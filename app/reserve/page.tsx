@@ -224,6 +224,29 @@ function totalEstimate(days: DayConfig[], isNP: boolean): number {
   return days.filter(d => d.included).reduce((sum, d) => sum + dayEstimate(d, isNP), 0);
 }
 
+/** Returns a recommendation tag (label + color) based on headcount vs. room capacity. */
+function getRoomTag(headcount: number, capacityTheater: number, capacityBanquet: number): {
+  label: string; color: string;
+} | null {
+  if (headcount <= 0) return null;
+  const ratio = headcount / capacityTheater;
+  if (headcount > capacityTheater) {
+    // Exceeds theater — always warn
+    return { label: "Too small", color: "text-red-500 bg-red-50 border-red-200" };
+  }
+  if (ratio >= 0.6 && ratio <= 1.0) {
+    return { label: "Best fit", color: "text-emerald-700 bg-emerald-50 border-emerald-200" };
+  }
+  if (ratio >= 0.25 && ratio < 0.6) {
+    return { label: "Good fit", color: "text-[#00abc9] bg-[#f0fafc] border-[#b3e8f0]" };
+  }
+  // ratio < 0.25 — much bigger than needed
+  if (capacityBanquet > 0 && headcount <= capacityBanquet) {
+    return { label: "Oversized", color: "text-gray-400 bg-gray-50 border-gray-200" };
+  }
+  return { label: "Oversized", color: "text-gray-400 bg-gray-50 border-gray-200" };
+}
+
 function signalBadge(sig: Signal) {
   switch (sig) {
     case "available":   return <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Available</span>;
@@ -668,6 +691,14 @@ function DayCard({
                             {room.name}
                           </p>
                           <p className="text-xs text-gray-400">Theater {room.capacityTheater} · Banquet {room.capacityBanquet}</p>
+                          {(() => {
+                            const tag = getRoomTag(day.headcount, room.capacityTheater, room.capacityBanquet);
+                            return tag ? (
+                              <span className={`inline-block mt-1 px-1.5 py-0.5 rounded border text-[10px] font-semibold leading-tight ${tag.color}`}>
+                                {tag.label}
+                              </span>
+                            ) : null;
+                          })()}
                         </div>
                         {signalBadge(sig)}
                       </div>
