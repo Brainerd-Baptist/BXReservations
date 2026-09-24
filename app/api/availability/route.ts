@@ -116,7 +116,7 @@ export async function GET(req: NextRequest) {
               signal = "unavailable";
               break;
             }
-            if (mapped === "available" && signal !== "unavailable") {
+            if (mapped === "available") {
               signal = "available";
             }
           }
