@@ -74,7 +74,7 @@ export default function HeaderShell({ initials, role, hasUser }: HeaderShellProp
                 href="/login"
                 className="inline-flex items-center text-sm font-medium text-[#00205B] border border-[#00205B]/30 rounded-lg px-3 py-1.5 hover:bg-[#00205B]/5 transition-colors"
               >
-                Sign in
+                Sign in / Sign up
               </Link>
             )}
           </div>
