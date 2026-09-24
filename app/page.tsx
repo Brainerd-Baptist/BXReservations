@@ -140,20 +140,58 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ── Contact Barb ── */}
+      {/* ── Meet the team ── */}
       <section className="max-w-2xl mx-auto px-5 py-9">
-        <div className="bg-white border border-gray-200 rounded-2xl px-6 py-5 flex items-start gap-4">
-          <div className="text-2xl shrink-0 mt-0.5">💬</div>
-          <div>
-            <p className="font-semibold text-gray-900 text-sm mb-1">Have a specific question?</p>
-            <p className="text-xs text-gray-500 leading-relaxed">
-              Reach out to <strong>Barb</strong> at the BX directly — she can help with pricing details, special setup requests, or anything else not covered by the form.
+        <h2 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-6 text-center">
+          Questions? We're here to help
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Barb */}
+          <div className="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col items-center text-center">
+            <div className="mb-3">
+              <Image
+                src="/staff/barb.jpg"
+                alt="Barb"
+                width={80}
+                height={80}
+                className="rounded-full object-cover shadow-sm"
+                style={{ width: 80, height: 80 }}
+              />
+            </div>
+            <div className="font-bold text-gray-900 text-sm">Barb</div>
+            <div className="text-[11px] text-gray-400 mb-3">BX Coordinator</div>
+            <p className="text-xs text-gray-500 leading-relaxed mb-4">
+              Pricing, setup requests, and anything specific to your event.
             </p>
             <a
               href="mailto:barb@brainerdbaptist.org"
-              className="inline-flex items-center gap-1.5 mt-3 text-xs font-semibold text-[#00abc9] hover:underline"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#00abc9] hover:underline"
             >
               Contact Barb →
+            </a>
+          </div>
+          {/* Jo */}
+          <div className="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col items-center text-center">
+            <div className="mb-3">
+              <Image
+                src="/staff/jo.jpg"
+                alt="Jo"
+                width={80}
+                height={80}
+                className="rounded-full object-cover shadow-sm"
+                style={{ width: 80, height: 80 }}
+              />
+            </div>
+            <div className="font-bold text-gray-900 text-sm">Jo</div>
+            <div className="text-[11px] text-gray-400 mb-3">BX Director</div>
+            <p className="text-xs text-gray-500 leading-relaxed mb-4">
+              General questions about the BX, partnerships, or larger events.
+            </p>
+            <a
+              href="mailto:jo@brainerdbaptist.org"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#00abc9] hover:underline"
+            >
+              Contact Jo →
             </a>
           </div>
         </div>
