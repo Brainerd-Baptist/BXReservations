@@ -325,7 +325,7 @@ function ContactStep({
           <input type="text" value={contact.name} onChange={e => onChange({ name: e.target.value })}
             placeholder="Jane Smith" autoComplete="name" className={input} />
         </Field>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Email" required>
             <input type="email" value={contact.email} onChange={e => onChange({ email: e.target.value })}
               placeholder="jane@example.com" autoComplete="email" className={input} />
@@ -521,7 +521,7 @@ function BuilderStep({
 
       {/* Date range + default headcount */}
       <div className="bg-white border border-gray-200 rounded-2xl p-5 mb-6 shadow-sm">
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 gap-3 mb-4 sm:grid-cols-2 sm:gap-4">
           <Field label="Start date" required>
             <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
               className={input} />
