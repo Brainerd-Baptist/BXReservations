@@ -307,7 +307,18 @@ function ContactStep({
     <div className="max-w-lg mx-auto">
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-6">
       <h2 className="text-2xl font-bold text-[#00205B] mb-1">Let's get started</h2>
-      <p className="text-gray-500 mb-6">Tell us a bit about you and your event.</p>
+      <p className="text-gray-500 mb-4">Tell us a bit about you and your event.</p>
+
+      {/* Returning-user nudge */}
+      <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 mb-6">
+        <p className="text-sm text-gray-500">Already have an account?</p>
+        <a
+          href="/login?next=/reserve"
+          className="text-sm font-semibold text-[#00abc9] hover:text-[#009ab7] transition-colors"
+        >
+          Sign in to pre-fill →
+        </a>
+      </div>
 
       <div className="space-y-4">
         <Field label="Your name" required>
@@ -951,7 +962,32 @@ function ReviewStep({
           </div>
         )}
         <p className="text-sm text-gray-400">A confirmation has been sent to {contact.email}.</p>
-        <div className="mt-8 p-4 bg-amber-50 border border-amber-200 rounded-xl text-left">
+
+        {/* ── Sign-in nudge ─────────────────────────────────── */}
+        <div className="mt-6 p-4 bg-white border border-[#00abc9]/30 rounded-2xl text-left flex items-start gap-3">
+          <div className="w-8 h-8 rounded-full bg-[#f0fafc] flex items-center justify-center shrink-0 mt-0.5">
+            <svg className="w-4 h-4 text-[#00abc9]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+            </svg>
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-[#00205B] mb-0.5">Save this to your account</p>
+            <p className="text-sm text-gray-500 mb-3">
+              Create a free account to track your booking status, upload your insurance, and see updates — no need to dig through email.
+            </p>
+            <a
+              href="/login?next=/account"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-[#00205B] hover:bg-[#001a4d] px-4 py-2 rounded-xl transition-colors"
+            >
+              Sign in or create account
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+            </a>
+          </div>
+        </div>
+
+        <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl text-left">
           <p className="text-sm font-semibold text-amber-800 mb-1">Next step: Upload your liability insurance</p>
           <p className="text-sm text-amber-700">To complete your booking, upload a Certificate of Insurance (COI) showing Brainerd Baptist Church as an Additional Insured. We&apos;ll send you a link via email.</p>
         </div>
