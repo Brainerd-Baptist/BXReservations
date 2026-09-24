@@ -332,6 +332,33 @@ function ContactStep({
             placeholder="Annual Gala, Youth Conference, Wedding…" className={input} />
         </Field>
 
+        {/* Space mode selector */}
+        <div className="pt-2">
+          <p className="text-sm font-medium text-gray-700 mb-2">How many spaces do you need? <span className="text-red-400">*</span></p>
+          <div className="grid grid-cols-1 gap-2">
+            {([
+              { mode: "single"    as SpaceMode, icon: "🏛️",  label: "One room",           desc: "A single space for your entire event" },
+              { mode: "main-plus" as SpaceMode, icon: "🏛️➕", label: "Main room + extras", desc: "A primary space plus breakout or support rooms" },
+              { mode: "multiple"  as SpaceMode, icon: "🔲",   label: "Multiple spaces",    desc: "Several independent rooms with no primary" },
+            ]).map(opt => (
+              <button key={opt.mode} type="button"
+                onClick={() => onSpaceMode(opt.mode)}
+                className={`flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all ${
+                  spaceMode === opt.mode
+                    ? "border-[#00abc9] bg-[#f0fafc]"
+                    : "border-gray-200 bg-white hover:border-gray-300"
+                }`}>
+                <span className="text-xl leading-none w-7 text-center">{opt.icon}</span>
+                <div className="flex-1">
+                  <p className={`text-sm font-semibold ${spaceMode === opt.mode ? "text-[#00205B]" : "text-gray-700"}`}>{opt.label}</p>
+                  <p className="text-xs text-gray-400">{opt.desc}</p>
+                </div>
+                {spaceMode === opt.mode && <span className="text-[#00abc9] font-bold text-sm">✓</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="flex items-center gap-3 pt-2">
           <button
             type="button"
