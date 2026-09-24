@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+:root {
+  /* BBC Brand Colors */
+  --bbc-blue: #00abc9;
+  --bbc-blue-dark: #0090a8;
+  --bbc-blue-light: #33c1d9;
+  --bbc-navy: #00205B;
+  --bbc-navy-light: #0a2d6e;
+  --black: #111111;
+  --gray-100: #f7f7f7;
+  --gray-200: #efefef;
+  --gray-600: #6b7280;
+  --gray-800: #1f2937;
+  --white: #ffffff;
+  --text-muted: rgba(0,32,91,0.55);
+  --glass-border: rgba(0,171,201,0.15);
+  --glass-bg: rgba(0,171,201,0.06);
+}
+
+* { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background: #ffffff;
+  color: var(--black);
+  font-family: var(--font-inter), sans-serif;
+  overflow-x: hidden;
+}
+
+.btn-primary {
+  font-weight: 600;
+  font-size: 0.875rem;
+  background: var(--bbc-blue);
+  color: #fff;
+  padding: 0.625rem 1.5rem;
+  border-radius: 9999px;
+  transition: background 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.btn-primary:hover { background: var(--bbc-blue-dark); }
+
+.btn-outline {
+  font-weight: 600;
+  font-size: 0.875rem;
+  background: transparent;
+  color: var(--bbc-navy);
+  border: 1.5px solid rgba(0,32,91,0.2);
+  padding: 0.625rem 1.5rem;
+  border-radius: 9999px;
+  transition: border-color 0.2s;
+}
+.btn-outline:hover { border-color: var(--bbc-blue); color: var(--bbc-blue); }
