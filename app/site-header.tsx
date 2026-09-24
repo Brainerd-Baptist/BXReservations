@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import NavSidebar from "./components/nav-sidebar";
@@ -10,7 +10,12 @@ export default function SiteHeader() {
 
   return (
     <>
-      <NavSidebar open={navOpen} onClose={() => setNavOpen(false)} />
+      {/* Suspense required because NavSidebar calls useSearchParams(),
+          which Next.js App Router cannot statically pre-render without a
+          boundary. The sidebar is always hidden on first paint anyway. */}
+      <Suspense>
+        <NavSidebar open={navOpen} onClose={() => setNavOpen(false)} />
+      </Suspense>
 
       <header className="border-b border-gray-200 bg-white z-30 print:hidden sticky top-0">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
@@ -47,7 +52,7 @@ export default function SiteHeader() {
             </Link>
           </div>
 
-          {/* Right: new request + sign in avatar */}
+          {/* Right: new request + sign in */}
           <div className="flex items-center gap-3">
             <Link
               href="/reserve"
