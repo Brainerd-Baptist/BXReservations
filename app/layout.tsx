@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import SiteHeader from "./site-header";
 import "./globals.css";
@@ -14,6 +14,12 @@ export const metadata: Metadata = {
   title: "BX Community Center — Reservations | Brainerd Baptist",
   description:
     "Reserve the BX Community Center rooms for your event. Check availability and submit a request online.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 const APP_VERSION = "0.6.0";

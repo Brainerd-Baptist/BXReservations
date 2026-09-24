@@ -192,7 +192,7 @@ export default async function AccountPage() {
             My reservations
           </h2>
           <Link
-            href="/new-request"
+            href="/reserve"
             style={{ fontSize: "0.875rem", color: "#00abc9", fontWeight: 600, textDecoration: "none" }}
           >
             + New request
@@ -203,7 +203,7 @@ export default async function AccountPage() {
           {!reservations || reservations.length === 0 ? (
             <div style={{ padding: "2.5rem 1.5rem", textAlign: "center", color: "#666" }}>
               <p style={{ margin: "0 0 0.5rem" }}>No reservations yet.</p>
-              <Link href="/new-request" style={{ color: "#00abc9", fontWeight: 600, textDecoration: "none" }}>
+              <Link href="/reserve" style={{ color: "#00abc9", fontWeight: 600, textDecoration: "none" }}>
                 Make your first reservation →
               </Link>
             </div>
