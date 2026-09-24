@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import SiteHeader from "./site-header";
 import "./globals.css";
 
 const inter = Inter({
@@ -15,8 +16,7 @@ export const metadata: Metadata = {
     "Reserve the BX Community Center rooms for your event. Check availability and submit a request online.",
 };
 
-// Version info — package version is baked in at build time.
-const APP_VERSION = "0.5.0";
+const APP_VERSION = "0.6.0";
 
 export default function RootLayout({
   children,
@@ -25,7 +25,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="flex flex-col min-h-screen">
+      <body className="flex flex-col min-h-screen bg-gray-50">
+        <SiteHeader />
         <main className="flex-1">{children}</main>
 
         {/* Version footer */}
