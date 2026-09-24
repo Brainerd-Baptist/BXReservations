@@ -301,7 +301,7 @@ function ContactStep({
 
   return (
     <div className="max-w-lg mx-auto">
-      <h2 className="text-2xl font-bold text-[#00205B] mb-1">Let\'s get started</h2>
+      <h2 className="text-2xl font-bold text-[#00205B] mb-1">Let's get started</h2>
       <p className="text-gray-500 mb-8">Tell us a bit about you and your event.</p>
 
       <div className="space-y-4">
