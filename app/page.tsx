@@ -10,35 +10,36 @@ export default async function Home() {
 
       {/* ── Hero ── */}
       <section className="bg-white border-b border-gray-100">
-        <div className="max-w-2xl mx-auto px-5 py-12 sm:py-20 text-center">
-          <div className="flex justify-center mb-6">
+        <div className="max-w-2xl mx-auto px-5 pt-10 pb-12 sm:pt-16 sm:pb-16 text-center">
+          <div className="flex justify-center mb-5">
             <Image
               src="/bx-logo.png"
               alt="BX Community Center"
-              width={72}
-              height={72}
+              width={68}
+              height={68}
               className="rounded-2xl shadow-sm"
               priority
             />
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-[#00205B] leading-tight mb-3">
-            BX Community Center
+
+          <h1 className="text-3xl sm:text-4xl font-bold text-[#00205B] leading-tight mb-2">
+            Welcome to BX Reservations
           </h1>
-          <p className="text-base sm:text-lg text-gray-500 mb-8 max-w-sm mx-auto leading-relaxed">
-            Reserve a space for your event, meeting, or gathering — right here.
+          <p className="text-base sm:text-[1.1rem] text-gray-500 mb-8 max-w-md mx-auto leading-relaxed">
+            Reserve a space at the BX Community Center for your event, meeting, class, or gathering.
           </p>
 
           {user ? (
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
                 href="/reserve"
-                className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl bg-[#00abc9] text-white font-semibold text-base shadow-sm hover:bg-[#0099b5] active:scale-[0.98] transition-all"
+                className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl bg-[#00abc9] text-white font-bold text-base shadow-sm hover:bg-[#0099b5] active:scale-[0.98] transition-all"
               >
                 Reserve a Space →
               </Link>
               <Link
                 href="/account"
-                className="inline-flex items-center justify-center px-7 py-4 rounded-xl border border-gray-200 text-gray-700 font-medium text-base hover:bg-gray-50 transition-colors"
+                className="inline-flex items-center justify-center px-7 py-4 rounded-xl border border-gray-200 text-gray-700 font-semibold text-base hover:bg-gray-50 transition-colors"
               >
                 My Reservations
               </Link>
@@ -47,13 +48,13 @@ export default async function Home() {
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
                 href="/reserve"
-                className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl bg-[#00abc9] text-white font-semibold text-base shadow-sm hover:bg-[#0099b5] active:scale-[0.98] transition-all"
+                className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl bg-[#00abc9] text-white font-bold text-base shadow-sm hover:bg-[#0099b5] active:scale-[0.98] transition-all"
               >
                 Reserve a Space →
               </Link>
               <Link
                 href="/login"
-                className="inline-flex items-center justify-center px-7 py-4 rounded-xl border border-gray-200 text-gray-700 font-medium text-base hover:bg-gray-50 transition-colors"
+                className="inline-flex items-center justify-center px-7 py-4 rounded-xl border border-gray-200 text-gray-700 font-semibold text-base hover:bg-gray-50 transition-colors"
               >
                 Sign in / Sign up
               </Link>
@@ -62,9 +63,32 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* ── Account value prop (only show if not signed in) ── */}
+      {!user && (
+        <section className="max-w-2xl mx-auto px-5 pt-8">
+          <div className="bg-[#00205B] rounded-2xl px-6 py-5 flex items-start gap-4">
+            <div className="text-2xl shrink-0 mt-0.5">🔐</div>
+            <div>
+              <p className="text-white font-semibold text-sm mb-1">
+                Create a free account to get the most out of BX Reservations
+              </p>
+              <p className="text-blue-200 text-xs leading-relaxed mb-3">
+                Sign in with Google to save your progress as you go, submit your request with one tap, and follow your reservation status — from Pending all the way to Confirmed — right here online.
+              </p>
+              <Link
+                href="/login"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-white/15 hover:bg-white/25 transition-colors px-3 py-1.5 rounded-lg"
+              >
+                Create your account →
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ── Spaces overview ── */}
-      <section className="max-w-2xl mx-auto px-5 py-10">
-        <h2 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-5 text-center">
+      <section className="max-w-2xl mx-auto px-5 py-9">
+        <h2 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-4 text-center">
           Available spaces
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -73,43 +97,42 @@ export default async function Home() {
               key={s.name}
               className="bg-white rounded-xl border border-gray-200 p-4 flex items-start gap-3"
             >
-              <div className="text-2xl shrink-0 mt-0.5">{s.emoji}</div>
+              <div className="text-xl shrink-0 mt-0.5">{s.emoji}</div>
               <div>
                 <div className="font-semibold text-gray-900 text-sm">{s.name}</div>
-                <div className="text-xs text-gray-500 mt-0.5">{s.desc}</div>
+                <div className="text-xs text-gray-500 mt-0.5 leading-relaxed">{s.desc}</div>
               </div>
             </div>
           ))}
         </div>
-
-        <div className="mt-8 text-center">
+        <div className="mt-7 text-center">
           <Link
             href="/reserve"
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#00abc9] hover:underline"
           >
-            Check availability and reserve →
+            Check availability and make a request →
           </Link>
         </div>
       </section>
 
       {/* ── How it works ── */}
       <section className="bg-white border-t border-gray-100">
-        <div className="max-w-2xl mx-auto px-5 py-10">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-6 text-center">
+        <div className="max-w-2xl mx-auto px-5 py-9">
+          <h2 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-6 text-center">
             How it works
           </h2>
-          <ol className="space-y-4">
+          <ol className="space-y-5">
             {STEPS.map((s, i) => (
               <li key={i} className="flex items-start gap-4">
                 <div
                   className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0 mt-0.5"
-                  style={{ background: "#00205B" }}
+                  style={{ background: "#00abc9" }}
                 >
                   {i + 1}
                 </div>
                 <div>
                   <div className="font-semibold text-gray-900 text-sm">{s.title}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">{s.desc}</div>
+                  <div className="text-xs text-gray-500 mt-0.5 leading-relaxed">{s.desc}</div>
                 </div>
               </li>
             ))}
@@ -117,8 +140,27 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* ── Contact Barb ── */}
+      <section className="max-w-2xl mx-auto px-5 py-9">
+        <div className="bg-white border border-gray-200 rounded-2xl px-6 py-5 flex items-start gap-4">
+          <div className="text-2xl shrink-0 mt-0.5">💬</div>
+          <div>
+            <p className="font-semibold text-gray-900 text-sm mb-1">Have a specific question?</p>
+            <p className="text-xs text-gray-500 leading-relaxed">
+              Reach out to <strong>Barb</strong> at the BX directly — she can help with pricing details, special setup requests, or anything else not covered by the form.
+            </p>
+            <a
+              href="mailto:barb@brainerdbaptist.org"
+              className="inline-flex items-center gap-1.5 mt-3 text-xs font-semibold text-[#00abc9] hover:underline"
+            >
+              Contact Barb →
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* ── Footer ── */}
-      <footer className="text-center py-8 text-xs text-gray-400">
+      <footer className="text-center pb-10 text-xs text-gray-400">
         BX Community Center · Brainerd Baptist Church
       </footer>
     </main>
@@ -128,14 +170,27 @@ export default async function Home() {
 const SPACES = [
   { emoji: "🏟️", name: "The Crossing", desc: "Large auditorium-style main event space" },
   { emoji: "🪜", name: "The Loft", desc: "Flexible upper-level meeting area" },
-  { emoji: "🔤", name: "Crosspointe A / B / C", desc: "Configurable breakout rooms (can combine)" },
+  { emoji: "🔤", name: "Crosspointe A / B / C", desc: "Configurable breakout rooms — use one or combine all three" },
   { emoji: "👁️", name: "Crossview", desc: "Intimate gathering or overflow space" },
   { emoji: "🔗", name: "Crossties A / B / C", desc: "Small group & classroom rooms" },
   { emoji: "☕", name: "Crossties Café", desc: "Coffee & community space for smaller groups" },
 ];
 
 const STEPS = [
-  { title: "Tell us about your event", desc: "Share your name, organization, and event details." },
-  { title: "Choose your space & dates", desc: "Pick rooms and time blocks — we'll show live availability." },
-  { title: "Submit your request", desc: "Our team reviews and confirms. You'll hear back by email." },
+  {
+    title: "Tell us about your event",
+    desc: "Share your name, organization, event type, and expected headcount.",
+  },
+  {
+    title: "Choose your space and dates",
+    desc: "Pick rooms and time blocks — we'll show live availability from our calendar.",
+  },
+  {
+    title: "Create an account to submit",
+    desc: "Sign in with Google to submit your request and track your status online from Pending to Confirmed.",
+  },
+  {
+    title: "We review and confirm",
+    desc: "Our team will follow up with next steps and any questions. Expect a response within 1–2 business days.",
+  },
 ];
