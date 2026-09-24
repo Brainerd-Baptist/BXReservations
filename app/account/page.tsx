@@ -1,135 +1,252 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getUserAndRole } from "@/lib/get-user-role";
-import { createClient } from "@/lib/supabase/server";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 import SignOutButton from "./sign-out-button";
-
-export const metadata = { title: "My Account · BX Reservations" };
-
-function statusBadge(status: string) {
-  const map: Record<string, { label: string; className: string }> = {
-    pending:   { label: "Pending",   className: "bg-yellow-100 text-yellow-800" },
-    approved:  { label: "Approved",  className: "bg-green-100 text-green-800"  },
-    rejected:  { label: "Rejected",  className: "bg-red-100 text-red-800"      },
-    cancelled: { label: "Cancelled", className: "bg-gray-100 text-gray-500"    },
-  };
-  const s = map[status] ?? { label: status, className: "bg-gray-100 text-gray-600" };
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${s.className}`}>
-      {s.label}
-    </span>
-  );
-}
+import ProfileForm from "./profile-form";
 
 export default async function AccountPage() {
-  const { user, role } = await getUserAndRole();
+  const { user, role, profile } = await getUserAndRole();
   if (!user) redirect("/login");
 
-  const supabase = await createClient();
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll: () => cookieStore.getAll(),
+        setAll: (cs) =>
+          cs.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options)
+          ),
+      },
+    }
+  );
+
   const { data: reservations } = await supabase
     .from("reservations")
-    .select("id, space, event_date, event_name, status, created_at")
+    .select("id, created_at, status, event_name, space, start_date")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(20);
 
-  const initials = user.email
-    .split("@")[0]
-    .split(/[._-]/)
-    .map((p: string) => p[0]?.toUpperCase() ?? "")
-    .slice(0, 2)
-    .join("");
+  const initials = profile?.display_name
+    ? profile.display_name
+        .split(" ")
+        .map((n: string) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : user.email[0].toUpperCase();
+
+  const statusChip = (status: string) => {
+    const map: Record<string, { label: string; bg: string; color: string }> = {
+      pending:   { label: "Pending",   bg: "#FEF3C7", color: "#92400E" },
+      approved:  { label: "Approved",  bg: "#D1FAE5", color: "#065F46" },
+      rejected:  { label: "Rejected",  bg: "#FEE2E2", color: "#991B1B" },
+      cancelled: { label: "Cancelled", bg: "#F3F4F6", color: "#374151" },
+    };
+    const s = map[status] ?? { label: status, bg: "#F3F4F6", color: "#374151" };
+    return (
+      <span
+        style={{
+          padding: "2px 8px",
+          borderRadius: "9999px",
+          fontSize: "0.75rem",
+          fontWeight: 600,
+          background: s.bg,
+          color: s.color,
+        }}
+      >
+        {s.label}
+      </span>
+    );
+  };
 
   return (
-    <main className="max-w-2xl mx-auto px-4 sm:px-6 py-10 space-y-8">
+    <main style={{ maxWidth: "640px", margin: "0 auto", padding: "2rem 1rem 4rem" }}>
 
-      {/* Profile card */}
-      <section className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-        <div className="px-6 pt-6 pb-5 flex items-start gap-4">
+      {/* ── Profile header card ── */}
+      <div
+        style={{
+          border: "1px solid #e5e5e5",
+          borderRadius: "12px",
+          overflow: "hidden",
+          marginBottom: "1.5rem",
+        }}
+      >
+        <div style={{ padding: "1.25rem 1.5rem", display: "flex", alignItems: "center", gap: "1rem" }}>
           <div
-            className="w-14 h-14 rounded-full flex items-center justify-center text-white text-lg font-semibold shrink-0"
-            style={{ background: "#00205B" }}
+            style={{
+              width: 52,
+              height: 52,
+              borderRadius: "50%",
+              background: "#00205B",
+              color: "#fff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "1.25rem",
+              fontWeight: 700,
+              flexShrink: 0,
+            }}
           >
-            {initials || "?"}
+            {initials}
           </div>
-          <div className="min-w-0">
-            <p className="text-sm text-gray-500 truncate">{user.email}</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {role === "admin" ? (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold tracking-wide uppercase bg-[#00205B] text-white">
-                  Admin
-                </span>
-              ) : (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold tracking-wide uppercase border border-gray-300 text-gray-600">
-                  User
-                </span>
-              )}
+          <div>
+            <div style={{ fontWeight: 600, fontSize: "1rem", color: "#111" }}>
+              {profile?.display_name || user.email}
+            </div>
+            {profile?.display_name && (
+              <div style={{ fontSize: "0.8125rem", color: "#666", marginTop: "0.1rem" }}>
+                {user.email}
+              </div>
+            )}
+            {profile?.organization && (
+              <div style={{ fontSize: "0.8125rem", color: "#888", marginTop: "0.1rem" }}>
+                {profile.organization}
+              </div>
+            )}
+            <div style={{ marginTop: "0.35rem" }}>
+              <span
+                style={{
+                  padding: "2px 8px",
+                  borderRadius: "9999px",
+                  fontSize: "0.7rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.05em",
+                  textTransform: "uppercase",
+                  background: role === "admin" ? "#00205B" : "#E5E7EB",
+                  color: role === "admin" ? "#fff" : "#374151",
+                }}
+              >
+                {role === "admin" ? "Admin" : "User"}
+              </span>
             </div>
           </div>
         </div>
 
         {role === "admin" && (
-          <div className="border-t border-gray-100 px-6 py-3">
+          <div style={{ borderTop: "1px solid #f0f0f0", padding: "0.875rem 1.5rem" }}>
             <Link
               href="/admin/bx-reservations"
-              className="text-sm font-medium text-[#00205B] hover:underline flex items-center gap-1"
+              style={{ color: "#00205B", fontWeight: 500, fontSize: "0.9375rem", textDecoration: "none" }}
             >
               Admin dashboard →
             </Link>
           </div>
         )}
-      </section>
+      </div>
 
-      {/* My reservations */}
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400">My Reservations</h2>
-          <Link href="/reserve" className="text-sm text-[#00abc9] hover:underline font-medium">
+      {/* ── Editable contact info ── */}
+      <div
+        style={{
+          border: "1px solid #e5e5e5",
+          borderRadius: "12px",
+          padding: "1.25rem 1.5rem",
+          marginBottom: "1.5rem",
+        }}
+      >
+        <h2
+          style={{
+            margin: "0 0 1rem",
+            fontSize: "0.75rem",
+            fontWeight: 700,
+            letterSpacing: "0.05em",
+            textTransform: "uppercase",
+            color: "#666",
+          }}
+        >
+          Contact info
+        </h2>
+        <ProfileForm
+          displayName={profile?.display_name ?? null}
+          phone={profile?.phone ?? null}
+          organization={profile?.organization ?? null}
+          email={user.email}
+        />
+      </div>
+
+      {/* ── My reservations ── */}
+      <div style={{ marginBottom: "1.5rem" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "0.75rem",
+          }}
+        >
+          <h2
+            style={{
+              margin: 0,
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              letterSpacing: "0.05em",
+              textTransform: "uppercase",
+              color: "#666",
+            }}
+          >
+            My reservations
+          </h2>
+          <Link
+            href="/new-request"
+            style={{ fontSize: "0.875rem", color: "#00abc9", fontWeight: 600, textDecoration: "none" }}
+          >
             + New request
           </Link>
         </div>
 
-        {!reservations || reservations.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-200 px-6 py-10 text-center">
-            <p className="text-gray-400 text-sm">No reservations yet.</p>
-            <Link
-              href="/reserve"
-              className="mt-4 inline-flex items-center text-sm font-medium text-[#00205B] hover:underline"
-            >
-              Make your first reservation →
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {reservations.map((r) => (
+        <div style={{ border: "1px solid #e5e5e5", borderRadius: "12px", overflow: "hidden" }}>
+          {!reservations || reservations.length === 0 ? (
+            <div style={{ padding: "2.5rem 1.5rem", textAlign: "center", color: "#666" }}>
+              <p style={{ margin: "0 0 0.5rem" }}>No reservations yet.</p>
+              <Link href="/new-request" style={{ color: "#00abc9", fontWeight: 600, textDecoration: "none" }}>
+                Make your first reservation →
+              </Link>
+            </div>
+          ) : (
+            reservations.map((r, i) => (
               <div
                 key={r.id}
-                className="bg-white rounded-xl border border-gray-200 px-5 py-4 flex items-start justify-between gap-4"
+                style={{
+                  padding: "0.875rem 1.25rem",
+                  borderTop: i === 0 ? "none" : "1px solid #f0f0f0",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: "0.75rem",
+                }}
               >
-                <div className="min-w-0">
-                  <p className="font-medium text-gray-900 truncate">
-                    {r.event_name || r.space || "Untitled reservation"}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-0.5">
-                    {r.space && r.event_name ? r.space + " · " : ""}
-                    {r.event_date
-                      ? new Date(r.event_date).toLocaleDateString("en-US", {
-                          weekday: "short", month: "short", day: "numeric", year: "numeric",
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: "0.9375rem", color: "#111" }}>
+                    {r.event_name || r.space || "Reservation"}
+                  </div>
+                  <div style={{ fontSize: "0.8125rem", color: "#888", marginTop: "0.15rem" }}>
+                    {r.start_date
+                      ? new Date(r.start_date).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
                         })
-                      : "—"}
-                  </p>
+                      : new Date(r.created_at).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                  </div>
                 </div>
-                <div className="shrink-0 mt-0.5">{statusBadge(r.status ?? "pending")}</div>
+                {statusChip(r.status)}
               </div>
-            ))}
-          </div>
-        )}
-      </section>
+            ))
+          )}
+        </div>
+      </div>
 
-      {/* Sign out */}
-      <section className="pt-2">
-        <SignOutButton />
-      </section>
+      {/* ── Sign out ── */}
+      <SignOutButton />
     </main>
   );
 }
