@@ -19,7 +19,7 @@ export default function SiteHeader() {
           />
           <div className="hidden sm:flex items-center gap-3">
             <div className="w-px h-5 bg-gray-200" />
-            <span className="text-sm tracking-[0.15em] uppercase text-gray-600 whitespace-nowrap font-medium">
+            <span className="text-xs uppercase tracking-[0.2em] text-gray-500 whitespace-nowrap">
               Reservations
             </span>
           </div>
