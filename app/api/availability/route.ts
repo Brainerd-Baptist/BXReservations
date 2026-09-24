@@ -14,29 +14,39 @@ const ROOM_RESOURCE_IDS: Record<string, number> = {
   crosstiescafe: 369502,
 };
 
-// ─── PCO "Event Status" tag → availability signal ─────────────────────────────
-const TAG_SIGNAL: Record<string, "available" | "ask" | "unavailable"> = {
-  Confirmed: "unavailable",
-  "Pending | Hold": "ask",
-  Placeholder: "ask",
-  Canceled: "available",
+// ─── PCO Event approval_status → availability signal ─────────────────────────
+// PCO Calendar approval_status values: draft, pending, tentative, confirmed, cancelled
+type Signal = "available" | "ask" | "unavailable";
+const STATUS_SIGNAL: Record<string, Signal> = {
+  confirmed: "unavailable",
+  tentative: "ask",
+  pending: "ask",
+  draft: "ask",
+  cancelled: "available",
 };
 
 // ─── PCO API helper ────────────────────────────────────────────────────────────
-async function pcoGet(path: string, params?: Record<string, string>): Promise<unknown> {
+// NOTE: PCO uses PHP-style bracket notation in query params (e.g. where[field][op]).
+// URLSearchParams encodes brackets as %5B%5D, which PCO ignores.
+// We build the query string manually to keep raw brackets in keys.
+async function pcoGet(
+  path: string,
+  params?: Record<string, string>
+): Promise<unknown> {
   const appId = process.env.PCO_APP_ID;
   const secret = process.env.PCO_SECRET;
   if (!appId || !secret) throw new Error("PCO_APP_ID / PCO_SECRET not configured");
   const auth = Buffer.from(`${appId}:${secret}`).toString("base64");
 
-  const url = new URL(`https://api.planningcenteronline.com/calendar/v2${path}`);
-  if (params) {
-    for (const [k, v] of Object.entries(params)) {
-      url.searchParams.set(k, v);
-    }
-  }
+  const base = `https://api.planningcenteronline.com/calendar/v2${path}`;
+  const queryString = params
+    ? Object.entries(params)
+        .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
+        .join("&")
+    : "";
+  const fullUrl = queryString ? `${base}?${queryString}` : base;
 
-  const res = await fetch(url.toString(), {
+  const res = await fetch(fullUrl, {
     headers: { Authorization: `Basic ${auth}` },
     cache: "no-store",
   });
@@ -47,19 +57,22 @@ async function pcoGet(path: string, params?: Record<string, string>): Promise<un
   return res.json();
 }
 
-type Signal = "available" | "ask" | "unavailable";
-
 interface PcoBooking {
   id: string;
   relationships?: {
     event?: { data?: { id: string } };
   };
 }
+interface PcoEvent {
+  id: string;
+  type: string;
+  attributes: {
+    approval_status?: string;
+  };
+}
 interface PcoData {
   data: PcoBooking[];
-}
-interface PcoTagData {
-  data: Array<{ attributes: { name: string } }>;
+  included?: PcoEvent[];
 }
 
 export async function GET(req: NextRequest) {
@@ -90,12 +103,15 @@ export async function GET(req: NextRequest) {
       }
 
       try {
-        // Use URLSearchParams-style object so brackets are properly encoded
+        // Fetch bookings for this room that overlap the requested day.
+        // include=event pulls the event record inline so we can read approval_status
+        // without a separate API call per booking.
         const data = (await pcoGet("/resource_bookings", {
           "where[resource_id]": String(resourceId),
           "where[starts_at][lte]": endOfDay,
           "where[ends_at][gte]": startOfDay,
-          "per_page": "25",
+          include: "event",
+          per_page: "25",
         })) as PcoData;
 
         const bookings = data.data ?? [];
@@ -105,27 +121,29 @@ export async function GET(req: NextRequest) {
           return;
         }
 
+        // Build a lookup from event id → event record (included sideloads)
+        const eventsById = new Map<string, PcoEvent>();
+        for (const inc of data.included ?? []) {
+          if (inc.type === "Event") eventsById.set(inc.id, inc);
+        }
+
         let signal: Signal = "ask";
 
         for (const booking of bookings) {
           const eventId = booking.relationships?.event?.data?.id;
           if (!eventId) continue;
 
-          const tagsData = (await pcoGet(`/events/${eventId}/tags`)) as PcoTagData;
-          const tagNames = (tagsData.data ?? []).map((t) => t.attributes.name);
+          const event = eventsById.get(eventId);
+          const status = event?.attributes?.approval_status ?? "pending";
+          const mapped: Signal = STATUS_SIGNAL[status] ?? "ask";
 
-          for (const tag of tagNames) {
-            const mapped = TAG_SIGNAL[tag];
-            if (mapped === "unavailable") {
-              signal = "unavailable";
-              break;
-            }
-            if (mapped === "available") {
-              signal = "available";
-            }
+          if (mapped === "unavailable") {
+            signal = "unavailable";
+            break;
           }
-
-          if (signal === "unavailable") break;
+          if (mapped === "available") {
+            signal = "available";
+          }
         }
 
         result[roomId] = signal;
