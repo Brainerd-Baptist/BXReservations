@@ -10,15 +10,30 @@ interface Props {
   email: string;
 }
 
+/** Format digits as (XXX) XXX-XXXX as the user types */
+function formatPhone(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 10);
+  if (digits.length === 0) return "";
+  if (digits.length <= 3) return `(${digits}`;
+  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
+
 export default function ProfileForm({ displayName, phone, organization, email }: Props) {
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [phoneValue, setPhoneValue] = useState(phone ? formatPhone(phone) : "");
   const formRef = useRef<HTMLFormElement>(null);
+
+  function handlePhoneChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setPhoneValue(formatPhone(e.target.value));
+  }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    // Store the formatted value (already in the input)
     setSaved(false);
     setError(null);
     startTransition(async () => {
@@ -61,16 +76,17 @@ export default function ProfileForm({ displayName, phone, organization, email }:
           />
         </div>
 
-        {/* Phone */}
+        {/* Phone — live-formatted */}
         <div>
           <label style={labelStyle}>Phone number</label>
           <input
             type="tel"
             name="phone"
-            defaultValue={phone ?? ""}
+            value={phoneValue}
+            onChange={handlePhoneChange}
             placeholder="(555) 555-5555"
             style={inputStyle}
-            maxLength={30}
+            maxLength={14}
           />
         </div>
 
