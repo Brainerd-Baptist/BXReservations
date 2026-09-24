@@ -687,7 +687,7 @@ function DayCard({
                         <div className="mt-3 border-t border-gray-100 pt-3">
                           <p className="text-xs font-medium text-gray-500 mb-2">Setup style</p>
                           <div className="flex flex-wrap gap-1">
-                            {(room.setups as string[]).map(sid => {
+                            {(room.setups as readonly string[]).map(sid => {
                               const s = SETUP_STYLES.find(x => x.id === sid);
                               if (!s) return null;
                               return (
