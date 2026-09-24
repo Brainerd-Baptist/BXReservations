@@ -16,10 +16,11 @@ const ROOM_RESOURCE_IDS: Record<string, number> = {
 
 // ─── PCO EventResourceRequest approval_status → availability signal ───────────
 type Signal = "available" | "ask" | "unavailable";
+// PCO returns both full words and single-letter abbreviations depending on context.
 const STATUS_SIGNAL: Record<string, Signal> = {
-  approved: "unavailable",
-  pending: "ask",
-  rejected: "available",
+  approved: "unavailable", A: "unavailable",
+  pending:  "ask",         P: "ask",
+  rejected: "available",   R: "available",
 };
 
 // ─── PCO API helper ────────────────────────────────────────────────────────────
@@ -87,7 +88,8 @@ export async function GET(req: NextRequest) {
     : Object.keys(ROOM_RESOURCE_IDS);
 
   // Overlap window: booking starts before end-of-day AND ends after start-of-day
-  const startOfDay = `${date}T00:00:00Z`;
+  // T00:00:01Z: a booking ending exactly at midnight belongs to the prior day
+  const startOfDay = `${date}T00:00:01Z`;
   const endOfDay = `${date}T23:59:59Z`;
 
   const result: Record<string, Signal> = {};
