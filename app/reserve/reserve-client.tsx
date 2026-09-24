@@ -524,14 +524,19 @@ function BuilderStep({
 
       {/* Date range + default headcount */}
       <div className="bg-white border border-gray-200 rounded-2xl p-5 mb-6 shadow-sm">
-        <div className="grid grid-cols-1 gap-3 mb-4 sm:grid-cols-2 sm:gap-4">
+        <div className="grid grid-cols-1 gap-3 mb-4 sm:grid-cols-2 sm:gap-4 overflow-hidden">
           <Field label="Start date" required>
-            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
-              className={input} />
+            <input type="date" value={startDate}
+              onChange={e => {
+                setStartDate(e.target.value);
+                // Default end date to start date if unset or before new start
+                if (!endDate || endDate < e.target.value) setEndDate(e.target.value);
+              }}
+              className={`${input} min-w-0`} />
           </Field>
           <Field label="End date" required>
             <input type="date" value={endDate} min={startDate}
-              onChange={e => setEndDate(e.target.value)} className={input} />
+              onChange={e => setEndDate(e.target.value)} className={`${input} min-w-0`} />
           </Field>
         </div>
         <Field label={`Default headcount (applies to all days unless overridden)`}>
