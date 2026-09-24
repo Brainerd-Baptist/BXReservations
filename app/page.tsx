@@ -96,13 +96,10 @@ export default async function Home() {
           {SPACES.map((s) => (
             <div
               key={s.name}
-              className="bg-white rounded-xl border border-gray-200 p-4 flex items-start gap-3"
+              className="bg-white rounded-xl border border-gray-200 p-4"
             >
-              <div className="text-xl shrink-0 mt-0.5">{s.emoji}</div>
-              <div>
-                <div className="font-semibold text-gray-900 text-sm">{s.name}</div>
-                <div className="text-xs text-gray-500 mt-0.5 leading-relaxed">{s.desc}</div>
-              </div>
+              <div className="font-semibold text-gray-900 text-sm">{s.name}</div>
+              <div className="text-xs text-gray-500 mt-0.5 leading-relaxed">{s.desc}</div>
             </div>
           ))}
         </div>
@@ -203,12 +200,12 @@ export default async function Home() {
 }
 
 const SPACES = [
-  { emoji: "🏟️", name: "The Crossing", desc: "Large auditorium-style main event space" },
-  { emoji: "🪜", name: "The Loft", desc: "Flexible upper-level meeting area" },
-  { emoji: "🔤", name: "Crosspointe A / B / C", desc: "Configurable breakout rooms — use one or combine all three" },
-  { emoji: "👁️", name: "Crossview", desc: "Intimate gathering or overflow space" },
-  { emoji: "🔗", name: "Crossties A / B / C", desc: "Small group & classroom rooms" },
-  { emoji: "☕", name: "Crossties Café", desc: "Coffee & community space for smaller groups" },
+  { name: "The Crossing", desc: "Large auditorium-style main event space" },
+  { name: "The Loft", desc: "Flexible upper-level meeting area" },
+  { name: "Crosspointe A / B / C", desc: "Configurable breakout rooms — use one or combine all three" },
+  { name: "Crossview", desc: "Intimate gathering or overflow space" },
+  { name: "Crossties A / B / C", desc: "Small group & classroom rooms" },
+  { name: "Crossties Café", desc: "Coffee & community space for smaller groups" },
 ];
 
 const STEPS = [
