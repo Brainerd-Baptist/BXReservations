@@ -5,9 +5,16 @@ import { getUserAndRole } from "@/lib/get-user-role";
 import NavSidebarWrapper from "./components/nav-sidebar-wrapper";
 
 export default async function SiteHeader() {
-  const { user, role } = await getUserAndRole();
+  const { user, role, profile } = await getUserAndRole();
 
-  const initials = user
+  const initials = profile?.display_name
+    ? profile.display_name
+        .split(" ")
+        .map((n: string) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : user
     ? user.email
         .split("@")[0]
         .split(/[._-]/)
@@ -23,26 +30,29 @@ export default async function SiteHeader() {
       </Suspense>
       <header className="border-b border-gray-200 bg-white z-30 print:hidden sticky top-0">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 shrink-0">
-            {/* Hamburger is inside NavSidebarWrapper (client component) */}
-            <Link href="/" className="flex items-center gap-3 group">
+
+          {/* Left: hamburger + logo */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Hamburger rendered inside NavSidebarWrapper */}
+            <Link href="/" className="flex items-center gap-2.5 group ml-1">
               <Image
                 src="/bx-logo.png"
                 alt="BX Brainerd Crossroads"
-                width={36}
-                height={36}
+                width={32}
+                height={32}
                 className="object-contain"
                 priority
               />
-              <div className="hidden sm:flex items-center gap-3">
-                <div className="w-px h-5 bg-gray-200" />
-                <span className="text-xs uppercase tracking-[0.2em] text-gray-500 whitespace-nowrap">
+              <div className="hidden sm:flex items-center gap-2.5">
+                <div className="w-px h-4 bg-gray-200" />
+                <span className="text-[11px] uppercase tracking-[0.18em] text-gray-400 whitespace-nowrap font-medium">
                   Reservations
                 </span>
               </div>
             </Link>
           </div>
 
+          {/* Right: new request + avatar */}
           <div className="flex items-center gap-3">
             <Link
               href="/reserve"
@@ -54,17 +64,11 @@ export default async function SiteHeader() {
             {user ? (
               <Link
                 href="/account"
-                className="inline-flex items-center gap-2 text-sm font-medium text-[#00205B] border border-[#00205B]/30 rounded-lg px-3 py-1.5 hover:bg-[#00205B]/5 transition-colors"
+                title={role === "admin" ? "Admin" : "My account"}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0 hover:opacity-85 transition-opacity"
+                style={{ background: "#00205B" }}
               >
-                <span
-                  className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
-                  style={{ background: "#00205B" }}
-                >
-                  {initials || "?"}
-                </span>
-                <span className="hidden sm:inline">
-                  {role === "admin" ? "Admin" : "My account"}
-                </span>
+                {initials || "?"}
               </Link>
             ) : (
               <Link

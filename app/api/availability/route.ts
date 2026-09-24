@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // ─── Room → PCO Resource ID mapping ──────────────────────────────────────────
-// IDs confirmed from PCO Calendar → Resources → BX section.
 const ROOM_RESOURCE_IDS: Record<string, number> = {
   crossing: 355074,
   loft: 355075,
@@ -16,22 +15,28 @@ const ROOM_RESOURCE_IDS: Record<string, number> = {
 };
 
 // ─── PCO "Event Status" tag → availability signal ─────────────────────────────
-// Tags live in Planning Center Calendar → Tags → "Event Status" tag group.
-// Add/rename tags there; update this map to match.
 const TAG_SIGNAL: Record<string, "available" | "ask" | "unavailable"> = {
   Confirmed: "unavailable",
   "Pending | Hold": "ask",
   Placeholder: "ask",
-  Canceled: "available", // treat as no booking
+  Canceled: "available",
 };
 
 // ─── PCO API helper ────────────────────────────────────────────────────────────
-async function pcoGet(path: string): Promise<unknown> {
+async function pcoGet(path: string, params?: Record<string, string>): Promise<unknown> {
   const appId = process.env.PCO_APP_ID;
   const secret = process.env.PCO_SECRET;
   if (!appId || !secret) throw new Error("PCO_APP_ID / PCO_SECRET not configured");
   const auth = Buffer.from(`${appId}:${secret}`).toString("base64");
-  const res = await fetch(`https://api.planningcenteronline.com/calendar/v2${path}`, {
+
+  const url = new URL(`https://api.planningcenteronline.com/calendar/v2${path}`);
+  if (params) {
+    for (const [k, v] of Object.entries(params)) {
+      url.searchParams.set(k, v);
+    }
+  }
+
+  const res = await fetch(url.toString(), {
     headers: { Authorization: `Basic ${auth}` },
     cache: "no-store",
   });
@@ -60,7 +65,7 @@ interface PcoTagData {
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const date = searchParams.get("date"); // YYYY-MM-DD
-  const roomParam = searchParams.get("rooms"); // comma-separated room ids
+  const roomParam = searchParams.get("rooms");
 
   if (!date) {
     return NextResponse.json({ error: "date parameter required" }, { status: 400 });
@@ -70,7 +75,7 @@ export async function GET(req: NextRequest) {
     ? roomParam.split(",").map((r) => r.trim())
     : Object.keys(ROOM_RESOURCE_IDS);
 
-  // Overlap query: booking starts before end-of-day AND ends after start-of-day
+  // Overlap window: booking starts before end-of-day AND ends after start-of-day
   const startOfDay = `${date}T00:00:00Z`;
   const endOfDay = `${date}T23:59:59Z`;
 
@@ -85,13 +90,13 @@ export async function GET(req: NextRequest) {
       }
 
       try {
-        const data = (await pcoGet(
-          `/resource_bookings` +
-            `?where[resource_id]=${resourceId}` +
-            `&where[starts_at][lte]=${endOfDay}` +
-            `&where[ends_at][gte]=${startOfDay}` +
-            `&per_page=25`
-        )) as PcoData;
+        // Use URLSearchParams-style object so brackets are properly encoded
+        const data = (await pcoGet("/resource_bookings", {
+          "where[resource_id]": String(resourceId),
+          "where[starts_at][lte]": endOfDay,
+          "where[ends_at][gte]": startOfDay,
+          "per_page": "25",
+        })) as PcoData;
 
         const bookings = data.data ?? [];
 
@@ -100,7 +105,6 @@ export async function GET(req: NextRequest) {
           return;
         }
 
-        // Default when bookings exist but no recognized tag: ask
         let signal: Signal = "ask";
 
         for (const booking of bookings) {
