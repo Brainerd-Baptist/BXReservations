@@ -12,6 +12,7 @@ const ROOMS = [
     extraHourNonProfit: 100,
     extraHourProfit: 100,
     description: "Large main event space. Ideal for galas, receptions, and conferences.",
+    image: "/images/rooms/crossing-11.jpg",
   },
   {
     id: "loft",
@@ -456,6 +457,16 @@ export default function ReservePage() {
                                     <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                     </svg>
+                                  </div>
+                                )}
+                                {"image" in room && (
+                                  <div className="-mx-4 -mt-4 mb-3 rounded-t-xl overflow-hidden">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                      src={(room as typeof room & { image: string }).image}
+                                      alt={room.name}
+                                      className="w-full h-28 object-cover object-center"
+                                    />
                                   </div>
                                 )}
                                 <p className="font-semibold text-sm text-gray-900 pr-6">{room.name}</p>
