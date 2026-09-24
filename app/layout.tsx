@@ -17,8 +17,7 @@ export const metadata: Metadata = {
 
 // Version info — package version is baked in at build time.
 // NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA is set automatically by Vercel on every deploy.
-const APP_VERSION = "0.3.0";
-const COMMIT_SHA = process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? null;
+const APP_VERSION = "0.4.0";
 
 export default function RootLayout({
   children,
