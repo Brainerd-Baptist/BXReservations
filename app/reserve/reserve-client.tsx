@@ -309,16 +309,18 @@ function ContactStep({
       <h2 className="text-2xl font-bold text-[#00205B] mb-1">Let's get started</h2>
       <p className="text-gray-500 mb-4">Tell us a bit about you and your event.</p>
 
-      {/* Returning-user nudge */}
-      <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 mb-6">
-        <p className="text-sm text-gray-500">Already have an account?</p>
-        <a
-          href="/login?next=/reserve"
-          className="text-sm font-semibold text-[#00abc9] hover:text-[#009ab7] transition-colors"
-        >
-          Sign in to pre-fill →
-        </a>
-      </div>
+      {/* Returning-user nudge — only shown when signed out */}
+      {!initialContact && (
+        <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 mb-6">
+          <p className="text-sm text-gray-500">Already have an account?</p>
+          <a
+            href="/login?next=/reserve"
+            className="text-sm font-semibold text-[#00abc9] hover:text-[#009ab7] transition-colors"
+          >
+            Sign in to pre-fill →
+          </a>
+        </div>
+      )}
 
       <div className="space-y-4">
         <Field label="Your name" required>
