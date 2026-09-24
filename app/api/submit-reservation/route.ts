@@ -60,10 +60,10 @@ export async function POST(req: NextRequest) {
   }
 
   const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+  const supabaseServiceKey = process.env.SUPABASE_ANON_KEY; // anon key + RLS insert policy; swap for SUPABASE_SERVICE_KEY once you add it to Vercel
 
   // ── Path A: Supabase configured ───────────────────────────────────────────
-  if (supabaseUrl && supabaseServiceKey) {
+  if (supabaseUrl && supabaseServiceKey) { // switches automatically to DB path once env vars are set
     try {
       const { createClient } = await import("@supabase/supabase-js");
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
