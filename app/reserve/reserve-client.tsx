@@ -293,13 +293,14 @@ function StepBar({ step }: { step: number }) {
 // ─── Step 0: Contact ──────────────────────────────────────────────────────────
 
 function ContactStep({
-  contact, onChange, spaceMode, onSpaceMode, onNext,
+  contact, onChange, spaceMode, onSpaceMode, onNext, isSignedIn,
 }: {
   contact: ContactInfo;
   onChange: (f: Partial<ContactInfo>) => void;
   spaceMode: SpaceMode;
   onSpaceMode: (m: SpaceMode) => void;
   onNext: () => void;
+  isSignedIn: boolean;
 }) {
   const valid = contact.name && contact.email && contact.phone && contact.org && contact.eventName;
 
@@ -310,7 +311,7 @@ function ContactStep({
       <p className="text-gray-500 mb-4">Tell us a bit about you and your event.</p>
 
       {/* Returning-user nudge — only shown when signed out */}
-      {!initialContact && (
+      {!isSignedIn && (
         <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 mb-6">
           <p className="text-sm text-gray-500">Already have an account?</p>
           <a
@@ -1191,6 +1192,7 @@ export default function ReserveClient({ initialContact }: ReserveClientProps) {
             spaceMode={spaceMode}
             onSpaceMode={setSpaceMode}
             onNext={() => setStep(1)}
+            isSignedIn={!!initialContact}
           />
         )}
         {step === 1 && (
