@@ -305,27 +305,35 @@ function ContactStep({
 
   return (
     <div className="max-w-lg mx-auto">
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-6">
       <h2 className="text-2xl font-bold text-[#00205B] mb-1">Let's get started</h2>
-      <p className="text-gray-500 mb-8">Tell us a bit about you and your event.</p>
+      <p className="text-gray-500 mb-6">Tell us a bit about you and your event.</p>
 
       <div className="space-y-4">
         <Field label="Your name" required>
           <input type="text" value={contact.name} onChange={e => onChange({ name: e.target.value })}
-            placeholder="Jane Smith" className={input} />
+            placeholder="Jane Smith" autoComplete="name" className={input} />
         </Field>
         <div className="grid grid-cols-2 gap-4">
           <Field label="Email" required>
             <input type="email" value={contact.email} onChange={e => onChange({ email: e.target.value })}
-              placeholder="jane@example.com" className={input} />
+              placeholder="jane@example.com" autoComplete="email" className={input} />
           </Field>
           <Field label="Phone" required>
-            <input type="tel" value={contact.phone} onChange={e => onChange({ phone: e.target.value })}
-              placeholder="(555) 000-0000" className={input} />
+            <input type="tel" value={contact.phone}
+              onChange={e => {
+                // Allow digits, spaces, dashes, parens, plus
+                const v = e.target.value.replace(/[^\d\s\-().+]/g, "");
+                onChange({ phone: v });
+              }}
+              placeholder="(555) 000-0000" autoComplete="tel"
+              pattern="[\d\s\-().+]{7,}" minLength={7}
+              className={input} />
           </Field>
         </div>
         <Field label="Organization / Church" required>
           <input type="text" value={contact.org} onChange={e => onChange({ org: e.target.value })}
-            placeholder="First Baptist Church of Example" className={input} />
+            placeholder="First Baptist Church of Example" autoComplete="organization" className={input} />
         </Field>
         <Field label="Event name" required>
           <input type="text" value={contact.eventName} onChange={e => onChange({ eventName: e.target.value })}
@@ -337,9 +345,9 @@ function ContactStep({
           <p className="text-sm font-medium text-gray-700 mb-2">How many spaces do you need? <span className="text-red-400">*</span></p>
           <div className="grid grid-cols-1 gap-2">
             {([
-              { mode: "single"    as SpaceMode, icon: "🏛️",  label: "One room",           desc: "A single space for your entire event" },
-              { mode: "main-plus" as SpaceMode, icon: "🏛️➕", label: "Main room + extras", desc: "A primary space plus breakout or support rooms" },
-              { mode: "multiple"  as SpaceMode, icon: "🔲",   label: "Multiple spaces",    desc: "Several independent rooms with no primary" },
+              { mode: "single"    as SpaceMode, label: "One room",           desc: "A single space for your entire event" },
+              { mode: "main-plus" as SpaceMode, label: "Main room + extras", desc: "A primary space plus breakout or support rooms" },
+              { mode: "multiple"  as SpaceMode, label: "Multiple spaces",    desc: "Several independent rooms with no primary" },
             ]).map(opt => (
               <button key={opt.mode} type="button"
                 onClick={() => onSpaceMode(opt.mode)}
@@ -348,7 +356,6 @@ function ContactStep({
                     ? "border-[#00abc9] bg-[#f0fafc]"
                     : "border-gray-200 bg-white hover:border-gray-300"
                 }`}>
-                <span className="text-xl leading-none w-7 text-center">{opt.icon}</span>
                 <div className="flex-1">
                   <p className={`text-sm font-semibold ${spaceMode === opt.mode ? "text-[#00205B]" : "text-gray-700"}`}>{opt.label}</p>
                   <p className="text-xs text-gray-400">{opt.desc}</p>
@@ -367,14 +374,16 @@ function ContactStep({
           >
             <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${contact.isNonProfit ? "translate-x-4" : ""}`} />
           </button>
-          <span className="text-sm text-gray-700">We are a non-profit or religious organization</span>
+          <span className="text-sm text-gray-700">We are a non-profit organization</span>
         </div>
         {contact.isNonProfit && (
           <p className="text-xs text-[#00abc9] -mt-2 pl-14">Non-profit rates will be applied to your estimate.</p>
         )}
       </div>
 
-      <div className="mt-8 flex justify-end">
+      </div>{/* end white card */}
+
+      <div className="mt-6 flex justify-end">
         <button onClick={onNext} disabled={!valid}
           className="px-8 py-3 rounded-xl bg-[#00abc9] text-white font-semibold text-sm disabled:opacity-40 hover:bg-[#0099b5] transition-colors">
           Continue →
@@ -532,24 +541,31 @@ function BuilderStep({
 
       <div className="space-y-4">
         {days.map((day, idx) => (
-          <DayCard
-            key={day.date}
-            day={day}
-            dayIdx={idx}
-            total={days.length}
-            isNP={isNP}
-            spaceMode={spaceMode}
-            breakoutGroupSize={breakoutGroupSize}
-            onBreakoutGroupSize={setBreakoutGroupSize}
-            onToggleInclude={() => updateDay(day.date, { included: !day.included })}
-            onHeadcount={n => updateDay(day.date, { headcount: n })}
-            onTimeBlock={tb => updateDay(day.date, { timeBlock: tb })}
-            onCustomTime={(s, e2) => updateDay(day.date, { customStart: s, customEnd: e2 })}
-            onToggleRoom={(roomId, role) => toggleRoom(day, roomId, role)}
-            onUpdateRoom={(roomId, patch) => updateRoomSelection(day, roomId, patch)}
-            onCopyToNext={() => copyToNext(idx)}
-            onApplyToAll={() => applyToAll(idx)}
-          />
+          <div key={day.date} data-day-idx={idx}>
+            <DayCard
+              day={day}
+              dayIdx={idx}
+              total={days.length}
+              isNP={isNP}
+              spaceMode={spaceMode}
+              breakoutGroupSize={breakoutGroupSize}
+              onBreakoutGroupSize={setBreakoutGroupSize}
+              onToggleInclude={() => updateDay(day.date, { included: !day.included })}
+              onHeadcount={n => updateDay(day.date, { headcount: n })}
+              onTimeBlock={tb => updateDay(day.date, { timeBlock: tb })}
+              onCustomTime={(s, e2) => updateDay(day.date, { customStart: s, customEnd: e2 })}
+              onToggleRoom={(roomId, role) => toggleRoom(day, roomId, role)}
+              onUpdateRoom={(roomId, patch) => updateRoomSelection(day, roomId, patch)}
+              onCopyToNext={() => {
+                copyToNext(idx);
+                setTimeout(() => {
+                  const next = document.querySelector(`[data-day-idx="${idx + 1}"]`);
+                  if (next) next.scrollIntoView({ behavior: "smooth", block: "start" });
+                }, 50);
+              }}
+              onApplyToAll={() => applyToAll(idx)}
+            />
+          </div>
         ))}
       </div>
 
@@ -637,8 +653,8 @@ function DayCard({
           <div className="flex items-center gap-2 mr-2" onClick={e => e.stopPropagation()}>
             {dayIdx < total - 1 && (
               <button onClick={onCopyToNext}
-                className="text-xs text-[#00abc9] hover:text-[#0099b5] font-medium whitespace-nowrap">
-                Copy to next
+                className="text-xs px-2.5 py-1 rounded-lg bg-[#f0fafc] border border-[#00abc9]/30 text-[#00abc9] hover:bg-[#00abc9] hover:text-white font-medium whitespace-nowrap transition-colors active:scale-95">
+                Copy to next ↓
               </button>
             )}
             {total > 1 && (
