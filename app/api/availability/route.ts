@@ -17,13 +17,6 @@ const ROOM_RESOURCE_IDS: Record<string, number> = {
 // ─── PCO Event approval_status → availability signal ─────────────────────────
 // PCO Calendar approval_status values: draft, pending, tentative, confirmed, cancelled
 type Signal = "available" | "ask" | "unavailable";
-const STATUS_SIGNAL: Record<string, Signal> = {
-  confirmed: "unavailable",
-  tentative: "ask",
-  pending: "ask",
-  draft: "ask",
-  cancelled: "available",
-};
 
 // ─── PCO API helper ────────────────────────────────────────────────────────────
 // NOTE: PCO uses PHP-style bracket notation in query params (e.g. where[field][op]).
@@ -57,22 +50,32 @@ async function pcoGet(
   return res.json();
 }
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
 interface PcoBooking {
   id: string;
+  relationships?: {
+    // ResourceBooking → event_instance (NOT event directly)
+    event_instance?: { data?: { id: string } };
+  };
+}
+interface PcoEventInstance {
+  id: string;
+  type: string;
   relationships?: {
     event?: { data?: { id: string } };
   };
 }
 interface PcoEvent {
-  id: string;
-  type: string;
-  attributes: {
-    approval_status?: string;
+  data: {
+    attributes: {
+      approval_status?: string;
+    };
   };
 }
-interface PcoData {
+interface PcoBookingsData {
   data: PcoBooking[];
-  included?: PcoEvent[];
+  included?: PcoEventInstance[];
 }
 
 export async function GET(req: NextRequest) {
@@ -103,50 +106,89 @@ export async function GET(req: NextRequest) {
       }
 
       try {
-        // Fetch bookings for this room that overlap the requested day.
-        // include=event pulls the event record inline so we can read approval_status
-        // without a separate API call per booking.
-        const data = (await pcoGet("/resource_bookings", {
+        // Fetch resource bookings that overlap the requested day.
+        // PCO relationship chain: ResourceBooking → event_instance → event
+        // include=event_instance brings EventInstance records into `included`,
+        // each of which carries a relationships.event.data.id we can use to
+        // fetch the parent Event and read its approval_status.
+        const bookingsData = (await pcoGet("/resource_bookings", {
           "where[resource_id]": String(resourceId),
           "where[starts_at][lte]": endOfDay,
           "where[ends_at][gte]": startOfDay,
-          include: "event",
+          include: "event_instance",
           per_page: "25",
-        })) as PcoData;
+        })) as PcoBookingsData;
 
-        const bookings = data.data ?? [];
+        const bookings = bookingsData.data ?? [];
 
         if (bookings.length === 0) {
           result[roomId] = "available";
           return;
         }
 
-        // Build a lookup from event id → event record (included sideloads)
-        const eventsById = new Map<string, PcoEvent>();
-        for (const inc of data.included ?? []) {
-          if (inc.type === "Event") eventsById.set(inc.id, inc);
+        // Build map: event_instance_id → event_id
+        const instanceToEventId = new Map<string, string>();
+        for (const inc of bookingsData.included ?? []) {
+          if (inc.type === "EventInstance") {
+            const eventId = inc.relationships?.event?.data?.id;
+            if (eventId) instanceToEventId.set(inc.id, eventId);
+          }
         }
 
-        let signal: Signal = "ask";
+        // Collect unique event IDs from this room's bookings
+        const eventIds = new Set<string>();
+        for (const booking of bookings) {
+          const instanceId = booking.relationships?.event_instance?.data?.id;
+          if (instanceId) {
+            const eventId = instanceToEventId.get(instanceId);
+            if (eventId) eventIds.add(eventId);
+          }
+        }
+
+        // Fetch approval_status for each unique event (usually 1–3 per room/day)
+        const eventStatuses = new Map<string, string>();
+        await Promise.all(
+          Array.from(eventIds).map(async (eventId) => {
+            const ev = (await pcoGet(`/events/${eventId}`)) as PcoEvent;
+            eventStatuses.set(eventId, ev.data?.attributes?.approval_status ?? "pending");
+          })
+        );
+
+        // Determine signal with correct priority:
+        //   confirmed → unavailable (trumps everything)
+        //   all cancelled → available
+        //   otherwise (pending/tentative/draft/unknown) → ask
+        let hasConfirmed = false;
+        let allCancelled = bookings.length > 0;
 
         for (const booking of bookings) {
-          const eventId = booking.relationships?.event?.data?.id;
-          if (!eventId) continue;
-
-          const event = eventsById.get(eventId);
-          const status = event?.attributes?.approval_status ?? "pending";
-          const mapped: Signal = STATUS_SIGNAL[status] ?? "ask";
-
-          if (mapped === "unavailable") {
-            signal = "unavailable";
-            break;
+          const instanceId = booking.relationships?.event_instance?.data?.id;
+          if (!instanceId) {
+            // Booking with no event_instance — treat as pending / unknown
+            allCancelled = false;
+            continue;
           }
-          if (mapped === "available") {
-            signal = "available";
+
+          const eventId = instanceToEventId.get(instanceId);
+          if (!eventId) {
+            allCancelled = false;
+            continue;
+          }
+
+          const status = eventStatuses.get(eventId) ?? "pending";
+
+          if (status === "confirmed") {
+            hasConfirmed = true;
+            break; // confirmed beats everything
+          }
+          if (status !== "cancelled") {
+            allCancelled = false;
           }
         }
 
-        result[roomId] = signal;
+        if (hasConfirmed) result[roomId] = "unavailable";
+        else if (allCancelled) result[roomId] = "available";
+        else result[roomId] = "ask";
       } catch (err) {
         console.error(`[availability] Room ${roomId}:`, err);
         result[roomId] = "ask";
