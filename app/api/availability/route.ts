@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// --- Room -> PCO Resource ID mapping -----------------------------------------
+// ─── Room → PCO Resource ID mapping ──────────────────────────────────────────
 const ROOM_RESOURCE_IDS: Record<string, number> = {
   crossing: 355074,
   loft: 355075,
@@ -14,8 +14,7 @@ const ROOM_RESOURCE_IDS: Record<string, number> = {
   crosstiescafe: 369502,
 };
 
-// --- PCO EventResourceRequest approval_status -> availability signal ----------
-// approval_status on EventResourceRequest: approved | pending | rejected
+// ─── PCO EventResourceRequest approval_status → availability signal ───────────
 type Signal = "available" | "ask" | "unavailable";
 const STATUS_SIGNAL: Record<string, Signal> = {
   approved: "unavailable",
@@ -23,8 +22,8 @@ const STATUS_SIGNAL: Record<string, Signal> = {
   rejected: "available",
 };
 
-// --- PCO API helper -----------------------------------------------------------
-// PCO uses PHP-style bracket params (where[field][op]).
+// ─── PCO API helper ────────────────────────────────────────────────────────────
+// NOTE: PCO uses PHP-style bracket notation in query params (e.g. where[field][op]).
 // URLSearchParams encodes brackets as %5B%5D which PCO ignores, so we build
 // the query string manually to keep raw brackets in keys.
 async function pcoGet(
@@ -55,8 +54,7 @@ async function pcoGet(
   return res.json();
 }
 
-// --- Types -------------------------------------------------------------------
-
+// ─── Types ────────────────────────────────────────────────────────────────────
 interface PcoBooking {
   id: string;
   relationships?: {
@@ -103,16 +101,20 @@ export async function GET(req: NextRequest) {
       }
 
       try {
-        // include=event_resource_request is the only PCO-supported include on
-        // resource_bookings (besides "resource"). Its approval_status is the
-        // direct signal -- no second event fetch needed.
-        const bookingsData = (await pcoGet("/resource_bookings", {
-          "where[resource_id]": String(resourceId),
-          "where[starts_at][lte]": endOfDay,
-          "where[ends_at][gte]": startOfDay,
-          include: "event_resource_request",
-          per_page: "25",
-        })) as PcoBookingsData;
+        // Use the resource-scoped path: /resources/{id}/resource_bookings
+        // IMPORTANT: "where[resource_id]" is NOT a valid flat filter on
+        // /resource_bookings — PCO silently ignores unknown where[] keys and
+        // returns all org-wide bookings, which poisons every room's status.
+        // The scoped endpoint is the correct way to filter by resource.
+        const bookingsData = (await pcoGet(
+          `/resources/${resourceId}/resource_bookings`,
+          {
+            "where[starts_at][lte]": endOfDay,
+            "where[ends_at][gte]": startOfDay,
+            include: "event_resource_request",
+            per_page: "25",
+          }
+        )) as PcoBookingsData;
 
         const bookings = bookingsData.data ?? [];
 
@@ -137,7 +139,7 @@ export async function GET(req: NextRequest) {
         for (const booking of bookings) {
           const reqId = booking.relationships?.event_resource_request?.data?.id;
           if (!reqId) {
-            allRejected = false; // booking with no request -- treat as pending
+            allRejected = false; // booking with no request — treat conservatively
             continue;
           }
 
