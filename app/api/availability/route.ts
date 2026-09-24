@@ -114,7 +114,7 @@ export async function GET(req: NextRequest) {
             "where[starts_at][lte]": endOfDay,
             "where[ends_at][gte]": startOfDay,
             include: "event_resource_request",
-            per_page: "25",
+            per_page: "100",
           }
         )) as PcoBookingsData;
 
