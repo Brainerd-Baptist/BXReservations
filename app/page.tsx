@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { getUserAndRole } from "@/lib/get-user-role";
+import StaffPhoto from "@/app/components/StaffPhoto";
 
 export default async function Home() {
   const { user } = await getUserAndRole();
@@ -143,19 +144,17 @@ export default async function Home() {
       {/* ── Meet the team ── */}
       <section className="max-w-2xl mx-auto px-5 py-9">
         <h2 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-6 text-center">
-          Questions? We're here to help
+          Questions? We&#39;re here to help
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Barb */}
           <div className="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col items-center text-center">
             <div className="mb-3">
-              <Image
-                src="/staff/barb.jpg"
-                alt="Barb"
-                width={80}
-                height={80}
-                className="rounded-full object-cover shadow-sm"
-                style={{ width: 80, height: 80 }}
+              <StaffPhoto
+                thumbSrc="/staff/barb.jpg"
+                fullSrc="/staff/barb-full.jpg"
+                name="Barb"
+                size={80}
               />
             </div>
             <div className="font-bold text-gray-900 text-sm">Barb</div>
@@ -173,13 +172,11 @@ export default async function Home() {
           {/* Jo */}
           <div className="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col items-center text-center">
             <div className="mb-3">
-              <Image
-                src="/staff/jo.jpg"
-                alt="Jo"
-                width={80}
-                height={80}
-                className="rounded-full object-cover shadow-sm"
-                style={{ width: 80, height: 80 }}
+              <StaffPhoto
+                thumbSrc="/staff/jo.jpg"
+                fullSrc="/staff/jo-full.jpg"
+                name="Jo"
+                size={80}
               />
             </div>
             <div className="font-bold text-gray-900 text-sm">Jo</div>
