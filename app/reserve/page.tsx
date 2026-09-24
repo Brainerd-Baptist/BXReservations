@@ -1,9 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // ─── Rate table (BX Room Rental Information, 2026 rev.)
-// Base rate = 4-hour block. Prices include table/chair setup, teardown, and trash removal.
-// ─────────────────────────────────────────────────────────────────────────────
 const ROOMS = [
   {
     id: "crossing",
@@ -14,7 +12,6 @@ const ROOMS = [
     extraHourNonProfit: 100,
     extraHourProfit: 100,
     description: "Large main event space. Ideal for galas, receptions, and conferences.",
-    capacityNote: "Contact us for capacity details",
   },
   {
     id: "loft",
@@ -25,7 +22,6 @@ const ROOMS = [
     extraHourNonProfit: 75,
     extraHourProfit: 75,
     description: "Versatile upper-level space. Great for mid-size events and gatherings.",
-    capacityNote: "Contact us for capacity details",
   },
   {
     id: "crosspointe-a",
@@ -36,7 +32,6 @@ const ROOMS = [
     extraHourNonProfit: 35,
     extraHourProfit: 35,
     description: "Flexible meeting/event room. Can be combined with B and C.",
-    capacityNote: "Contact us for capacity details",
   },
   {
     id: "crosspointe-b",
@@ -47,7 +42,6 @@ const ROOMS = [
     extraHourNonProfit: 35,
     extraHourProfit: 35,
     description: "Flexible meeting/event room. Can be combined with A and C.",
-    capacityNote: "Contact us for capacity details",
   },
   {
     id: "crosspointe-c",
@@ -58,7 +52,6 @@ const ROOMS = [
     extraHourNonProfit: 35,
     extraHourProfit: 35,
     description: "Flexible meeting/event room. Can be combined with A and B.",
-    capacityNote: "Contact us for capacity details",
   },
   {
     id: "crossview",
@@ -69,7 +62,6 @@ const ROOMS = [
     extraHourNonProfit: 35,
     extraHourProfit: 35,
     description: "Windowed room with open views. Well-suited for smaller events.",
-    capacityNote: "Contact us for capacity details",
   },
   {
     id: "crosstiesA",
@@ -80,7 +72,6 @@ const ROOMS = [
     extraHourNonProfit: 35,
     extraHourProfit: 35,
     description: "Compact event room. Ideal for small meetings and classes.",
-    capacityNote: "Contact us for capacity details",
   },
   {
     id: "crosstiesB",
@@ -91,7 +82,6 @@ const ROOMS = [
     extraHourNonProfit: 35,
     extraHourProfit: 35,
     description: "Compact event room. Ideal for small meetings and classes.",
-    capacityNote: "Contact us for capacity details",
   },
   {
     id: "crosstiesC",
@@ -102,7 +92,6 @@ const ROOMS = [
     extraHourNonProfit: 35,
     extraHourProfit: 35,
     description: "Compact event room. Ideal for small meetings and classes.",
-    capacityNote: "Contact us for capacity details",
   },
   {
     id: "crosstiescafe",
@@ -113,31 +102,26 @@ const ROOMS = [
     extraHourNonProfit: 35,
     extraHourProfit: 35,
     description: "Café-style space with casual atmosphere. Great for receptions and socials.",
-    capacityNote: "Contact us for capacity details",
   },
 ] as const;
 
 type RoomId = (typeof ROOMS)[number]["id"];
+type AvailabilityStatus = "available" | "ask" | "unavailable" | "loading";
 
 const SETUPS = ["Theater", "Banquet/Rounds", "Classroom", "U-Shape"] as const;
 type Setup = (typeof SETUPS)[number];
 
 const AV_PRICE = 75;
-const TABLECLOTH_PRICE = 13;
+const TABLECLOTH_PRICE = 17;
 
-// ─── Mock availability signal (real: PCO Calendar lookup) ─────────────────────
-function getAvailability(roomId: string, date: string): "available" | "ask" | "unavailable" {
-  if (!date) return "available";
-  const d = new Date(date);
-  const day = d.getDay();
-  if (day === 0 || day === 6) return "unavailable";
-  const dateNum = parseInt(date.replace(/-/g, ""), 10);
-  if (roomId === "crossing" && dateNum % 7 === 0) return "ask";
-  if (roomId === "loft" && dateNum % 5 === 0) return "ask";
-  return "available";
-}
-
-function AvailabilityBadge({ status }: { status: "available" | "ask" | "unavailable" }) {
+function AvailabilityBadge({ status }: { status: AvailabilityStatus }) {
+  if (status === "loading")
+    return (
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gray-50 text-gray-500 border border-gray-200">
+        <span className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-pulse" />
+        Checking…
+      </span>
+    );
   if (status === "available")
     return (
       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -149,7 +133,7 @@ function AvailabilityBadge({ status }: { status: "available" | "ask" | "unavaila
     return (
       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
         <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-        Ask us — standing use may flex
+        Ask us
       </span>
     );
   return (
@@ -160,21 +144,22 @@ function AvailabilityBadge({ status }: { status: "available" | "ask" | "unavaila
   );
 }
 
-// ─── Cost estimate ─────────────────────────────────────────────────────────────
 function calcCost(
-  room: (typeof ROOMS)[number] | null,
+  rooms: readonly (typeof ROOMS)[number][],
   nonProfit: boolean,
+  days: number,
   extraHours: number,
   tablecloths: number,
   avNeeded: boolean
 ): number {
-  if (!room) return 0;
-  const base = nonProfit ? room.baseNonProfit : room.baseProfit;
-  const extra = (nonProfit ? room.extraHourNonProfit : room.extraHourProfit) * extraHours;
-  return base + extra + tablecloths * TABLECLOTH_PRICE + (avNeeded ? AV_PRICE : 0);
+  const roomTotal = rooms.reduce((sum, room) => {
+    const base = nonProfit ? room.baseNonProfit : room.baseProfit;
+    const extra = (nonProfit ? room.extraHourNonProfit : room.extraHourProfit) * extraHours;
+    return sum + (base + extra) * days;
+  }, 0);
+  return roomTotal + tablecloths * TABLECLOTH_PRICE + (avNeeded ? AV_PRICE : 0);
 }
 
-// ─── Types ─────────────────────────────────────────────────────────────────────
 interface FormData {
   firstName: string;
   lastName: string;
@@ -184,10 +169,11 @@ interface FormData {
   nonProfit: boolean;
   eventName: string;
   eventDate: string;
+  days: number;
   startTime: string;
   endTime: string;
   guestCount: string;
-  roomId: RoomId | "";
+  roomIds: RoomId[];
   setup: Setup;
   tablecloths: number;
   avNeeded: boolean;
@@ -204,10 +190,11 @@ const INITIAL: FormData = {
   nonProfit: false,
   eventName: "",
   eventDate: "",
+  days: 1,
   startTime: "",
   endTime: "",
   guestCount: "",
-  roomId: "",
+  roomIds: [],
   setup: "Theater",
   tablecloths: 0,
   avNeeded: false,
@@ -217,7 +204,6 @@ const INITIAL: FormData = {
 
 const STEPS = ["Your Info", "Event Details", "Setup & Extras", "Policies", "Review"];
 
-// Group rooms for the picker
 const ROOM_GROUPS = [
   { label: "Main Spaces", ids: ["crossing", "loft"] },
   { label: "CrossPointe Rooms", ids: ["crosspointe-a", "crosspointe-b", "crosspointe-c", "crossview"] },
@@ -229,24 +215,55 @@ export default function ReservePage() {
   const [form, setForm] = useState<FormData>(INITIAL);
   const [submitted, setSubmitted] = useState(false);
   const [policyExpanded, setPolicyExpanded] = useState(false);
+  const [availability, setAvailability] = useState<Record<string, AvailabilityStatus>>({});
 
   const set = <K extends keyof FormData>(k: K, v: FormData[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
 
-  const selectedRoom = ROOMS.find((r) => r.id === form.roomId) ?? null;
-  const availability =
-    selectedRoom ? getAvailability(form.roomId, form.eventDate) : "available";
+  const toggleRoom = (id: RoomId) => {
+    setForm((f) => ({
+      ...f,
+      roomIds: f.roomIds.includes(id)
+        ? f.roomIds.filter((r) => r !== id)
+        : [...f.roomIds, id],
+    }));
+  };
+
+  useEffect(() => {
+    if (!form.eventDate) {
+      setAvailability({});
+      return;
+    }
+    const loading: Record<string, AvailabilityStatus> = {};
+    ROOMS.forEach((r) => { loading[r.id] = "loading"; });
+    setAvailability(loading);
+
+    const allIds = ROOMS.map((r) => r.id).join(",");
+    fetch(`/api/availability?date=${form.eventDate}&rooms=${allIds}`)
+      .then((res) => res.json())
+      .then((data: Record<string, AvailabilityStatus>) => setAvailability(data))
+      .catch(() => {
+        const fallback: Record<string, AvailabilityStatus> = {};
+        ROOMS.forEach((r) => { fallback[r.id] = "ask"; });
+        setAvailability(fallback);
+      });
+  }, [form.eventDate]);
+
+  const selectedRooms = ROOMS.filter((r) => form.roomIds.includes(r.id as RoomId));
   const estimatedCost = calcCost(
-    selectedRoom,
+    selectedRooms,
     form.nonProfit,
+    form.days,
     form.extraHours,
     form.tablecloths,
     form.avNeeded
   );
+  const isMultiDay = form.days > 1;
+  const isMultiRoom = form.roomIds.length > 1;
 
   const canNext = () => {
     if (step === 0) return form.firstName && form.lastName && form.email;
-    if (step === 1) return form.eventName && form.eventDate && form.roomId;
+    if (step === 1) return form.eventName && form.eventDate && form.roomIds.length > 0;
     if (step === 2) return true;
     if (step === 3) return form.policyAgreed;
     return true;
@@ -269,9 +286,7 @@ export default function ReservePage() {
             We&apos;ll review your request and follow up at <strong>{form.email}</strong> within
             2 business days to confirm availability and next steps.
           </p>
-          <a href={process.env.NEXT_PUBLIC_SITE_URL ?? "/"} className="btn-primary">
-            Back to BX
-          </a>
+          <a href="/" className="btn-primary">Back to BX</a>
         </div>
       </div>
     );
@@ -279,7 +294,6 @@ export default function ReservePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-6 py-4">
           <p className="text-xs font-semibold text-[var(--bbc-blue)] tracking-widest uppercase">BX Crossroads</p>
@@ -288,7 +302,6 @@ export default function ReservePage() {
       </header>
 
       <div className="max-w-4xl mx-auto px-4 py-8 grid lg:grid-cols-[1fr_280px] gap-8">
-        {/* Main form */}
         <div>
           {/* Step indicator */}
           <div className="flex items-center gap-0 mb-8">
@@ -325,26 +338,26 @@ export default function ReservePage() {
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
 
-            {/* ── Step 0: Your Info ── */}
+            {/* Step 0: Your Info */}
             {step === 0 && (
               <div className="space-y-5">
                 <h2 className="text-xl font-bold text-gray-900">Your Information</h2>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <Field label="First name" required>
-                    <input className={input} value={form.firstName} onChange={(e) => set("firstName", e.target.value)} />
+                    <input className={inp} value={form.firstName} onChange={(e) => set("firstName", e.target.value)} />
                   </Field>
                   <Field label="Last name" required>
-                    <input className={input} value={form.lastName} onChange={(e) => set("lastName", e.target.value)} />
+                    <input className={inp} value={form.lastName} onChange={(e) => set("lastName", e.target.value)} />
                   </Field>
                 </div>
                 <Field label="Email" required>
-                  <input className={input} type="email" value={form.email} onChange={(e) => set("email", e.target.value)} />
+                  <input className={inp} type="email" value={form.email} onChange={(e) => set("email", e.target.value)} />
                 </Field>
                 <Field label="Phone">
-                  <input className={input} type="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} />
+                  <input className={inp} type="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} />
                 </Field>
                 <Field label="Organization or group name">
-                  <input className={input} value={form.org} onChange={(e) => set("org", e.target.value)} placeholder="Leave blank if personal" />
+                  <input className={inp} value={form.org} onChange={(e) => set("org", e.target.value)} placeholder="Leave blank if personal" />
                 </Field>
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input
@@ -361,36 +374,59 @@ export default function ReservePage() {
               </div>
             )}
 
-            {/* ── Step 1: Event Details ── */}
+            {/* Step 1: Event Details */}
             {step === 1 && (
               <div className="space-y-5">
                 <h2 className="text-xl font-bold text-gray-900">Event Details</h2>
                 <Field label="Event name" required>
-                  <input className={input} value={form.eventName} onChange={(e) => set("eventName", e.target.value)} placeholder="e.g. Company Holiday Party" />
+                  <input className={inp} value={form.eventName} onChange={(e) => set("eventName", e.target.value)} placeholder="e.g. Company Holiday Party" />
                 </Field>
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <Field label="Date" required>
-                    <input className={input} type="date" value={form.eventDate} onChange={(e) => set("eventDate", e.target.value)} />
+                  <Field label="Start date" required>
+                    <input className={inp} type="date" value={form.eventDate} onChange={(e) => set("eventDate", e.target.value)} />
                   </Field>
                   <Field label="Approximate guest count">
-                    <input className={input} type="number" min={1} value={form.guestCount} onChange={(e) => set("guestCount", e.target.value)} />
+                    <input className={inp} type="number" min={1} value={form.guestCount} onChange={(e) => set("guestCount", e.target.value)} />
                   </Field>
                 </div>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <Field label="Start time">
-                    <input className={input} type="time" value={form.startTime} onChange={(e) => set("startTime", e.target.value)} />
+                    <input className={inp} type="time" value={form.startTime} onChange={(e) => set("startTime", e.target.value)} />
                   </Field>
                   <Field label="End time">
-                    <input className={input} type="time" value={form.endTime} onChange={(e) => set("endTime", e.target.value)} />
+                    <input className={inp} type="time" value={form.endTime} onChange={(e) => set("endTime", e.target.value)} />
                   </Field>
                 </div>
 
-                {/* Room selector — grouped */}
+                {/* Number of days */}
                 <div>
-                  <p className="text-sm font-semibold text-gray-700 mb-1">Room <span className="text-red-500">*</span></p>
-                  <p className="text-xs text-gray-400 mb-3">
-                    All rates include table/chair setup, teardown, and trash removal. Base rate = 4-hour block.
+                  <p className="text-sm font-semibold text-gray-700 mb-1">Number of Days</p>
+                  <p className="text-xs text-gray-500 mb-2">For multi-day events, final pricing is confirmed by our team.</p>
+                  <div className="flex items-center gap-3">
+                    <button type="button"
+                      className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-gray-400"
+                      onClick={() => set("days", Math.max(1, form.days - 1))}>−</button>
+                    <span className="w-8 text-center font-semibold">{form.days}</span>
+                    <button type="button"
+                      className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-gray-400"
+                      onClick={() => set("days", form.days + 1)}>+</button>
+                    <span className="text-sm text-gray-500">{form.days === 1 ? "day" : "days"}</span>
+                  </div>
+                </div>
+
+                {/* Room picker */}
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 mb-1">
+                    Rooms <span className="text-red-500">*</span>
                   </p>
+                  <p className="text-xs text-gray-400 mb-3">
+                    Select all spaces you need. Base rate = 4-hour block per room. Setup, teardown, and trash removal included.
+                  </p>
+                  {form.roomIds.length > 0 && (
+                    <p className="text-xs font-semibold text-[var(--bbc-blue)] mb-3">
+                      {form.roomIds.length} room{form.roomIds.length !== 1 ? "s" : ""} selected
+                    </p>
+                  )}
                   <div className="space-y-4">
                     {ROOM_GROUPS.map((group) => (
                       <div key={group.label}>
@@ -398,28 +434,41 @@ export default function ReservePage() {
                         <div className="grid sm:grid-cols-2 gap-3">
                           {group.ids.map((id) => {
                             const room = ROOMS.find((r) => r.id === id)!;
-                            const avail = getAvailability(room.id, form.eventDate);
-                            const selected = form.roomId === room.id;
+                            const avail: AvailabilityStatus = availability[room.id] ?? "available";
+                            const selected = form.roomIds.includes(room.id as RoomId);
+                            const isUnavailable = avail === "unavailable";
                             return (
                               <button
                                 key={room.id}
                                 type="button"
-                                onClick={() => set("roomId", room.id as RoomId)}
-                                className={`text-left p-4 rounded-xl border-2 transition-all ${
-                                  selected
-                                    ? "border-[var(--bbc-blue)] bg-[var(--glass-bg)]"
+                                onClick={() => !isUnavailable && toggleRoom(room.id as RoomId)}
+                                disabled={isUnavailable}
+                                className={`relative text-left p-4 rounded-xl border-2 transition-all ${
+                                  isUnavailable
+                                    ? "border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed"
+                                    : selected
+                                    ? "border-[var(--bbc-blue)] bg-blue-50"
                                     : "border-gray-200 hover:border-gray-300"
                                 }`}
                               >
-                                <div className="flex items-start justify-between gap-2 mb-1">
-                                  <p className="font-semibold text-sm text-gray-900">{room.name}</p>
-                                  {form.eventDate && <AvailabilityBadge status={avail} />}
-                                </div>
-                                <p className="text-xs text-gray-500 mb-2">{room.description}</p>
+                                {selected && (
+                                  <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-[var(--bbc-blue)] flex items-center justify-center">
+                                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                  </div>
+                                )}
+                                <p className="font-semibold text-sm text-gray-900 pr-6">{room.name}</p>
+                                <p className="text-xs text-gray-500 mt-1 mb-2">{room.description}</p>
                                 <p className="text-xs text-[var(--bbc-blue)] font-semibold">
-                                  ${room.baseNonProfit.toLocaleString()} non-profit &nbsp;·&nbsp; ${room.baseProfit.toLocaleString()} standard
+                                  ${room.baseNonProfit.toLocaleString()} NP &nbsp;·&nbsp; ${room.baseProfit.toLocaleString()} standard
                                   <span className="text-gray-400 font-normal"> (4 hrs)</span>
                                 </p>
+                                {form.eventDate && (
+                                  <div className="mt-2">
+                                    <AvailabilityBadge status={avail} />
+                                  </div>
+                                )}
                               </button>
                             );
                           })}
@@ -428,28 +477,22 @@ export default function ReservePage() {
                     ))}
                   </div>
                 </div>
-
-                {selectedRoom && form.eventDate && (
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200">
-                    <span className="text-sm text-gray-600">Availability for {selectedRoom.name}:</span>
-                    <AvailabilityBadge status={availability} />
-                    {availability === "ask" && (
-                      <span className="text-xs text-gray-500">We&apos;ll confirm when we review your request.</span>
-                    )}
-                  </div>
-                )}
               </div>
             )}
 
-            {/* ── Step 2: Setup & Extras ── */}
-            {step === 2 && selectedRoom && (
+            {/* Step 2: Setup & Extras */}
+            {step === 2 && (
               <div className="space-y-6">
                 <h2 className="text-xl font-bold text-gray-900">Setup & Extras</h2>
                 <p className="text-sm text-gray-500 -mt-2">
                   Table/chair setup and teardown are included in your rental. Let us know your preferred layout and any add-ons.
                 </p>
-
-                {/* Room setup presets */}
+                {selectedRooms.length > 0 && (
+                  <div className="rounded-lg bg-gray-50 border border-gray-200 px-3 py-2 text-sm text-gray-600">
+                    <span className="font-semibold">Selected rooms:</span>{" "}
+                    {selectedRooms.map((r) => r.name).join(", ")}
+                  </div>
+                )}
                 <div>
                   <p className="text-sm font-semibold text-gray-700 mb-3">Preferred Room Layout</p>
                   <div className="grid grid-cols-2 gap-3">
@@ -459,7 +502,7 @@ export default function ReservePage() {
                         type="button"
                         onClick={() => set("setup", s)}
                         className={`p-4 rounded-xl border-2 text-left transition-all ${
-                          form.setup === s ? "border-[var(--bbc-blue)] bg-[var(--glass-bg)]" : "border-gray-200 hover:border-gray-300"
+                          form.setup === s ? "border-[var(--bbc-blue)] bg-blue-50" : "border-gray-200 hover:border-gray-300"
                         }`}
                       >
                         <p className="font-semibold text-sm text-gray-900">{s}</p>
@@ -467,58 +510,56 @@ export default function ReservePage() {
                     ))}
                   </div>
                 </div>
-
-                {/* Tablecloths */}
                 <div>
                   <p className="text-sm font-semibold text-gray-700 mb-1">Tablecloths</p>
                   <p className="text-xs text-gray-500 mb-2">${TABLECLOTH_PRICE} each</p>
                   <div className="flex items-center gap-3">
-                    <button type="button" className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-gray-400"
+                    <button type="button"
+                      className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-gray-400"
                       onClick={() => set("tablecloths", Math.max(0, form.tablecloths - 1))}>−</button>
                     <span className="w-8 text-center font-semibold">{form.tablecloths}</span>
-                    <button type="button" className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-gray-400"
+                    <button type="button"
+                      className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-gray-400"
                       onClick={() => set("tablecloths", form.tablecloths + 1)}>+</button>
                     {form.tablecloths > 0 && (
                       <span className="text-sm text-gray-500">${(form.tablecloths * TABLECLOTH_PRICE).toLocaleString()}</span>
                     )}
                   </div>
                 </div>
-
-                {/* A/V */}
                 <label className="flex items-start gap-3 cursor-pointer">
-                  <input type="checkbox" className="mt-0.5 rounded border-gray-300" checked={form.avNeeded}
-                    onChange={(e) => set("avNeeded", e.target.checked)} />
+                  <input type="checkbox" className="mt-0.5 rounded border-gray-300"
+                    checked={form.avNeeded} onChange={(e) => set("avNeeded", e.target.checked)} />
                   <div>
                     <p className="text-sm font-semibold text-gray-800">A/V Package — ${AV_PRICE}</p>
                     <p className="text-xs text-gray-500 mt-0.5">Projector, screen, PA system, and basic microphone setup.</p>
                   </div>
                 </label>
-
-                {/* Extra hours */}
                 <div>
                   <p className="text-sm font-semibold text-gray-700 mb-1">Extra Hours</p>
                   <p className="text-xs text-gray-500 mb-2">
-                    ${(form.nonProfit ? selectedRoom.extraHourNonProfit : selectedRoom.extraHourProfit).toLocaleString()} / hr beyond the 4-hour base window
+                    Beyond the 4-hour base window{isMultiRoom ? " (applied per room)" : ""}
                   </p>
                   <div className="flex items-center gap-3">
-                    <button type="button" className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-gray-400"
+                    <button type="button"
+                      className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-gray-400"
                       onClick={() => set("extraHours", Math.max(0, form.extraHours - 1))}>−</button>
                     <span className="w-8 text-center font-semibold">{form.extraHours}</span>
-                    <button type="button" className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-gray-400"
+                    <button type="button"
+                      className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-gray-400"
                       onClick={() => set("extraHours", form.extraHours + 1)}>+</button>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* ── Step 3: Policies ── */}
+            {/* Step 3: Policies */}
             {step === 3 && (
               <div className="space-y-5">
                 <h2 className="text-xl font-bold text-gray-900">Policies & Terms</h2>
                 <div className="rounded-xl border border-gray-200 overflow-hidden">
                   <div className="bg-gray-50 p-4 space-y-3 text-sm text-gray-700">
                     <Policy title="Deposit">A 50% deposit is required to confirm your reservation. The remaining balance is due 14 days before your event.</Policy>
-                    <Policy title="What&apos;s Included">Your rental includes table and chair setup, teardown, and trash removal at the close of the event.</Policy>
+                    <Policy title="What's Included">Your rental includes table and chair setup, teardown, and trash removal at the close of the event.</Policy>
                     <Policy title="Cancellation">Cancellations with 30+ days notice receive a full deposit refund. Cancellations within 30 days forfeit the deposit. Cancellations within 7 days are charged the full rental fee.</Policy>
                     <Policy title="Alcohol">No alcohol is permitted on BX premises at any time.</Policy>
                     <Policy title="Capacity">You are responsible for ensuring your event does not exceed posted room capacity.</Policy>
@@ -532,7 +573,7 @@ export default function ReservePage() {
                       <>
                         <Policy title="Noise">Events must end by 11:00 PM. Amplified music and sound must comply with local noise ordinances.</Policy>
                         <Policy title="Damage">Renter is liable for any damage to the facility, furnishings, or equipment during their rental period.</Policy>
-                        <Policy title="Parking">Parking is available in the BX lot. Overflow parking is the renter&apos;s responsibility to coordinate.</Policy>
+                        <Policy title="Parking">Parking is available in the BX lot. Overflow parking is the renter's responsibility to coordinate.</Policy>
                         <Policy title="Catering">Outside catering is permitted. Caterers must clean up after themselves.</Policy>
                         <button type="button" className="text-xs font-semibold text-[var(--bbc-blue)] hover:underline"
                           onClick={() => setPolicyExpanded(false)}>
@@ -553,7 +594,7 @@ export default function ReservePage() {
               </div>
             )}
 
-            {/* ── Step 4: Review ── */}
+            {/* Step 4: Review */}
             {step === 4 && (
               <div className="space-y-5">
                 <h2 className="text-xl font-bold text-gray-900">Review Your Request</h2>
@@ -566,24 +607,38 @@ export default function ReservePage() {
                 </ReviewSection>
                 <ReviewSection title="Event">
                   <Row label="Event" value={form.eventName} />
-                  <Row label="Date" value={form.eventDate} />
+                  <Row label="Start date" value={form.eventDate} />
+                  <Row label="Days" value={`${form.days}`} />
                   {form.startTime && <Row label="Time" value={`${form.startTime}${form.endTime ? ` – ${form.endTime}` : ""}`} />}
                   {form.guestCount && <Row label="Guests" value={form.guestCount} />}
-                  <Row label="Room" value={selectedRoom?.name ?? ""} />
+                  <Row label={`Room${selectedRooms.length !== 1 ? "s" : ""}`} value={selectedRooms.map((r) => r.name).join(", ")} />
                 </ReviewSection>
                 <ReviewSection title="Setup">
                   <Row label="Layout" value={form.setup} />
                   <Row label="Tablecloths" value={`${form.tablecloths} ($${(form.tablecloths * TABLECLOTH_PRICE).toLocaleString()})`} />
                   <Row label="A/V Package" value={form.avNeeded ? `Yes ($${AV_PRICE})` : "No"} />
-                  {form.extraHours > 0 && <Row label="Extra hours" value={`${form.extraHours} hr`} />}
+                  {form.extraHours > 0 && <Row label="Extra hours" value={`${form.extraHours} hr${isMultiRoom ? " per room" : ""}`} />}
                 </ReviewSection>
                 <div className="rounded-xl bg-[var(--bbc-navy)] text-white p-4 flex items-center justify-between">
                   <div>
                     <p className="text-xs opacity-60 font-semibold uppercase tracking-widest">Estimated Total</p>
-                    <p className="text-xs opacity-50 mt-0.5">4-hr base · staff will confirm final pricing</p>
+                    <p className="text-xs opacity-50 mt-0.5">
+                      {isMultiDay || isMultiRoom
+                        ? "Estimate — staff will confirm final pricing"
+                        : "4-hr base · staff will confirm final pricing"}
+                    </p>
                   </div>
                   <p className="text-3xl font-bold">${estimatedCost.toLocaleString()}</p>
                 </div>
+                {(isMultiDay || isMultiRoom) && (
+                  <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                    {isMultiDay && isMultiRoom
+                      ? "Multi-room and multi-day pricing is confirmed by our team and may vary from this estimate."
+                      : isMultiDay
+                      ? "Multi-day pricing is confirmed by our team and may vary from this estimate."
+                      : "Multi-room pricing is confirmed by our team and may vary from this estimate."}
+                  </p>
+                )}
               </div>
             )}
 
@@ -593,8 +648,12 @@ export default function ReservePage() {
                 <button type="button" className="btn-outline" onClick={() => setStep((s) => s - 1)}>← Back</button>
               ) : <div />}
               {step < STEPS.length - 1 ? (
-                <button type="button" className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
-                  disabled={!canNext()} onClick={() => setStep((s) => s + 1)}>
+                <button
+                  type="button"
+                  className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed"
+                  disabled={!canNext()}
+                  onClick={() => setStep((s) => s + 1)}
+                >
                   Continue →
                 </button>
               ) : (
@@ -606,22 +665,28 @@ export default function ReservePage() {
           </div>
         </div>
 
-        {/* Sidebar: live cost estimate */}
-        {(step >= 1 && selectedRoom) && (
+        {/* Sidebar cost estimate */}
+        {step >= 1 && selectedRooms.length > 0 && (
           <div className="hidden lg:block">
             <div className="sticky top-24 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Live Estimate</p>
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between text-gray-700">
-                  <span>{selectedRoom.name} (4 hrs)</span>
-                  <span>${(form.nonProfit ? selectedRoom.baseNonProfit : selectedRoom.baseProfit).toLocaleString()}</span>
-                </div>
-                {form.extraHours > 0 && (
-                  <div className="flex justify-between text-gray-700">
-                    <span>+{form.extraHours} extra hr{form.extraHours !== 1 ? "s" : ""}</span>
-                    <span>${((form.nonProfit ? selectedRoom.extraHourNonProfit : selectedRoom.extraHourProfit) * form.extraHours).toLocaleString()}</span>
-                  </div>
-                )}
+                {selectedRooms.map((room) => {
+                  const base = form.nonProfit ? room.baseNonProfit : room.baseProfit;
+                  const extra = (form.nonProfit ? room.extraHourNonProfit : room.extraHourProfit) * form.extraHours;
+                  const roomTotal = (base + extra) * form.days;
+                  return (
+                    <div key={room.id} className="flex justify-between text-gray-700">
+                      <span className="truncate pr-2">
+                        {room.name}
+                        {form.days > 1 && (
+                          <span className="text-gray-400 text-xs"> ×{form.days}d</span>
+                        )}
+                      </span>
+                      <span className="shrink-0">${roomTotal.toLocaleString()}</span>
+                    </div>
+                  );
+                })}
                 {form.tablecloths > 0 && (
                   <div className="flex justify-between text-gray-700">
                     <span>{form.tablecloths} tablecloth{form.tablecloths !== 1 ? "s" : ""}</span>
@@ -640,11 +705,8 @@ export default function ReservePage() {
                 </div>
               </div>
               <p className="text-xs text-gray-400">Setup & teardown included. 50% deposit due at confirmation.</p>
-              {form.eventDate && (
-                <div className="pt-2 border-t border-gray-100">
-                  <p className="text-xs text-gray-500 mb-1">{selectedRoom.name} · {form.eventDate}</p>
-                  <AvailabilityBadge status={availability} />
-                </div>
+              {(isMultiDay || isMultiRoom) && (
+                <p className="text-xs text-amber-600">Final pricing confirmed by staff.</p>
               )}
             </div>
           </div>
@@ -655,7 +717,7 @@ export default function ReservePage() {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const input = "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--bbc-blue)] focus:border-transparent";
+const inp = "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--bbc-blue)] focus:border-transparent";
 
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
