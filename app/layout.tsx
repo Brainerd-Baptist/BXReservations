@@ -16,7 +16,6 @@ export const metadata: Metadata = {
 };
 
 // Version info — package version is baked in at build time.
-// NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA is set automatically by Vercel on every deploy.
 const APP_VERSION = "0.4.0";
 
 export default function RootLayout({
@@ -33,9 +32,6 @@ export default function RootLayout({
         <footer className="border-t border-gray-100 bg-white py-3 px-4">
           <p className="text-center text-xs text-gray-300 font-mono">
             BX Reservations v{APP_VERSION}
-            {COMMIT_SHA && (
-              <span className="ml-2 opacity-60">· {COMMIT_SHA}</span>
-            )}
           </p>
         </footer>
       </body>
