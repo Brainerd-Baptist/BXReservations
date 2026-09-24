@@ -917,30 +917,44 @@ function DayCard({
 // ─── Step 2: Review ───────────────────────────────────────────────────────────
 
 function ReviewStep({
-  contact, days, isNP, notes, setNotes, onBack, onSubmit, submitted,
+  contact, days, isNP, notes, setNotes, onBack, onSubmit, submitted, bookingNumber,
 }: {
   contact: ContactInfo;
   days: DayConfig[];
   isNP: boolean;
   notes: string; setNotes: (v: string) => void;
   onBack: () => void;
-  onSubmit: () => void;
+  onSubmit: () => Promise<void>;
   submitted: boolean;
+  bookingNumber: string;
 }) {
   const activeDays = days.filter(d => d.included);
   const total = totalEstimate(days, isNP);
 
   if (submitted) {
     return (
-      <div className="max-w-lg mx-auto text-center py-12">
+      <div className="max-w-lg mx-auto text-center py-16">
         <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
-          <span className="text-3xl">✓</span>
+          <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
         </div>
         <h2 className="text-2xl font-bold text-[#00205B] mb-2">Request received!</h2>
-        <p className="text-gray-500 mb-6">
-          Thank you, {contact.name.split(" ")[0]}. Our team will review your event request for <strong>{contact.eventName}</strong> and follow up within 1–2 business days.
+        <p className="text-gray-500 mb-4">
+          Thank you, {contact.name.split(" ")[0]}. Our team will review your request for <strong>{contact.eventName}</strong> and follow up within 1–2 business days.
         </p>
+        {bookingNumber && (
+          <div className="inline-block bg-[#f0fafc] border border-[#00abc9]/30 rounded-2xl px-6 py-4 mb-6">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">Your booking reference</p>
+            <p className="text-2xl font-bold text-[#00205B] tracking-widest font-mono">{bookingNumber}</p>
+            <p className="text-xs text-gray-400 mt-1">Save this number — you&apos;ll need it to upload your liability insurance.</p>
+          </div>
+        )}
         <p className="text-sm text-gray-400">A confirmation has been sent to {contact.email}.</p>
+        <div className="mt-8 p-4 bg-amber-50 border border-amber-200 rounded-xl text-left">
+          <p className="text-sm font-semibold text-amber-800 mb-1">Next step: Upload your liability insurance</p>
+          <p className="text-sm text-amber-700">To complete your booking, upload a Certificate of Insurance (COI) showing Brainerd Baptist Church as an Additional Insured. We&apos;ll send you a link via email.</p>
+        </div>
       </div>
     );
   }
@@ -1046,7 +1060,7 @@ function ReviewStep({
         <button onClick={onBack} className="px-6 py-3 rounded-xl text-gray-500 font-medium text-sm hover:bg-gray-100 transition-colors">
           ← Back
         </button>
-        <button onClick={onSubmit}
+        <button onClick={() => { void onSubmit(); }}
           className="px-8 py-3 rounded-xl bg-[#00205B] text-white font-semibold text-sm hover:bg-[#001a4a] transition-colors">
           Send Request →
         </button>
@@ -1075,6 +1089,8 @@ const input = "w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focu
 export default function ReservePage() {
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
+  const [bookingNumber, setBookingNumber] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const [contact, setContact] = useState<ContactInfo>({
     name: "", email: "", phone: "", org: "", eventName: "", isNonProfit: false,
@@ -1089,9 +1105,22 @@ export default function ReservePage() {
   const [notes, setNotes] = useState("");
 
   async function handleSubmit() {
-    // TODO: wire to /api/submit-reservation or PCO form
-    setSubmitted(true);
-    setStep(2);
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/submit-reservation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contact, days, spaceMode, notes }),
+      });
+      const data = await res.json();
+      if (data.bookingNumber) setBookingNumber(data.bookingNumber);
+    } catch (err) {
+      console.error("Submission error:", err);
+    } finally {
+      setSubmitting(false);
+      setSubmitted(true);
+      setStep(2);
+    }
   }
 
   return (
@@ -1139,6 +1168,7 @@ export default function ReservePage() {
             onBack={() => setStep(1)}
             onSubmit={handleSubmit}
             submitted={submitted}
+            bookingNumber={bookingNumber}
           />
         )}
       </div>
