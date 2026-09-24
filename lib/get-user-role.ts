@@ -19,10 +19,15 @@ export async function getUserAndRole(): Promise<{
     {
       cookies: {
         getAll: () => cookieStore.getAll(),
-        setAll: (cs) =>
-          cs.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options)
-          ),
+        setAll: (cs) => {
+          try {
+            cs.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch {
+            // Server components can't write cookies — middleware handles refresh
+          }
+        },
       },
     }
   );
