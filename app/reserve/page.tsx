@@ -667,7 +667,7 @@ function DayCard({
                           <p className={`font-semibold text-sm ${isUnavailable && !isSelected ? "text-gray-400" : "text-[#00205B]"}`}>
                             {room.name}
                           </p>
-                          <p className="text-xs text-gray-400">Up to {room.capacity.toLocaleString()} people</p>
+                          <p className="text-xs text-gray-400">Theater {room.capacityTheater} · Banquet {room.capacityBanquet}</p>
                         </div>
                         {signalBadge(sig)}
                       </div>
@@ -675,7 +675,7 @@ function DayCard({
                         {room.description}
                       </p>
                       <p className={`text-xs font-medium mb-3 ${isUnavailable && !isSelected ? "text-gray-300" : "text-gray-400"}`}>
-                        From ${(isNP ? room.baseNP : room.basePro).toLocaleString()} / day
+                        From ${(isNP ? room.baseNP : room.basePro).toLocaleString()} / 4 hrs
                       </p>
 
                       {/* Select / request button */}
@@ -836,7 +836,7 @@ function ReviewStep({
                           <span className="text-xs text-gray-400 italic">— {r.customSetup}</span>
                         )}
                         <span className="ml-auto text-xs font-medium text-gray-500">
-                          ${(isNP ? room?.baseNP : room?.basePro)?.toLocaleString() ?? "—"}
+                          ${(isNP ? room?.baseNP : room?.basePro)?.toLocaleString() ?? "—"} / 4 hrs
                         </span>
                       </div>
                     );
