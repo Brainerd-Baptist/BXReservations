@@ -357,13 +357,16 @@ function ContactStep({
 
 function BuilderStep({
   days, setDays, startDate, setStartDate, endDate, setEndDate,
-  defaultHeadcount, setDefaultHeadcount, isNP, onBack, onNext,
+  defaultHeadcount, setDefaultHeadcount, spaceMode, breakoutGroupSize, setBreakoutGroupSize,
+  isNP, onBack, onNext,
 }: {
   days: DayConfig[];
   setDays: React.Dispatch<React.SetStateAction<DayConfig[]>>;
   startDate: string; setStartDate: (v: string) => void;
   endDate: string;   setEndDate:   (v: string) => void;
   defaultHeadcount: number; setDefaultHeadcount: (v: number) => void;
+  spaceMode: SpaceMode;
+  breakoutGroupSize: number; setBreakoutGroupSize: (v: number) => void;
   isNP: boolean;
   onBack: () => void; onNext: () => void;
 }) {
@@ -409,7 +412,7 @@ function BuilderStep({
     setDays(prev => prev.map(d => d.date === date ? { ...d, ...patch } : d));
   }
 
-  function toggleRoom(day: DayConfig, roomId: string) {
+  function toggleRoom(day: DayConfig, roomId: string, role: "main" | "extra" = "extra") {
     const existing = day.rooms.find(r => r.roomId === roomId);
     const sig = day.availability[roomId] ?? "loading";
     if (existing) {
@@ -503,11 +506,14 @@ function BuilderStep({
             dayIdx={idx}
             total={days.length}
             isNP={isNP}
+            spaceMode={spaceMode}
+            breakoutGroupSize={breakoutGroupSize}
+            onBreakoutGroupSize={setBreakoutGroupSize}
             onToggleInclude={() => updateDay(day.date, { included: !day.included })}
             onHeadcount={n => updateDay(day.date, { headcount: n })}
             onTimeBlock={tb => updateDay(day.date, { timeBlock: tb })}
             onCustomTime={(s, e2) => updateDay(day.date, { customStart: s, customEnd: e2 })}
-            onToggleRoom={roomId => toggleRoom(day, roomId)}
+            onToggleRoom={(roomId, role) => toggleRoom(day, roomId, role)}
             onUpdateRoom={(roomId, patch) => updateRoomSelection(day, roomId, patch)}
             onCopyToNext={() => copyToNext(idx)}
             onApplyToAll={() => applyToAll(idx)}
@@ -550,16 +556,19 @@ function BuilderStep({
 // ─── Day card ─────────────────────────────────────────────────────────────────
 
 function DayCard({
-  day, dayIdx, total, isNP,
+  day, dayIdx, total, isNP, spaceMode, breakoutGroupSize, onBreakoutGroupSize,
   onToggleInclude, onHeadcount, onTimeBlock, onCustomTime,
   onToggleRoom, onUpdateRoom, onCopyToNext, onApplyToAll,
 }: {
   day: DayConfig; dayIdx: number; total: number; isNP: boolean;
+  spaceMode: SpaceMode;
+  breakoutGroupSize: number;
+  onBreakoutGroupSize: (n: number) => void;
   onToggleInclude: () => void;
   onHeadcount: (n: number) => void;
   onTimeBlock: (tb: TimeBlockId) => void;
   onCustomTime: (start: string, end: string) => void;
-  onToggleRoom: (roomId: string) => void;
+  onToggleRoom: (roomId: string, role: "main" | "extra") => void;
   onUpdateRoom: (roomId: string, patch: Partial<RoomSelection>) => void;
   onCopyToNext: () => void;
   onApplyToAll: () => void;
@@ -657,127 +666,199 @@ function DayCard({
             )}
           </div>
 
-          {/* Room grid */}
-          <div>
-            <p className="text-xs font-medium text-gray-500 mb-3 uppercase tracking-wide">Select spaces for this day</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {ROOMS.map(room => {
-                const sig = day.availability[room.id] ?? "loading";
-                const sel = day.rooms.find(r => r.roomId === room.id);
-                const isSelected = !!sel;
-                const isUnavailable = sig === "unavailable";
-
-                return (
-                  <div key={room.id}
-                    className={`rounded-xl border-2 transition-all overflow-hidden ${
-                      isSelected
-                        ? isUnavailable && sel.requested
-                          ? "border-amber-400 bg-amber-50"
-                          : "border-[#00abc9] bg-[#f0fafc]"
-                        : "border-gray-200 bg-white hover:border-gray-300"
-                    }`}>
-
-                    {/* Room photo (if available) */}
-                    {room.image && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={room.image} alt={room.name}
-                        className={`w-full h-24 object-cover transition-opacity ${isUnavailable && !isSelected ? "opacity-40" : ""}`} />
-                    )}
-
-                    <div className="p-3">
-                      <div className="flex items-start justify-between gap-2 mb-1">
-                        <div>
-                          <p className={`font-semibold text-sm ${isUnavailable && !isSelected ? "text-gray-400" : "text-[#00205B]"}`}>
-                            {room.name}
-                          </p>
-                          <p className="text-xs text-gray-400">Theater {room.capacityTheater} · Banquet {room.capacityBanquet}</p>
-                          {(() => {
-                            const tag = getRoomTag(day.headcount, room.capacityTheater, room.capacityBanquet);
-                            return tag ? (
-                              <span className={`inline-block mt-1 px-1.5 py-0.5 rounded border text-[10px] font-semibold leading-tight ${tag.color}`}>
-                                {tag.label}
-                              </span>
-                            ) : null;
-                          })()}
-                        </div>
-                        {signalBadge(sig)}
-                      </div>
-                      <p className={`text-xs mb-3 leading-relaxed ${isUnavailable && !isSelected ? "text-gray-300" : "text-gray-500"}`}>
-                        {room.description}
-                      </p>
-                      <p className={`text-xs font-medium mb-3 ${isUnavailable && !isSelected ? "text-gray-300" : "text-gray-400"}`}>
-                        From ${(isNP ? room.baseNP : room.basePro).toLocaleString()} / 4 hrs
-                      </p>
-
-                      {/* Select / request button */}
-                      {!isUnavailable ? (
-                        <button onClick={() => onToggleRoom(room.id)}
-                          className={`w-full py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                            isSelected
-                              ? "bg-[#00abc9] text-white hover:bg-[#0099b5]"
-                              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                          }`}>
-                          {isSelected ? "✓ Selected — click to remove" : "Select this space"}
-                        </button>
-                      ) : (
-                        <button onClick={() => {
-                          if (isSelected) {
-                            onToggleRoom(room.id);
-                          } else {
-                            onToggleRoom(room.id);
-                          }
-                        }}
-                          className={`w-full py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                            isSelected && sel?.requested
-                              ? "bg-amber-400 text-white hover:bg-amber-500"
-                              : "bg-gray-100 text-gray-500 hover:bg-amber-100 hover:text-amber-700"
-                          }`}>
-                          {isSelected && sel?.requested ? "✓ Added to request — click to remove" : "Request anyway"}
-                        </button>
-                      )}
-
-                      {/* Setup selector (shown when selected + available) */}
-                      {isSelected && !sel?.requested && (
-                        <div className="mt-3 border-t border-gray-100 pt-3">
-                          <p className="text-xs font-medium text-gray-500 mb-2">Setup style</p>
-                          <div className="flex flex-wrap gap-1">
-                            {(room.setups as readonly string[]).map(sid => {
-                              const s = SETUP_STYLES.find(x => x.id === sid);
-                              if (!s) return null;
-                              return (
-                                <button key={sid}
-                                  onClick={() => onUpdateRoom(room.id, { setup: sid as SetupId })}
-                                  title={s.desc}
-                                  className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
-                                    sel?.setup === sid
-                                      ? "bg-[#00205B] text-white"
-                                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                  }`}>
-                                  {s.label}
-                                </button>
-                              );
-                            })}
-                          </div>
-                          {sel?.setup === "custom" && (
-                            <input type="text" placeholder="Describe your setup…"
-                              value={sel.customSetup}
-                              onChange={e => onUpdateRoom(room.id, { customSetup: e.target.value })}
-                              className={`${input} mt-2 text-xs`} />
-                          )}
-                        </div>
-                      )}
-
-                      {/* Request annotation */}
-                      {isSelected && sel?.requested && (
-                        <p className="mt-2 text-xs text-amber-600 italic">
-                          This space may be in conflict. We\'ll review and follow up with you.
-                        </p>
-                      )}
+          {/* Room grid — space-mode-aware */}
+          <div className="space-y-5">
+            {spaceMode === "main-plus" && (
+              <div className="bg-[#f0fafc] border border-[#b3e8f0] rounded-xl p-3">
+                <p className="text-xs font-semibold text-[#00205B] uppercase tracking-wide mb-2">Breakout calculator</p>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <label className="text-xs text-gray-500 block mb-1">People per breakout group</label>
+                    <div className="flex items-center gap-2">
+                      <button type="button"
+                        onClick={() => onBreakoutGroupSize(Math.max(5, breakoutGroupSize - 5))}
+                        className="w-7 h-7 rounded-full bg-white border border-gray-200 text-gray-600 text-sm font-bold hover:bg-gray-50 flex items-center justify-center">−</button>
+                      <span className="text-base font-semibold text-[#00205B] w-8 text-center">{breakoutGroupSize}</span>
+                      <button type="button"
+                        onClick={() => onBreakoutGroupSize(Math.min(200, breakoutGroupSize + 5))}
+                        className="w-7 h-7 rounded-full bg-white border border-gray-200 text-gray-600 text-sm font-bold hover:bg-gray-50 flex items-center justify-center">+</button>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                  {day.headcount > 0 && (
+                    <div className="text-right">
+                      <p className="text-xs text-gray-500">Rooms needed</p>
+                      <p className="text-2xl font-bold text-[#00205B]">{Math.ceil(day.headcount / breakoutGroupSize)}</p>
+                      <p className="text-[10px] text-gray-400">{day.headcount} people ÷ {breakoutGroupSize}/group</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Main / single space picker */}
+            {(spaceMode === "single" || spaceMode === "main-plus") && (
+              <div>
+                <p className="text-xs font-medium text-gray-500 mb-3 uppercase tracking-wide">
+                  {spaceMode === "main-plus" ? "🏛️ Main Space" : "Select your space"}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {ROOMS.map(room => {
+                    const sig = day.availability[room.id] ?? "loading";
+                    const sel = day.rooms.find(r => r.roomId === room.id);
+                    const isSelected = !!sel && sel.role === "main";
+                    const isUnavailable = sig === "unavailable";
+                    const mainPicked = day.rooms.find(r => r.role === "main");
+                    const isDisabled = spaceMode === "single" && !!mainPicked && mainPicked.roomId !== room.id;
+                    const tag = getRoomTag(day.headcount, room.capacityTheater, room.capacityBanquet);
+                    return (
+                      <div key={room.id}
+                        className={`rounded-xl border-2 transition-all overflow-hidden ${
+                          isDisabled ? "opacity-40 pointer-events-none" :
+                          isSelected
+                            ? isUnavailable && sel?.requested ? "border-amber-400 bg-amber-50" : "border-[#00abc9] bg-[#f0fafc]"
+                            : "border-gray-200 bg-white hover:border-gray-300"
+                        }`}>
+                        {room.image && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={room.image} alt={room.name}
+                            className={`w-full h-24 object-cover ${isUnavailable && !isSelected ? "opacity-40" : ""}`} />
+                        )}
+                        <div className="p-3">
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <div>
+                              <p className={`font-semibold text-sm ${isUnavailable && !isSelected ? "text-gray-400" : "text-[#00205B]"}`}>{room.name}</p>
+                              <p className="text-xs text-gray-400">Theater {room.capacityTheater} · Banquet {room.capacityBanquet}</p>
+                              {tag && <span className={`inline-block mt-1 px-1.5 py-0.5 rounded border text-[10px] font-semibold leading-tight ${tag.color}`}>{tag.label}</span>}
+                            </div>
+                            {signalBadge(sig)}
+                          </div>
+                          <p className={`text-xs mb-3 leading-relaxed ${isUnavailable && !isSelected ? "text-gray-300" : "text-gray-500"}`}>{room.description}</p>
+                          <p className={`text-xs font-medium mb-3 ${isUnavailable && !isSelected ? "text-gray-300" : "text-gray-400"}`}>From ${(isNP ? room.baseNP : room.basePro).toLocaleString()} / 4 hrs</p>
+                          {!isUnavailable ? (
+                            <button onClick={() => onToggleRoom(room.id, "main")}
+                              className={`w-full py-1.5 rounded-lg text-xs font-semibold transition-colors ${isSelected ? "bg-[#00abc9] text-white hover:bg-[#0099b5]" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                              {isSelected ? "✓ Selected — click to remove" : spaceMode === "main-plus" ? "Select as main space" : "Select this space"}
+                            </button>
+                          ) : (
+                            <button onClick={() => onToggleRoom(room.id, "main")}
+                              className={`w-full py-1.5 rounded-lg text-xs font-semibold transition-colors ${isSelected && sel?.requested ? "bg-amber-400 text-white hover:bg-amber-500" : "bg-gray-100 text-gray-500 hover:bg-amber-100 hover:text-amber-700"}`}>
+                              {isSelected && sel?.requested ? "✓ Added to request — click to remove" : "Request anyway"}
+                            </button>
+                          )}
+                          {isSelected && !sel?.requested && (
+                            <div className="mt-3 border-t border-gray-100 pt-3">
+                              <p className="text-xs font-medium text-gray-500 mb-2">Setup style</p>
+                              <div className="flex flex-wrap gap-1">
+                                {(room.setups as readonly string[]).map(sid => {
+                                  const s = SETUP_STYLES.find(x => x.id === sid);
+                                  if (!s) return null;
+                                  return (
+                                    <button key={sid} onClick={() => onUpdateRoom(room.id, { setup: sid as SetupId })} title={s.desc}
+                                      className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${sel?.setup === sid ? "bg-[#00205B] text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                                      {s.label}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              {sel?.setup === "custom" && (
+                                <input type="text" placeholder="Describe your setup…" value={sel.customSetup}
+                                  onChange={e => onUpdateRoom(room.id, { customSetup: e.target.value })}
+                                  className={`${input} mt-2 text-xs`} />
+                              )}
+                            </div>
+                          )}
+                          {isSelected && sel?.requested && (
+                            <p className="mt-2 text-xs text-amber-600 italic">This space may be in conflict. We will review and follow up with you.</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Extra / additional spaces (main-plus and multiple modes) */}
+            {(spaceMode === "main-plus" || spaceMode === "multiple") && (
+              <div>
+                <p className="text-xs font-medium text-gray-500 mb-3 uppercase tracking-wide">
+                  {spaceMode === "main-plus" ? "➕ Additional Spaces" : "Select spaces for this day"}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {ROOMS.map(room => {
+                    const sig = day.availability[room.id] ?? "loading";
+                    const sel = day.rooms.find(r => r.roomId === room.id);
+                    if (spaceMode === "main-plus" && sel?.role === "main") return null;
+                    const isSelected = !!sel && sel.role === "extra";
+                    const isUnavailable = sig === "unavailable";
+                    const effectiveHC = spaceMode === "main-plus" ? breakoutGroupSize : day.headcount;
+                    const tag = getRoomTag(effectiveHC, room.capacityTheater, room.capacityBanquet);
+                    return (
+                      <div key={room.id}
+                        className={`rounded-xl border-2 transition-all overflow-hidden ${
+                          isSelected
+                            ? isUnavailable && sel?.requested ? "border-amber-400 bg-amber-50" : "border-[#00abc9] bg-[#f0fafc]"
+                            : "border-gray-200 bg-white hover:border-gray-300"
+                        }`}>
+                        {room.image && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={room.image} alt={room.name}
+                            className={`w-full h-24 object-cover ${isUnavailable && !isSelected ? "opacity-40" : ""}`} />
+                        )}
+                        <div className="p-3">
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <div>
+                              <p className={`font-semibold text-sm ${isUnavailable && !isSelected ? "text-gray-400" : "text-[#00205B]"}`}>{room.name}</p>
+                              <p className="text-xs text-gray-400">Theater {room.capacityTheater} · Banquet {room.capacityBanquet}</p>
+                              {tag && <span className={`inline-block mt-1 px-1.5 py-0.5 rounded border text-[10px] font-semibold leading-tight ${tag.color}`}>{tag.label}</span>}
+                            </div>
+                            {signalBadge(sig)}
+                          </div>
+                          <p className={`text-xs mb-3 leading-relaxed ${isUnavailable && !isSelected ? "text-gray-300" : "text-gray-500"}`}>{room.description}</p>
+                          <p className={`text-xs font-medium mb-3 ${isUnavailable && !isSelected ? "text-gray-300" : "text-gray-400"}`}>From ${(isNP ? room.baseNP : room.basePro).toLocaleString()} / 4 hrs</p>
+                          {!isUnavailable ? (
+                            <button onClick={() => onToggleRoom(room.id, "extra")}
+                              className={`w-full py-1.5 rounded-lg text-xs font-semibold transition-colors ${isSelected ? "bg-[#00abc9] text-white hover:bg-[#0099b5]" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                              {isSelected ? "✓ Added — click to remove" : "Add this space"}
+                            </button>
+                          ) : (
+                            <button onClick={() => onToggleRoom(room.id, "extra")}
+                              className={`w-full py-1.5 rounded-lg text-xs font-semibold transition-colors ${isSelected && sel?.requested ? "bg-amber-400 text-white hover:bg-amber-500" : "bg-gray-100 text-gray-500 hover:bg-amber-100 hover:text-amber-700"}`}>
+                              {isSelected && sel?.requested ? "✓ Added to request — click to remove" : "Request anyway"}
+                            </button>
+                          )}
+                          {isSelected && !sel?.requested && (
+                            <div className="mt-3 border-t border-gray-100 pt-3">
+                              <p className="text-xs font-medium text-gray-500 mb-2">Setup style</p>
+                              <div className="flex flex-wrap gap-1">
+                                {(room.setups as readonly string[]).map(sid => {
+                                  const s = SETUP_STYLES.find(x => x.id === sid);
+                                  if (!s) return null;
+                                  return (
+                                    <button key={sid} onClick={() => onUpdateRoom(room.id, { setup: sid as SetupId })} title={s.desc}
+                                      className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${sel?.setup === sid ? "bg-[#00205B] text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                                      {s.label}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              {sel?.setup === "custom" && (
+                                <input type="text" placeholder="Describe your setup…" value={sel.customSetup}
+                                  onChange={e => onUpdateRoom(room.id, { customSetup: e.target.value })}
+                                  className={`${input} mt-2 text-xs`} />
+                              )}
+                            </div>
+                          )}
+                          {isSelected && sel?.requested && (
+                            <p className="mt-2 text-xs text-amber-600 italic">This space may be in conflict. We will review and follow up with you.</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -981,6 +1062,8 @@ export default function ReservePage() {
           <ContactStep
             contact={contact}
             onChange={p => setContact(c => ({ ...c, ...p }))}
+            spaceMode={spaceMode}
+            onSpaceMode={setSpaceMode}
             onNext={() => setStep(1)}
           />
         )}
@@ -990,6 +1073,8 @@ export default function ReservePage() {
             startDate={startDate} setStartDate={setStartDate}
             endDate={endDate} setEndDate={setEndDate}
             defaultHeadcount={defaultHeadcount} setDefaultHeadcount={setDefaultHeadcount}
+            spaceMode={spaceMode}
+            breakoutGroupSize={breakoutGroupSize} setBreakoutGroupSize={setBreakoutGroupSize}
             isNP={contact.isNonProfit}
             onBack={() => setStep(0)}
             onNext={() => setStep(2)}

@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 // Version info — package version is baked in at build time.
-const APP_VERSION = "0.4.0";
+const APP_VERSION = "0.5.0";
 
 export default function RootLayout({
   children,
