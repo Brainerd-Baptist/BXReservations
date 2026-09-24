@@ -426,7 +426,7 @@ function BuilderStep({
         rooms: [...day.rooms, {
           roomId, setup: "" as SetupId, customSetup: "",
           requested: sig === "unavailable",
-          role: role as const,
+          role,
         }],
       });
     }
