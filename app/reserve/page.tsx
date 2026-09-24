@@ -8,6 +8,7 @@ import { useState, useEffect, useCallback } from "react";
 type Signal = "available" | "ask" | "unavailable" | "loading";
 type SetupId = "theater" | "banquet" | "classroom" | "reception" | "cocktail" | "boardroom" | "custom" | "";
 type TimeBlockId = "full" | "am" | "pm" | "evening" | "custom";
+type SpaceMode = "single" | "main-plus" | "multiple";
 
 const SETUP_STYLES: { id: SetupId; label: string; desc: string }[] = [
   { id: "theater",   label: "Theater",   desc: "Rows of chairs facing a stage or screen" },
@@ -32,6 +33,7 @@ interface RoomSelection {
   setup: SetupId;
   customSetup: string;
   requested: boolean;
+  role: "main" | "extra";
 }
 
 interface DayConfig {
@@ -291,10 +293,12 @@ function StepBar({ step }: { step: number }) {
 // ─── Step 0: Contact ──────────────────────────────────────────────────────────
 
 function ContactStep({
-  contact, onChange, onNext,
+  contact, onChange, spaceMode, onSpaceMode, onNext,
 }: {
   contact: ContactInfo;
   onChange: (f: Partial<ContactInfo>) => void;
+  spaceMode: SpaceMode;
+  onSpaceMode: (m: SpaceMode) => void;
   onNext: () => void;
 }) {
   const valid = contact.name && contact.email && contact.phone && contact.org && contact.eventName;
@@ -422,6 +426,7 @@ function BuilderStep({
         rooms: [...day.rooms, {
           roomId, setup: "" as SetupId, customSetup: "",
           requested: sig === "unavailable",
+          role: role as const,
         }],
       });
     }
@@ -1032,6 +1037,8 @@ export default function ReservePage() {
     name: "", email: "", phone: "", org: "", eventName: "", isNonProfit: false,
   });
 
+  const [spaceMode, setSpaceMode] = useState<SpaceMode>("single");
+  const [breakoutGroupSize, setBreakoutGroupSize] = useState(30);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [defaultHeadcount, setDefaultHeadcount] = useState(50);
