@@ -17,9 +17,20 @@ interface ProfileMenuProps {
   savedTheme?: string | null;
 }
 
-function ThemeSwatch({ colors }: { colors: readonly string[] }) {
+function ThemeSwatch({ colors, size = "sm" }: { colors: readonly string[]; size?: "sm" | "lg" }) {
+  const dim = size === "lg" ? "100%" : "1rem";
   return (
-    <span className="inline-flex rounded-full overflow-hidden w-4 h-4 shrink-0 border border-white/10">
+    <span
+      style={{
+        display: "inline-flex",
+        borderRadius: "50%",
+        overflow: "hidden",
+        width: dim,
+        height: dim,
+        flexShrink: 0,
+        border: "1px solid rgba(255,255,255,0.1)",
+      }}
+    >
       {colors.slice(0, 2).map((c, i) => (
         <span key={i} style={{ background: c, flex: 1 }} />
       ))}
