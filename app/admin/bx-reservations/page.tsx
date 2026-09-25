@@ -938,17 +938,20 @@ function UsersTab({
   pendingRoles: Record<string, string>; setPendingRoles: (v: Record<string, string>) => void;
   savingRole: string | null; setSavingRole: (v: string | null) => void;
 }) {
+  const [users, setUsers] = useState<MockUser[]>(MOCK_USERS);
   const search = userSearch.toLowerCase();
-  const filtered = MOCK_USERS.filter(
+  const filtered = users.filter(
     u => u.name.toLowerCase().includes(search) || u.email.toLowerCase().includes(search)
   );
-  const orphaned = MOCK_USERS.filter(u => u.orphaned);
+  const orphaned = users.filter(u => u.orphaned);
 
   async function saveRole(userId: string) {
-    if (!pendingRoles[userId]) return;
+    const newRole = pendingRoles[userId];
+    if (!newRole) return;
     setSavingRole(userId);
-    // TODO: POST /api/bx/roles { userId, role: pendingRoles[userId] }
+    // TODO: POST /api/bx/roles { userId, role: newRole }
     await new Promise(r => setTimeout(r, 600));
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole as MockUser["role"] } : u));
     setSavingRole(null);
     setPendingRoles({ ...pendingRoles, [userId]: "" });
   }
@@ -971,18 +974,24 @@ function UsersTab({
 
       {/* Orphaned reservations alert */}
       {orphaned.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4">
-          <p className="text-sm font-semibold text-amber-800 mb-1">⚠ Orphaned reservations</p>
-          <p className="text-xs text-amber-700 mb-3">
-            {orphaned.length} reservation{orphaned.length > 1 ? "s" : ""} have no owner because their account was deleted and no co-owner existed.
-            Reassign them to a member below.
+        <div className="rounded-xl px-5 py-4" style={{ background: "color-mix(in srgb, var(--bx-brass) 10%, var(--bx-ink-soft))", border: "1px solid color-mix(in srgb, var(--bx-brass) 30%, transparent)" }}>
+          <p className="text-sm font-semibold mb-1" style={{ color: "var(--bx-brass)" }}>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 inline-block mr-1.5 -mt-0.5 opacity-80"><path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" /></svg>
+            Orphaned reservations
+          </p>
+          <p className="text-xs mb-3" style={{ color: "var(--bx-slate)" }}>
+            {orphaned.length} reservation{orphaned.length !== 1 ? "s have" : " has"} no owner because the account was deleted and no co-owner existed.
+            Reassign to a member below.
           </p>
           {orphaned.map(u => (
-            <div key={u.id} className="flex items-center justify-between gap-3 bg-white/60 rounded-lg px-4 py-2 mt-2 border border-amber-100">
-              <span className="text-sm font-medium text-amber-900">
-                {u.reservationCount} orphaned reservation{u.reservationCount > 1 ? "s" : ""}
+            <div key={u.id} className="flex items-center justify-between gap-3 rounded-lg px-4 py-2 mt-2" style={{ background: "color-mix(in srgb, var(--bx-brass) 6%, var(--bx-ink))", border: "1px solid color-mix(in srgb, var(--bx-brass) 20%, transparent)" }}>
+              <span className="text-sm font-medium" style={{ color: "var(--bx-parchment)" }}>
+                {u.reservationCount} orphaned reservation{u.reservationCount !== 1 ? "s" : ""}
               </span>
-              <button className="btn-outline text-xs border-amber-300 text-amber-800 hover:border-amber-500">
+              <button
+                className="text-xs px-3 py-1.5 rounded-lg font-semibold transition-all hover:opacity-90"
+                style={{ background: "color-mix(in srgb, var(--bx-brass) 15%, transparent)", color: "var(--bx-brass)", border: "1px solid color-mix(in srgb, var(--bx-brass) 40%, transparent)" }}
+              >
                 Reassign →
               </button>
             </div>

@@ -35,7 +35,7 @@ const adminManageItems = [
   { label: "Users",       href: "/admin/bx-reservations?tab=users",       icon: "users" },
   { label: "Ministries",  href: "/admin/bx-reservations?tab=ministries",  icon: "building" },
   { label: "COI Review",  href: "/admin/bx-reservations/coi",             icon: "shield" },
-  { label: "Reports",     href: "/admin/bx-reservations/reports",         icon: "chart" },
+  { label: "Reports",     href: "/admin/bx-reservations?tab=reports",         icon: "chart" },
   { label: "Settings",    href: "/admin/bx-reservations?tab=settings",    icon: "settings" },
 ];
 
