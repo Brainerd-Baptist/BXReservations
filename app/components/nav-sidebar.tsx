@@ -28,7 +28,7 @@ const reservationItems = [
 const adminQueueItems = [
   { label: "Requests",      href: "/admin/bx-reservations",                      icon: "table" },
   { label: "Pending Review", href: "/admin/bx-reservations?status=under_review", icon: "clock" },
-  { label: "Calendar",      href: "/admin/bx-reservations/calendar",             icon: "calendar" },
+  { label: "Calendar",      href: "/admin/bx-reservations?tab=requests",             icon: "calendar" },
 ];
 
 const adminManageItems = [
