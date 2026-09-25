@@ -414,6 +414,45 @@ function BuilderStep({
               className={`${input} min-w-0 cursor-pointer`} />
           </Field>
         </div>
+        {/* Date step buttons — shift the whole window by its duration */}
+        {startDate && endDate && (() => {
+          const shiftDates = (dir: 1 | -1) => {
+            const s = new Date(startDate + "T00:00:00");
+            const e = new Date(endDate + "T00:00:00");
+            const span = Math.round((e.getTime() - s.getTime()) / 86400000); // days between
+            const step = Math.max(1, span) * dir;
+            const ns = new Date(s); ns.setDate(ns.getDate() + step);
+            const ne = new Date(e); ne.setDate(ne.getDate() + step);
+            const fmt = (d: Date) => d.toISOString().slice(0, 10);
+            setStartDate(fmt(ns));
+            setEndDate(fmt(ne));
+          };
+          const spanLabel = (() => {
+            const s = new Date(startDate + "T00:00:00");
+            const e = new Date(endDate + "T00:00:00");
+            const days = Math.round((e.getTime() - s.getTime()) / 86400000) + 1;
+            return days === 1 ? "1 day" : `${days} days`;
+          })();
+          return (
+            <div className="flex items-center justify-between mt-1 mb-4">
+              <button
+                type="button"
+                onClick={() => shiftDates(-1)}
+                className="flex items-center gap-1.5 text-xs font-semibold text-slate hover:text-parchment px-3 py-1.5 rounded-lg border border-parchment/15 hover:border-parchment/30 transition-colors"
+              >
+                ← Prev {spanLabel}
+              </button>
+              <span className="text-[11px] text-slate/60">shift window</span>
+              <button
+                type="button"
+                onClick={() => shiftDates(1)}
+                className="flex items-center gap-1.5 text-xs font-semibold text-slate hover:text-parchment px-3 py-1.5 rounded-lg border border-parchment/15 hover:border-parchment/30 transition-colors"
+              >
+                Next {spanLabel} →
+              </button>
+            </div>
+          );
+        })()}
         <Field label={`Default headcount (applies to all days unless overridden)`}>
           <input type="number" min={1} value={defaultHeadcount}
             onChange={e => {
