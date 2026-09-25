@@ -147,6 +147,7 @@ export function RoomsClient() {
                   )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     {rooms.map(room => (
+                      <div key={room.id} id={room.id} className="scroll-mt-20">
                       <RoomCard
                         key={room.id}
                         room={room}
@@ -160,6 +161,7 @@ export function RoomsClient() {
                         role="main"
                         galleryMode
                       />
+                      </div>
                     ))}
                   </div>
                 </div>

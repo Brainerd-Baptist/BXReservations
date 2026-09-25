@@ -99,23 +99,27 @@ export default async function Home() {
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {SPACES.map((s) => (
-            <div
+            <Link
               key={s.name}
-              className="relative rounded-xl overflow-hidden border border-parchment/10 h-28"
+              href={`/rooms#${s.roomId}`}
+              className="relative rounded-xl overflow-hidden border border-parchment/10 h-28 block group"
             >
               <Image
                 src={s.image}
                 alt={s.name}
                 fill
                 sizes="(max-width:640px) 100vw, 50vw"
-                className="object-cover"
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10 group-hover:from-black/90 transition-colors duration-300" />
               <div className="absolute bottom-0 left-0 right-0 p-3">
                 <div className="font-semibold text-white text-sm leading-tight">{s.name}</div>
                 <div className="text-[11px] text-white/70 mt-0.5 leading-snug">{s.desc}</div>
               </div>
-            </div>
+              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <span className="text-[10px] font-bold text-white/80 bg-black/40 px-2 py-0.5 rounded-full">View photos →</span>
+              </div>
+            </Link>
           ))}
         </div>
         <div className="mt-7 text-center flex flex-col sm:flex-row gap-3 justify-center items-center">
@@ -225,12 +229,12 @@ const U = (id: string) =>
   `https://images.unsplash.com/${id}?w=600&q=80&fit=crop&auto=format`;
 
 const SPACES = [
-  { name: "The Crossing", desc: "Large auditorium-style main event space", image: U("photo-1519167758481-83f550bb49b3") },
-  { name: "The Loft", desc: "Flexible upper-level meeting area", image: U("photo-1497366216548-37526070297c") },
-  { name: "Crosspointe A / B / C", desc: "Configurable breakout rooms — use one or combine all three", image: U("photo-1568992687947-868a62a9f521") },
-  { name: "Crossview", desc: "Intimate gathering or overflow space", image: U("photo-1580582932707-520aed937b7b") },
-  { name: "Crossties A / B / C", desc: "Small group & classroom rooms", image: U("photo-1517502884422-41eaead166d4") },
-  { name: "Crossties Café", desc: "Coffee & community space for smaller groups", image: U("photo-1554118811-1e0d58224f24") },
+  { name: "The Crossing", desc: "Large auditorium-style main event space", image: U("photo-1519167758481-83f550bb49b3"), roomId: "crossing" },
+  { name: "The Loft", desc: "Flexible upper-level meeting area", image: U("photo-1497366216548-37526070297c"), roomId: "loft" },
+  { name: "Crosspointe A / B / C", desc: "Configurable breakout rooms — use one or combine all three", image: U("photo-1568992687947-868a62a9f521"), roomId: "crosspointe-a" },
+  { name: "Crossview", desc: "Intimate gathering or overflow space", image: U("photo-1580582932707-520aed937b7b"), roomId: "crossview" },
+  { name: "Crossties A / B / C", desc: "Small group & classroom rooms", image: U("photo-1517502884422-41eaead166d4"), roomId: "crosstiesA" },
+  { name: "Crossties Café", desc: "Coffee & community space for smaller groups", image: U("photo-1554118811-1e0d58224f24"), roomId: "crosstiescafe" },
 ];
 
 const STEPS = [
