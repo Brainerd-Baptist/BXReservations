@@ -38,7 +38,7 @@ const DOWNSTAIRS: Shape[] = [
 // viewBox: 0 0 990 410
 // Left col (0–345): Gym + Fitness below
 // Center-left (345–490): CrossTies Café, Loft, Weight Room, Group Fitness stacked
-// Center (490–580): Stair/corridor, Conf Room, Game Room
+// Center (490–580): Stair/corridor, Conf Room, Fitness Room
 // Right (580–990): CrossTies A/B/C at top, CrossView fills bottom
 
 const UPSTAIRS: Shape[] = [
@@ -51,7 +51,7 @@ const UPSTAIRS: Shape[] = [
   { id: null, label: "Group Fitness",    x: 345, y: 350, w: 145, h:  60, reservable: false, labelSize: "xs" },
   { id: null, label: "",                 x: 490, y:   0, w:  90, h: 100, reservable: false }, // stairs
   { id: null, label: "Conf. Room",       x: 490, y: 100, w:  90, h: 105, reservable: false, labelSize: "xs" },
-  { id: null, label: "Game Room",        x: 490, y: 205, w:  90, h: 100, reservable: false, labelSize: "xs" },
+  { id: null, label: "Fitness Room",        x: 490, y: 205, w:  90, h: 100, reservable: false, labelSize: "xs" },
   { id: null, label: "",                 x: 490, y: 305, w:  90, h: 105, reservable: false }, // utility
   // — Reservable
   { id: "crosstiescafe", label: "CrossTies Café", sub: "60 seats",  x: 345, y:   0, w: 145, h: 135, reservable: true, labelSize: "sm" },
