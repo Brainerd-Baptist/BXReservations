@@ -195,3 +195,15 @@ body {
   border-color: var(--bx-brass);
   color: var(--bx-brass);
 }
+
+/* ── Logo: auto-invert on dark-background themes ──────────────────────────
+   The .bx-logo image is black artwork on transparent background.
+   On themes where --bx-ink-soft is dark, invert it to white.                */
+[data-theme="ledger"] .bx-logo,
+[data-theme="glass-dark"] .bx-logo,
+[data-theme="harbor"] .bx-logo,
+[data-theme="heather"] .bx-logo,
+[data-theme="moss"] .bx-logo,
+[data-theme="orbit"] .bx-logo {
+  filter: brightness(0) invert(1);
+}

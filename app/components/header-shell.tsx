@@ -69,12 +69,13 @@ export default function HeaderShell({
 
             <Link href="/" className="flex items-center gap-2 group ml-1">
               <Image
-                src="/bx-logo.png"
+                src="/bx-logo.svg"
                 alt="BX Brainerd Crossroads"
                 width={30}
                 height={30}
-                className="object-contain"
+                className="object-contain bx-logo"
                 priority
+                unoptimized
               />
               <div className="hidden sm:flex items-center gap-2">
                 <div
