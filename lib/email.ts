@@ -13,18 +13,21 @@ const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://bx.brainerdhq.app
 
 // ─── Design tokens (inline — no CSS classes; email-client safe) ───────────────
 const C = {
-  navy:        "#0f172a",
-  teal:        "#00abc9",
-  parchment:   "#e8e4dc",
+  blue:        "#00205b",   // Brainerd Blue — headlines, emphasis
+  teal:        "#00abc9",   // CTA buttons, links
   body:        "#374151",
   muted:       "#6b7280",
-  bg:          "#f4f7fa",
+  light:       "#9ca3af",
+  bg:          "#f4f5f7",
   card:        "#ffffff",
   border:      "#e5e7eb",
+  rowAlt:      "#f8fafc",
   buttonBg:    "#00abc9",
   buttonText:  "#ffffff",
 };
-const FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+const FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+// Hosted on the BBC Team Dashboard — stable public URL used for email logo
+const LOGO_URL = "https://bbc-team-dashboard.vercel.app/brainerd-logo.png";
 
 // ─── Core HTML builder ────────────────────────────────────────────────────────
 
@@ -41,7 +44,7 @@ export function brandedEmailHtml(opts: {
   // Bulletproof CTA — nested table; centers in Gmail mobile where plain <td align="center"> does not
   const ctaBlock = ctaText && ctaUrl ? `
     <tr>
-      <td align="center" style="padding:28px 40px 8px;">
+      <td align="center" style="padding:24px 40px 8px;">
         <table border="0" cellpadding="0" cellspacing="0" role="presentation"
           style="border-collapse:separate;mso-table-lspace:0pt;mso-table-rspace:0pt;">
           <tr>
@@ -77,62 +80,72 @@ export function brandedEmailHtml(opts: {
   <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation"
     style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;width:100%;">
     <tr>
-      <td align="center" style="padding:32px 16px;">
+      <td align="center" style="padding:40px 16px;">
 
         <table border="0" cellpadding="0" cellspacing="0" role="presentation"
-          style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;width:100%;max-width:480px;">
+          style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;width:100%;max-width:480px;background-color:${C.card};border-radius:12px;overflow:hidden;">
 
-          <!-- Navy header bar -->
+          <!-- Logo -->
           <tr>
-            <td align="center" bgcolor="${C.navy}"
-              style="border-radius:12px 12px 0 0;padding:24px 40px 20px;background:${C.navy};">
-              <p style="margin:0 0 4px;font-family:${FONT};font-size:11px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:rgba(0,171,201,0.9);">
-                BRAINERD BAPTIST CHURCH
-              </p>
-              <p style="margin:0;font-family:${FONT};font-size:12px;font-weight:400;letter-spacing:0.12em;text-transform:uppercase;color:rgba(232,228,220,0.55);">
-                BX Reservations
-              </p>
+            <td align="center" style="padding:40px 40px 24px 40px;">
+              <img src="${LOGO_URL}" alt="Brainerd Baptist Church" width="180"
+                style="display:block;margin:0 auto;border:0;outline:none;text-decoration:none;" />
             </td>
           </tr>
 
-          <!-- Card body -->
+          <!-- Divider -->
           <tr>
-            <td bgcolor="${C.card}"
-              style="border-left:1px solid ${C.border};border-right:1px solid ${C.border};">
+            <td style="padding:0 40px;">
               <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
-
-                <!-- Headline -->
                 <tr>
-                  <td style="padding:32px 40px 16px;">
-                    <h1 style="margin:0;font-family:${FONT};font-size:22px;font-weight:700;line-height:1.3;color:${C.navy};">
-                      ${headline}
-                    </h1>
-                  </td>
+                  <td style="border-top:1px solid ${C.border};font-size:0;line-height:0;">&nbsp;</td>
                 </tr>
-
-                <!-- Body -->
-                <tr>
-                  <td style="padding:0 40px;font-family:${FONT};font-size:15px;line-height:1.65;color:${C.body};">
-                    ${body}
-                  </td>
-                </tr>
-
-                ${ctaBlock}
-                <tr><td style="height:32px;"></td></tr>
               </table>
             </td>
           </tr>
 
-          <!-- Footer -->
+          <!-- Headline -->
           <tr>
-            <td bgcolor="${C.bg}"
-              style="border-radius:0 0 12px 12px;border:1px solid ${C.border};border-top:none;padding:20px 40px;text-align:center;">
-              <p style="margin:0 0 4px;font-family:${FONT};font-size:12px;color:${C.muted};">
-                Brainerd Baptist Church &mdash; 4014 Brainerd Rd, Chattanooga, TN 37411
-              </p>
-              ${footerNote ? `<p style="margin:4px 0 0;font-family:${FONT};font-size:12px;color:${C.muted};">${footerNote}</p>` : ""}
-              <p style="margin:8px 0 0;font-family:${FONT};font-size:11px;color:${C.muted};">
-                This is an automated message from BX Reservations. Please do not reply to this email.
+            <td style="padding:32px 40px 8px 40px;">
+              <h1 style="margin:0;font-family:${FONT};font-size:22px;font-weight:700;line-height:1.3;color:${C.blue};letter-spacing:-0.01em;">
+                ${headline}
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:12px 40px 0 40px;font-family:${FONT};font-size:15px;line-height:1.65;color:${C.body};">
+              ${body}
+            </td>
+          </tr>
+
+          ${ctaBlock}
+          <tr><td style="height:8px;"></td></tr>
+
+          <!-- Divider above footer -->
+          <tr>
+            <td style="padding:24px 40px 0 40px;">
+              <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+                <tr>
+                  <td style="border-top:1px solid ${C.border};font-size:0;line-height:0;">&nbsp;</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Signature / footer -->
+          <tr>
+            <td style="padding:20px 40px 0 40px;font-family:${FONT};font-size:14px;line-height:1.6;color:${C.body};">
+              <p style="margin:0;">— Josiah King<br />Brainerd Baptist Church</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:12px 40px 40px 40px;font-family:${FONT};font-size:12px;line-height:1.6;color:${C.light};">
+              <p style="margin:0;">
+                ${footerNote ? `${footerNote} &middot; ` : ""}Questions? Call or text
+                <a href="tel:4236534670" style="color:${C.light};text-decoration:underline;">(423) 653-4670</a>
+                or email <a href="mailto:jking@brainerdbaptist.org" style="color:${C.light};text-decoration:underline;">jking@brainerdbaptist.org</a>.
               </p>
             </td>
           </tr>
@@ -166,14 +179,14 @@ export async function sendReservationConfirmation(opts: {
     preheader: `Your booking reference is ${bookingNumber} — we'll be in touch shortly.`,
     headline: "We received your reservation request.",
     body: `
-      <p>Hi ${name},</p>
-      <p>Thank you for submitting a space reservation request at Brainerd Baptist Church.
+      <p style="margin:0 0 16px 0;">Hi ${name},</p>
+      <p style="margin:0 0 16px 0;">Thank you for submitting a space reservation request at Brainerd Baptist Church.
          Here's a summary of what we received:</p>
       <table border="0" cellpadding="0" cellspacing="0" role="presentation"
         style="width:100%;border-collapse:collapse;margin:16px 0 8px;">
         <tr>
           <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;font-weight:600;color:#374151;font-size:14px;width:38%;">Booking #</td>
-          <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;color:#0f172a;font-size:14px;font-weight:700;">${bookingNumber}</td>
+          <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;color:#00205b;font-size:14px;font-weight:700;">${bookingNumber}</td>
         </tr>
         <tr>
           <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;font-weight:600;color:#374151;font-size:14px;">Event</td>
@@ -188,9 +201,8 @@ export async function sendReservationConfirmation(opts: {
           <td style="padding:10px 0;color:#374151;font-size:14px;">${rooms.join(", ")}</td>
         </tr>` : ""}
       </table>
-      <p>Our team will review your request and follow up within 2–3 business days.
-         You'll receive an email when your status changes.</p>
-      <p>If you have questions or need to make changes, please contact the church office.</p>`,
+      <p style="margin:16px 0 0 0;">Our team will review your request and follow up within 2–3 business days.
+         You'll receive an email when your status changes.</p>`,
     ctaText: "View Your Request",
     ctaUrl:  `${SITE_URL}/account`,
     footerNote: `Reference: ${bookingNumber}`,
@@ -224,12 +236,12 @@ export async function sendAdminNewReservationAlert(opts: {
     preheader: `New space request from ${submitterName} — ${bookingNumber}`,
     headline: "New Reservation Request",
     body: `
-      <p>A new space reservation request has been submitted and is waiting for review.</p>
+      <p style="margin:0 0 16px 0;">A new space reservation request has been submitted and is waiting for review.</p>
       <table border="0" cellpadding="0" cellspacing="0" role="presentation"
         style="width:100%;border-collapse:collapse;margin:16px 0 8px;">
         <tr>
           <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;font-weight:600;color:#374151;font-size:14px;width:38%;">Booking #</td>
-          <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;color:#0f172a;font-size:14px;font-weight:700;">${bookingNumber}</td>
+          <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;color:#00205b;font-size:14px;font-weight:700;">${bookingNumber}</td>
         </tr>
         <tr>
           <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;font-weight:600;color:#374151;font-size:14px;">Submitted by</td>
@@ -240,8 +252,8 @@ export async function sendAdminNewReservationAlert(opts: {
           <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;color:#374151;font-size:14px;">${eventName}</td>
         </tr>
         <tr>
-          <td style="padding:10px 0;${notes ? "border-bottom:1px solid #e5e7eb;" : ""}font-weight:600;color:#374151;font-size:14px;">Date(s)</td>
-          <td style="padding:10px 0;${notes ? "border-bottom:1px solid #e5e7eb;" : ""}color:#374151;font-size:14px;">${dates.length ? dates.join(", ") : "TBD"}</td>
+          <td style="padding:10px 0;${(rooms.length > 0 || notes) ? "border-bottom:1px solid #e5e7eb;" : ""}font-weight:600;color:#374151;font-size:14px;">Date(s)</td>
+          <td style="padding:10px 0;${(rooms.length > 0 || notes) ? "border-bottom:1px solid #e5e7eb;" : ""}color:#374151;font-size:14px;">${dates.length ? dates.join(", ") : "TBD"}</td>
         </tr>
         ${rooms.length > 0 ? `<tr>
           <td style="padding:10px 0;${notes ? "border-bottom:1px solid #e5e7eb;" : ""}font-weight:600;color:#374151;font-size:14px;">Space(s)</td>
@@ -286,11 +298,11 @@ export async function sendCollaboratorInvite(opts: {
     preheader: `${inviterName} invited you to collaborate on a reservation for ${eventName}.`,
     headline: "You've been invited to collaborate.",
     body: `
-      <p>${inviterName} has invited you to collaborate on a space reservation for
+      <p style="margin:0 0 16px 0;">${inviterName} has invited you to collaborate on a space reservation for
          <strong>${eventName}</strong>.</p>
-      <p>Your access level will be <strong>${roleLabel}</strong> — ${roleDesc}.</p>
-      <p>Click below to accept the invitation. This link expires in 7 days.</p>
-      <p style="margin-top:20px;font-size:13px;color:#6b7280;">
+      <p style="margin:0 0 16px 0;">Your access level will be <strong>${roleLabel}</strong> — ${roleDesc}.</p>
+      <p style="margin:0 0 16px 0;">Click below to accept the invitation. This link expires in 7 days.</p>
+      <p style="margin:0;font-size:13px;color:#6b7280;">
         If you don't recognize this invitation, you can safely ignore this email.
       </p>`,
     ctaText: "Accept Invitation",
@@ -329,25 +341,25 @@ export async function sendStatusUpdateEmail(opts: {
     approved: {
       subject:  `Reservation Approved — ${bookingNumber}`,
       headline: "Your reservation has been approved.",
-      body:     `<p>Hi ${name},</p><p>Great news — your space reservation for <strong>${eventName}</strong> (${bookingNumber}) has been approved.</p>${noteBlock}<p>Please log in to view the full details of your approved reservation.</p>`,
+      body:     `<p style="margin:0 0 16px 0;">Hi ${name},</p><p style="margin:0 0 16px 0;">Great news — your space reservation for <strong>${eventName}</strong> (${bookingNumber}) has been approved.</p>${noteBlock}<p style="margin:0;">Please log in to view the full details of your approved reservation.</p>`,
       cta:      "View Approved Reservation",
     },
     declined: {
       subject:  `Reservation Update — ${bookingNumber}`,
       headline: "Your request could not be approved.",
-      body:     `<p>Hi ${name},</p><p>After review, we're unable to approve your space reservation for <strong>${eventName}</strong> (${bookingNumber}) at this time.</p>${noteBlock}<p>If you have questions or would like to submit a revised request, please contact the church office.</p>`,
+      body:     `<p style="margin:0 0 16px 0;">Hi ${name},</p><p style="margin:0 0 16px 0;">After review, we're unable to approve your space reservation for <strong>${eventName}</strong> (${bookingNumber}) at this time.</p>${noteBlock}<p style="margin:0;">If you have questions or would like to submit a revised request, please contact the church office.</p>`,
       cta:      "View Request Details",
     },
     needs_info: {
       subject:  `Action Needed — ${bookingNumber}`,
       headline: "Additional information needed.",
-      body:     `<p>Hi ${name},</p><p>We're reviewing your reservation for <strong>${eventName}</strong> (${bookingNumber}) and have a few follow-up questions before we can proceed.</p>${noteBlock}<p>Please log in to view the details and respond.</p>`,
+      body:     `<p style="margin:0 0 16px 0;">Hi ${name},</p><p style="margin:0 0 16px 0;">We're reviewing your reservation for <strong>${eventName}</strong> (${bookingNumber}) and have a few follow-up questions before we can proceed.</p>${noteBlock}<p style="margin:0;">Please log in to view the details and respond.</p>`,
       cta:      "View & Respond",
     },
     cancelled: {
       subject:  `Reservation Cancelled — ${bookingNumber}`,
       headline: "Your reservation has been cancelled.",
-      body:     `<p>Hi ${name},</p><p>Your space reservation for <strong>${eventName}</strong> (${bookingNumber}) has been cancelled.</p>${noteBlock}<p>If you believe this was an error, please contact the church office.</p>`,
+      body:     `<p style="margin:0 0 16px 0;">Hi ${name},</p><p style="margin:0 0 16px 0;">Your space reservation for <strong>${eventName}</strong> (${bookingNumber}) has been cancelled.</p>${noteBlock}<p style="margin:0;">If you believe this was an error, please contact the church office.</p>`,
       cta:      "View Reservation",
     },
   } as const;
@@ -393,14 +405,14 @@ export async function sendBookingReminder(opts: {
     preheader: `Your event "${eventName}" is coming up in 48 hours — here's everything you need.`,
     headline:  "Your booking is coming up.",
     body: `
-      <p>Hi ${name},</p>
-      <p>This is a reminder that your space reservation at Brainerd Baptist Church is
+      <p style="margin:0 0 16px 0;">Hi ${name},</p>
+      <p style="margin:0 0 16px 0;">This is a reminder that your space reservation at Brainerd Baptist Church is
          <strong>48 hours away</strong>. Here's a quick summary:</p>
       <table border="0" cellpadding="0" cellspacing="0" role="presentation"
         style="width:100%;border-collapse:collapse;margin:16px 0 8px;">
         <tr>
           <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;font-weight:600;color:#374151;font-size:14px;width:38%;">Booking #</td>
-          <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;color:#0f172a;font-size:14px;font-weight:700;">${bookingNumber}</td>
+          <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;color:#00205b;font-size:14px;font-weight:700;">${bookingNumber}</td>
         </tr>
         <tr>
           <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;font-weight:600;color:#374151;font-size:14px;">Event</td>
@@ -423,9 +435,8 @@ export async function sendBookingReminder(opts: {
           <td style="padding:10px 0;color:#374151;font-size:14px;">${headcount} attendees</td>
         </tr>
       </table>
-      <p style="margin-top:16px;">If you have any questions or need to make last-minute changes,
-         please contact the church office as soon as possible.</p>
-      <p>We look forward to hosting you!</p>`,
+      <p style="margin:16px 0 0 0;">If you have any questions or need to make last-minute changes,
+         please contact the church office as soon as possible.</p>`,
     ctaText:    "View Your Booking",
     ctaUrl:     `${SITE_URL}/account`,
     footerNote: `Reference: ${bookingNumber}`,
