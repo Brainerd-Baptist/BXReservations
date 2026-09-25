@@ -68,16 +68,16 @@ export default function HeaderShell({
             </button>
 
             <Link href="/" className="flex items-center gap-2 group ml-1">
+              {/* BBC stacked logo — black artwork, inverted white by .bx-logo CSS rule */}
               <Image
-                src="/bx-logo.svg"
-                alt="BX Brainerd Crossroads"
-                width={30}
-                height={30}
-                className="object-contain bx-logo"
+                src="/bbc-logo-stacked.png"
+                alt="Brainerd Baptist Church"
+                width={110}
+                height={32}
+                className="h-7 sm:h-8 w-auto object-contain bx-logo"
                 priority
-                unoptimized
               />
-              <div className="hidden sm:flex items-center gap-2">
+              <div className="flex items-center gap-2 ml-0.5">
                 <div
                   className="w-px h-4"
                   style={{ background: "color-mix(in srgb, var(--bx-parchment) 15%, transparent)" }}
