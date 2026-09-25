@@ -461,17 +461,17 @@ function BuilderStep({
 
       {/* Footer */}
       {total > 0 && (
-        <div className="mt-6 bg-parchment text-ink rounded-2xl p-4 flex items-center justify-between">
+        <div className="mt-6 bg-[var(--bbc-navy)] text-white rounded-2xl p-4 flex items-center justify-between">
           <div>
-            <p className="text-xs text-blue-200 uppercase tracking-wide">Estimated total</p>
+            <p className="text-xs text-white/60 uppercase tracking-wide">Estimated total</p>
             <p className="text-2xl font-bold">${total.toLocaleString()}</p>
-            <p className="text-xs text-blue-200 mt-0.5">
+            <p className="text-xs text-white/60 mt-0.5">
               {isNP ? "Non-profit" : "Standard"} rates · Final pricing confirmed by our team
             </p>
           </div>
           <div className="text-right">
-            <p className="text-sm text-blue-200">{activeDays.length} day{activeDays.length !== 1 ? "s" : ""}</p>
-            <p className="text-sm text-blue-200">
+            <p className="text-sm text-white/70">{activeDays.length} day{activeDays.length !== 1 ? "s" : ""}</p>
+            <p className="text-sm text-white/70">
               {activeDays.reduce((sum, d) => sum + d.rooms.filter(r => !r.requested).length, 0)} room selections
             </p>
           </div>
@@ -952,12 +952,12 @@ function ReviewStep({
 
       {/* Estimate */}
       {total > 0 && (
-        <div className="bg-parchment text-ink rounded-2xl p-4 mb-4 flex items-center justify-between">
+        <div className="bg-[var(--bbc-navy)] text-white rounded-2xl p-4 mb-4 flex items-center justify-between">
           <div>
-            <p className="text-xs text-blue-200 uppercase tracking-wide">Estimated total</p>
+            <p className="text-xs text-white/60 uppercase tracking-wide">Estimated total</p>
             <p className="text-2xl font-bold">${total.toLocaleString()}</p>
           </div>
-          <p className="text-xs text-blue-200 text-right max-w-[180px] leading-relaxed">
+          <p className="text-xs text-white/70 text-right max-w-[180px] leading-relaxed">
             Estimate only. Final pricing confirmed by our events team.
           </p>
         </div>
@@ -1230,7 +1230,7 @@ export default function ReserveClient({ initialContact }: ReserveClientProps) {
   return (
     <div className="min-h-screen bg-ink relative overflow-hidden">
       <div className="bx-bloom" aria-hidden="true" />
-      <div className="relative px-4 pt-20 pb-16">
+      <div className="relative px-4 pt-6 pb-16">
         <StepBar step={step} />
 
         {step === 0 && (

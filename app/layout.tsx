@@ -23,7 +23,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
-const APP_VERSION = "1.0.15";
+const APP_VERSION = "1.0.16";
 
 export default function RootLayout({
   children,
@@ -39,7 +39,7 @@ export default function RootLayout({
       </head>
       <body className="flex flex-col min-h-screen">
         <SiteHeader />
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 pt-14">{children}</main>
 
         {/* Version footer */}
         <footer className="border-t py-3 px-4" style={{ borderColor: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>
