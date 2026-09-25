@@ -42,24 +42,24 @@ const DOWNSTAIRS: Shape[] = [
 // Right (580–990): CrossTies A/B/C at top, CrossView fills bottom
 
 const UPSTAIRS: Shape[] = [
-  // — Non-reservable
-  { id: null, label: "Gym",              x:   0, y:   0, w: 345, h: 310, reservable: false, labelSize: "lg" },
-  { id: null, label: "Walking Track",    x:   0, y: 310, w: 345, h:  22, reservable: false, labelSize: "xs" },
-  { id: null, label: "Fitness Center",   x:   0, y: 332, w: 175, h:  78, reservable: false, labelSize: "xs" },
-  { id: null, label: "",                 x: 175, y: 332, w: 170, h:  78, reservable: false },
-  { id: null, label: "Weight Room",      x: 345, y: 270, w: 145, h:  80, reservable: false, labelSize: "xs" },
-  { id: null, label: "Group Fitness",    x: 345, y: 350, w: 145, h:  60, reservable: false, labelSize: "xs" },
-  { id: null, label: "",                 x: 490, y:   0, w:  90, h: 100, reservable: false }, // stairs
-  { id: null, label: "Conf. Room",       x: 490, y: 100, w:  90, h: 105, reservable: false, labelSize: "xs" },
-  { id: null, label: "Fitness Room",        x: 490, y: 205, w:  90, h: 100, reservable: false, labelSize: "xs" },
-  { id: null, label: "",                 x: 490, y: 305, w:  90, h: 105, reservable: false }, // utility
+  // — Non-reservable (all x-coords horizontally mirrored: new_x = 990 - x - w)
+  { id: null, label: "Gym",           x: 645, y:   0, w: 345, h: 310, reservable: false, labelSize: "lg" },
+  { id: null, label: "Walking Track", x: 645, y: 310, w: 345, h:  22, reservable: false, labelSize: "xs" },
+  { id: null, label: "Fitness Center",x: 815, y: 332, w: 175, h:  78, reservable: false, labelSize: "xs" },
+  { id: null, label: "",              x: 645, y: 332, w: 170, h:  78, reservable: false },
+  { id: null, label: "Weight Room",   x: 500, y: 270, w: 145, h:  80, reservable: false, labelSize: "xs" },
+  { id: null, label: "Group Fitness", x: 500, y: 350, w: 145, h:  60, reservable: false, labelSize: "xs" },
+  { id: null, label: "",              x: 410, y:   0, w:  90, h: 100, reservable: false }, // stairs
+  { id: null, label: "Conf. Room",    x: 410, y: 100, w:  90, h: 105, reservable: false, labelSize: "xs" },
+  { id: null, label: "Fitness Room",  x: 410, y: 205, w:  90, h: 100, reservable: false, labelSize: "xs" },
+  { id: null, label: "",              x: 410, y: 305, w:  90, h: 105, reservable: false }, // utility
   // — Reservable
-  { id: "crosstiescafe", label: "CrossTies Café", sub: "60 seats",  x: 345, y:   0, w: 145, h: 135, reservable: true, labelSize: "sm" },
-  { id: "loft",          label: "The Loft",        sub: "100 seats", x: 345, y: 135, w: 145, h: 135, reservable: true, labelSize: "sm" },
-  { id: "crosstiesA",    label: "CrossTies A",     sub: "20",        x: 580, y:   0, w: 130, h: 100, reservable: true, labelSize: "xs" },
-  { id: "crosstiesB",    label: "CrossTies B",     sub: "20",        x: 710, y:   0, w: 130, h: 100, reservable: true, labelSize: "xs" },
-  { id: "crosstiesC",    label: "CrossTies C",     sub: "20",        x: 840, y:   0, w: 150, h: 100, reservable: true, labelSize: "xs" },
-  { id: "crossview",     label: "CrossView",       sub: "50 seats",  x: 580, y: 100, w: 410, h: 310, reservable: true, labelSize: "md" },
+  { id: "crosstiescafe", label: "CrossTies Café", sub: "60 seats",  x: 500, y:   0, w: 145, h: 135, reservable: true, labelSize: "sm" },
+  { id: "loft",          label: "The Loft",        sub: "100 seats", x: 500, y: 135, w: 145, h: 135, reservable: true, labelSize: "sm" },
+  { id: "crosstiesA",    label: "CrossTies A",     sub: "20",        x: 280, y:   0, w: 130, h: 100, reservable: true, labelSize: "xs" },
+  { id: "crosstiesB",    label: "CrossTies B",     sub: "20",        x: 150, y:   0, w: 130, h: 100, reservable: true, labelSize: "xs" },
+  { id: "crosstiesC",    label: "CrossTies C",     sub: "20",        x:   0, y:   0, w: 150, h: 100, reservable: true, labelSize: "xs" },
+  { id: "crossview",     label: "CrossView",       sub: "50 seats",  x:   0, y: 100, w: 410, h: 310, reservable: true, labelSize: "md" },
 ];
 
 // ── Room lookup ───────────────────────────────────────────────────────────────
