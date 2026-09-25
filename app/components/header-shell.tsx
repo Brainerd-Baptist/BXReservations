@@ -77,14 +77,18 @@ export default function HeaderShell({
                 className="h-8 sm:h-9 w-auto object-contain bbc-logo"
                 priority
               />
-              <div className="flex items-center gap-2 ml-1">
+              {/* Nav label — matches HeaderLabel spec from BrainerdWorkspaces */}
+              <div className="flex items-center gap-3 ml-1">
                 <div
-                  className="w-px h-4"
-                  style={{ background: "color-mix(in srgb, var(--bx-parchment) 15%, transparent)" }}
+                  className="w-px h-6"
+                  style={{ background: "rgb(0 171 201 / 0.2)" }}
                 />
                 <span
-                  className="text-[10px] uppercase tracking-[0.2em] whitespace-nowrap font-medium"
-                  style={{ color: "color-mix(in srgb, var(--bx-slate) 70%, transparent)" }}
+                  className="text-xs uppercase tracking-[0.2em] whitespace-nowrap"
+                  style={{
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                    color: "rgb(91 107 130)",
+                  }}
                 >
                   Reservations
                 </span>
