@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 import {
   sendReservationConfirmation,
   sendAdminNewReservationAlert,
 } from "@/lib/email";
+import { ROOMS } from "@/lib/rooms";
 
 // ─── Types mirrored from reserve/page.tsx ─────────────────────────────────────
 interface ContactInfo {
@@ -62,17 +65,7 @@ function extractRooms(days: DayConfig[]): string[] {
       if (r.requested) seen.add(r.roomId);
     }
   }
-  // Humanize common room IDs — extend as needed
-  const labels: Record<string, string> = {
-    sanctuary: "Sanctuary",
-    fam_life:  "Family Life Center",
-    "family-life": "Family Life Center",
-    chapel:    "Chapel",
-    room_a:    "Room A",
-    room_b:    "Room B",
-    kitchen:   "Kitchen",
-  };
-  return [...seen].map(id => labels[id] ?? id);
+  return [...seen].map(id => ROOMS.find(r => r.id === id)?.name ?? id);
 }
 
 // ─── Route handler ────────────────────────────────────────────────────────────
@@ -99,6 +92,15 @@ export async function POST(req: NextRequest) {
       const { createClient } = await import("@supabase/supabase-js");
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+      // Resolve the authenticated user so we can attach user_id to the reservation
+      const cookieStore = await cookies();
+      const ssrClient = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        { cookies: { getAll: () => cookieStore.getAll(), setAll: () => {} } }
+      );
+      const { data: { user: authUser } } = await ssrClient.auth.getUser();
+
       const { data: numData, error: numErr } = await supabase.rpc("next_booking_number");
       if (numErr || !numData) {
         console.error("booking_number rpc error:", numErr);
@@ -107,7 +109,7 @@ export async function POST(req: NextRequest) {
 
       const bookingNumber: string = numData as string;
 
-      const { error: insertErr } = await supabase.from("reservations").insert({
+      const { data: insertData, error: insertErr } = await supabase.from("reservations").insert({
         booking_number:  bookingNumber,
         status:          "pending_insurance",
         contact_name:    contact.name,
@@ -119,12 +121,14 @@ export async function POST(req: NextRequest) {
         space_mode:      spaceMode,
         notes:           notes ?? null,
         payload:         { contact, days, spaceMode, notes },
-      });
+        user_id:         authUser?.id ?? null,
+      }).select("id").single();
 
-      if (insertErr) {
+      if (insertErr || !insertData) {
         console.error("insert error:", insertErr);
         return NextResponse.json({ error: "Failed to save reservation" }, { status: 500 });
       }
+      const reservationId = insertData.id as string;
 
       // ── Send emails (non-blocking — don't fail the request if email fails) ──
       const dates = extractDates(days);
@@ -156,7 +160,7 @@ export async function POST(req: NextRequest) {
         });
       });
 
-      return NextResponse.json({ bookingNumber }, { status: 201 });
+      return NextResponse.json({ bookingNumber, reservationId }, { status: 201 });
     } catch (err) {
       console.error("Supabase submit error:", err);
       return NextResponse.json({ error: "Internal server error" }, { status: 500 });

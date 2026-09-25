@@ -13,5 +13,5 @@ export default async function ReservePage() {
       }
     : undefined;
 
-  return <ReserveClient initialContact={initialContact} />;
+  return <ReserveClient initialContact={initialContact} userId={user?.id ?? null} />;
 }

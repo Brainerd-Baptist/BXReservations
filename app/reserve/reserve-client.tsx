@@ -844,7 +844,7 @@ function DayCard({
 // ─── Step 2: Review ───────────────────────────────────────────────────────────
 
 function ReviewStep({
-  contact, days, isNP, notes, setNotes, onBack, onSubmit, submitted, submitting, bookingNumber, submitError, reservationId,
+  contact, days, isNP, notes, setNotes, onBack, onSubmit, submitted, submitting, bookingNumber, submitError, reservationId, userId,
 }: {
   contact: ContactInfo;
   days: DayConfig[];
@@ -882,7 +882,8 @@ function ReviewStep({
         )}
         <p className="text-sm text-slate">A confirmation has been sent to {contact.email}.</p>
 
-        {/* ── Sign-in nudge ─────────────────────────────────── */}
+        {/* ── Sign-in nudge (only shown when not logged in) ─── */}
+        {!userId && (
         <div className="mt-6 p-4 bg-ink-soft border border-brass/30 rounded-2xl text-left flex items-start gap-3">
           <div className="w-8 h-8 rounded-full bg-brass/5 flex items-center justify-center shrink-0 mt-0.5">
             <svg className="w-4 h-4 text-brass" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -905,6 +906,7 @@ function ReviewStep({
             </a>
           </div>
         </div>
+        )}
 
         {/* ── Share this reservation ─────────────────────── */}
         {reservationId && (
@@ -1206,9 +1208,10 @@ const input = "w-full border border-parchment/20 rounded-xl px-3 py-2.5 text-sm 
 
 interface ReserveClientProps {
   initialContact?: { name: string; email: string; phone: string; org: string };
+  userId?: string | null;
 }
 
-export default function ReserveClient({ initialContact }: ReserveClientProps) {
+export default function ReserveClient({ initialContact, userId }: ReserveClientProps) {
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [bookingNumber, setBookingNumber] = useState("");
@@ -1319,6 +1322,7 @@ export default function ReserveClient({ initialContact }: ReserveClientProps) {
             submitted={submitted}
             submitting={submitting}
             submitError={submitError}
+            userId={userId}
             bookingNumber={bookingNumber}
             reservationId={reservationId ?? undefined}
           />
