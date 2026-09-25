@@ -10,9 +10,12 @@ import NotificationPreferencesSection, {
   type BxNotificationPrefs,
 } from "../components/notification-preferences-section";
 
-export default async function AccountPage() {
+export default async function AccountPage({ searchParams }: { searchParams: Promise<{ welcome?: string }> }) {
   const { user, role, profile } = await getUserAndRole();
   if (!user) redirect("/login");
+
+  const params = await searchParams;
+  const isFirstVisit = params.welcome === "1";
 
   const cookieStore = await cookies();
   const supabase = createServerClient(
@@ -101,6 +104,33 @@ export default async function AccountPage() {
 
   return (
     <main style={{ maxWidth: "640px", margin: "0 auto", padding: "2rem 1rem 4rem" }}>
+
+      {/* ── First-run welcome banner ── */}
+      {isFirstVisit && (
+        <div
+          className="bx-fade-in"
+          style={{
+            background: "color-mix(in srgb, var(--bx-brass) 12%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--bx-brass) 30%, transparent)",
+            borderRadius: "12px",
+            padding: "1rem 1.25rem",
+            marginBottom: "1.5rem",
+            display: "flex",
+            gap: "0.875rem",
+            alignItems: "flex-start",
+          }}
+        >
+          <span style={{ fontSize: "1.25rem", lineHeight: 1, marginTop: "0.1rem" }}>👋</span>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: "0.9375rem", color: "var(--bx-parchment)", marginBottom: "0.2rem" }}>
+              You're in{profile?.display_name ? `, ${profile.display_name.split(" ")[0]}` : ""}!
+            </div>
+            <div style={{ fontSize: "0.8125rem", color: "var(--bx-slate)", lineHeight: 1.5 }}>
+              Add your phone number below so our team can reach you about your reservation requests.
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Profile header card ── */}
       <div

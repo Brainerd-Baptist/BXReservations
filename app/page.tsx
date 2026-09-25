@@ -4,7 +4,12 @@ import { getUserAndRole } from "@/lib/get-user-role";
 import StaffPhoto from "@/app/components/StaffPhoto";
 
 export default async function Home() {
-  const { user } = await getUserAndRole();
+  const { user, profile } = await getUserAndRole();
+
+  // Derive a first name for the personalized greeting
+  const firstName = profile?.display_name
+    ? profile.display_name.split(" ")[0]
+    : null;
 
   return (
     <main className="min-h-screen bg-ink">
@@ -24,43 +29,58 @@ export default async function Home() {
             />
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold text-parchment leading-tight mb-2">
-            Welcome to BX Reservations
-          </h1>
-          <p className="text-base sm:text-[1.1rem] text-slate mb-8 max-w-md mx-auto leading-relaxed">
-            Reserve a space at the BX Community Center for your event, meeting, class, or gathering.
-          </p>
-
           {user ? (
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link
-                href="/reserve"
-                className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl bg-brass text-white font-bold text-base shadow-sm hover:opacity-90 active:scale-[0.98] transition-all"
-              >
-                Reserve a Space →
-              </Link>
-              <Link
-                href="/account"
-                className="inline-flex items-center justify-center px-7 py-4 rounded-xl border border-parchment/20 text-parchment font-semibold text-base hover:bg-parchment/10 transition-colors"
-              >
-                My Reservations
-              </Link>
-            </div>
+            <>
+              <p className="text-xs font-semibold uppercase tracking-widest text-slate mb-2">
+                Welcome back{firstName ? `, ${firstName}` : ""}
+              </p>
+              <h1 className="text-3xl sm:text-4xl font-bold text-parchment leading-tight mb-2">
+                BX Reservations
+              </h1>
+              <p className="text-base sm:text-[1.1rem] text-slate mb-8 max-w-md mx-auto leading-relaxed">
+                Reserve a space at the BX Community Center for your event, meeting, class, or gathering.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link
+                  href="/reserve"
+                  className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl bg-brass text-white font-bold text-base shadow-sm hover:opacity-90 active:scale-[0.98] transition-all"
+                >
+                  Reserve a Space →
+                </Link>
+                <Link
+                  href="/account"
+                  className="inline-flex items-center justify-center px-7 py-4 rounded-xl border border-parchment/20 text-parchment font-semibold text-base hover:bg-parchment/10 transition-colors"
+                >
+                  My Reservations
+                </Link>
+              </div>
+            </>
           ) : (
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link
-                href="/reserve"
-                className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl bg-brass text-white font-bold text-base shadow-sm hover:opacity-90 active:scale-[0.98] transition-all"
-              >
-                Reserve a Space →
-              </Link>
-              <Link
-                href="/login"
-                className="inline-flex items-center justify-center px-7 py-4 rounded-xl border border-parchment/20 text-parchment font-semibold text-base hover:bg-parchment/10 transition-colors"
-              >
-                Sign in / Sign up
-              </Link>
-            </div>
+            <>
+              <h1 className="text-3xl sm:text-4xl font-bold text-parchment leading-tight mb-2">
+                Welcome to BX Reservations
+              </h1>
+              <p className="text-base sm:text-[1.1rem] text-slate mb-8 max-w-md mx-auto leading-relaxed">
+                Reserve a space at the BX Community Center for your event, meeting, class, or gathering.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link
+                  href="/reserve"
+                  className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl bg-brass text-white font-bold text-base shadow-sm hover:opacity-90 active:scale-[0.98] transition-all"
+                >
+                  Reserve a Space →
+                </Link>
+                <Link
+                  href="/login"
+                  className="inline-flex items-center justify-center px-7 py-4 rounded-xl border border-parchment/20 text-parchment font-semibold text-base hover:bg-parchment/10 transition-colors"
+                >
+                  Sign in / Sign up
+                </Link>
+              </div>
+              <p className="text-xs text-slate mt-4 opacity-70">
+                No account required to submit — sign in after to track your request.
+              </p>
+            </>
           )}
         </div>
       </section>
@@ -72,20 +92,20 @@ export default async function Home() {
             className="rounded-2xl px-6 py-5 flex items-start gap-4"
             style={{ background: "var(--bx-parchment)" }}
           >
-            <div className="text-2xl shrink-0 mt-0.5">🔐</div>
+            <div className="text-2xl shrink-0 mt-0.5">✨</div>
             <div>
               <p className="font-semibold text-sm mb-1" style={{ color: "var(--bx-ink)" }}>
-                Create a free account to get the most out of BX Reservations
+                Your Google account is your BX account
               </p>
               <p className="text-xs leading-relaxed mb-3" style={{ color: "color-mix(in srgb, var(--bx-ink) 70%, transparent)" }}>
-                Sign in with Google to save your progress as you go, submit your request with one tap, and follow your reservation status — from Pending all the way to Confirmed — right here online.
+                Sign in with Google once and your name, email, and phone pre-fill every future request automatically. Track your reservation from Pending all the way to Confirmed — no separate sign-up form, no new password.
               </p>
               <Link
                 href="/login"
                 className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors"
                 style={{ color: "var(--bx-ink)", background: "color-mix(in srgb, var(--bx-ink) 15%, transparent)" }}
               >
-                Create your account →
+                Sign in with Google →
               </Link>
             </div>
           </div>

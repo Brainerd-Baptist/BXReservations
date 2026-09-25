@@ -100,7 +100,7 @@ export default function HeaderShell({
           {/* Right: new request + avatar/sign-in */}
           <div className="flex items-center gap-3">
             {hasUser && (
-              <NotificationBell href="/account" />
+              <NotificationBell href={role === "admin" ? "/admin/bx-reservations?status=pending_insurance" : "/account#invites"} />
             )}
 
             {hasUser && userId && email ? (
