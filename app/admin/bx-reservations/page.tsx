@@ -157,10 +157,10 @@ export default function BxReservationsAdmin() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const rawTab = searchParams.get("tab") ?? "requests";
-  const tab = ["requests", "users", "ministries", "settings"].includes(rawTab)
-    ? (rawTab as "requests" | "users" | "ministries" | "settings")
+  const tab = ["requests", "users", "ministries", "settings", "reports"].includes(rawTab)
+    ? (rawTab as "requests" | "users" | "ministries" | "settings" | "reports")
     : "requests";
-  function setTab(id: "requests" | "users" | "ministries" | "settings") {
+  function setTab(id: "requests" | "users" | "ministries" | "settings" | "reports") {
     const params = new URLSearchParams(searchParams.toString());
     if (id === "requests") {
       params.delete("tab");
@@ -322,8 +322,24 @@ Send this to ${req.name} (${req.email}).`);
   return (
     <div className="min-h-screen bg-ink font-sans">
 
-
-
+      {/* ── Tab nav ────────────────────────────────────────────────────────── */}
+      <div className="max-w-7xl mx-auto px-4 pt-4 pb-0 flex items-center gap-1 flex-wrap border-b" style={{ borderColor: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>
+        {(["requests", "users", "ministries", "settings", "reports"] as const).map((id) => {
+          const labels: Record<string, string> = { requests: "Requests", users: "Users", ministries: "Ministries", settings: "Settings", reports: "Reports" };
+          return (
+            <button
+              key={id}
+              onClick={() => setTab(id)}
+              className="px-4 py-2.5 text-sm font-semibold transition-colors relative"
+              style={tab === id
+                ? { color: "var(--bx-brass)", borderBottom: "2px solid var(--bx-brass)", marginBottom: "-1px" }
+                : { color: "var(--bx-slate)", borderBottom: "2px solid transparent", marginBottom: "-1px" }}
+            >
+              {labels[id]}
+            </button>
+          );
+        })}
+      </div>
 
       <div className="max-w-7xl mx-auto px-4 py-6 grid lg:grid-cols-[1fr_320px] gap-6">
         {/* Left: queue / settings */}
@@ -570,6 +586,9 @@ Send this to ${req.name} (${req.email}).`);
               setSavingMinistry={setSavingMinistry}
             />
           )}
+
+          {/* ── Reports tab ────────────────────────────────────────────────── */}
+          {tab === "reports" && <ReportsTab />}
         </div>
 
         {/* Right: Calendar sidebar */}
@@ -1203,6 +1222,235 @@ function MinistriesTab({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+// ─── Historical reservation data (Google Form, May 2025 – Sep 2026) ────────────
+const HISTORICAL_DATA = {
+  byMonth: [
+    { month: "2025-05", label: "May '25", count: 1 },
+    { month: "2025-07", label: "Jul '25", count: 2 },
+    { month: "2025-08", label: "Aug '25", count: 1 },
+    { month: "2025-09", label: "Sep '25", count: 1 },
+    { month: "2025-10", label: "Oct '25", count: 1 },
+    { month: "2026-01", label: "Jan '26", count: 2 },
+    { month: "2026-02", label: "Feb '26", count: 2 },
+    { month: "2026-03", label: "Mar '26", count: 8 },
+    { month: "2026-04", label: "Apr '26", count: 7 },
+    { month: "2026-05", label: "May '26", count: 8 },
+    { month: "2026-06", label: "Jun '26", count: 6 },
+    { month: "2026-07", label: "Jul '26", count: 5 },
+    { month: "2026-08", label: "Aug '26", count: 9 },
+    { month: "2026-09", label: "Sep '26", count: 11 },
+  ],
+  byRoom: [
+    { room: "The Crossing",      count: 26 },
+    { room: "Crossview",         count: 13 },
+    { room: "The Loft",          count: 7  },
+    { room: "CrossPointe A",     count: 7  },
+    { room: "Crossties A",       count: 4  },
+    { room: "CrossPointe C",     count: 3  },
+    { room: "Crossties Café",    count: 2  },
+    { room: "Basketball Courts", count: 1  },
+    { room: "CrossPointe B",     count: 1  },
+  ],
+  guestBuckets: [
+    { label: "1–25",    count: 30 },
+    { label: "26–75",   count: 17 },
+    { label: "76–150",  count: 5  },
+    { label: "151–250", count: 10 },
+    { label: "250+",    count: 2  },
+  ],
+  memberStatus: { member: 16, nonMember: 48 },
+  profitStatus: { nonProfit: 53, forProfit: 11 },
+  byYear: [
+    { year: "2025", count: 6  },
+    { year: "2026", count: 48 },
+    { year: "2027", count: 10 },
+  ],
+  totalRecords: 64,
+};
+
+// ─── ReportsTab ─────────────────────────────────────────────────────────────────
+function ReportsTab() {
+  const d = HISTORICAL_DATA;
+  const totalGuests = 30 * 13 + 17 * 50 + 5 * 113 + 10 * 200 + 2 * 300;
+  const avgGroup = Math.round(totalGuests / d.totalRecords);
+  const maxMonth = Math.max(...d.byMonth.map(m => m.count));
+  const maxRoom  = Math.max(...d.byRoom.map(r => r.count));
+  const maxGuest = Math.max(...d.guestBuckets.map(g => g.count));
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-lg font-bold" style={{ color: "var(--bx-parchment)" }}>Historical Reports</h2>
+        <p className="text-sm mt-0.5" style={{ color: "var(--bx-slate)" }}>
+          64 submissions from the Google Form · May 2025 – Sep 2026
+        </p>
+      </div>
+
+      {/* KPI tiles */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <KPI label="Total Submissions" value={String(d.totalRecords)} color="text-[var(--bx-brass)]" />
+        <KPI label="Avg Group Size" value={`~${avgGroup}`} color="text-emerald-400" />
+        <KPI label="Non-Profit Share" value={`${Math.round(d.profitStatus.nonProfit / d.totalRecords * 100)}%`} color="text-blue-400" />
+        <KPI label="Member Orgs" value={`${Math.round(d.memberStatus.member / d.totalRecords * 100)}%`} color="text-violet-400" />
+      </div>
+
+      {/* Monthly submissions bar chart */}
+      <div className="rounded-xl border p-5 space-y-3" style={{ background: "var(--bx-ink-soft)", borderColor: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>
+        <p className="text-sm font-semibold" style={{ color: "var(--bx-parchment)" }}>Submissions by Month</p>
+        <div className="flex items-end gap-1" style={{ height: 100 }}>
+          {d.byMonth.map((m) => (
+            <div key={m.month} className="flex-1 flex flex-col items-center group relative">
+              <div
+                className="w-full rounded-t transition-all"
+                style={{
+                  height: maxMonth ? `${(m.count / maxMonth) * 80}px` : "4px",
+                  background: m.count === maxMonth
+                    ? "var(--bx-brass)"
+                    : "color-mix(in srgb, var(--bx-brass) 45%, transparent)",
+                  minHeight: m.count > 0 ? "4px" : "0",
+                }}
+              />
+              <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 hidden group-hover:block z-10 px-2 py-1 rounded text-[10px] font-semibold whitespace-nowrap"
+                style={{ background: "var(--bx-ink)", color: "var(--bx-parchment)", border: "1px solid color-mix(in srgb, var(--bx-parchment) 15%, transparent)" }}>
+                {m.label}: {m.count}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex items-end gap-1">
+          {d.byMonth.map((m) => (
+            <div key={m.month} className="flex-1 text-center" style={{ fontSize: 8, color: "var(--bx-slate)" }}>
+              {m.label.split(" ")[0]}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Room usage + Guest size — 2 col on large */}
+      <div className="grid lg:grid-cols-2 gap-4">
+        <div className="rounded-xl border p-5 space-y-3" style={{ background: "var(--bx-ink-soft)", borderColor: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>
+          <p className="text-sm font-semibold" style={{ color: "var(--bx-parchment)" }}>Requests by Room</p>
+          <div className="space-y-2">
+            {d.byRoom.map((r) => (
+              <div key={r.room} className="flex items-center gap-3">
+                <span className="w-32 text-xs shrink-0 truncate" style={{ color: "var(--bx-slate)" }}>{r.room}</span>
+                <div className="flex-1 rounded-full overflow-hidden" style={{ height: 8, background: "color-mix(in srgb, var(--bx-parchment) 6%, transparent)" }}>
+                  <div className="h-full rounded-full" style={{
+                    width: `${(r.count / maxRoom) * 100}%`,
+                    background: r.count === maxRoom ? "var(--bx-brass)" : "color-mix(in srgb, var(--bx-brass) 55%, transparent)",
+                  }} />
+                </div>
+                <span className="text-xs font-semibold w-5 text-right" style={{ color: "var(--bx-parchment)" }}>{r.count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-xl border p-5 space-y-3" style={{ background: "var(--bx-ink-soft)", borderColor: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>
+          <p className="text-sm font-semibold" style={{ color: "var(--bx-parchment)" }}>Group Size Distribution</p>
+          <div className="space-y-2">
+            {d.guestBuckets.map((g) => (
+              <div key={g.label} className="flex items-center gap-3">
+                <span className="w-16 text-xs shrink-0" style={{ color: "var(--bx-slate)" }}>{g.label}</span>
+                <div className="flex-1 rounded-full overflow-hidden" style={{ height: 8, background: "color-mix(in srgb, var(--bx-parchment) 6%, transparent)" }}>
+                  <div className="h-full rounded-full" style={{
+                    width: `${(g.count / maxGuest) * 100}%`,
+                    background: "color-mix(in srgb, #22c55e 70%, var(--bx-brass))",
+                  }} />
+                </div>
+                <span className="text-xs font-semibold w-5 text-right" style={{ color: "var(--bx-parchment)" }}>{g.count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Member + Non-profit donut tiles */}
+      <div className="grid sm:grid-cols-2 gap-4">
+        <div className="rounded-xl border p-5 space-y-3" style={{ background: "var(--bx-ink-soft)", borderColor: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>
+          <p className="text-sm font-semibold" style={{ color: "var(--bx-parchment)" }}>BBC Member Orgs</p>
+          <div className="flex items-center gap-4">
+            <div className="relative w-20 h-20 flex-shrink-0">
+              <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="color-mix(in srgb, var(--bx-parchment) 8%, transparent)" strokeWidth="3.2" />
+                <circle cx="18" cy="18" r="15.9" fill="none"
+                  stroke="color-mix(in srgb, #7c3aed 80%, transparent)"
+                  strokeWidth="3.2"
+                  strokeDasharray={`${(d.memberStatus.member / d.totalRecords) * 100} ${100 - (d.memberStatus.member / d.totalRecords) * 100}`}
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-sm font-bold" style={{ color: "var(--bx-parchment)" }}>
+                  {Math.round(d.memberStatus.member / d.totalRecords * 100)}%
+                </span>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: "color-mix(in srgb, #7c3aed 80%, transparent)" }} />
+                <span className="text-xs" style={{ color: "var(--bx-slate)" }}>Member — {d.memberStatus.member}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: "color-mix(in srgb, var(--bx-parchment) 8%, transparent)" }} />
+                <span className="text-xs" style={{ color: "var(--bx-slate)" }}>Non-member — {d.memberStatus.nonMember}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-xl border p-5 space-y-3" style={{ background: "var(--bx-ink-soft)", borderColor: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>
+          <p className="text-sm font-semibold" style={{ color: "var(--bx-parchment)" }}>Non-Profit vs. For-Profit</p>
+          <div className="flex items-center gap-4">
+            <div className="relative w-20 h-20 flex-shrink-0">
+              <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="color-mix(in srgb, var(--bx-parchment) 8%, transparent)" strokeWidth="3.2" />
+                <circle cx="18" cy="18" r="15.9" fill="none"
+                  stroke="var(--bx-brass)"
+                  strokeWidth="3.2"
+                  strokeDasharray={`${(d.profitStatus.nonProfit / d.totalRecords) * 100} ${100 - (d.profitStatus.nonProfit / d.totalRecords) * 100}`}
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-sm font-bold" style={{ color: "var(--bx-parchment)" }}>
+                  {Math.round(d.profitStatus.nonProfit / d.totalRecords * 100)}%
+                </span>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: "var(--bx-brass)" }} />
+                <span className="text-xs" style={{ color: "var(--bx-slate)" }}>Non-profit — {d.profitStatus.nonProfit}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: "color-mix(in srgb, var(--bx-parchment) 8%, transparent)" }} />
+                <span className="text-xs" style={{ color: "var(--bx-slate)" }}>For-profit — {d.profitStatus.forProfit}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Event year breakdown */}
+      <div className="rounded-xl border p-5 space-y-3" style={{ background: "var(--bx-ink-soft)", borderColor: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>
+        <p className="text-sm font-semibold" style={{ color: "var(--bx-parchment)" }}>Event Year Breakdown</p>
+        <div className="flex gap-4">
+          {d.byYear.map((y) => (
+            <div key={y.year} className="flex-1 rounded-xl p-4 text-center" style={{ background: "color-mix(in srgb, var(--bx-parchment) 4%, transparent)", border: "1px solid color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>
+              <p className="text-3xl font-bold" style={{ color: y.year === "2026" ? "var(--bx-brass)" : "var(--bx-parchment)" }}>{y.count}</p>
+              <p className="text-xs uppercase tracking-widest mt-1" style={{ color: "var(--bx-slate)" }}>{y.year}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <p className="text-xs pb-4" style={{ color: "color-mix(in srgb, var(--bx-slate) 50%, transparent)" }}>
+        Source: BX Online Reservation Request Responses · Google Form export · 64 records · through Sep 2026
+      </p>
     </div>
   );
 }
