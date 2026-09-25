@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { BlackoutRule, ruleDescription } from "@/lib/blackouts";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -153,7 +154,21 @@ export default function BxReservationsAdmin() {
   const [filter, setFilter] = useState<Status | "All">("All");
   const [selected, setSelected] = useState<Request | null>(null);
   const [calOpen, setCalOpen] = useState(false);
-  const [tab, setTab] = useState<"requests" | "users" | "ministries" | "settings">("requests");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const rawTab = searchParams.get("tab") ?? "requests";
+  const tab = ["requests", "users", "ministries", "settings"].includes(rawTab)
+    ? (rawTab as "requests" | "users" | "ministries" | "settings")
+    : "requests";
+  function setTab(id: "requests" | "users" | "ministries" | "settings") {
+    const params = new URLSearchParams(searchParams.toString());
+    if (id === "requests") {
+      params.delete("tab");
+    } else {
+      params.set("tab", id);
+    }
+    router.replace(`/admin/bx-reservations?${params.toString()}`);
+  }
 
   // ── Users tab state ──────────────────────────────────────────────────────────
   const [userSearch, setUserSearch] = useState("");
@@ -320,29 +335,7 @@ Send this to ${req.name} (${req.email}).`);
         </button>
       </header>
 
-      {/* Tab nav */}
-      <div className="border-b border-white/10 bg-[var(--bbc-navy)]">
-        <div className="max-w-7xl mx-auto px-4 flex gap-1">
-          {([
-            { id: "requests",   label: "Requests" },
-            { id: "users",      label: "Users" },
-            { id: "ministries", label: "Ministries" },
-            { id: "settings",   label: "Settings" },
-          ] as const).map(({ id, label }) => (
-            <button
-              key={id}
-              onClick={() => setTab(id)}
-              className={`px-4 py-2.5 text-sm font-semibold transition-colors border-b-2 ${
-                tab === id
-                  ? "border-white text-white"
-                  : "border-transparent text-white/50 hover:text-white/80"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
+
 
       <div className="max-w-7xl mx-auto px-4 py-6 grid lg:grid-cols-[1fr_320px] gap-6">
         {/* Left: queue / settings */}
