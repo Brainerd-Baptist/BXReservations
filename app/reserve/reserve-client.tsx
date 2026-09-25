@@ -281,7 +281,7 @@ function ContactStep({
 
 function BuilderStep({
   days, setDays, startDate, setStartDate, endDate, setEndDate,
-  defaultHeadcount, setDefaultHeadcount, spaceMode, breakoutGroupSize, setBreakoutGroupSize,
+  defaultHeadcount, setDefaultHeadcount, rawDefaultHeadcount, setRawDefaultHeadcount, spaceMode, breakoutGroupSize, setBreakoutGroupSize,
   isNP, blackoutRules, onBack, onNext,
 }: {
   days: DayConfig[];
@@ -289,6 +289,7 @@ function BuilderStep({
   startDate: string; setStartDate: (v: string) => void;
   endDate: string;   setEndDate:   (v: string) => void;
   defaultHeadcount: number; setDefaultHeadcount: (v: number) => void;
+  rawDefaultHeadcount: string; setRawDefaultHeadcount: (v: string) => void;
   spaceMode: SpaceMode;
   breakoutGroupSize: number; setBreakoutGroupSize: (v: number) => void;
   isNP: boolean;
@@ -1334,6 +1335,7 @@ export default function ReserveClient({ initialContact, userId }: ReserveClientP
             startDate={startDate} setStartDate={setStartDate}
             endDate={endDate} setEndDate={setEndDate}
             defaultHeadcount={defaultHeadcount} setDefaultHeadcount={setDefaultHeadcount}
+            rawDefaultHeadcount={rawDefaultHeadcount} setRawDefaultHeadcount={setRawDefaultHeadcount}
             spaceMode={spaceMode}
             breakoutGroupSize={breakoutGroupSize} setBreakoutGroupSize={setBreakoutGroupSize}
             isNP={contact.isNonProfit}
