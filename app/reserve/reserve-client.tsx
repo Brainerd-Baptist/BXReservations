@@ -44,6 +44,7 @@ interface DayConfig {
   customStart: string;
   customEnd: string;
   rooms: RoomSelection[];
+  timeSlot: "any" | "morning" | "afternoon" | "evening";
   availability: Record<string, Signal>;
   availabilityFetched: boolean;
 }
@@ -429,7 +430,7 @@ function BuilderStep({
     if (day.availabilityFetched) return;
     const roomIds = ROOMS.map(r => r.id).join(",");
     try {
-      const res = await fetch(`/api/availability?date=${day.date}&rooms=${roomIds}`);
+      const res = await fetch(`/api/availability?date=${day.date}&rooms=${roomIds}&timeSlot=${day.timeSlot}`);
       const data: Record<string, Signal> = await res.json();
       setDays(prev => prev.map(d =>
         d.date === day.date ? { ...d, availability: data, availabilityFetched: true } : d
@@ -571,6 +572,7 @@ function BuilderStep({
               onBreakoutGroupSize={setBreakoutGroupSize}
               onToggleInclude={() => updateDay(day.date, { included: !day.included })}
               onHeadcount={n => updateDay(day.date, { headcount: n })}
+              onTimeSlot={slot => updateDay(day.date, { timeSlot: slot, availabilityFetched: false, availability: Object.fromEntries(ROOMS.map(r => [r.id, "loading" as Signal])) })}
               onTimeBlock={tb => updateDay(day.date, { timeBlock: tb })}
               onCustomTime={(s, e2) => updateDay(day.date, { customStart: s, customEnd: e2 })}
               onToggleRoom={(roomId, role) => toggleRoom(day, roomId, role)}
@@ -625,7 +627,7 @@ function BuilderStep({
 
 function DayCard({
   day, dayIdx, total, isNP, spaceMode, breakoutGroupSize, onBreakoutGroupSize,
-  onToggleInclude, onHeadcount, onTimeBlock, onCustomTime,
+  onToggleInclude, onHeadcount, onTimeSlot, onTimeBlock, onCustomTime,
   onToggleRoom, onUpdateRoom, onCopyToNext, onApplyToAll,
 }: {
   day: DayConfig; dayIdx: number; total: number; isNP: boolean;
@@ -634,6 +636,7 @@ function DayCard({
   onBreakoutGroupSize: (n: number) => void;
   onToggleInclude: () => void;
   onHeadcount: (n: number) => void;
+  onTimeSlot: (slot: "any" | "morning" | "afternoon" | "evening") => void;
   onTimeBlock: (tb: TimeBlockId) => void;
   onCustomTime: (start: string, end: string) => void;
   onToggleRoom: (roomId: string, role: "main" | "extra") => void;
@@ -706,6 +709,32 @@ function DayCard({
               </div>
             </div>
             <div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Time of day</label>
+                <div className="flex gap-1 flex-wrap">
+                  {(["any", "morning", "afternoon", "evening"] as const).map(slot => {
+                    const labels: Record<string, string> = {
+                      any: "Any time",
+                      morning: "Morning (8a–12p)",
+                      afternoon: "Afternoon (12p–5p)",
+                      evening: "Evening (5p–10p)",
+                    };
+                    return (
+                      <button
+                        key={slot}
+                        onClick={() => onTimeSlot(slot)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                          day.timeSlot === slot
+                            ? "bg-[#00205B] text-white"
+                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        }`}
+                      >
+                        {labels[slot]}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Time block</label>
               <div className="flex gap-1 flex-wrap">
                 {TIME_BLOCKS.map(tb => (

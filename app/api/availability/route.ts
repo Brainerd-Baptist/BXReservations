@@ -16,34 +16,52 @@ const ROOM_RESOURCE_IDS: Record<string, number> = {
 
 // ─── PCO EventResourceRequest approval_status → availability signal ───────────
 type Signal = "available" | "ask" | "unavailable";
-// PCO returns both full words and single-letter abbreviations depending on context.
 const STATUS_SIGNAL: Record<string, Signal> = {
   approved: "unavailable", A: "unavailable",
   pending:  "ask",         P: "ask",
   rejected: "available",   R: "available",
 };
 
+// ─── ET timezone helpers ──────────────────────────────────────────────────────
+// Returns UTC offset in hours (positive = hours behind UTC) for Eastern Time on a given date.
+// EDT (UTC-4) runs 2nd Sunday in March → 1st Sunday in November; EST (UTC-5) otherwise.
+function etUtcOffsetHours(dateStr: string): number {
+  const d = new Date(`${dateStr}T12:00:00Z`);
+  const yr = d.getUTCFullYear();
+  const mar1 = new Date(Date.UTC(yr, 2, 1));
+  const dstStart = new Date(Date.UTC(yr, 2, 1 + ((7 - mar1.getUTCDay()) % 7) + 7));
+  const nov1 = new Date(Date.UTC(yr, 10, 1));
+  const dstEnd = new Date(Date.UTC(yr, 10, 1 + ((7 - nov1.getUTCDay()) % 7)));
+  return d >= dstStart && d < dstEnd ? 4 : 5; // EDT=UTC-4, EST=UTC-5
+}
+
+// Convert a local ET hour (0–24) on a given date to a UTC ISO string.
+function etToUtc(dateStr: string, hourET: number, offsetH: number): string {
+  const base = new Date(`${dateStr}T00:00:00Z`);
+  base.setUTCMinutes(base.getUTCMinutes() + hourET * 60 + offsetH * 60);
+  return base.toISOString().replace(/\.\d{3}Z$/, "Z");
+}
+
+// Time-of-day slot → [startHourET, endHourET]
+type TimeSlot = "any" | "morning" | "afternoon" | "evening";
+const SLOT_HOURS: Record<TimeSlot, [number, number]> = {
+  any:       [0,  24],
+  morning:   [8,  12],
+  afternoon: [12, 17],
+  evening:   [17, 22],
+};
+
 // ─── PCO API helper ────────────────────────────────────────────────────────────
-// NOTE: PCO uses PHP-style bracket notation in query params (e.g. where[field][op]).
-// URLSearchParams encodes brackets as %5B%5D which PCO ignores, so we build
-// the query string manually to keep raw brackets in keys.
-async function pcoGet(
-  path: string,
-  params?: Record<string, string>
-): Promise<unknown> {
+async function pcoGet(path: string, params?: Record<string, string>): Promise<unknown> {
   const appId = process.env.PCO_APP_ID;
   const secret = process.env.PCO_SECRET;
   if (!appId || !secret) throw new Error("PCO_APP_ID / PCO_SECRET not configured");
   const auth = Buffer.from(`${appId}:${secret}`).toString("base64");
-
   const base = `https://api.planningcenteronline.com/calendar/v2${path}`;
   const queryString = params
-    ? Object.entries(params)
-        .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
-        .join("&")
+    ? Object.entries(params).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join("&")
     : "";
   const fullUrl = queryString ? `${base}?${queryString}` : base;
-
   const res = await fetch(fullUrl, {
     headers: { Authorization: `Basic ${auth}` },
     cache: "no-store",
@@ -58,16 +76,11 @@ async function pcoGet(
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface PcoBooking {
   id: string;
-  relationships?: {
-    event_resource_request?: { data?: { id: string } };
-  };
+  relationships?: { event_resource_request?: { data?: { id: string } } };
 }
 interface PcoEventResourceRequest {
-  id: string;
-  type: string;
-  attributes: {
-    approval_status?: string;
-  };
+  id: string; type: string;
+  attributes: { approval_status?: string };
 }
 interface PcoBookingsData {
   data: PcoBooking[];
@@ -77,6 +90,7 @@ interface PcoBookingsData {
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const date = searchParams.get("date"); // YYYY-MM-DD
+  const timeSlotParam = (searchParams.get("timeSlot") ?? "any") as TimeSlot;
   const roomParam = searchParams.get("rooms");
 
   if (!date) {
@@ -84,48 +98,38 @@ export async function GET(req: NextRequest) {
   }
 
   const rooms = roomParam
-    ? roomParam.split(",").map((r) => r.trim())
+    ? roomParam.split(",").map(r => r.trim())
     : Object.keys(ROOM_RESOURCE_IDS);
 
-  // Overlap window: booking starts before end-of-day AND ends after start-of-day
-  // T00:00:01Z: a booking ending exactly at midnight belongs to the prior day
-  const startOfDay = `${date}T00:00:01Z`;
-  const endOfDay = `${date}T23:59:59Z`;
+  const slot: TimeSlot = SLOT_HOURS[timeSlotParam] ? timeSlotParam : "any";
+  const [startHour, endHour] = SLOT_HOURS[slot];
+  const offset = etUtcOffsetHours(date);
+
+  // Query PCO for bookings that overlap the requested ET time window
+  const slotStartUtc = etToUtc(date, startHour, offset);
+  const slotEndUtc   = etToUtc(date, endHour,   offset);
 
   const result: Record<string, Signal> = {};
 
   await Promise.all(
     rooms.map(async (roomId) => {
       const resourceId = ROOM_RESOURCE_IDS[roomId];
-      if (!resourceId) {
-        result[roomId] = "available";
-        return;
-      }
+      if (!resourceId) { result[roomId] = "available"; return; }
 
       try {
-        // Use the resource-scoped path: /resources/{id}/resource_bookings
-        // IMPORTANT: "where[resource_id]" is NOT a valid flat filter on
-        // /resource_bookings — PCO silently ignores unknown where[] keys and
-        // returns all org-wide bookings, which poisons every room's status.
-        // The scoped endpoint is the correct way to filter by resource.
         const bookingsData = (await pcoGet(
           `/resources/${resourceId}/resource_bookings`,
           {
-            "where[starts_at][lte]": endOfDay,
-            "where[ends_at][gte]": startOfDay,
+            "where[starts_at][lte]": slotEndUtc,
+            "where[ends_at][gte]": slotStartUtc,
             include: "event_resource_request",
             per_page: "100",
           }
         )) as PcoBookingsData;
 
         const bookings = bookingsData.data ?? [];
+        if (bookings.length === 0) { result[roomId] = "available"; return; }
 
-        if (bookings.length === 0) {
-          result[roomId] = "available";
-          return;
-        }
-
-        // Build map: event_resource_request_id -> approval_status
         const requestStatus = new Map<string, string>();
         for (const inc of bookingsData.included ?? []) {
           if (inc.type === "EventResourceRequest") {
@@ -134,27 +138,16 @@ export async function GET(req: NextRequest) {
           }
         }
 
-        // Priority: approved -> unavailable | all rejected -> available | else -> ask
         let hasApproved = false;
         let allRejected = bookings.length > 0;
 
         for (const booking of bookings) {
           const reqId = booking.relationships?.event_resource_request?.data?.id;
-          if (!reqId) {
-            allRejected = false; // booking with no request — treat conservatively
-            continue;
-          }
-
+          if (!reqId) { allRejected = false; continue; }
           const status = requestStatus.get(reqId) ?? "pending";
           const signal = STATUS_SIGNAL[status] ?? "ask";
-
-          if (signal === "unavailable") {
-            hasApproved = true;
-            break;
-          }
-          if (signal !== "available") {
-            allRejected = false;
-          }
+          if (signal === "unavailable") { hasApproved = true; break; }
+          if (signal !== "available") allRejected = false;
         }
 
         if (hasApproved) result[roomId] = "unavailable";
@@ -168,8 +161,6 @@ export async function GET(req: NextRequest) {
   );
 
   return NextResponse.json(result, {
-    headers: {
-      "Cache-Control": "public, s-maxage=300, stale-while-revalidate=60",
-    },
+    headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=60" },
   });
 }
