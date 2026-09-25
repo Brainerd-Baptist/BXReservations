@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import SiteHeader from "./site-header";
+import ScrollReveal from "./components/scroll-reveal";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
@@ -23,7 +24,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
-const APP_VERSION = "1.0.18";
+const APP_VERSION = "1.0.19";
 
 export default function RootLayout({
   children,
@@ -40,6 +41,7 @@ export default function RootLayout({
       <body className="flex flex-col min-h-screen">
         <SiteHeader />
         <main className="flex-1 pt-14">{children}</main>
+        <ScrollReveal />
 
         {/* Version footer */}
         <footer className="border-t py-3 px-4" style={{ borderColor: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>
