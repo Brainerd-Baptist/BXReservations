@@ -857,6 +857,7 @@ function ReviewStep({
   bookingNumber: string;
   submitError: string;
   reservationId?: string;
+  userId?: string | null;
 }) {
   const activeDays = days.filter(d => d.included);
   const total = totalEstimate(days, isNP);
