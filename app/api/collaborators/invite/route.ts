@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
   // ── Ownership check — caller must own (or co_own) the reservation ─────────
   const { data: reservation, error: resErr } = await supabase
     .from("reservations")
-    .select("id, submitter_id")
+    .select("id, submitter_id, event_name")
     .eq("id", reservationId)
     .single();
 
@@ -51,7 +51,6 @@ export async function POST(req: NextRequest) {
   const isOwner = reservation.submitter_id === user.id;
 
   if (!isOwner) {
-    // Also allow co_owners
     const { data: collab } = await supabase
       .from("reservation_collaborators")
       .select("collab_role")
@@ -67,10 +66,7 @@ export async function POST(req: NextRequest) {
 
   // ── Guard: don't invite yourself ─────────────────────────────────────────
   if (normalizedEmail === user.email?.toLowerCase()) {
-    return NextResponse.json(
-      { error: "You can't invite yourself." },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "You can't invite yourself." }, { status: 400 });
   }
 
   // ── Guard: no duplicate pending invites ───────────────────────────────────
@@ -82,10 +78,7 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (existing) {
-    return NextResponse.json(
-      { error: "This person has already been invited." },
-      { status: 409 }
-    );
+    return NextResponse.json({ error: "This person has already been invited." }, { status: 409 });
   }
 
   // ── Insert the invite ─────────────────────────────────────────────────────
@@ -95,10 +88,10 @@ export async function POST(req: NextRequest) {
     .from("reservation_collaborators")
     .insert({
       reservation_id: reservationId,
-      invited_email: normalizedEmail,
-      collab_role: role,
-      invite_token: token,
-      invited_by: user.id,
+      invited_email:  normalizedEmail,
+      collab_role:    role,
+      invite_token:   token,
+      invited_by:     user.id,
     });
 
   if (insertErr) {
@@ -106,11 +99,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Failed to create invite" }, { status: 500 });
   }
 
-  // ── TODO: send invite email ───────────────────────────────────────────────
-  // When an email service is wired up, send a message containing:
-  //   Accept link: <NEXT_PUBLIC_SITE_URL>/account/invites?token=<token>
-  // For now the token is stored; the invitee can be given the link manually
-  // or via a future Supabase Edge Function trigger.
+  // ── Send invite email (non-blocking) ─────────────────────────────────────
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://bx.brainerdhq.app").replace(/\/$/, "");
+  const acceptUrl = `${siteUrl}/account/invites?token=${token}`;
+
+  // Fetch inviter display name
+  const { data: inviterProfile } = await supabase
+    .from("bx_user_profiles")
+    .select("display_name")
+    .eq("user_id", user.id)
+    .single();
+
+  const inviterName = (inviterProfile?.display_name ?? user.email ?? "A team member") as string;
+  const eventName   = (reservation.event_name ?? "a reservation") as string;
+
+  import("@/lib/email").then(({ sendCollaboratorInvite }) => {
+    sendCollaboratorInvite({ to: normalizedEmail, inviterName, eventName, role, acceptUrl })
+      .catch(err => console.error("[collaborators/invite] email send failed:", err));
+  });
 
   return NextResponse.json({ ok: true });
 }

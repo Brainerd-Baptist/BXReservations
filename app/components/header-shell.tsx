@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import NavSidebar from "./nav-sidebar";
 import ProfileMenu from "./profile-menu";
+import NotificationBell from "./notification-bell";
 
 interface HeaderShellProps {
   initials: string;
@@ -111,6 +112,10 @@ export default function HeaderShell({
             >
               New request
             </Link>
+
+            {hasUser && (
+              <NotificationBell href="/account" />
+            )}
 
             {hasUser && userId && email ? (
               <ProfileMenu
