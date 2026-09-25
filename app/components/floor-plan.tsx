@@ -216,6 +216,15 @@ export function FloorPlan({ activeIds, onRoomClick, className = "" }: FloorPlanP
                 onClick={() => handleClick(shape)}
                 onMouseEnter={() => shape.id && shape.reservable && setHoverId(shape.id)}
                 onMouseLeave={() => setHoverId(null)}
+                onTouchStart={(e) => {
+                  if (!shape.id || !shape.reservable) return;
+                  e.preventDefault();
+                  if (hoverId === shape.id) {
+                    handleClick(shape);
+                  } else {
+                    setHoverId(shape.id);
+                  }
+                }}
               >
                 <rect
                   x={shape.x + 1} y={shape.y + 1}
@@ -318,7 +327,7 @@ export function FloorPlan({ activeIds, onRoomClick, className = "" }: FloorPlanP
           </div>
         ) : (
           <span className="text-xs" style={{ color: "var(--bx-slate)" }}>
-            Hover a room to preview · Click to explore
+            Tap a room to preview · Tap again to explore
           </span>
         )}
       </div>
