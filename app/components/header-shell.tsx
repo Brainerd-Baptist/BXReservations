@@ -45,7 +45,7 @@ export default function HeaderShell({
           borderColor: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)",
         }}
       >
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
 
           {/* Left: hamburger + logo */}
           <div className="flex items-center gap-1 shrink-0">
