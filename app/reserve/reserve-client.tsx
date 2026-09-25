@@ -2,6 +2,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { BlackoutRule, isDateBlackedOut, isSlotBlackedOut, blackoutReason } from "@/lib/blackouts";
+import { COLLAB_ROLE_LABELS, COLLAB_ROLE_DESCRIPTIONS, type CollabRole } from "@/lib/roles";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -944,7 +945,7 @@ function DayCard({
 // ─── Step 2: Review ───────────────────────────────────────────────────────────
 
 function ReviewStep({
-  contact, days, isNP, notes, setNotes, onBack, onSubmit, submitted, submitting, bookingNumber, submitError,
+  contact, days, isNP, notes, setNotes, onBack, onSubmit, submitted, submitting, bookingNumber, submitError, reservationId,
 }: {
   contact: ContactInfo;
   days: DayConfig[];
@@ -956,6 +957,7 @@ function ReviewStep({
   submitting: boolean;
   bookingNumber: string;
   submitError: string;
+  reservationId?: string;
 }) {
   const activeDays = days.filter(d => d.included);
   const total = totalEstimate(days, isNP);
@@ -1004,6 +1006,11 @@ function ReviewStep({
             </a>
           </div>
         </div>
+
+        {/* ── Share this reservation ─────────────────────── */}
+        {reservationId && (
+          <ShareSection reservationId={reservationId} />
+        )}
 
         <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl text-left">
           <p className="text-sm font-semibold text-amber-800 mb-1">Next step: Upload your liability insurance</p>
@@ -1131,6 +1138,156 @@ function ReviewStep({
   );
 }
 
+
+// ─── ShareSection: collaborator invite after booking confirmed ────────────────
+
+interface MockCollaborator {
+  id: string;
+  email: string;
+  role: CollabRole;
+  display_name?: string;
+  accepted: boolean;
+}
+
+function ShareSection({ reservationId }: { reservationId: string }) {
+  const [inviteEmail, setInviteEmail]     = useState("");
+  const [inviteRole, setInviteRole]       = useState<CollabRole>("viewer");
+  const [inviting, setInviting]           = useState(false);
+  const [inviteError, setInviteError]     = useState("");
+  const [collaborators, setCollaborators] = useState<MockCollaborator[]>([]);
+  const [revoking, setRevoking]           = useState<string | null>(null);
+
+  async function handleInvite() {
+    const email = inviteEmail.trim().toLowerCase();
+    if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) {
+      setInviteError("Please enter a valid email address.");
+      return;
+    }
+    if (collaborators.some(c => c.email === email)) {
+      setInviteError("This person has already been invited.");
+      return;
+    }
+    setInviting(true);
+    setInviteError("");
+    try {
+      const res = await fetch("/api/collaborators/invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reservationId, email, role: inviteRole }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setInviteError((data as { error?: string }).error ?? "Failed to send invite. Try again.");
+        return;
+      }
+      // Optimistic update
+      setCollaborators(prev => [
+        ...prev,
+        { id: crypto.randomUUID(), email, role: inviteRole, accepted: false },
+      ]);
+      setInviteEmail("");
+    } catch {
+      setInviteError("Network error. Please try again.");
+    } finally {
+      setInviting(false);
+    }
+  }
+
+  async function handleRevoke(collaboratorId: string) {
+    setRevoking(collaboratorId);
+    try {
+      await fetch(`/api/collaborators/${collaboratorId}`, { method: "DELETE" });
+      setCollaborators(prev => prev.filter(c => c.id !== collaboratorId));
+    } catch {
+      // fail silently — optimistic remove already happened
+    } finally {
+      setRevoking(null);
+    }
+  }
+
+  return (
+    <div className="mt-6 p-4 bg-ink-soft border border-brass/30 rounded-2xl text-left">
+      <div className="flex items-center gap-2 mb-3">
+        <svg className="w-4 h-4 text-brass shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
+        </svg>
+        <p className="text-sm font-semibold text-parchment">Share this reservation</p>
+      </div>
+      <p className="text-xs text-slate mb-4">
+        Invite a co-organizer or viewer. They&apos;ll get an email with a link to access the reservation.
+      </p>
+
+      {/* Invite form */}
+      <div className="flex flex-col sm:flex-row gap-2 mb-2">
+        <input
+          type="email"
+          value={inviteEmail}
+          onChange={e => { setInviteEmail(e.target.value); setInviteError(""); }}
+          onKeyDown={e => { if (e.key === "Enter") void handleInvite(); }}
+          placeholder="colleague@example.com"
+          className="flex-1 border border-parchment/20 rounded-xl px-3 py-2 text-sm bg-ink text-parchment placeholder:text-slate/50 focus:outline-none focus:ring-2 focus:ring-brass/30 focus:border-brass transition-colors"
+        />
+        <select
+          value={inviteRole}
+          onChange={e => setInviteRole(e.target.value as CollabRole)}
+          className="border border-parchment/20 rounded-xl px-3 py-2 text-sm bg-ink text-parchment focus:outline-none focus:ring-2 focus:ring-brass/30 focus:border-brass transition-colors"
+        >
+          {(["co_owner", "viewer"] as const).map(role => (
+            <option key={role} value={role}>{COLLAB_ROLE_LABELS[role]}</option>
+          ))}
+        </select>
+        <button
+          onClick={() => { void handleInvite(); }}
+          disabled={inviting || !inviteEmail.trim()}
+          className="px-4 py-2 rounded-xl bg-brass text-ink text-sm font-semibold hover:bg-brass/90 disabled:opacity-50 transition-colors whitespace-nowrap"
+        >
+          {inviting ? "Sending…" : "Invite"}
+        </button>
+      </div>
+
+      {/* Role description hint */}
+      <p className="text-xs text-slate mb-3 leading-relaxed">
+        <span className="font-medium text-parchment/80">{COLLAB_ROLE_LABELS[inviteRole]}:</span>{" "}
+        {COLLAB_ROLE_DESCRIPTIONS[inviteRole]}
+      </p>
+
+      {inviteError && (
+        <p className="text-xs text-red-400 mb-3">{inviteError}</p>
+      )}
+
+      {/* Collaborator list */}
+      {collaborators.length > 0 && (
+        <div className="border-t border-parchment/10 pt-3 space-y-2">
+          {collaborators.map(c => (
+            <div key={c.id} className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm text-parchment truncate">
+                  {c.display_name ?? c.email}
+                </p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-xs text-slate">{COLLAB_ROLE_LABELS[c.role]}</span>
+                  {!c.accepted && (
+                    <span className="inline-flex items-center text-[10px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full">
+                      Invite pending
+                    </span>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={() => void handleRevoke(c.id)}
+                disabled={revoking === c.id}
+                className="text-xs text-slate hover:text-red-400 disabled:opacity-50 transition-colors shrink-0 px-2 py-1 rounded-lg hover:bg-parchment/5"
+              >
+                {revoking === c.id ? "Removing…" : "Revoke"}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Shared primitives ────────────────────────────────────────────────────────
 
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
@@ -1156,6 +1313,7 @@ export default function ReserveClient({ initialContact }: ReserveClientProps) {
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [bookingNumber, setBookingNumber] = useState("");
+  const [reservationId, setReservationId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
@@ -1205,6 +1363,7 @@ export default function ReserveClient({ initialContact }: ReserveClientProps) {
         return;
       }
       if (data.bookingNumber) setBookingNumber(data.bookingNumber);
+      if (data.reservationId) setReservationId(data.reservationId as string);
       setSubmitted(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
@@ -1265,6 +1424,7 @@ export default function ReserveClient({ initialContact }: ReserveClientProps) {
             submitting={submitting}
             submitError={submitError}
             bookingNumber={bookingNumber}
+            reservationId={reservationId ?? undefined}
           />
         )}
       </div>
