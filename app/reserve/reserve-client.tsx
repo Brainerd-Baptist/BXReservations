@@ -607,15 +607,9 @@ function BuilderStep({
         </div>
       )}
 
-      {submitError && (
-        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
-          {submitError}
-        </div>
-      )}
-
       <div className="mt-6 flex justify-between">
-        <button onClick={onBack} disabled={submitting}
-          className="px-6 py-3 rounded-xl text-gray-500 font-medium text-sm hover:bg-gray-100 disabled:opacity-40 transition-colors">
+        <button onClick={onBack}
+          className="px-6 py-3 rounded-xl text-gray-500 font-medium text-sm hover:bg-gray-100 transition-colors">
           ← Back
         </button>
         <button onClick={onNext} disabled={!canContinue}
