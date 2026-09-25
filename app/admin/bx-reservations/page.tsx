@@ -989,31 +989,33 @@ function UsersTab({
           const pending = pendingRoles[user.id];
           const isSaving = savingRole === user.id;
           return (
-            <div key={user.id} className="flex flex-wrap items-center gap-4 px-5 py-4">
-              {/* Identity */}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-parchment truncate">{user.name}</p>
-                <p className="text-xs text-slate truncate">{user.email}</p>
-              </div>
-
-              {/* Stats */}
-              <div className="text-right hidden sm:block flex-shrink-0">
-                <p className="text-xs text-slate">{user.reservationCount} reservations</p>
-                <p className="text-xs text-slate/60">Active {user.lastActive}</p>
-              </div>
-
-              {/* Current role badge */}
-              <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold border flex-shrink-0 ${ROLE_BADGE_COLORS[user.role]}`}>
-                {ROLE_LABELS_DISPLAY[user.role]}
-              </span>
-
-              {/* Role reassignment (system_admin+ only in production) */}
-              {user.role !== "owner" && (
+            <div key={user.id} className="px-5 py-4 space-y-2.5">
+              {/* Top row: identity + stats + badge */}
+              <div className="flex items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-parchment truncate">{user.name}</p>
+                  <p className="text-xs text-slate truncate">{user.email}</p>
+                </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
+                  {/* Stats — desktop only */}
+                  <div className="text-right hidden sm:block">
+                    <p className="text-xs text-slate">{user.reservationCount} reservations</p>
+                    <p className="text-xs text-slate/60">Active {user.lastActive}</p>
+                  </div>
+                  {/* Role badge */}
+                  <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold border ${ROLE_BADGE_COLORS[user.role]}`}>
+                    {ROLE_LABELS_DISPLAY[user.role]}
+                  </span>
+                </div>
+              </div>
+
+              {/* Bottom row: role reassignment (system_admin+ only in production) */}
+              {user.role !== "owner" && (
+                <div className="flex items-center gap-2">
                   <select
                     value={pending || user.role}
                     onChange={e => setPendingRoles({ ...pendingRoles, [user.id]: e.target.value })}
-                    className="border border-parchment/20 rounded-lg px-2 py-1.5 text-xs bg-ink text-parchment"
+                    className="flex-1 min-w-0 border border-parchment/20 rounded-lg px-2 py-1.5 text-xs bg-ink text-parchment"
                   >
                     <option value="booking_admin">Booking Admin</option>
                     <option value="ministry_coordinator">Ministry Coordinator</option>
@@ -1023,7 +1025,7 @@ function UsersTab({
                     <button
                       onClick={() => saveRole(user.id)}
                       disabled={isSaving}
-                      className="btn-primary text-xs disabled:opacity-40"
+                      className="btn-primary text-xs disabled:opacity-40 flex-shrink-0"
                     >
                       {isSaving ? "Saving…" : "Save"}
                     </button>

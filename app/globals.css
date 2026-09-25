@@ -150,6 +150,7 @@
 * { box-sizing: border-box; }
 
 html {
+  background: var(--bx-ink, #f4f7fa);
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
 }
