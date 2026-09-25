@@ -1229,15 +1229,6 @@ export default function ReserveClient({ initialContact }: ReserveClientProps) {
 
   return (
     <div className="min-h-screen bg-ink">
-      {/* Header */}
-      <div className="bg-parchment text-ink py-6 px-4 mb-8">
-        <div className="max-w-3xl mx-auto">
-          <p className="text-xs font-semibold uppercase tracking-widest text-brass mb-1">BX Community Center</p>
-          <h1 className="text-2xl font-bold">Reserve a Space</h1>
-          <p className="text-blue-200 text-sm mt-1">Build your event, see real availability, and send your request — all in one place.</p>
-        </div>
-      </div>
-
       <div className="px-4 pb-16">
         <StepBar step={step} />
 

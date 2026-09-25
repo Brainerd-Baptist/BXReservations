@@ -49,31 +49,6 @@ export function RoomsClient() {
   return (
     <main className="min-h-screen" style={{ background: "var(--bx-ink)" }}>
 
-      {/* ── Hero ── */}
-      <section className="relative overflow-hidden" style={{ background: "var(--bx-ink-soft)" }}>
-        <div className="bx-bloom" aria-hidden="true" />
-        <div className="relative max-w-4xl mx-auto px-5 pt-12 pb-10 text-center">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-3" style={{ color: "var(--bx-brass)" }}>
-            BX Community Center
-          </p>
-          <h1 className="text-3xl sm:text-4xl font-bold mb-3" style={{ color: "var(--bx-parchment)" }}>
-            Our Spaces
-          </h1>
-          <p className="text-sm max-w-xl mx-auto leading-relaxed" style={{ color: "var(--bx-slate)" }}>
-            From a 500-seat auditorium to intimate breakout rooms — browse every space, see the photos, and find the right fit for your event.
-          </p>
-          <div className="mt-6">
-            <Link
-              href="/reserve"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm text-white transition-all hover:opacity-90 active:scale-[0.98]"
-              style={{ background: "var(--bx-brass)" }}
-            >
-              Reserve a Space →
-            </Link>
-          </div>
-        </div>
-      </section>
-
       {/* ── Filters ── */}
       <section className="sticky top-14 z-10 border-b" style={{ background: "color-mix(in srgb, var(--bx-ink) 92%, transparent)", backdropFilter: "blur(12px)", borderColor: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>
         <div className="max-w-5xl mx-auto px-4 py-3 flex flex-wrap gap-2 items-center">
