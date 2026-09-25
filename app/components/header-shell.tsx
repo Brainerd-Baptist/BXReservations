@@ -43,6 +43,7 @@ export default function HeaderShell({
         className="z-30 print:hidden fixed top-0 left-0 right-0 w-full border-b"
         style={{
           background: "var(--bx-ink-soft)",
+          paddingTop: "env(safe-area-inset-top)",
           borderColor: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)",
         }}
       >

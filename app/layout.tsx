@@ -22,9 +22,10 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  viewportFit: "cover",
 };
 
-const APP_VERSION = "1.0.40";
+const APP_VERSION = "1.0.41";
 
 export default function RootLayout({
   children,
@@ -40,7 +41,7 @@ export default function RootLayout({
       </head>
       <body className="flex flex-col min-h-screen">
         <SiteHeader />
-        <main className="flex-1 pt-14">{children}</main>
+        <main className="flex-1" style={{ paddingTop: "calc(3.5rem + env(safe-area-inset-top))" }}>{children}</main>
         <ScrollReveal />
 
         {/* Version footer */}
