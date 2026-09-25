@@ -13,6 +13,7 @@ function statusChip(status: string) {
     rejected:  { label: "Rejected",  bg: "#FEE2E2", color: "#991B1B" },
     cancelled: { label: "Cancelled", bg: "#F3F4F6", color: "#374151" },
     under_review: { label: "In Review", bg: "#E0E7FF", color: "#3730A3" },
+    pending_insurance: { label: "Pending Insurance", bg: "#FEF9C3", color: "#713F12" },
   };
   const s = map[status] ?? { label: status, bg: "#F3F4F6", color: "#374151" };
   return (
@@ -42,6 +43,28 @@ function formatDate(dateStr?: string | null, fallback?: string | null) {
   });
 }
 
+const ROOM_LABELS: Record<string, string> = {
+  "crosspointe-a": "Crosspointe A",
+  "crosspointe-b": "Crosspointe B",
+  "crosspointe-c": "Crosspointe C",
+  "crosstiesA": "CrossTies A",
+  "crosstiesB": "CrossTies B",
+  "crosstiesC": "CrossTies C",
+  "crosstiescafe": "CrossTies Café",
+  "crossing": "The Crossing",
+  "crossview": "CrossView",
+  "loft": "The Loft",
+};
+
+function parsePayload(payload: unknown) {
+  const p = payload as { days?: Array<{ date?: string; rooms?: Array<{ roomId?: string }> }>; contact?: { eventName?: string } } | null;
+  const firstDay = p?.days?.[0];
+  const startDate = firstDay?.date ?? null;
+  const roomId = firstDay?.rooms?.[0]?.roomId ?? null;
+  const space = roomId ? (ROOM_LABELS[roomId] ?? roomId) : null;
+  return { startDate, space };
+}
+
 export default async function ReservationsPage() {
   const { user } = await getUserAndRole();
   if (!user) redirect("/login");
@@ -63,33 +86,37 @@ export default async function ReservationsPage() {
 
   const { data: reservations } = await supabase
     .from("reservations")
-    .select("id, booking_number, created_at, status, event_name, space, start_date")
+    .select("id, booking_number, created_at, status, event_name, payload")
     .or(`user_id.eq.${user.id},contact_email.eq.${user.email}`)
-    .order("start_date", { ascending: false })
+    .order("created_at", { ascending: false })
     .limit(50);
 
   const { data: pendingInvites } = await supabase
     .from("reservation_collaborators")
-    .select("id, invite_token, collab_role, created_at, reservations(id, event_name, start_date, space)")
+    .select("id, invite_token, collab_role, created_at, reservations(id, event_name, payload)")
     .eq("invited_email", (user.email ?? "").toLowerCase())
     .is("accepted_at", null)
     .order("created_at", { ascending: false });
 
   const { data: sharedCollabs } = await supabase
     .from("reservation_collaborators")
-    .select("id, collab_role, reservations(id, event_name, start_date, space, status)")
+    .select("id, collab_role, reservations(id, event_name, payload, status)")
     .eq("user_id", user.id)
     .not("accepted_at", "is", null)
     .order("created_at", { ascending: false })
     .limit(20);
 
   const now = new Date();
-  const upcoming = (reservations ?? []).filter(
-    (r) => r.status !== "cancelled" && r.status !== "rejected" && new Date(r.start_date ?? r.created_at) >= now
-  );
-  const past = (reservations ?? []).filter(
-    (r) => r.status === "cancelled" || r.status === "rejected" || new Date(r.start_date ?? r.created_at) < now
-  );
+  const upcoming = (reservations ?? []).filter((r) => {
+    const { startDate } = parsePayload(r.payload);
+    const eventDate = startDate ? new Date(startDate) : new Date(r.created_at);
+    return r.status !== "cancelled" && r.status !== "rejected" && eventDate >= now;
+  });
+  const past = (reservations ?? []).filter((r) => {
+    const { startDate } = parsePayload(r.payload);
+    const eventDate = startDate ? new Date(startDate) : new Date(r.created_at);
+    return r.status === "cancelled" || r.status === "rejected" || eventDate < now;
+  });
 
   const sectionHeader = (label: string, count?: number, badge?: { label: string }) => (
     <div
@@ -194,10 +221,11 @@ export default async function ReservationsPage() {
             }}
           >
             {pendingInvites.map((inv, i) => {
-              const res = inv.reservations as unknown as { id: string; event_name?: string; start_date?: string; space?: string } | null;
-              const label = res?.event_name || res?.space || "A reservation";
-              const dateStr = res?.start_date
-                ? new Date(res.start_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+              const res = inv.reservations as unknown as { id: string; event_name?: string; payload?: unknown } | null;
+              const { startDate: resStart, space: resSpace } = parsePayload(res?.payload);
+              const label = res?.event_name || resSpace || "A reservation";
+              const dateStr = resStart
+                ? new Date(resStart).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
                 : null;
               const roleLabel = inv.collab_role === "co_owner" ? "Co-owner" : "Viewer";
               return (
@@ -287,13 +315,18 @@ export default async function ReservationsPage() {
                 }
               >
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: "0.9375rem", color: "var(--bx-parchment)" }}>
-                    {r.event_name || r.space || "Reservation"}
-                  </div>
-                  <div style={{ fontSize: "0.8125rem", color: "var(--bx-slate)", marginTop: "0.15rem" }}>
-                    {formatDate(r.start_date, r.created_at)}
-                    {r.booking_number ? ` · ${r.booking_number}` : ""}
-                  </div>
+                  {(() => {
+                    const { startDate, space } = parsePayload(r.payload);
+                    return (<>
+                      <div style={{ fontWeight: 600, fontSize: "0.9375rem", color: "var(--bx-parchment)" }}>
+                        {r.event_name || space || "Reservation"}
+                      </div>
+                      <div style={{ fontSize: "0.8125rem", color: "var(--bx-slate)", marginTop: "0.15rem" }}>
+                        {formatDate(startDate, r.created_at)}
+                        {r.booking_number ? ` · ${r.booking_number}` : ""}
+                      </div>
+                    </>);
+                  })()}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                   {statusChip(r.status)}
@@ -320,9 +353,10 @@ export default async function ReservationsPage() {
             }}
           >
             {sharedCollabs.map((collab, i) => {
-              const res = collab.reservations as unknown as { id: string; event_name?: string; start_date?: string; space?: string; status?: string } | null;
-              const label = res?.event_name || res?.space || "Shared reservation";
-              const dateStr = formatDate(res?.start_date);
+              const res = collab.reservations as unknown as { id: string; event_name?: string; payload?: unknown; status?: string } | null;
+              const { startDate: resStart2, space: resSpace2 } = parsePayload(res?.payload);
+              const label = res?.event_name || resSpace2 || "Shared reservation";
+              const dateStr = formatDate(resStart2);
               const roleLabel = collab.collab_role === "co_owner" ? "Co-owner" : "Viewer";
               return (
                 <Link
@@ -401,13 +435,18 @@ export default async function ReservationsPage() {
                 }
               >
                 <div>
-                  <div style={{ fontWeight: 500, fontSize: "0.875rem", color: "var(--bx-parchment)" }}>
-                    {r.event_name || r.space || "Reservation"}
-                  </div>
-                  <div style={{ fontSize: "0.75rem", color: "var(--bx-slate)", marginTop: "0.1rem" }}>
-                    {formatDate(r.start_date, r.created_at)}
-                    {r.booking_number ? ` · ${r.booking_number}` : ""}
-                  </div>
+                  {(() => {
+                    const { startDate, space } = parsePayload(r.payload);
+                    return (<>
+                      <div style={{ fontWeight: 500, fontSize: "0.875rem", color: "var(--bx-parchment)" }}>
+                        {r.event_name || space || "Reservation"}
+                      </div>
+                      <div style={{ fontSize: "0.75rem", color: "var(--bx-slate)", marginTop: "0.1rem" }}>
+                        {formatDate(startDate, r.created_at)}
+                        {r.booking_number ? ` · ${r.booking_number}` : ""}
+                      </div>
+                    </>);
+                  })()}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                   {statusChip(r.status)}
