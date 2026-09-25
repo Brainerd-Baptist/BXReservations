@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
   // ── Ownership check — caller must own (or co_own) the reservation ─────────
   const { data: reservation, error: resErr } = await supabase
     .from("reservations")
-    .select("id, submitter_id, event_name")
+    .select("id, user_id, event_name")
     .eq("id", reservationId)
     .single();
 
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Reservation not found" }, { status: 404 });
   }
 
-  const isOwner = reservation.submitter_id === user.id;
+  const isOwner = reservation.user_id === user.id;
 
   if (!isOwner) {
     const { data: collab } = await supabase

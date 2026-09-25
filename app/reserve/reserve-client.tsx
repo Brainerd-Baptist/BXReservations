@@ -1092,36 +1092,57 @@ function ShareSection({ reservationId }: { reservationId: string }) {
   const [revoking, setRevoking]           = useState<string | null>(null);
 
   async function handleInvite() {
-    const email = inviteEmail.trim().toLowerCase();
-    if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) {
-      setInviteError("Please enter a valid email address.");
+    // Support comma-separated list of emails
+    const emails = inviteEmail
+      .split(/[,\s]+/)
+      .map(e => e.trim().toLowerCase())
+      .filter(Boolean);
+
+    if (emails.length === 0) {
+      setInviteError("Please enter at least one email address.");
       return;
     }
-    if (collaborators.some(c => c.email === email)) {
-      setInviteError("This person has already been invited.");
+    const invalid = emails.find(e => !/^[^@]+@[^@]+\.[^@]+$/.test(e));
+    if (invalid) {
+      setInviteError(`"${invalid}" doesn't look like a valid email address.`);
       return;
     }
+    const alreadyAdded = emails.find(e => collaborators.some(c => c.email === e));
+    if (alreadyAdded) {
+      setInviteError(`${alreadyAdded} has already been invited.`);
+      return;
+    }
+
     setInviting(true);
     setInviteError("");
+    const errors: string[] = [];
+    const added: MockCollaborator[] = [];
+
     try {
-      const res = await fetch("/api/collaborators/invite", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reservationId, email, role: inviteRole }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setInviteError((data as { error?: string }).error ?? "Failed to send invite. Try again.");
-        return;
+      for (const email of emails) {
+        try {
+          const res = await fetch("/api/collaborators/invite", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ reservationId, email, role: inviteRole }),
+          });
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            errors.push(`${email}: ${(data as { error?: string }).error ?? "failed"}`);
+          } else {
+            added.push({ id: crypto.randomUUID(), email, role: inviteRole, accepted: false });
+          }
+        } catch {
+          errors.push(`${email}: network error`);
+        }
       }
-      // Optimistic update
-      setCollaborators(prev => [
-        ...prev,
-        { id: crypto.randomUUID(), email, role: inviteRole, accepted: false },
-      ]);
-      setInviteEmail("");
-    } catch {
-      setInviteError("Network error. Please try again.");
+      if (added.length > 0) {
+        setCollaborators(prev => [...prev, ...added]);
+        setInviteEmail("");
+      }
+      if (errors.length > 0) {
+        setInviteError(errors.join(" · "));
+      }
     } finally {
       setInviting(false);
     }
@@ -1158,7 +1179,7 @@ function ShareSection({ reservationId }: { reservationId: string }) {
           value={inviteEmail}
           onChange={e => { setInviteEmail(e.target.value); setInviteError(""); }}
           onKeyDown={e => { if (e.key === "Enter") void handleInvite(); }}
-          placeholder="colleague@example.com"
+          placeholder="colleague@example.com, another@example.com"
           className="flex-1 border border-parchment/20 rounded-xl px-3 py-2 text-sm bg-ink text-parchment placeholder:text-slate/50 focus:outline-none focus:ring-2 focus:ring-brass/30 focus:border-brass transition-colors"
         />
         <select
