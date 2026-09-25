@@ -136,7 +136,7 @@ export function RoomsClient() {
               if (rooms.length === 0) return null;
               const floorLabel = f === "main" ? "Main Level" : f === "upper" ? "Upper Level" : "Lower Level";
               return (
-                <div key={f} className="mb-10 bx-fade-in">
+                <div key={f} className="mb-10">
                   {floor === "all" && (
                     <div className="flex items-center gap-3 mb-4">
                       <span className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: "var(--bx-slate)" }}>

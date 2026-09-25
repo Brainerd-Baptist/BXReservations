@@ -2,29 +2,46 @@
 import { useEffect } from "react";
 
 /**
- * Attaches an IntersectionObserver to every .bx-fade-in element on the page.
- * When an element scrolls into view it gets the .bx-visible class, triggering
- * the CSS transition defined in globals.css.
+ * Attaches an IntersectionObserver to every .bx-fade-in element.
+ * A MutationObserver watches for new elements added after initial render
+ * (e.g. client components that hydrate late) and observes those too.
  */
 export default function ScrollReveal() {
   useEffect(() => {
-    const els = document.querySelectorAll<HTMLElement>(".bx-fade-in");
-    if (!els.length) return;
+    const seen = new WeakSet<Element>();
 
-    const observer = new IntersectionObserver(
+    const io = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             entry.target.classList.add("bx-visible");
-            observer.unobserve(entry.target); // fire once
+            io.unobserve(entry.target);
           }
         });
       },
-      { threshold: 0.12 }
+      { threshold: 0.08 }
     );
 
-    els.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
+    function observe(root: Document | Element = document) {
+      root.querySelectorAll<HTMLElement>(".bx-fade-in").forEach((el) => {
+        if (!seen.has(el)) {
+          seen.add(el);
+          io.observe(el);
+        }
+      });
+    }
+
+    // Observe elements already in the DOM
+    observe();
+
+    // Watch for elements added later (client-component hydration)
+    const mo = new MutationObserver(() => observe());
+    mo.observe(document.body, { childList: true, subtree: true });
+
+    return () => {
+      io.disconnect();
+      mo.disconnect();
+    };
   }, []);
 
   return null;
