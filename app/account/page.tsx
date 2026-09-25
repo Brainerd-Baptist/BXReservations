@@ -36,6 +36,23 @@ export default async function AccountPage() {
     .order("created_at", { ascending: false })
     .limit(20);
 
+  // Pending invites — rows where invited_email matches and accepted_at is null
+  const { data: pendingInvites } = await supabase
+    .from("reservation_collaborators")
+    .select("id, invite_token, collab_role, created_at, reservations(id, event_name, start_date, space)")
+    .eq("invited_email", (user.email ?? "").toLowerCase())
+    .is("accepted_at", null)
+    .order("created_at", { ascending: false });
+
+  // Shared with me — accepted collaborations
+  const { data: sharedCollabs } = await supabase
+    .from("reservation_collaborators")
+    .select("id, collab_role, reservations(id, event_name, start_date, space, status)")
+    .eq("user_id", user.id)
+    .not("accepted_at", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
   // Fetch user prefs (theme + notification toggles)
   const { data: userPrefs } = await supabase
     .from("bx_user_prefs")
@@ -231,6 +248,163 @@ export default async function AccountPage() {
           initialPrefs={initialNotifPrefs}
         />
       </div>
+
+      {/* ── Pending invites ── */}
+      {pendingInvites && pendingInvites.length > 0 && (
+        <div style={{ marginBottom: "1.5rem" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "0.75rem",
+            }}
+          >
+            <h2
+              style={{
+                margin: 0,
+                fontSize: "0.75rem",
+                fontWeight: 700,
+                letterSpacing: "0.05em",
+                textTransform: "uppercase",
+                color: "var(--bx-brass)",
+              }}
+            >
+              Pending invites
+            </h2>
+            <span
+              style={{
+                padding: "1px 8px",
+                borderRadius: "9999px",
+                fontSize: "0.7rem",
+                fontWeight: 700,
+                background: "color-mix(in srgb, var(--bx-brass) 20%, transparent)",
+                color: "var(--bx-brass)",
+              }}
+            >
+              {pendingInvites.length}
+            </span>
+          </div>
+          <div
+            style={{
+              border: "1px solid color-mix(in srgb, var(--bx-brass) 25%, transparent)",
+              borderRadius: "12px",
+              overflow: "hidden",
+              background: "color-mix(in srgb, var(--bx-brass) 5%, transparent)",
+            }}
+          >
+            {pendingInvites.map((inv, i) => {
+              const res = inv.reservations as unknown as { id: string; event_name?: string; start_date?: string; space?: string } | null;
+              const label = res?.event_name || res?.space || "A reservation";
+              const dateStr = res?.start_date
+                ? new Date(res.start_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                : null;
+              const roleLabel = inv.collab_role === "co_owner" ? "Co-owner" : "Viewer";
+              return (
+                <div
+                  key={inv.id}
+                  style={{
+                    padding: "0.875rem 1.25rem",
+                    borderTop: i === 0 ? "none" : "1px solid color-mix(in srgb, var(--bx-brass) 15%, transparent)",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: "0.75rem",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: "0.9375rem", color: "var(--bx-parchment)" }}>
+                      {label}
+                    </div>
+                    <div style={{ fontSize: "0.8125rem", color: "var(--bx-slate)", marginTop: "0.15rem" }}>
+                      {dateStr ? dateStr + " · " : ""}{roleLabel} access
+                    </div>
+                  </div>
+                  {inv.invite_token && (
+                    <a
+                      href={"/account/invites?token=" + inv.invite_token}
+                      style={{
+                        padding: "0.375rem 0.875rem",
+                        borderRadius: "0.5rem",
+                        fontSize: "0.8125rem",
+                        fontWeight: 600,
+                        background: "var(--bx-brass)",
+                        color: "white",
+                        textDecoration: "none",
+                        whiteSpace: "nowrap",
+                        flexShrink: 0,
+                      }}
+                    >
+                      Accept invite →
+                    </a>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Shared with me ── */}
+      {sharedCollabs && sharedCollabs.length > 0 && (
+        <div style={{ marginBottom: "1.5rem" }}>
+          <div style={{ marginBottom: "0.75rem" }}>
+            <h2
+              style={{
+                margin: 0,
+                fontSize: "0.75rem",
+                fontWeight: 700,
+                letterSpacing: "0.05em",
+                textTransform: "uppercase",
+                color: "var(--bx-slate)",
+              }}
+            >
+              Shared with me
+            </h2>
+          </div>
+          <div
+            style={{
+              border: "1px solid color-mix(in srgb, var(--bx-parchment) 12%, transparent)",
+              borderRadius: "12px",
+              overflow: "hidden",
+              background: "var(--bx-ink-soft)",
+            }}
+          >
+            {sharedCollabs.map((collab, i) => {
+              const res = collab.reservations as unknown as { id: string; event_name?: string; start_date?: string; space?: string; status?: string } | null;
+              const label = res?.event_name || res?.space || "Shared reservation";
+              const dateStr = res?.start_date
+                ? new Date(res.start_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                : null;
+              const roleLabel = collab.collab_role === "co_owner" ? "Co-owner" : "Viewer";
+              return (
+                <div
+                  key={collab.id}
+                  style={{
+                    padding: "0.875rem 1.25rem",
+                    borderTop: i === 0 ? "none" : "1px solid color-mix(in srgb, var(--bx-parchment) 6%, transparent)",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: "0.75rem",
+                  }}
+                >
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: "0.9375rem", color: "var(--bx-parchment)" }}>
+                      {label}
+                    </div>
+                    <div style={{ fontSize: "0.8125rem", color: "var(--bx-slate)", marginTop: "0.15rem" }}>
+                      {dateStr ? dateStr + " · " : ""}{roleLabel}
+                    </div>
+                  </div>
+                  {res?.status && statusChip(res.status)}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ── My reservations ── */}
       <div style={{ marginBottom: "1.5rem" }}>
