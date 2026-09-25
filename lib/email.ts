@@ -64,6 +64,8 @@ export function brandedEmailHtml(opts: {
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="x-apple-disable-message-reformatting">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
   <title>${headline}</title>
   <!--[if mso]><noscript><xml><o:OfficeDocumentSettings>
   <o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
@@ -181,10 +183,10 @@ export async function sendReservationConfirmation(opts: {
           <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;font-weight:600;color:#374151;font-size:14px;">Date(s)</td>
           <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;color:#374151;font-size:14px;">${dates.length ? dates.join(", ") : "See request"}</td>
         </tr>
-        <tr>
+        ${rooms.length > 0 ? `<tr>
           <td style="padding:10px 0;font-weight:600;color:#374151;font-size:14px;">Space(s)</td>
-          <td style="padding:10px 0;color:#374151;font-size:14px;">${rooms.length ? rooms.join(", ") : "See request"}</td>
-        </tr>
+          <td style="padding:10px 0;color:#374151;font-size:14px;">${rooms.join(", ")}</td>
+        </tr>` : ""}
       </table>
       <p>Our team will review your request and follow up within 2–3 business days.
          You'll receive an email when your status changes.</p>
@@ -241,10 +243,10 @@ export async function sendAdminNewReservationAlert(opts: {
           <td style="padding:10px 0;${notes ? "border-bottom:1px solid #e5e7eb;" : ""}font-weight:600;color:#374151;font-size:14px;">Date(s)</td>
           <td style="padding:10px 0;${notes ? "border-bottom:1px solid #e5e7eb;" : ""}color:#374151;font-size:14px;">${dates.length ? dates.join(", ") : "TBD"}</td>
         </tr>
-        <tr>
+        ${rooms.length > 0 ? `<tr>
           <td style="padding:10px 0;${notes ? "border-bottom:1px solid #e5e7eb;" : ""}font-weight:600;color:#374151;font-size:14px;">Space(s)</td>
-          <td style="padding:10px 0;${notes ? "border-bottom:1px solid #e5e7eb;" : ""}color:#374151;font-size:14px;">${rooms.length ? rooms.join(", ") : "See request"}</td>
-        </tr>
+          <td style="padding:10px 0;${notes ? "border-bottom:1px solid #e5e7eb;" : ""}color:#374151;font-size:14px;">${rooms.join(", ")}</td>
+        </tr>` : ""}
         ${notes ? `<tr>
           <td style="padding:10px 0;font-weight:600;color:#374151;font-size:14px;vertical-align:top;">Notes</td>
           <td style="padding:10px 0;color:#374151;font-size:14px;">${notes}</td>

@@ -62,7 +62,7 @@ function extractRooms(days: DayConfig[]): string[] {
   for (const day of days) {
     if (!day.included) continue;
     for (const r of day.rooms) {
-      if (r.requested) seen.add(r.roomId);
+      seen.add(r.roomId);  // include all selected rooms regardless of availability conflict flag
     }
   }
   return [...seen].map(id => ROOMS.find(r => r.id === id)?.name ?? id);
