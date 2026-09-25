@@ -232,13 +232,13 @@ function getRoomTag(headcount: number, capacityTheater: number, capacityBanquet:
     return { label: "Best fit", color: "text-emerald-700 bg-emerald-50 border-emerald-200" };
   }
   if (ratio >= 0.25 && ratio < 0.6) {
-    return { label: "Good fit", color: "text-[#00abc9] bg-[#f0fafc] border-[#b3e8f0]" };
+    return { label: "Good fit", color: "text-brass bg-brass/5 border-brass/30" };
   }
   // ratio < 0.25 — much bigger than needed
   if (capacityBanquet > 0 && headcount <= capacityBanquet) {
-    return { label: "Oversized", color: "text-gray-400 bg-gray-50 border-gray-200" };
+    return { label: "Oversized", color: "text-slate bg-ink border-parchment/15" };
   }
-  return { label: "Oversized", color: "text-gray-400 bg-gray-50 border-gray-200" };
+  return { label: "Oversized", color: "text-slate bg-ink border-parchment/15" };
 }
 
 function signalBadge(sig: Signal) {
@@ -246,7 +246,7 @@ function signalBadge(sig: Signal) {
     case "available":   return <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Available</span>;
     case "ask":         return <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Ask Us</span>;
     case "unavailable": return <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-700">Unavailable</span>;
-    default:            return <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-400 animate-pulse">Checking…</span>;
+    default:            return <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-parchment/10 text-slate animate-pulse">Checking…</span>;
   }
 }
 
@@ -262,18 +262,18 @@ function StepBar({ step }: { step: number }) {
           <div key={i} className="flex items-center flex-1 last:flex-none">
             <div className="flex flex-col items-center min-w-0">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all shrink-0 ${
-                i < step  ? "bg-[#00abc9] border-[#00abc9] text-white" :
-                i === step ? "bg-white border-[#00abc9] text-[#00abc9]" :
-                             "bg-white border-gray-200 text-gray-400"
+                i < step  ? "bg-brass border-brass text-white" :
+                i === step ? "bg-ink-soft border-brass text-brass" :
+                             "bg-ink border-parchment/20 text-slate"
               }`}>
                 {i < step ? "✓" : i + 1}
               </div>
-              <span className={`text-[10px] mt-1 text-center leading-tight font-medium ${i === step ? "text-[#00205B]" : "text-gray-400"}`}>
+              <span className={`text-[10px] mt-1 text-center leading-tight font-medium ${i === step ? "text-parchment" : "text-slate"}`}>
                 {label}
               </span>
             </div>
             {i < STEPS.length - 1 && (
-              <div className={`flex-1 h-0.5 mb-5 mx-1 transition-all ${i < step ? "bg-[#00abc9]" : "bg-gray-200"}`} />
+              <div className={`flex-1 h-0.5 mb-5 mx-1 transition-all ${i < step ? "bg-brass" : "bg-parchment/15"}`} />
             )}
           </div>
         ))}
@@ -298,17 +298,17 @@ function ContactStep({
 
   return (
     <div className="max-w-lg mx-auto">
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-6">
-      <h2 className="text-2xl font-bold text-[#00205B] mb-1">Let's get started</h2>
-      <p className="text-gray-500 mb-4">Tell us a bit about you and your event.</p>
+      <div className="bg-ink-soft rounded-2xl border border-parchment/10 shadow-sm p-6 mb-6">
+      <h2 className="text-2xl font-bold text-parchment mb-1">Let's get started</h2>
+      <p className="text-slate mb-4">Tell us a bit about you and your event.</p>
 
       {/* Returning-user nudge — only shown when signed out */}
       {!isSignedIn && (
-        <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 mb-6">
-          <p className="text-sm text-gray-500">Already have an account?</p>
+        <div className="flex items-center justify-between bg-ink border border-parchment/15 rounded-xl px-4 py-3 mb-6">
+          <p className="text-sm text-slate">Already have an account?</p>
           <a
             href="/login?next=/reserve"
-            className="text-sm font-semibold text-[#00abc9] hover:text-[#009ab7] transition-colors"
+            className="text-sm font-semibold text-brass hover:text-brass/80 transition-colors"
           >
             Sign in to pre-fill →
           </a>
@@ -348,7 +348,7 @@ function ContactStep({
 
         {/* Space mode selector */}
         <div className="pt-2">
-          <p className="text-sm font-medium text-gray-700 mb-2">How many spaces do you need? <span className="text-red-400">*</span></p>
+          <p className="text-sm font-medium text-parchment mb-2">How many spaces do you need? <span className="text-red-400">*</span></p>
           <div className="grid grid-cols-1 gap-2">
             {([
               { mode: "single"    as SpaceMode, label: "One room",           desc: "A single space for your entire event" },
@@ -359,14 +359,14 @@ function ContactStep({
                 onClick={() => onSpaceMode(opt.mode)}
                 className={`flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all ${
                   spaceMode === opt.mode
-                    ? "border-[#00abc9] bg-[#f0fafc]"
-                    : "border-gray-200 bg-white hover:border-gray-300"
+                    ? "border-brass bg-brass/5"
+                    : "border-parchment/15 bg-ink-soft hover:border-parchment/30"
                 }`}>
                 <div className="flex-1">
-                  <p className={`text-sm font-semibold ${spaceMode === opt.mode ? "text-[#00205B]" : "text-gray-700"}`}>{opt.label}</p>
-                  <p className="text-xs text-gray-400">{opt.desc}</p>
+                  <p className={`text-sm font-semibold ${spaceMode === opt.mode ? "text-parchment" : "text-parchment"}`}>{opt.label}</p>
+                  <p className="text-xs text-slate">{opt.desc}</p>
                 </div>
-                {spaceMode === opt.mode && <span className="text-[#00abc9] font-bold text-sm">✓</span>}
+                {spaceMode === opt.mode && <span className="text-brass font-bold text-sm">✓</span>}
               </button>
             ))}
           </div>
@@ -376,14 +376,14 @@ function ContactStep({
           <button
             type="button"
             onClick={() => onChange({ isNonProfit: !contact.isNonProfit })}
-            className={`w-10 h-6 rounded-full relative transition-colors ${contact.isNonProfit ? "bg-[#00abc9]" : "bg-gray-200"}`}
+            className={`w-10 h-6 rounded-full relative transition-colors ${contact.isNonProfit ? "bg-brass" : "bg-parchment/20"}`}
           >
-            <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${contact.isNonProfit ? "translate-x-4" : ""}`} />
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-ink-soft rounded-full shadow transition-transform ${contact.isNonProfit ? "translate-x-4" : ""}`} />
           </button>
-          <span className="text-sm text-gray-700">We are a non-profit organization</span>
+          <span className="text-sm text-parchment">We are a non-profit organization</span>
         </div>
         {contact.isNonProfit && (
-          <p className="text-xs text-[#00abc9] -mt-2 pl-14">Non-profit rates will be applied to your estimate.</p>
+          <p className="text-xs text-brass -mt-2 pl-14">Non-profit rates will be applied to your estimate.</p>
         )}
       </div>
 
@@ -391,7 +391,7 @@ function ContactStep({
 
       <div className="mt-6 flex justify-end">
         <button onClick={onNext} disabled={!valid}
-          className="px-8 py-3 rounded-xl bg-[#00abc9] text-white font-semibold text-sm disabled:opacity-40 hover:bg-[#0099b5] transition-colors">
+          className="px-8 py-3 rounded-xl bg-brass text-white font-semibold text-sm disabled:opacity-40 hover:bg-brass/90 transition-colors">
           Continue →
         </button>
       </div>
@@ -511,11 +511,11 @@ function BuilderStep({
 
   return (
     <div className="max-w-3xl mx-auto">
-      <h2 className="text-2xl font-bold text-[#00205B] mb-1">Build your event</h2>
-      <p className="text-gray-500 mb-6">Set your dates, configure each day, and choose your spaces.</p>
+      <h2 className="text-2xl font-bold text-parchment mb-1">Build your event</h2>
+      <p className="text-slate mb-6">Set your dates, configure each day, and choose your spaces.</p>
 
       {/* Date range + default headcount */}
-      <div className="bg-white border border-gray-200 rounded-2xl p-5 mb-6 shadow-sm">
+      <div className="bg-ink-soft border border-parchment/10 rounded-2xl p-5 mb-6 shadow-sm">
         <div className="grid grid-cols-1 gap-3 mb-4 sm:grid-cols-2 sm:gap-4 overflow-hidden">
           <Field label="Start date" required>
             <input type="date" value={startDate}
@@ -544,7 +544,7 @@ function BuilderStep({
 
       {/* Day cards */}
       {days.length === 0 && (
-        <div className="text-center py-16 text-gray-400">
+        <div className="text-center py-16 text-slate">
           <p className="text-4xl mb-3">📅</p>
           <p className="font-medium">Pick your dates above to start building.</p>
         </div>
@@ -583,7 +583,7 @@ function BuilderStep({
 
       {/* Footer */}
       {total > 0 && (
-        <div className="mt-6 bg-[#00205B] text-white rounded-2xl p-4 flex items-center justify-between">
+        <div className="mt-6 bg-parchment text-ink rounded-2xl p-4 flex items-center justify-between">
           <div>
             <p className="text-xs text-blue-200 uppercase tracking-wide">Estimated total</p>
             <p className="text-2xl font-bold">${total.toLocaleString()}</p>
@@ -602,11 +602,11 @@ function BuilderStep({
 
       <div className="mt-6 flex justify-between">
         <button onClick={onBack}
-          className="px-6 py-3 rounded-xl text-gray-500 font-medium text-sm hover:bg-gray-100 transition-colors">
+          className="px-6 py-3 rounded-xl text-slate font-medium text-sm hover:bg-parchment/10 transition-colors">
           ← Back
         </button>
         <button onClick={onNext} disabled={!canContinue}
-          className="px-8 py-3 rounded-xl bg-[#00abc9] text-white font-semibold text-sm disabled:opacity-40 hover:bg-[#0099b5] transition-colors">
+          className="px-8 py-3 rounded-xl bg-brass text-white font-semibold text-sm disabled:opacity-40 hover:bg-brass/90 transition-colors">
           Review & Request →
         </button>
       </div>
@@ -640,7 +640,7 @@ function DayCard({
   const est = dayEstimate(day, isNP);
 
   return (
-    <div className={`rounded-2xl border transition-all ${isDayBlocked ? "border-red-200 bg-red-50" : day.included ? "border-gray-200 bg-white shadow-sm" : "border-dashed border-gray-200 bg-gray-50 opacity-60"}`}>
+    <div className={`rounded-2xl border transition-all ${isDayBlocked ? "border-red-200 bg-red-50" : day.included ? "border-parchment/15 bg-ink-soft shadow-sm" : "border-dashed border-parchment/15 bg-ink opacity-60"}`}>
       {isDayBlocked && (
         <div className="flex items-center gap-2 px-4 py-2 bg-red-50 rounded-t-2xl border-b border-red-100 text-xs text-red-700 font-medium">
           <span>🚫</span>
@@ -654,15 +654,15 @@ function DayCard({
           onClick={e => { e.stopPropagation(); onToggleInclude(); }}
           title={day.included ? "Remove this day" : "Include this day"}
           className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-            day.included ? "bg-[#00abc9] border-[#00abc9] text-white" : "border-gray-300 bg-white"
+            day.included ? "bg-brass border-brass text-white" : "border-parchment/20 bg-ink"
           }`}
         >
           {day.included && <span className="text-xs font-bold">✓</span>}
         </button>
         <div className="flex-1">
-          <p className="font-semibold text-[#00205B]">{fmtDate(day.date)}</p>
+          <p className="font-semibold text-parchment">{fmtDate(day.date)}</p>
           {day.included && (
-            <p className="text-xs text-gray-400 mt-0.5">
+            <p className="text-xs text-slate mt-0.5">
               {day.rooms.filter(r => !r.requested).length > 0
                 ? `${day.rooms.filter(r => !r.requested).length} room${day.rooms.filter(r => !r.requested).length !== 1 ? "s" : ""} selected${est ? ` · est. $${est.toLocaleString()}` : ""}`
                 : "No rooms selected yet"}
@@ -674,41 +674,41 @@ function DayCard({
           <div className="flex items-center gap-2 mr-2" onClick={e => e.stopPropagation()}>
             {dayIdx < total - 1 && (
               <button onClick={onCopyToNext}
-                className="text-xs px-2.5 py-1 rounded-lg bg-[#f0fafc] border border-[#00abc9]/30 text-[#00abc9] hover:bg-[#00abc9] hover:text-white font-medium whitespace-nowrap transition-colors active:scale-95">
+                className="text-xs px-2.5 py-1 rounded-lg bg-brass/5 border border-brass/30 text-brass hover:bg-brass hover:text-white font-medium whitespace-nowrap transition-colors active:scale-95">
                 Copy to next ↓
               </button>
             )}
             {total > 1 && (
               <button onClick={onApplyToAll}
-                className="text-xs text-gray-400 hover:text-gray-600 font-medium whitespace-nowrap">
+                className="text-xs text-slate hover:text-parchment font-medium whitespace-nowrap">
                 Apply to all
               </button>
             )}
           </div>
         )}
-        <span className="text-gray-300 text-sm">{expanded && day.included ? "▲" : "▼"}</span>
+        <span className="text-slate/40 text-sm">{expanded && day.included ? "▲" : "▼"}</span>
       </div>
 
       {/* Day body */}
       {expanded && day.included && (
-        <div className="border-t border-gray-100 px-5 py-4 space-y-5">
+        <div className="border-t border-parchment/10 px-5 py-4 space-y-5">
           {/* Headcount + time of day */}
           <div className="flex flex-wrap gap-4 items-end">
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Headcount</label>
+              <label className="block text-xs font-medium text-slate mb-1">Headcount</label>
               <div className="flex items-center gap-2">
                 <button onClick={() => onHeadcount(Math.max(1, day.headcount - 10))}
-                  className="w-7 h-7 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 font-bold">−</button>
+                  className="w-7 h-7 rounded-lg border border-parchment/15 text-slate hover:bg-parchment/5 font-bold">−</button>
                 <input type="number" min={1} value={day.headcount}
                   onChange={e => onHeadcount(parseInt(e.target.value) || 1)}
-                  className="w-16 text-center border border-gray-200 rounded-lg py-1 text-sm" />
+                  className="w-16 text-center border border-parchment/15 rounded-lg py-1 text-sm bg-ink text-parchment" />
                 <button onClick={() => onHeadcount(day.headcount + 10)}
-                  className="w-7 h-7 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 font-bold">+</button>
+                  className="w-7 h-7 rounded-lg border border-parchment/15 text-slate hover:bg-parchment/5 font-bold">+</button>
               </div>
             </div>
             <div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Time of day</label>
+                <label className="block text-xs font-medium text-slate mb-1">Time of day</label>
                 <div className="flex gap-1 flex-wrap">
                   {(["any", "morning", "afternoon", "evening"] as const).map(slot => {
                     const slotLabels: Record<string, string> = {
@@ -726,10 +726,10 @@ function DayCard({
                         title={slotBlocked ? blackoutReason(day.date, slot, blackoutRules ?? []) ?? "Not available" : undefined}
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                           slotBlocked
-                            ? "bg-gray-50 text-gray-300 cursor-not-allowed line-through"
+                            ? "bg-ink text-slate/40 cursor-not-allowed line-through"
                             : day.timeSlot === slot
-                            ? "bg-[#00205B] text-white"
-                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                            ? "bg-parchment text-ink"
+                            : "bg-parchment/10 text-slate hover:bg-parchment/20"
                         }`}
                       >
                         {slotLabels[slot]}
@@ -744,26 +744,26 @@ function DayCard({
           {/* Room grid — space-mode-aware */}
           <div className="space-y-5">
             {spaceMode === "main-plus" && (
-              <div className="bg-[#f0fafc] border border-[#b3e8f0] rounded-xl p-3">
-                <p className="text-xs font-semibold text-[#00205B] uppercase tracking-wide mb-2">Breakout calculator</p>
+              <div className="bg-brass/5 border border-brass/30 rounded-xl p-3">
+                <p className="text-xs font-semibold text-parchment uppercase tracking-wide mb-2">Breakout calculator</p>
                 <div className="flex items-center gap-3">
                   <div className="flex-1">
-                    <label className="text-xs text-gray-500 block mb-1">People per breakout group</label>
+                    <label className="text-xs text-slate block mb-1">People per breakout group</label>
                     <div className="flex items-center gap-2">
                       <button type="button"
                         onClick={() => onBreakoutGroupSize(Math.max(5, breakoutGroupSize - 5))}
-                        className="w-7 h-7 rounded-full bg-white border border-gray-200 text-gray-600 text-sm font-bold hover:bg-gray-50 flex items-center justify-center">−</button>
-                      <span className="text-base font-semibold text-[#00205B] w-8 text-center">{breakoutGroupSize}</span>
+                        className="w-7 h-7 rounded-full bg-ink border border-parchment/15 text-slate text-sm font-bold hover:bg-parchment/5 flex items-center justify-center">−</button>
+                      <span className="text-base font-semibold text-parchment w-8 text-center">{breakoutGroupSize}</span>
                       <button type="button"
                         onClick={() => onBreakoutGroupSize(Math.min(200, breakoutGroupSize + 5))}
-                        className="w-7 h-7 rounded-full bg-white border border-gray-200 text-gray-600 text-sm font-bold hover:bg-gray-50 flex items-center justify-center">+</button>
+                        className="w-7 h-7 rounded-full bg-ink border border-parchment/15 text-slate text-sm font-bold hover:bg-parchment/5 flex items-center justify-center">+</button>
                     </div>
                   </div>
                   {day.headcount > 0 && (
                     <div className="text-right">
-                      <p className="text-xs text-gray-500">Rooms needed</p>
-                      <p className="text-2xl font-bold text-[#00205B]">{Math.ceil(day.headcount / breakoutGroupSize)}</p>
-                      <p className="text-[10px] text-gray-400">{day.headcount} people ÷ {breakoutGroupSize}/group</p>
+                      <p className="text-xs text-slate">Rooms needed</p>
+                      <p className="text-2xl font-bold text-parchment">{Math.ceil(day.headcount / breakoutGroupSize)}</p>
+                      <p className="text-[10px] text-slate">{day.headcount} people ÷ {breakoutGroupSize}/group</p>
                     </div>
                   )}
                 </div>
@@ -773,7 +773,7 @@ function DayCard({
             {/* Main / single space picker */}
             {(spaceMode === "single" || spaceMode === "main-plus") && (
               <div>
-                <p className="text-xs font-medium text-gray-500 mb-3 uppercase tracking-wide">
+                <p className="text-xs font-medium text-slate mb-3 uppercase tracking-wide">
                   {spaceMode === "main-plus" ? "🏛️ Main Space" : "Select your space"}
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -790,8 +790,8 @@ function DayCard({
                         className={`rounded-xl border-2 transition-all overflow-hidden ${
                           isDisabled ? "opacity-40 pointer-events-none" :
                           isSelected
-                            ? isUnavailable && sel?.requested ? "border-amber-400 bg-amber-50" : "border-[#00abc9] bg-[#f0fafc]"
-                            : "border-gray-200 bg-white hover:border-gray-300"
+                            ? isUnavailable && sel?.requested ? "border-amber-400 bg-amber-50" : "border-brass bg-brass/5"
+                            : "border-parchment/15 bg-ink-soft hover:border-parchment/30"
                         }`}>
                         {room.image && (
                           // eslint-disable-next-line @next/next/no-img-element
@@ -801,17 +801,17 @@ function DayCard({
                         <div className="p-3">
                           <div className="flex items-start justify-between gap-2 mb-1">
                             <div>
-                              <p className={`font-semibold text-sm ${isUnavailable && !isSelected ? "text-gray-400" : "text-[#00205B]"}`}>{room.name}</p>
-                              <p className="text-xs text-gray-400">Theater {room.capacityTheater} · Banquet {room.capacityBanquet}</p>
+                              <p className={`font-semibold text-sm ${isUnavailable && !isSelected ? "text-slate" : "text-parchment"}`}>{room.name}</p>
+                              <p className="text-xs text-slate">Theater {room.capacityTheater} · Banquet {room.capacityBanquet}</p>
                               {tag && <span className={`inline-block mt-1 px-1.5 py-0.5 rounded border text-[10px] font-semibold leading-tight ${tag.color}`}>{tag.label}</span>}
                             </div>
                             {signalBadge(sig)}
                           </div>
-                          <p className={`text-xs mb-3 leading-relaxed ${isUnavailable && !isSelected ? "text-gray-300" : "text-gray-500"}`}>{room.description}</p>
-                          <p className={`text-xs font-medium mb-3 ${isUnavailable && !isSelected ? "text-gray-300" : "text-gray-400"}`}>From ${(isNP ? room.baseNP : room.basePro).toLocaleString()} / 4 hrs</p>
+                          <p className={`text-xs mb-3 leading-relaxed ${isUnavailable && !isSelected ? "text-slate/40" : "text-slate"}`}>{room.description}</p>
+                          <p className={`text-xs font-medium mb-3 ${isUnavailable && !isSelected ? "text-slate/40" : "text-slate"}`}>From ${(isNP ? room.baseNP : room.basePro).toLocaleString()} / 4 hrs</p>
                           {!isUnavailable ? (
                             <button onClick={() => onToggleRoom(room.id, "main")}
-                              className={`w-full py-1.5 rounded-lg text-xs font-semibold transition-colors ${isSelected ? "bg-[#00abc9] text-white hover:bg-[#0099b5]" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                              className={`w-full py-1.5 rounded-lg text-xs font-semibold transition-colors ${isSelected ? "bg-brass text-white hover:bg-brass/90" : "bg-parchment/10 text-slate hover:bg-parchment/20"}`}>
                               {isSelected ? "✓ Selected — click to remove" : spaceMode === "main-plus" ? "Select as main space" : "Select this space"}
                             </button>
                           ) : (
@@ -821,15 +821,15 @@ function DayCard({
                             </button>
                           )}
                           {isSelected && !sel?.requested && (
-                            <div className="mt-3 border-t border-gray-100 pt-3">
-                              <p className="text-xs font-medium text-gray-500 mb-2">Setup style</p>
+                            <div className="mt-3 border-t border-parchment/10 pt-3">
+                              <p className="text-xs font-medium text-slate mb-2">Setup style</p>
                               <div className="flex flex-wrap gap-1">
                                 {(room.setups as readonly string[]).map(sid => {
                                   const s = SETUP_STYLES.find(x => x.id === sid);
                                   if (!s) return null;
                                   return (
                                     <button key={sid} onClick={() => onUpdateRoom(room.id, { setup: sid as SetupId })} title={s.desc}
-                                      className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${sel?.setup === sid ? "bg-[#00205B] text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                                      className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${sel?.setup === sid ? "bg-parchment text-ink" : "bg-parchment/10 text-slate hover:bg-parchment/20"}`}>
                                       {s.label}
                                     </button>
                                   );
@@ -856,7 +856,7 @@ function DayCard({
             {/* Extra / additional spaces (main-plus and multiple modes) */}
             {(spaceMode === "main-plus" || spaceMode === "multiple") && (
               <div>
-                <p className="text-xs font-medium text-gray-500 mb-3 uppercase tracking-wide">
+                <p className="text-xs font-medium text-slate mb-3 uppercase tracking-wide">
                   {spaceMode === "main-plus" ? "➕ Additional Spaces" : "Select spaces for this day"}
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -872,8 +872,8 @@ function DayCard({
                       <div key={room.id}
                         className={`rounded-xl border-2 transition-all overflow-hidden ${
                           isSelected
-                            ? isUnavailable && sel?.requested ? "border-amber-400 bg-amber-50" : "border-[#00abc9] bg-[#f0fafc]"
-                            : "border-gray-200 bg-white hover:border-gray-300"
+                            ? isUnavailable && sel?.requested ? "border-amber-400 bg-amber-50" : "border-brass bg-brass/5"
+                            : "border-parchment/15 bg-ink-soft hover:border-parchment/30"
                         }`}>
                         {room.image && (
                           // eslint-disable-next-line @next/next/no-img-element
@@ -883,17 +883,17 @@ function DayCard({
                         <div className="p-3">
                           <div className="flex items-start justify-between gap-2 mb-1">
                             <div>
-                              <p className={`font-semibold text-sm ${isUnavailable && !isSelected ? "text-gray-400" : "text-[#00205B]"}`}>{room.name}</p>
-                              <p className="text-xs text-gray-400">Theater {room.capacityTheater} · Banquet {room.capacityBanquet}</p>
+                              <p className={`font-semibold text-sm ${isUnavailable && !isSelected ? "text-slate" : "text-parchment"}`}>{room.name}</p>
+                              <p className="text-xs text-slate">Theater {room.capacityTheater} · Banquet {room.capacityBanquet}</p>
                               {tag && <span className={`inline-block mt-1 px-1.5 py-0.5 rounded border text-[10px] font-semibold leading-tight ${tag.color}`}>{tag.label}</span>}
                             </div>
                             {signalBadge(sig)}
                           </div>
-                          <p className={`text-xs mb-3 leading-relaxed ${isUnavailable && !isSelected ? "text-gray-300" : "text-gray-500"}`}>{room.description}</p>
-                          <p className={`text-xs font-medium mb-3 ${isUnavailable && !isSelected ? "text-gray-300" : "text-gray-400"}`}>From ${(isNP ? room.baseNP : room.basePro).toLocaleString()} / 4 hrs</p>
+                          <p className={`text-xs mb-3 leading-relaxed ${isUnavailable && !isSelected ? "text-slate/40" : "text-slate"}`}>{room.description}</p>
+                          <p className={`text-xs font-medium mb-3 ${isUnavailable && !isSelected ? "text-slate/40" : "text-slate"}`}>From ${(isNP ? room.baseNP : room.basePro).toLocaleString()} / 4 hrs</p>
                           {!isUnavailable ? (
                             <button onClick={() => onToggleRoom(room.id, "extra")}
-                              className={`w-full py-1.5 rounded-lg text-xs font-semibold transition-colors ${isSelected ? "bg-[#00abc9] text-white hover:bg-[#0099b5]" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                              className={`w-full py-1.5 rounded-lg text-xs font-semibold transition-colors ${isSelected ? "bg-brass text-white hover:bg-brass/90" : "bg-parchment/10 text-slate hover:bg-parchment/20"}`}>
                               {isSelected ? "✓ Added — click to remove" : "Add this space"}
                             </button>
                           ) : (
@@ -903,15 +903,15 @@ function DayCard({
                             </button>
                           )}
                           {isSelected && !sel?.requested && (
-                            <div className="mt-3 border-t border-gray-100 pt-3">
-                              <p className="text-xs font-medium text-gray-500 mb-2">Setup style</p>
+                            <div className="mt-3 border-t border-parchment/10 pt-3">
+                              <p className="text-xs font-medium text-slate mb-2">Setup style</p>
                               <div className="flex flex-wrap gap-1">
                                 {(room.setups as readonly string[]).map(sid => {
                                   const s = SETUP_STYLES.find(x => x.id === sid);
                                   if (!s) return null;
                                   return (
                                     <button key={sid} onClick={() => onUpdateRoom(room.id, { setup: sid as SetupId })} title={s.desc}
-                                      className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${sel?.setup === sid ? "bg-[#00205B] text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
+                                      className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${sel?.setup === sid ? "bg-parchment text-ink" : "bg-parchment/10 text-slate hover:bg-parchment/20"}`}>
                                       {s.label}
                                     </button>
                                   );
@@ -968,34 +968,34 @@ function ReviewStep({
             <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
           </svg>
         </div>
-        <h2 className="text-2xl font-bold text-[#00205B] mb-2">Request received!</h2>
-        <p className="text-gray-500 mb-4">
+        <h2 className="text-2xl font-bold text-parchment mb-2">Request received!</h2>
+        <p className="text-slate mb-4">
           Thank you, {contact.name.split(" ")[0]}. Our team will review your request for <strong>{contact.eventName}</strong> and follow up within 1–2 business days.
         </p>
         {bookingNumber && (
-          <div className="inline-block bg-[#f0fafc] border border-[#00abc9]/30 rounded-2xl px-6 py-4 mb-6">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">Your booking reference</p>
-            <p className="text-2xl font-bold text-[#00205B] tracking-widest font-mono">{bookingNumber}</p>
-            <p className="text-xs text-gray-400 mt-1">Save this number — you&apos;ll need it to upload your liability insurance.</p>
+          <div className="inline-block bg-brass/5 border border-brass/30 rounded-2xl px-6 py-4 mb-6">
+            <p className="text-xs font-semibold text-slate uppercase tracking-widest mb-1">Your booking reference</p>
+            <p className="text-2xl font-bold text-parchment tracking-widest font-mono">{bookingNumber}</p>
+            <p className="text-xs text-slate mt-1">Save this number — you&apos;ll need it to upload your liability insurance.</p>
           </div>
         )}
-        <p className="text-sm text-gray-400">A confirmation has been sent to {contact.email}.</p>
+        <p className="text-sm text-slate">A confirmation has been sent to {contact.email}.</p>
 
         {/* ── Sign-in nudge ─────────────────────────────────── */}
-        <div className="mt-6 p-4 bg-white border border-[#00abc9]/30 rounded-2xl text-left flex items-start gap-3">
-          <div className="w-8 h-8 rounded-full bg-[#f0fafc] flex items-center justify-center shrink-0 mt-0.5">
-            <svg className="w-4 h-4 text-[#00abc9]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+        <div className="mt-6 p-4 bg-ink-soft border border-brass/30 rounded-2xl text-left flex items-start gap-3">
+          <div className="w-8 h-8 rounded-full bg-brass/5 flex items-center justify-center shrink-0 mt-0.5">
+            <svg className="w-4 h-4 text-brass" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
             </svg>
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-[#00205B] mb-0.5">Save this to your account</p>
-            <p className="text-sm text-gray-500 mb-3">
+            <p className="text-sm font-semibold text-parchment mb-0.5">Save this to your account</p>
+            <p className="text-sm text-slate mb-3">
               Create a free account to track your booking status, upload your insurance, and see updates — no need to dig through email.
             </p>
             <a
               href="/login?next=/account"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-[#00205B] hover:bg-[#001a4d] px-4 py-2 rounded-xl transition-colors"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink bg-parchment hover:bg-parchment/90 px-4 py-2 rounded-xl transition-colors"
             >
               Sign in or create account
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
@@ -1015,22 +1015,22 @@ function ReviewStep({
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h2 className="text-2xl font-bold text-[#00205B] mb-1">Review your request</h2>
-      <p className="text-gray-500 mb-6">Everything look right? Add any notes, then send your request.</p>
+      <h2 className="text-2xl font-bold text-parchment mb-1">Review your request</h2>
+      <p className="text-slate mb-6">Everything look right? Add any notes, then send your request.</p>
 
       {/* Contact summary */}
-      <div className="bg-gray-50 rounded-2xl p-4 mb-4 border border-gray-100">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">About you</p>
-        <p className="font-semibold text-[#00205B]">{contact.name} · {contact.org}</p>
-        <p className="text-sm text-gray-500">{contact.email} · {contact.phone}</p>
-        {isNP && <p className="text-xs text-[#00abc9] mt-1">Non-profit rates applied</p>}
+      <div className="bg-ink rounded-2xl p-4 mb-4 border border-parchment/10">
+        <p className="text-xs font-semibold text-slate uppercase tracking-wide mb-2">About you</p>
+        <p className="font-semibold text-parchment">{contact.name} · {contact.org}</p>
+        <p className="text-sm text-slate">{contact.email} · {contact.phone}</p>
+        {isNP && <p className="text-xs text-brass mt-1">Non-profit rates applied</p>}
       </div>
 
       {/* Event summary */}
-      <div className="bg-gray-50 rounded-2xl p-4 mb-4 border border-gray-100">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Event</p>
-        <p className="font-semibold text-[#00205B] text-lg">{contact.eventName}</p>
-        <p className="text-sm text-gray-500">
+      <div className="bg-ink rounded-2xl p-4 mb-4 border border-parchment/10">
+        <p className="text-xs font-semibold text-slate uppercase tracking-wide mb-2">Event</p>
+        <p className="font-semibold text-parchment text-lg">{contact.eventName}</p>
+        <p className="text-sm text-slate">
           {activeDays.length === 1
             ? fmtDate(activeDays[0].date)
             : `${fmtShortDate(activeDays[0].date)} – ${fmtShortDate(activeDays[activeDays.length - 1].date)}`}
@@ -1045,10 +1045,10 @@ function ReviewStep({
           const confirmed = day.rooms.filter(r => !r.requested);
           const requested = day.rooms.filter(r => r.requested);
           return (
-            <div key={day.date} className="bg-white border border-gray-200 rounded-2xl p-4">
+            <div key={day.date} className="bg-ink-soft border border-parchment/15 rounded-2xl p-4">
               <div className="flex items-center justify-between mb-2">
-                <p className="font-semibold text-[#00205B] text-sm">{fmtDate(day.date)}</p>
-                <span className="text-xs text-gray-400">{slotLabel[day.timeSlot] ?? "Any time"} · {day.headcount} people</span>
+                <p className="font-semibold text-parchment text-sm">{fmtDate(day.date)}</p>
+                <span className="text-xs text-slate">{slotLabel[day.timeSlot] ?? "Any time"} · {day.headcount} people</span>
               </div>
               {confirmed.length > 0 && (
                 <div className="space-y-1 mb-2">
@@ -1057,13 +1057,13 @@ function ReviewStep({
                     const setup = SETUP_STYLES.find(s => s.id === r.setup);
                     return (
                       <div key={r.roomId} className="flex items-center gap-2 text-sm">
-                        <span className="text-[#00abc9]">✓</span>
-                        <span className="text-gray-700">{room?.name}</span>
-                        {setup && <span className="text-xs text-gray-400">— {setup.label}</span>}
+                        <span className="text-brass">✓</span>
+                        <span className="text-parchment">{room?.name}</span>
+                        {setup && <span className="text-xs text-slate">— {setup.label}</span>}
                         {r.setup === "custom" && r.customSetup && (
-                          <span className="text-xs text-gray-400 italic">— {r.customSetup}</span>
+                          <span className="text-xs text-slate italic">— {r.customSetup}</span>
                         )}
-                        <span className="ml-auto text-xs font-medium text-gray-500">
+                        <span className="ml-auto text-xs font-medium text-slate">
                           ${(isNP ? room?.baseNP : room?.basePro)?.toLocaleString() ?? "—"} / 4 hrs
                         </span>
                       </div>
@@ -1092,7 +1092,7 @@ function ReviewStep({
 
       {/* Estimate */}
       {total > 0 && (
-        <div className="bg-[#00205B] text-white rounded-2xl p-4 mb-4 flex items-center justify-between">
+        <div className="bg-parchment text-ink rounded-2xl p-4 mb-4 flex items-center justify-between">
           <div>
             <p className="text-xs text-blue-200 uppercase tracking-wide">Estimated total</p>
             <p className="text-2xl font-bold">${total.toLocaleString()}</p>
@@ -1111,11 +1111,11 @@ function ReviewStep({
       </Field>
 
       <div className="mt-6 flex justify-between">
-        <button onClick={onBack} className="px-6 py-3 rounded-xl text-gray-500 font-medium text-sm hover:bg-gray-100 transition-colors">
+        <button onClick={onBack} className="px-6 py-3 rounded-xl text-slate font-medium text-sm hover:bg-parchment/10 transition-colors">
           ← Back
         </button>
         <button onClick={() => { void onSubmit(); }} disabled={submitting}
-          className="px-8 py-3 rounded-xl bg-[#00205B] text-white font-semibold text-sm hover:bg-[#001a4a] disabled:opacity-60 transition-colors flex items-center gap-2">
+          className="px-8 py-3 rounded-xl bg-parchment text-ink font-semibold text-sm hover:bg-parchment/90 disabled:opacity-60 transition-colors flex items-center gap-2">
           {submitting ? (
             <>
               <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -1136,7 +1136,7 @@ function ReviewStep({
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+      <label className="block text-sm font-medium text-parchment mb-1">
         {label}{required && <span className="text-red-400 ml-0.5">*</span>}
       </label>
       {children}
@@ -1144,7 +1144,7 @@ function Field({ label, required, children }: { label: string; required?: boolea
   );
 }
 
-const input = "w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#00abc9]/30 focus:border-[#00abc9] transition-colors";
+const input = "w-full border border-parchment/20 rounded-xl px-3 py-2.5 text-sm bg-ink text-parchment placeholder:text-slate/50 focus:outline-none focus:ring-2 focus:ring-brass/30 focus:border-brass transition-colors";
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
@@ -1216,11 +1216,11 @@ export default function ReserveClient({ initialContact }: ReserveClientProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f0fafc] to-white">
+    <div className="min-h-screen bg-ink">
       {/* Header */}
-      <div className="bg-[#00205B] text-white py-6 px-4 mb-8">
+      <div className="bg-parchment text-ink py-6 px-4 mb-8">
         <div className="max-w-3xl mx-auto">
-          <p className="text-xs font-semibold uppercase tracking-widest text-[#00abc9] mb-1">BX Community Center</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-brass mb-1">BX Community Center</p>
           <h1 className="text-2xl font-bold">Reserve a Space</h1>
           <p className="text-blue-200 text-sm mt-1">Build your event, see real availability, and send your request — all in one place.</p>
         </div>

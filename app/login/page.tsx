@@ -50,7 +50,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-ink">
       <div className="w-full max-w-sm">
 
         {/* Logo + label */}
@@ -63,46 +63,46 @@ export default function LoginPage() {
             className="object-contain mb-3"
             priority
           />
-          <p className="text-xs uppercase tracking-[0.3em] text-gray-400 mb-4">
+          <p className="text-xs uppercase tracking-[0.3em] text-slate mb-4">
             BX Reservations
           </p>
-          <h1 className="text-xl font-bold text-[#00205B]">Sign in or create an account</h1>
-          <p className="text-sm text-gray-500 mt-1.5 max-w-xs leading-relaxed">
+          <h1 className="text-xl font-bold text-parchment">Sign in or create an account</h1>
+          <p className="text-sm text-slate mt-1.5 max-w-xs leading-relaxed">
             New here? Your Google account doubles as your BX Reservations account — no sign-up form needed.
           </p>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-xl p-7 shadow-sm space-y-5">
+        <div className="bg-ink-soft border border-parchment/10 rounded-xl p-7 shadow-sm space-y-5">
 
           {/* Google — primary CTA */}
           <button
             type="button"
             onClick={handleGoogleSignIn}
             disabled={googleLoading}
-            className="w-full flex items-center justify-center gap-2.5 bg-white border border-gray-300 hover:border-gray-400 hover:bg-gray-50 active:scale-[0.98] transition-all text-gray-700 font-medium rounded-lg py-3 text-sm disabled:opacity-60 shadow-sm"
+            className="w-full flex items-center justify-center gap-2.5 bg-ink-soft border border-parchment/20 hover:border-parchment/40 hover:bg-parchment/5 active:scale-[0.98] transition-all text-parchment font-medium rounded-lg py-3 text-sm disabled:opacity-60 shadow-sm"
           >
             <GoogleIcon size={16} />
             {googleLoading ? "Redirecting…" : "Continue with Google"}
           </button>
 
           {/* Google hint */}
-          <div className="flex items-start gap-2 bg-[#f0fafc] border border-[#00abc9]/20 rounded-lg px-3 py-2.5">
-            <span className="text-[#00abc9] text-base leading-none mt-0.5">ℹ</span>
-            <p className="text-xs text-[#007a8f] leading-relaxed">
+          <div className="flex items-start gap-2 bg-brass/5 border border-brass/20 rounded-lg px-3 py-2.5">
+            <span className="text-brass text-base leading-none mt-0.5">ℹ</span>
+            <p className="text-xs text-slate leading-relaxed">
               Use the Google button to <strong>sign in or create a new account</strong>. First-time users are set up automatically.
             </p>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-gray-200" />
-            <span className="text-[10px] uppercase tracking-wide text-gray-400">or sign in with email</span>
-            <div className="flex-1 h-px bg-gray-200" />
+            <div className="flex-1 h-px bg-parchment/10" />
+            <span className="text-[10px] uppercase tracking-wide text-slate">or sign in with email</span>
+            <div className="flex-1 h-px bg-parchment/10" />
           </div>
 
           {/* Email + password fallback */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
+              <label className="block text-xs font-semibold text-slate mb-1.5 uppercase tracking-wide">
                 Email
               </label>
               <input
@@ -111,13 +111,13 @@ export default function LoginPage() {
                 autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg py-2.5 px-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00abc9]/40 focus:border-[#00abc9]"
+                className="w-full border border-parchment/20 rounded-lg py-2.5 px-3 text-sm text-parchment placeholder:text-slate/50 bg-ink focus:outline-none focus:ring-2 focus:ring-brass/40 focus:border-brass"
                 placeholder="you@example.com"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
+              <label className="block text-xs font-semibold text-slate mb-1.5 uppercase tracking-wide">
                 Password
               </label>
               <input
@@ -126,7 +126,7 @@ export default function LoginPage() {
                 autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg py-2.5 px-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00abc9]/40 focus:border-[#00abc9]"
+                className="w-full border border-parchment/20 rounded-lg py-2.5 px-3 text-sm text-parchment placeholder:text-slate/50 bg-ink focus:outline-none focus:ring-2 focus:ring-brass/40 focus:border-brass"
                 placeholder="••••••••"
               />
             </div>
@@ -140,14 +140,14 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#00205B] hover:bg-[#00205B]/90 active:scale-[0.98] transition-all text-white font-semibold rounded-lg py-2.5 text-sm disabled:opacity-60"
+              className="w-full bg-brass hover:bg-brass/90 active:scale-[0.98] transition-all text-white font-semibold rounded-lg py-2.5 text-sm disabled:opacity-60"
             >
               {loading ? "Signing in…" : "Sign in"}
             </button>
           </form>
         </div>
 
-        <p className="text-xs text-gray-400 text-center mt-5 leading-relaxed px-2">
+        <p className="text-xs text-slate text-center mt-5 leading-relaxed px-2">
           By continuing, you agree to our use of your information to manage your reservation requests.
         </p>
       </div>

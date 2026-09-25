@@ -294,7 +294,7 @@ Send this to ${req.name} (${req.email}).`);
     .reduce((s, r) => s + r.estimate, 0);
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
+    <div className="min-h-screen bg-ink font-sans">
       {/* Top bar */}
       <header className="bg-[var(--bbc-navy)] text-white px-6 py-4 flex items-center justify-between sticky top-0 z-20">
         <div>
@@ -363,7 +363,7 @@ Send this to ${req.name} (${req.email}).`);
                 className={`px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
                   filter === s
                     ? "bg-[var(--bbc-navy)] text-white border-[var(--bbc-navy)]"
-                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                    : "bg-ink-soft text-slate border-parchment/15 hover:border-parchment/30"
                 }`}
               >
                 {s}
@@ -379,14 +379,14 @@ Send this to ${req.name} (${req.email}).`);
           {/* Request cards */}
           <div className="space-y-3">
             {filtered.length === 0 && (
-              <div className="bg-white rounded-xl border border-gray-100 p-10 text-center text-gray-400 text-sm">
+              <div className="bg-ink-soft rounded-xl border border-parchment/10 p-10 text-center text-slate text-sm">
                 No requests with this status
               </div>
             )}
             {filtered.map((req) => (
               <div
                 key={req.id}
-                className={`bg-white rounded-xl border border-gray-100 p-4 cursor-pointer transition-all hover:shadow-md ${
+                className={`bg-ink-soft rounded-xl border border-parchment/10 p-4 cursor-pointer transition-all hover:shadow-md ${
                   selected?.id === req.id ? "ring-2 ring-[var(--bbc-blue)]" : ""
                 }`}
                 onClick={() => setSelected(selected?.id === req.id ? null : req)}
@@ -394,21 +394,21 @@ Send this to ${req.name} (${req.email}).`);
                 <div className="flex items-start justify-between gap-3 flex-wrap">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                      <p className="font-bold text-gray-900 text-sm">{req.name}</p>
-                      {req.org && <p className="text-xs text-gray-400">· {req.org}</p>}
+                      <p className="font-bold text-parchment text-sm">{req.name}</p>
+                      {req.org && <p className="text-xs text-slate">· {req.org}</p>}
                       {req.flexible && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
                           ⚠ Soft block
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-slate">
                       <span className="font-semibold">{req.event}</span> — {req.room} · {req.date}
                     </p>
-                    <p className="text-xs text-gray-400 mt-0.5">{req.id} · Submitted {req.submitted}</p>
+                    <p className="text-xs text-slate mt-0.5">{req.id} · Submitted {req.submitted}</p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className="font-bold text-sm text-gray-900">${req.estimate.toLocaleString()}</span>
+                    <span className="font-bold text-sm text-parchment">${req.estimate.toLocaleString()}</span>
                     <span
                       className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${STATUS_COLORS[req.status]}`}
                     >
@@ -419,7 +419,7 @@ Send this to ${req.name} (${req.email}).`);
 
                 {/* Expanded detail panel */}
                 {selected?.id === req.id && (
-                  <div className="mt-4 pt-4 border-t border-gray-100 space-y-4">
+                  <div className="mt-4 pt-4 border-t border-parchment/10 space-y-4">
                     <div className="grid sm:grid-cols-3 gap-3 text-sm">
                       <Detail label="Email" value={req.email} />
                       <Detail label="Guests" value={String(req.guests)} />
@@ -431,7 +431,7 @@ Send this to ${req.name} (${req.email}).`);
 
                     {/* Status pipeline */}
                     <div>
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2">Pipeline</p>
+                      <p className="text-xs font-semibold text-slate uppercase tracking-widest mb-2">Pipeline</p>
                       <div className="flex items-center gap-1 flex-wrap">
                         {STATUS_ORDER.filter((s) => s !== "Declined").map((s, i) => {
                           const idx = STATUS_ORDER.indexOf(req.status);
@@ -441,18 +441,18 @@ Send this to ${req.name} (${req.email}).`);
                               <span
                                 className={`px-2 py-0.5 rounded text-xs font-semibold ${
                                   req.status === "Declined"
-                                    ? "bg-gray-100 text-gray-400"
+                                    ? "bg-parchment/10 text-slate"
                                     : sIdx < idx
                                     ? "bg-emerald-100 text-emerald-700"
                                     : sIdx === idx
                                     ? "bg-[var(--bbc-navy)] text-white"
-                                    : "bg-gray-100 text-gray-400"
+                                    : "bg-parchment/10 text-slate"
                                 }`}
                               >
                                 {s}
                               </span>
                               {i < STATUS_ORDER.length - 2 && (
-                                <span className="text-gray-300 text-xs">→</span>
+                                <span className="text-slate/40 text-xs">→</span>
                               )}
                             </div>
                           );
@@ -511,7 +511,7 @@ Send this to ${req.name} (${req.email}).`);
                               <div className="flex gap-2 items-center" onClick={(e) => e.stopPropagation()}>
                                 <input
                                   type="text"
-                                  className="border border-stone-300 rounded px-2 py-1 text-xs w-44"
+                                  className="border border-parchment/20 rounded px-2 py-1 text-xs w-44 bg-ink text-parchment"
                                   placeholder="Your full name"
                                   value={countersignName}
                                   onChange={(e) => setCountersignName(e.target.value)}
@@ -519,7 +519,7 @@ Send this to ${req.name} (${req.email}).`);
                                   autoFocus
                                 />
                                 <button className="btn-primary text-xs" onClick={() => doCountersign(req)}>Sign</button>
-                                <button className="text-xs text-gray-400 hover:text-gray-600" onClick={() => { setCountersigning(null); setCountersignName(""); }}>Cancel</button>
+                                <button className="text-xs text-slate hover:text-parchment" onClick={() => { setCountersigning(null); setCountersignName(""); }}>Cancel</button>
                               </div>
                             ) : (
                               <button
@@ -539,7 +539,7 @@ Send this to ${req.name} (${req.email}).`);
                       );
                     })()}
                     {req.status === "Declined" && (
-                      <p className="text-xs text-gray-400">This request was declined.</p>
+                      <p className="text-xs text-slate">This request was declined.</p>
                     )}
                   </div>
                 )}
@@ -551,12 +551,12 @@ Send this to ${req.name} (${req.email}).`);
 
         {/* Right: Calendar sidebar */}
         <div className={`${calOpen ? "block" : "hidden lg:block"}`}>
-          <div className="sticky top-24 bg-white rounded-xl border border-gray-100 p-5 space-y-4">
+          <div className="sticky top-24 bg-ink-soft rounded-xl border border-parchment/10 p-5 space-y-4">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Combined Calendar</p>
-              <p className="text-xs text-gray-400">Oct – Nov 2026</p>
+              <p className="text-xs font-semibold text-slate uppercase tracking-widest">Combined Calendar</p>
+              <p className="text-xs text-slate">Oct – Nov 2026</p>
             </div>
-            <p className="text-xs text-gray-400 leading-relaxed">
+            <p className="text-xs text-slate leading-relaxed">
               Staff view — shows real event names and flex-block flags. Never visible to the public.
             </p>
 
@@ -564,8 +564,8 @@ Send this to ${req.name} (${req.email}).`);
               {CALENDAR_EVENTS.sort((a, b) => a.date.localeCompare(b.date)).map((ev, i) => (
                 <div key={i} className="flex gap-3 items-start">
                   <div className="flex-shrink-0 w-14">
-                    <p className="text-xs font-bold text-gray-700">{ev.date.slice(5)}</p>
-                    <p className="text-xs text-gray-400">{ev.room}</p>
+                    <p className="text-xs font-bold text-parchment">{ev.date.slice(5)}</p>
+                    <p className="text-xs text-slate">{ev.room}</p>
                   </div>
                   <div
                     className={`flex-1 rounded-lg px-2 py-1 text-xs font-medium leading-snug border ${
@@ -573,7 +573,7 @@ Send this to ${req.name} (${req.email}).`);
                         ? "bg-[var(--glass-bg)] border-[var(--glass-border)] text-[var(--bbc-navy)]"
                         : ev.kind === "flex"
                         ? "bg-amber-50 border-amber-200 text-amber-800"
-                        : "bg-gray-50 border-gray-200 text-gray-400 line-through"
+                        : "bg-ink border-parchment/15 text-slate line-through"
                     }`}
                   >
                     {ev.kind === "flex" && <span className="mr-1">⟳</span>}
@@ -584,11 +584,11 @@ Send this to ${req.name} (${req.email}).`);
             </div>
 
             {/* Legend */}
-            <div className="pt-3 border-t border-gray-100 space-y-1.5">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">Legend</p>
+            <div className="pt-3 border-t border-parchment/10 space-y-1.5">
+              <p className="text-xs font-semibold text-slate uppercase tracking-widest mb-2">Legend</p>
               <LegendItem color="bg-[var(--glass-bg)] border-[var(--glass-border)] text-[var(--bbc-navy)]" label="Rental / confirmed event" />
               <LegendItem color="bg-amber-50 border-amber-200 text-amber-800" label="⟳ Standing use · may flex" />
-              <LegendItem color="bg-gray-50 border-gray-200 text-gray-400" label="Declined" />
+              <LegendItem color="bg-ink border-parchment/15 text-slate" label="Declined" />
             </div>
           </div>
         </div>
@@ -600,8 +600,8 @@ Send this to ${req.name} (${req.email}).`);
 // ─── Small helpers ─────────────────────────────────────────────────────────────
 function KPI({ label, value, color }: { label: string; value: string; color: string }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-4">
-      <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-1">{label}</p>
+    <div className="bg-ink-soft rounded-xl border border-parchment/10 p-4">
+      <p className="text-xs text-slate font-semibold uppercase tracking-wider mb-1">{label}</p>
       <p className={`text-2xl font-bold ${color}`}>{value}</p>
     </div>
   );
@@ -610,8 +610,8 @@ function KPI({ label, value, color }: { label: string; value: string; color: str
 function Detail({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider">{label}</p>
-      <p className="font-medium text-gray-800">{value}</p>
+      <p className="text-xs text-slate font-semibold uppercase tracking-wider">{label}</p>
+      <p className="font-medium text-parchment">{value}</p>
     </div>
   );
 }
@@ -620,7 +620,7 @@ function LegendItem({ color, label }: { color: string; label: string }) {
   return (
     <div className="flex items-center gap-2">
       <span className={`rounded px-2 py-0.5 text-xs border ${color}`}>Sample</span>
-      <span className="text-xs text-gray-500">{label}</span>
+      <span className="text-xs text-slate">{label}</span>
     </div>
   );
 }
@@ -656,26 +656,26 @@ function BlackoutSettings({
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
-        <h2 className="text-lg font-bold text-gray-900">Blackout Rules</h2>
-        <p className="text-sm text-gray-500 mt-1">
+        <h2 className="text-lg font-bold text-parchment">Blackout Rules</h2>
+        <p className="text-sm text-slate mt-1">
           Dates and times blocked on the public reservation form. PCO calendar is unaffected.
         </p>
       </div>
 
       {/* Current rules */}
-      <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-50">
+      <div className="bg-ink-soft rounded-xl border border-parchment/10 divide-y divide-parchment/5">
         {loading && (
-          <p className="px-5 py-4 text-sm text-gray-400">Loading…</p>
+          <p className="px-5 py-4 text-sm text-slate">Loading…</p>
         )}
         {!loading && rules.length === 0 && (
-          <p className="px-5 py-4 text-sm text-gray-400">No blackout rules yet.</p>
+          <p className="px-5 py-4 text-sm text-slate">No blackout rules yet.</p>
         )}
         {rules.map(rule => (
           <div key={rule.id} className="flex items-center justify-between gap-4 px-5 py-3">
             <div>
-              <p className="text-sm font-semibold text-gray-800">{rule.label || ruleDescription(rule)}</p>
+              <p className="text-sm font-semibold text-parchment">{rule.label || ruleDescription(rule)}</p>
               {rule.label && (
-                <p className="text-xs text-gray-400">{ruleDescription(rule)}</p>
+                <p className="text-xs text-slate">{ruleDescription(rule)}</p>
               )}
             </div>
             <button
@@ -689,8 +689,8 @@ function BlackoutSettings({
       </div>
 
       {/* Add new rule */}
-      <div className="bg-white rounded-xl border border-gray-100 p-5 space-y-4">
-        <p className="text-sm font-semibold text-gray-700">Add a rule</p>
+      <div className="bg-ink-soft rounded-xl border border-parchment/10 p-5 space-y-4">
+        <p className="text-sm font-semibold text-parchment">Add a rule</p>
 
         {/* Rule type */}
         <div className="flex gap-2 flex-wrap">
@@ -704,8 +704,8 @@ function BlackoutSettings({
               onClick={() => setNewRuleType(opt.value)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
                 newRuleType === opt.value
-                  ? "bg-[#00205B] text-white border-[#00205B]"
-                  : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
+                  ? "bg-parchment text-ink border-parchment"
+                  : "bg-ink text-slate border-parchment/20 hover:bg-parchment/10"
               }`}
             >
               {opt.label}
@@ -717,11 +717,11 @@ function BlackoutSettings({
           {/* Day of week picker */}
           {(newRuleType === "dow" || newRuleType === "dow_slot") && (
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">Day of week</label>
+              <label className="block text-xs font-semibold text-slate mb-1">Day of week</label>
               <select
                 value={newDow}
                 onChange={e => setNewDow(Number(e.target.value))}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                className="border border-parchment/20 rounded-lg px-3 py-2 text-sm bg-ink text-parchment"
               >
                 {DOW_NAMES.map((name, i) => (
                   <option key={i} value={i}>{name}</option>
@@ -733,11 +733,11 @@ function BlackoutSettings({
           {/* Slot picker */}
           {newRuleType === "dow_slot" && (
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">Time slot</label>
+              <label className="block text-xs font-semibold text-slate mb-1">Time slot</label>
               <select
                 value={newSlot}
                 onChange={e => setNewSlot(e.target.value)}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                className="border border-parchment/20 rounded-lg px-3 py-2 text-sm bg-ink text-parchment"
               >
                 {SLOT_OPTIONS.map(s => (
                   <option key={s.value} value={s.value}>{s.label}</option>
@@ -749,19 +749,19 @@ function BlackoutSettings({
           {/* Date picker */}
           {newRuleType === "date" && (
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1">Date</label>
+              <label className="block text-xs font-semibold text-slate mb-1">Date</label>
               <input
                 type="date"
                 value={newDate}
                 onChange={e => setNewDate(e.target.value)}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                className="border border-parchment/20 rounded-lg px-3 py-2 text-sm bg-ink text-parchment"
               />
             </div>
           )}
 
           {/* Label */}
           <div className="flex-1 min-w-[160px]">
-            <label className="block text-xs font-semibold text-gray-500 mb-1">
+            <label className="block text-xs font-semibold text-slate mb-1">
               Label <span className="font-normal opacity-60">(optional)</span>
             </label>
             <input
@@ -769,7 +769,7 @@ function BlackoutSettings({
               placeholder="e.g. Christmas, Church Night…"
               value={newLabel}
               onChange={e => setNewLabel(e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
+              className="w-full border border-parchment/20 rounded-lg px-3 py-2 text-sm bg-ink text-parchment"
             />
           </div>
 

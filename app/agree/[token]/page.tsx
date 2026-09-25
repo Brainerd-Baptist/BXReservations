@@ -56,18 +56,18 @@ export default function AgreePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
-        <p className="text-stone-500 text-sm">Loading agreement…</p>
+      <div className="min-h-screen bg-ink flex items-center justify-center">
+        <p className="text-slate text-sm">Loading agreement…</p>
       </div>
     );
   }
 
   if (error || !agreement) {
     return (
-      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+      <div className="min-h-screen bg-ink flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600 font-medium mb-2">Agreement not found</p>
-          <p className="text-stone-500 text-sm">
+          <p className="text-slate text-sm">
             {error ?? "This link may be invalid or expired. Please contact the BX team."}
           </p>
         </div>
@@ -84,18 +84,18 @@ export default function AgreePage() {
     : null;
 
   return (
-    <div className="min-h-screen bg-stone-50 py-10 px-4">
+    <div className="min-h-screen bg-ink py-10 px-4">
       <div className="max-w-2xl mx-auto">
 
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="text-2xl font-bold text-stone-800 mb-1">BX Facility Use Agreement</div>
-          <div className="text-stone-500 text-sm">Brainerd Crossing · Brainerd Baptist Church</div>
+          <div className="text-2xl font-bold text-parchment mb-1">BX Facility Use Agreement</div>
+          <div className="text-slate text-sm">Brainerd Crossing · Brainerd Baptist Church</div>
         </div>
 
         {/* Agreement text */}
-        <div className="bg-white border border-stone-200 rounded-xl p-6 mb-6 shadow-sm">
-          <pre className="whitespace-pre-wrap font-sans text-sm text-stone-700 leading-relaxed">
+        <div className="bg-ink-soft border border-parchment/10 rounded-xl p-6 mb-6 shadow-sm">
+          <pre className="whitespace-pre-wrap font-sans text-sm text-parchment leading-relaxed">
             {agreement.agreement_text}
           </pre>
         </div>
@@ -110,23 +110,23 @@ export default function AgreePage() {
               </p>
             )}
             {status === "pending_staff" && (
-              <p className="text-stone-500 text-sm mt-3">
+              <p className="text-slate text-sm mt-3">
                 The BX team will countersign shortly. Both parties will receive a copy once the agreement is complete.
               </p>
             )}
             {status === "complete" && (
-              <p className="text-stone-500 text-sm mt-3">
+              <p className="text-slate text-sm mt-3">
                 ✓ Countersigned by BX staff — your agreement is fully executed.
               </p>
             )}
           </div>
         ) : (
           /* Signing form */
-          <div className="bg-white border border-stone-200 rounded-xl p-6 shadow-sm">
-            <h2 className="font-semibold text-stone-800 mb-4">Sign this agreement</h2>
+          <div className="bg-ink-soft border border-parchment/10 rounded-xl p-6 shadow-sm">
+            <h2 className="font-semibold text-parchment mb-4">Sign this agreement</h2>
             <form onSubmit={handleSign} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-1">
+                <label className="block text-sm font-medium text-parchment mb-1">
                   Full name <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -135,9 +135,9 @@ export default function AgreePage() {
                   onChange={(e) => setCustomerName(e.target.value)}
                   placeholder="Type your full legal name"
                   required
-                  className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-stone-400"
+                  className="w-full border border-parchment/20 rounded-lg px-3 py-2 text-sm bg-ink text-parchment focus:outline-none focus:ring-2 focus:ring-brass/40"
                 />
-                <p className="text-stone-400 text-xs mt-1">
+                <p className="text-slate text-xs mt-1">
                   Typing your name serves as your electronic signature.
                 </p>
               </div>
@@ -149,7 +149,7 @@ export default function AgreePage() {
                   onChange={(e) => setAgreed(e.target.checked)}
                   className="mt-0.5 h-4 w-4 rounded border-stone-300"
                 />
-                <span className="text-sm text-stone-700">
+                <span className="text-sm text-parchment">
                   I have read and agree to the terms of this Facility Use Agreement, and I understand
                   that this electronic signature is legally binding.
                 </span>
@@ -162,8 +162,8 @@ export default function AgreePage() {
               <button
                 type="submit"
                 disabled={!customerName.trim() || !agreed || submitting}
-                className="w-full bg-stone-800 text-white rounded-lg py-2.5 text-sm font-medium
-                           disabled:opacity-40 disabled:cursor-not-allowed hover:bg-stone-700 transition-colors"
+                className="w-full bg-brass text-white rounded-lg py-2.5 text-sm font-medium
+                           disabled:opacity-40 disabled:cursor-not-allowed hover:bg-brass/90 transition-colors"
               >
                 {submitting ? "Submitting…" : "Sign Agreement"}
               </button>
@@ -171,7 +171,7 @@ export default function AgreePage() {
           </div>
         )}
 
-        <p className="text-center text-stone-400 text-xs mt-6">
+        <p className="text-center text-slate text-xs mt-6">
           Questions? Contact the BX team at{" "}
           <a href="mailto:bx@brainerdbaptist.org" className="underline">
             bx@brainerdbaptist.org
