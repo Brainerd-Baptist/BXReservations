@@ -7,7 +7,6 @@ import { BlackoutRule, isDateBlackedOut, isSlotBlackedOut, blackoutReason } from
 
 type Signal = "available" | "ask" | "unavailable" | "loading";
 type SetupId = "theater" | "banquet" | "classroom" | "reception" | "cocktail" | "boardroom" | "custom" | "";
-type TimeBlockId = "full" | "am" | "pm" | "evening" | "custom";
 type SpaceMode = "single" | "main-plus" | "multiple";
 
 const SETUP_STYLES: { id: SetupId; label: string; desc: string }[] = [
@@ -20,13 +19,6 @@ const SETUP_STYLES: { id: SetupId; label: string; desc: string }[] = [
   { id: "custom",    label: "Custom",    desc: "Describe your own setup" },
 ];
 
-const TIME_BLOCKS: { id: TimeBlockId; label: string; sub: string }[] = [
-  { id: "full",    label: "Full Day",   sub: "8 am – 10 pm" },
-  { id: "am",      label: "Morning",    sub: "8 am – 12 pm" },
-  { id: "pm",      label: "Afternoon",  sub: "1 pm – 5 pm" },
-  { id: "evening", label: "Evening",    sub: "5 pm – 10 pm" },
-  { id: "custom",  label: "Custom",     sub: "Set your hours" },
-];
 
 interface RoomSelection {
   roomId: string;
@@ -40,7 +32,6 @@ interface DayConfig {
   date: string;
   included: boolean;
   headcount: number;
-  timeBlock: TimeBlockId;
   customStart: string;
   customEnd: string;
   rooms: RoomSelection[];
@@ -456,7 +447,6 @@ function BuilderStep({
         return byDate[date] ?? {
         date, included: !isBlocked,
         headcount: defaultHeadcount,
-        timeBlock: "full" as TimeBlockId,
         customStart: "08:00", customEnd: "22:00",
         rooms: [],
         availability: Object.fromEntries(ROOMS.map(r => [r.id, "loading" as Signal])),
@@ -498,7 +488,6 @@ function BuilderStep({
     setDays(prev => prev.map((d, i) => i === dayIdx + 1 ? {
       ...d,
       headcount: src.headcount,
-      timeBlock: src.timeBlock,
       customStart: src.customStart,
       customEnd: src.customEnd,
       rooms: src.rooms.map(r => ({ ...r })),
@@ -510,7 +499,6 @@ function BuilderStep({
     setDays(prev => prev.map((d, i) => i === dayIdx ? d : {
       ...d,
       headcount: src.headcount,
-      timeBlock: src.timeBlock,
       customStart: src.customStart,
       customEnd: src.customEnd,
       rooms: src.rooms.map(r => ({ ...r })),
@@ -576,7 +564,6 @@ function BuilderStep({
               onToggleInclude={() => updateDay(day.date, { included: !day.included })}
               onHeadcount={n => updateDay(day.date, { headcount: n })}
               onTimeSlot={slot => updateDay(day.date, { timeSlot: slot, availabilityFetched: false, availability: Object.fromEntries(ROOMS.map(r => [r.id, "loading" as Signal])) })}
-              onTimeBlock={tb => updateDay(day.date, { timeBlock: tb })}
               onCustomTime={(s, e2) => updateDay(day.date, { customStart: s, customEnd: e2 })}
               onToggleRoom={(roomId, role) => toggleRoom(day, roomId, role)}
               onUpdateRoom={(roomId, patch) => updateRoomSelection(day, roomId, patch)}
@@ -631,7 +618,7 @@ function BuilderStep({
 
 function DayCard({
   day, dayIdx, total, isNP, spaceMode, breakoutGroupSize, onBreakoutGroupSize,
-  onToggleInclude, onHeadcount, onTimeSlot, onTimeBlock, onCustomTime,
+  onToggleInclude, onHeadcount, onTimeSlot, onCustomTime,
   onToggleRoom, onUpdateRoom, onCopyToNext, onApplyToAll, blackoutRules,
 }: {
   day: DayConfig; dayIdx: number; total: number; isNP: boolean;
@@ -641,7 +628,6 @@ function DayCard({
   onToggleInclude: () => void;
   onHeadcount: (n: number) => void;
   onTimeSlot: (slot: "any" | "morning" | "afternoon" | "evening") => void;
-  onTimeBlock: (tb: TimeBlockId) => void;
   onCustomTime: (start: string, end: string) => void;
   onToggleRoom: (roomId: string, role: "main" | "extra") => void;
   onUpdateRoom: (roomId: string, patch: Partial<RoomSelection>) => void;
@@ -706,7 +692,7 @@ function DayCard({
       {/* Day body */}
       {expanded && day.included && (
         <div className="border-t border-gray-100 px-5 py-4 space-y-5">
-          {/* Headcount + time block */}
+          {/* Headcount + time of day */}
           <div className="flex flex-wrap gap-4 items-end">
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Headcount</label>
@@ -752,32 +738,7 @@ function DayCard({
                   })}
                 </div>
               </div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Time block</label>
-              <div className="flex gap-1 flex-wrap">
-                {TIME_BLOCKS.map(tb => (
-                  <button key={tb.id} onClick={() => onTimeBlock(tb.id)}
-                    title={tb.sub}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                      day.timeBlock === tb.id
-                        ? "bg-[#00abc9] text-white"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }`}>
-                    {tb.label}
-                  </button>
-                ))}
-              </div>
             </div>
-            {day.timeBlock === "custom" && (
-              <div className="flex items-center gap-2">
-                <input type="time" value={day.customStart}
-                  onChange={e => onCustomTime(e.target.value, day.customEnd)}
-                  className="border border-gray-200 rounded-lg px-2 py-1 text-sm" />
-                <span className="text-gray-400 text-sm">to</span>
-                <input type="time" value={day.customEnd}
-                  onChange={e => onCustomTime(day.customStart, e.target.value)}
-                  className="border border-gray-200 rounded-lg px-2 py-1 text-sm" />
-              </div>
-            )}
           </div>
 
           {/* Room grid — space-mode-aware */}
@@ -1080,14 +1041,14 @@ function ReviewStep({
       {/* Days breakdown */}
       <div className="space-y-3 mb-4">
         {activeDays.map(day => {
-          const tb = TIME_BLOCKS.find(t => t.id === day.timeBlock);
+          const slotLabel: Record<string, string> = { any: "Any time", morning: "Morning", afternoon: "Afternoon", evening: "Evening" };
           const confirmed = day.rooms.filter(r => !r.requested);
           const requested = day.rooms.filter(r => r.requested);
           return (
             <div key={day.date} className="bg-white border border-gray-200 rounded-2xl p-4">
               <div className="flex items-center justify-between mb-2">
                 <p className="font-semibold text-[#00205B] text-sm">{fmtDate(day.date)}</p>
-                <span className="text-xs text-gray-400">{tb?.label} · {day.headcount} people</span>
+                <span className="text-xs text-gray-400">{slotLabel[day.timeSlot] ?? "Any time"} · {day.headcount} people</span>
               </div>
               {confirmed.length > 0 && (
                 <div className="space-y-1 mb-2">
