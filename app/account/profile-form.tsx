@@ -33,7 +33,6 @@ export default function ProfileForm({ displayName, phone, organization, email }:
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    // Store the formatted value (already in the input)
     setSaved(false);
     setError(null);
     startTransition(async () => {
@@ -58,7 +57,12 @@ export default function ProfileForm({ displayName, phone, organization, email }:
             type="email"
             value={email}
             readOnly
-            style={{ ...inputStyle, background: "#f5f5f5", color: "#666", cursor: "not-allowed" }}
+            style={{
+              ...inputStyle,
+              background: "color-mix(in srgb, var(--bx-parchment) 6%, transparent)",
+              color: "var(--bx-slate)",
+              cursor: "not-allowed",
+            }}
           />
           <p style={hintStyle}>Managed by Google sign-in</p>
         </div>
@@ -111,7 +115,7 @@ export default function ProfileForm({ displayName, phone, organization, email }:
           disabled={isPending}
           style={{
             padding: "0.5rem 1.25rem",
-            background: "#00205B",
+            background: "var(--bx-brass)",
             color: "#fff",
             border: "none",
             borderRadius: "6px",
@@ -126,12 +130,12 @@ export default function ProfileForm({ displayName, phone, organization, email }:
         </button>
 
         {saved && (
-          <span style={{ fontSize: "0.875rem", color: "#16a34a", fontWeight: 500 }}>
+          <span style={{ fontSize: "0.875rem", color: "var(--bx-sage)", fontWeight: 500 }}>
             ✓ Saved
           </span>
         )}
         {error && (
-          <span style={{ fontSize: "0.875rem", color: "#dc2626" }}>
+          <span style={{ fontSize: "0.875rem", color: "var(--bx-clay)" }}>
             {error}
           </span>
         )}
@@ -145,25 +149,26 @@ const labelStyle: React.CSSProperties = {
   fontSize: "0.75rem",
   fontWeight: 600,
   letterSpacing: "0.05em",
-  textTransform: "uppercase",
-  color: "#666",
+  textTransform: "uppercase" as const,
+  color: "var(--bx-slate)",
   marginBottom: "0.35rem",
 };
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
   padding: "0.5rem 0.75rem",
-  border: "1px solid #e0e0e0",
+  border: "1px solid color-mix(in srgb, var(--bx-parchment) 18%, transparent)",
   borderRadius: "6px",
   fontSize: "0.9375rem",
-  color: "#111",
-  boxSizing: "border-box",
+  color: "var(--bx-parchment)",
+  background: "var(--bx-ink)",
+  boxSizing: "border-box" as const,
   outline: "none",
   transition: "border-color 0.15s",
 };
 
 const hintStyle: React.CSSProperties = {
   fontSize: "0.75rem",
-  color: "#999",
+  color: "color-mix(in srgb, var(--bx-slate) 80%, transparent)",
   marginTop: "0.25rem",
 };
