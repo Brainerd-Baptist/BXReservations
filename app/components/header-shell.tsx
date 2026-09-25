@@ -99,20 +99,6 @@ export default function HeaderShell({
 
           {/* Right: new request + avatar/sign-in */}
           <div className="flex items-center gap-3">
-            <Link
-              href="/reserve"
-              className="text-sm transition-colors hidden sm:inline"
-              style={{ color: "var(--bx-slate)" }}
-              onMouseEnter={(e) =>
-                ((e.currentTarget as HTMLAnchorElement).style.color = "var(--bx-parchment)")
-              }
-              onMouseLeave={(e) =>
-                ((e.currentTarget as HTMLAnchorElement).style.color = "var(--bx-slate)")
-              }
-            >
-              New request
-            </Link>
-
             {hasUser && (
               <NotificationBell href="/account" />
             )}
