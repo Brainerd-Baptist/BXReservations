@@ -68,23 +68,23 @@ export default function HeaderShell({
             </button>
 
             <Link href="/" className="flex items-center gap-2 group ml-1">
-              {/* BBC stacked logo — black artwork, inverted white by .bx-logo CSS rule */}
+              {/* BBC stacked logo — white PNG, renders directly on dark header */}
               <Image
                 src="/bbc-logo-stacked.png"
                 alt="Brainerd Baptist Church"
-                width={110}
-                height={32}
-                className="h-7 sm:h-8 w-auto object-contain bx-logo"
+                width={130}
+                height={38}
+                className="h-8 sm:h-9 w-auto object-contain"
                 priority
               />
-              <div className="flex items-center gap-2 ml-0.5">
+              <div className="flex items-center gap-2 ml-1">
                 <div
                   className="w-px h-4"
                   style={{ background: "color-mix(in srgb, var(--bx-parchment) 15%, transparent)" }}
                 />
                 <span
-                  className="text-[11px] uppercase tracking-[0.18em] whitespace-nowrap font-medium"
-                  style={{ color: "var(--bx-slate)" }}
+                  className="text-[10px] uppercase tracking-[0.2em] whitespace-nowrap font-medium"
+                  style={{ color: "color-mix(in srgb, var(--bx-slate) 70%, transparent)" }}
                 >
                   Reservations
                 </span>

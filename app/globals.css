@@ -196,7 +196,4 @@ body {
   color: var(--bx-brass);
 }
 
-/* ── Logo: always invert — header uses dark ink background in every theme */
-.bx-logo {
-  filter: brightness(0) invert(1);
-}
+
