@@ -57,22 +57,6 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         .slice(0, 2)
     : user.email[0].toUpperCase();
 
-    const s = map[status] ?? { label: status, bg: "#F3F4F6", color: "#374151" };
-    return (
-      <span
-        style={{
-          padding: "2px 8px",
-          borderRadius: "9999px",
-          fontSize: "0.75rem",
-          fontWeight: 600,
-          background: s.bg,
-          color: s.color,
-        }}
-      >
-        {s.label}
-      </span>
-    );
-  };
 
   return (
     <main style={{ maxWidth: "640px", margin: "0 auto", padding: "2rem 1rem 4rem" }}>
