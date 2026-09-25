@@ -42,6 +42,7 @@ export function RoomsClient() {
   const [setup, setSetup] = useState<SetupId | "all">("all");
   const [previewRoom, setPreviewRoom] = useState<Room | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [mapFloor, setMapFloor] = useState<"upstairs" | "downstairs">("upstairs");
 
   const filtered = useMemo(() => ROOMS.filter(r => {
     if (floor !== "all" && r.floor !== floor) return false;
@@ -115,8 +116,25 @@ export function RoomsClient() {
             ))}
           </div>
 
+          {/* Floor tabs (map mode only) */}
+          {viewMode === "map" && (
+            <div className="flex items-center rounded-lg overflow-hidden ml-auto"
+              style={{ border: "1px solid color-mix(in srgb, var(--bx-parchment) 12%, transparent)" }}>
+              {(["upstairs", "downstairs"] as const).map(f => (
+                <button key={f} onClick={() => setMapFloor(f)}
+                  className="px-3 py-1 text-xs font-medium transition-all"
+                  style={mapFloor === f
+                    ? { background: "var(--bx-brass)", color: "var(--bx-ink)" }
+                    : { background: "transparent", color: "var(--bx-slate)" }
+                  }>
+                  {f === "upstairs" ? "↑ Up" : "↓ Down"}
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* Count + view toggle */}
-          <div className="ml-auto flex items-center gap-2">
+          <div className="flex items-center gap-2">
             {filtered.length < ROOMS.length && (
               <span className="text-xs" style={{ color: "var(--bx-slate)" }}>
                 {filtered.length} of {ROOMS.length}
@@ -145,6 +163,8 @@ export function RoomsClient() {
           <FloorPlan
             activeIds={activeIds}
             onRoomClick={(room) => setPreviewRoom(room)}
+            floor={mapFloor}
+            onFloorChange={setMapFloor}
           />
         ) : filtered.length === 0 ? (
           <div className="py-20 text-center">

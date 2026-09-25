@@ -83,15 +83,17 @@ function StairsIcon({ x, y }: { x: number; y: number }) {
 
 // ── Main component ─────────────────────────────────────────────────────────────
 interface FloorPlanProps {
-  /** Room IDs that are "active" in the current filter — others are dimmed */
   activeIds?: Set<string>;
-  /** Called when user clicks a reservable room */
   onRoomClick?: (room: Room) => void;
+  floor?: "upstairs" | "downstairs";
+  onFloorChange?: (floor: "upstairs" | "downstairs") => void;
   className?: string;
 }
 
-export function FloorPlan({ activeIds, onRoomClick, className = "" }: FloorPlanProps) {
-  const [floor, setFloor] = useState<"upstairs" | "downstairs">("upstairs");
+export function FloorPlan({ activeIds, onRoomClick, floor: floorProp, onFloorChange, className = "" }: FloorPlanProps) {
+  const [floorState, setFloorState] = useState<"upstairs" | "downstairs">("upstairs");
+  const floor = floorProp ?? floorState;
+  function setFloor(f: "upstairs" | "downstairs") { onFloorChange ? onFloorChange(f) : setFloorState(f); }
   const [hoverId, setHoverId] = useState<string | null>(null);
 
   const shapes = floor === "upstairs" ? UPSTAIRS : DOWNSTAIRS;
@@ -119,23 +121,6 @@ export function FloorPlan({ activeIds, onRoomClick, className = "" }: FloorPlanP
 
   return (
     <div className={`select-none ${className}`}>
-
-      {/* ── Floor tabs ── */}
-      <div className="flex gap-2 mb-3">
-        {(["upstairs", "downstairs"] as const).map(f => (
-          <button
-            key={f}
-            onClick={() => setFloor(f)}
-            className="px-4 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all"
-            style={floor === f
-              ? { background: "var(--bx-brass)", color: "var(--bx-ink)", boxShadow: "0 0 12px color-mix(in srgb, var(--bx-brass) 35%, transparent)" }
-              : { background: "color-mix(in srgb, var(--bx-parchment) 8%, transparent)", color: "var(--bx-slate)", border: "1px solid color-mix(in srgb, var(--bx-parchment) 12%, transparent)" }
-            }
-          >
-            {f === "upstairs" ? "↑ Upstairs" : "↓ Downstairs"}
-          </button>
-        ))}
-      </div>
 
       {/* ── SVG Floor Plan ── */}
       <div className="relative w-full overflow-x-auto rounded-xl"
