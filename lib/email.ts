@@ -204,7 +204,7 @@ export async function sendReservationConfirmation(opts: {
       <p style="margin:16px 0 0 0;">Our team will review your request and follow up within 2–3 business days.
          You'll receive an email when your status changes.</p>`,
     ctaText: "View Your Request",
-    ctaUrl:  `${SITE_URL}/account`,
+    ctaUrl:  `${SITE_URL}/reservations`,
     footerNote: `Reference: ${bookingNumber}`,
   });
 
@@ -371,7 +371,7 @@ export async function sendStatusUpdateEmail(opts: {
     headline:  cfg.headline,
     body:      cfg.body,
     ctaText:   cfg.cta,
-    ctaUrl:    `${SITE_URL}/account`,
+    ctaUrl:    `${SITE_URL}/reservations`,
     footerNote: `Reference: ${bookingNumber}`,
   });
 
@@ -438,7 +438,7 @@ export async function sendBookingReminder(opts: {
       <p style="margin:16px 0 0 0;">If you have any questions or need to make last-minute changes,
          please contact the church office as soon as possible.</p>`,
     ctaText:    "View Your Booking",
-    ctaUrl:     `${SITE_URL}/account`,
+    ctaUrl:     `${SITE_URL}/reservations`,
     footerNote: `Reference: ${bookingNumber}`,
   });
 

@@ -23,7 +23,7 @@ const navItems = [
 const reservationItems = [
   { label: "Spaces", href: "/rooms", icon: "map" },
   { label: "New Request", href: "/reserve", icon: "plus" },
-  { label: "My Reservations", href: "/account", icon: "list" },
+  { label: "My Reservations", href: "/reservations", icon: "list" },
 ];
 
 const adminQueueItems = [
