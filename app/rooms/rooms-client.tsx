@@ -5,10 +5,13 @@ import Link from "next/link";
 import { ROOMS, type Room, type SetupId } from "@/lib/rooms";
 import { RoomCard } from "@/app/components/room-card";
 import { RoomLightbox } from "@/app/components/room-lightbox";
+import { FloorPlan } from "@/app/components/floor-plan";
 
 // ── Filter types ─────────────────────────────────────────────────────────────
 type FloorFilter = "all" | "upstairs" | "downstairs";
 type CapacityFilter = "all" | "small" | "medium" | "large";
+type ViewMode = "grid" | "map";
+
 const SETUP_FILTER_IDS: SetupId[] = ["theater", "banquet", "reception", "cocktail", "classroom", "boardroom"];
 
 const SETUP_LABELS: Record<SetupId, string> = {
@@ -38,6 +41,7 @@ export function RoomsClient() {
   const [cap, setCap] = useState<CapacityFilter>("all");
   const [setup, setSetup] = useState<SetupId | "all">("all");
   const [previewRoom, setPreviewRoom] = useState<Room | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
   const filtered = useMemo(() => ROOMS.filter(r => {
     if (floor !== "all" && r.floor !== floor) return false;
@@ -45,6 +49,8 @@ export function RoomsClient() {
     if (setup !== "all" && !(r.setups as readonly string[]).includes(setup)) return false;
     return true;
   }), [floor, cap, setup]);
+
+  const activeIds = useMemo(() => new Set(filtered.map(r => r.id)), [filtered]);
 
   return (
     <main className="min-h-screen relative overflow-x-hidden" style={{ background: "var(--bx-ink)" }}>
@@ -109,18 +115,38 @@ export function RoomsClient() {
             ))}
           </div>
 
-          {/* Result count */}
-          {filtered.length < ROOMS.length && (
-            <span className="ml-auto text-xs" style={{ color: "var(--bx-slate)" }}>
-              {filtered.length} of {ROOMS.length}
-            </span>
-          )}
+          {/* Count + view toggle */}
+          <div className="ml-auto flex items-center gap-2">
+            {filtered.length < ROOMS.length && (
+              <span className="text-xs" style={{ color: "var(--bx-slate)" }}>
+                {filtered.length} of {ROOMS.length}
+              </span>
+            )}
+            <div className="flex items-center rounded-lg overflow-hidden"
+              style={{ border: "1px solid color-mix(in srgb, var(--bx-parchment) 12%, transparent)" }}>
+              {(["grid", "map"] as ViewMode[]).map(v => (
+                <button key={v} onClick={() => setViewMode(v)}
+                  className="px-3 py-1 text-xs font-medium transition-all"
+                  style={viewMode === v
+                    ? { background: "var(--bx-brass)", color: "var(--bx-ink)" }
+                    : { background: "transparent", color: "var(--bx-slate)" }
+                  }>
+                  {v === "grid" ? "⊞ Grid" : "⬜ Map"}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* ── Grid ── */}
+      {/* ── Content: Map or Grid ── */}
       <section className="max-w-5xl mx-auto px-4 py-8">
-        {filtered.length === 0 ? (
+        {viewMode === "map" ? (
+          <FloorPlan
+            activeIds={activeIds}
+            onRoomClick={(room) => setPreviewRoom(room)}
+          />
+        ) : filtered.length === 0 ? (
           <div className="py-20 text-center">
             <p className="text-4xl mb-3">🔍</p>
             <p className="font-semibold mb-1" style={{ color: "var(--bx-parchment)" }}>No spaces match these filters</p>
@@ -148,19 +174,18 @@ export function RoomsClient() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     {rooms.map(room => (
                       <div key={room.id} id={room.id} className="scroll-mt-20">
-                      <RoomCard
-                        key={room.id}
-                        room={room}
-                        signal="available"
-                        isSelected={false}
-                        isDisabled={false}
-                        isNP={false}
-                        tag={null}
-                        onToggle={() => {}}
-                        onPreview={() => setPreviewRoom(room)}
-                        role="main"
-                        galleryMode
-                      />
+                        <RoomCard
+                          room={room}
+                          signal="available"
+                          isSelected={false}
+                          isDisabled={false}
+                          isNP={false}
+                          tag={null}
+                          onToggle={() => {}}
+                          onPreview={() => setPreviewRoom(room)}
+                          role="main"
+                          galleryMode
+                        />
                       </div>
                     ))}
                   </div>
