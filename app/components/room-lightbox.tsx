@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import Image from "next/image";
 import { Room } from "@/lib/rooms";
 
@@ -9,6 +10,8 @@ interface Props {
   isNP: boolean;
   onClose: () => void;
   onToggle: () => void;
+  /** When true, CTA links to /reserve instead of calling onToggle */
+  galleryMode?: boolean;
 }
 
 const SETUP_LABELS: Record<string, string> = {
@@ -16,7 +19,7 @@ const SETUP_LABELS: Record<string, string> = {
   cocktail: "Cocktail", classroom: "Classroom", boardroom: "Boardroom", custom: "Custom",
 };
 
-export function RoomLightbox({ room, isSelected, isNP, onClose, onToggle }: Props) {
+export function RoomLightbox({ room, isSelected, isNP, onClose, onToggle, galleryMode = false }: Props) {
   const [photoIdx, setPhotoIdx] = useState(0);
 
   // Reset photo index when room changes
@@ -203,16 +206,26 @@ export function RoomLightbox({ room, isSelected, isNP, onClose, onToggle }: Prop
           </div>
 
           {/* CTA */}
-          <button
-            onClick={() => { onToggle(); onClose(); }}
-            className="w-full py-3 rounded-xl font-semibold text-sm transition-all hover:opacity-90 active:scale-[0.98]"
-            style={isSelected
-              ? { background: "color-mix(in srgb, var(--bx-brass) 15%, transparent)", color: "var(--bx-brass)", border: "1px solid var(--bx-brass)" }
-              : { background: "var(--bx-brass)", color: "white" }
-            }
-          >
-            {isSelected ? "✓ Selected — click to remove" : "Select this space →"}
-          </button>
+          {galleryMode ? (
+            <Link
+              href="/reserve"
+              className="w-full py-3 rounded-xl font-semibold text-sm transition-all hover:opacity-90 active:scale-[0.98] text-center inline-block"
+              style={{ background: "var(--bx-brass)", color: "white" }}
+            >
+              Reserve this space →
+            </Link>
+          ) : (
+            <button
+              onClick={() => { onToggle(); onClose(); }}
+              className="w-full py-3 rounded-xl font-semibold text-sm transition-all hover:opacity-90 active:scale-[0.98]"
+              style={isSelected
+                ? { background: "color-mix(in srgb, var(--bx-brass) 15%, transparent)", color: "var(--bx-brass)", border: "1px solid var(--bx-brass)" }
+                : { background: "var(--bx-brass)", color: "white" }
+              }
+            >
+              {isSelected ? "✓ Selected — click to remove" : "Select this space →"}
+            </button>
+          )}
         </div>
       </div>
     </div>

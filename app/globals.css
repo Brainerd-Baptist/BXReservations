@@ -207,3 +207,67 @@ body {
 [data-theme="orbit"] .bbc-logo {
   filter: brightness(0) invert(1);
 }
+
+/* ── Phase 4: Background life ────────────────────────────────────────────── */
+
+/* Noise texture overlay — ultra-subtle grain on every theme */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  opacity: 0.018;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+
+/* Bloom ambient glow — used in hero sections */
+.bx-bloom {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.bx-bloom::before {
+  content: "";
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--bx-brass) 14%, transparent),
+    transparent 70%
+  );
+  top: -200px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: bxBloomPulse 9s ease-in-out infinite alternate;
+  filter: blur(48px);
+}
+
+@keyframes bxBloomPulse {
+  from { opacity: 0.55; transform: translateX(-50%) scale(1); }
+  to   { opacity: 0.95; transform: translateX(-50%) scale(1.18); }
+}
+
+/* Scroll-driven fade-in — sections enter as they scroll into view */
+@supports (animation-timeline: view()) {
+  .bx-fade-in {
+    animation: bxFadeUp 0.65s ease both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 30%;
+  }
+}
+
+/* Fallback for browsers without scroll-driven animations */
+@supports not (animation-timeline: view()) {
+  .bx-fade-in {
+    opacity: 1;
+  }
+}
+
+@keyframes bxFadeUp {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

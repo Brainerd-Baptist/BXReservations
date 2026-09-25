@@ -107,12 +107,19 @@ export default async function Home() {
             </div>
           ))}
         </div>
-        <div className="mt-7 text-center">
+        <div className="mt-7 text-center flex flex-col sm:flex-row gap-3 justify-center items-center">
+          <Link
+            href="/rooms"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-parchment hover:underline"
+          >
+            Browse all spaces with photos →
+          </Link>
+          <span className="text-slate text-xs hidden sm:inline">·</span>
           <Link
             href="/reserve"
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-brass hover:underline"
           >
-            Check availability and make a request →
+            Check availability and reserve →
           </Link>
         </div>
       </section>

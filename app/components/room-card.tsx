@@ -16,6 +16,8 @@ interface Props {
   role: "main" | "extra";
   /** If true renders a compact horizontal variant for breakout lists */
   compact?: boolean;
+  /** If true, hides the Select/Add button and shows a 'Reserve →' link instead */
+  galleryMode?: boolean;
 }
 
 function SignalDot({ signal }: { signal: Signal }) {
@@ -43,7 +45,7 @@ function signalLabel(signal: Signal) {
   return "Checking…";
 }
 
-export function RoomCard({ room, signal, isSelected, isDisabled, isNP, tag, onToggle, onPreview, role }: Props) {
+export function RoomCard({ room, signal, isSelected, isDisabled, isNP, tag, onToggle, onPreview, role, galleryMode = false }: Props) {
   const unavailable = signal === "unavailable";
   const price = isNP ? room.baseNP : room.basePro;
 
@@ -131,23 +133,34 @@ export function RoomCard({ room, signal, isSelected, isDisabled, isNP, tag, onTo
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={e => { e.stopPropagation(); onToggle(); }}
-          className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-90 active:scale-95"
-          style={isSelected
-            ? { background: "var(--bx-brass)", color: "white" }
-            : unavailable
-            ? { background: "color-mix(in srgb, var(--bx-parchment) 8%, transparent)", color: "var(--bx-slate)", border: "1px solid color-mix(in srgb, var(--bx-parchment) 15%, transparent)" }
-            : { background: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)", color: "var(--bx-parchment)", border: "1px solid color-mix(in srgb, var(--bx-parchment) 15%, transparent)" }
-          }
-        >
-          {isSelected
-            ? "✓ Selected"
-            : unavailable
-            ? "Request"
-            : role === "main" ? "Select" : "Add"}
-        </button>
+        {galleryMode ? (
+          <a
+            href="/reserve"
+            onClick={e => e.stopPropagation()}
+            className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-90 active:scale-95"
+            style={{ background: "var(--bx-brass)", color: "white" }}
+          >
+            Reserve →
+          </a>
+        ) : (
+          <button
+            type="button"
+            onClick={e => { e.stopPropagation(); onToggle(); }}
+            className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-90 active:scale-95"
+            style={isSelected
+              ? { background: "var(--bx-brass)", color: "white" }
+              : unavailable
+              ? { background: "color-mix(in srgb, var(--bx-parchment) 8%, transparent)", color: "var(--bx-slate)", border: "1px solid color-mix(in srgb, var(--bx-parchment) 15%, transparent)" }
+              : { background: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)", color: "var(--bx-parchment)", border: "1px solid color-mix(in srgb, var(--bx-parchment) 15%, transparent)" }
+            }
+          >
+            {isSelected
+              ? "✓ Selected"
+              : unavailable
+              ? "Request"
+              : role === "main" ? "Select" : "Add"}
+          </button>
+        )}
       </div>
 
       {/* Selected brass border glow */}
