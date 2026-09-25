@@ -35,7 +35,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const { data: reservations } = await supabase
     .from("reservations")
     .select("id, created_at, status, event_name, space, start_date")
-    .eq("user_id", user.id)
+    .or(`user_id.eq.${user.id},contact_email.eq.${user.email}`)
     .order("created_at", { ascending: false })
     .limit(20);
 
@@ -213,70 +213,90 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         )}
       </div>
 
-      {/* ── Editable contact info ── */}
-      <div
-        style={{
-          border: "1px solid color-mix(in srgb, var(--bx-parchment) 12%, transparent)",
-          borderRadius: "12px",
-          padding: "1.25rem 1.5rem",
-          marginBottom: "1.5rem",
-          background: "var(--bx-ink-soft)",
-        }}
-      >
-        <h2
+      {/* ── My reservations ── */}
+      <div className="bx-fade-in" style={{ marginBottom: "1.5rem" }}>
+        <div
           style={{
-            margin: "0 0 1rem",
-            fontSize: "0.75rem",
-            fontWeight: 700,
-            letterSpacing: "0.05em",
-            textTransform: "uppercase",
-            color: "var(--bx-slate)",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "0.75rem",
           }}
         >
-          Contact info
-        </h2>
-        <ProfileForm
-          displayName={profile?.display_name ?? null}
-          phone={profile?.phone ?? null}
-          organization={profile?.organization ?? null}
-          email={user.email}
-        />
-      </div>
+          <h2
+            style={{
+              margin: 0,
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              letterSpacing: "0.05em",
+              textTransform: "uppercase",
+              color: "var(--bx-slate)",
+            }}
+          >
+            My reservations
+          </h2>
+          <Link
+            href="/reserve"
+            style={{ fontSize: "0.875rem", color: "var(--bx-brass)", fontWeight: 600, textDecoration: "none" }}
+          >
+            + New request
+          </Link>
+        </div>
 
-      {/* ── Appearance (theme picker) ── */}
-      <div
-        style={{
-          border: "1px solid color-mix(in srgb, var(--bx-parchment) 12%, transparent)",
-          borderRadius: "12px",
-          padding: "1.25rem 1.5rem",
-          marginBottom: "1.5rem",
-          background: "var(--bx-ink-soft)",
-        }}
-      >
-        <h2
+        <div
           style={{
-            margin: "0 0 0.25rem",
-            fontSize: "0.75rem",
-            fontWeight: 700,
-            letterSpacing: "0.05em",
-            textTransform: "uppercase",
-            color: "var(--bx-slate)",
+            border: "1px solid color-mix(in srgb, var(--bx-parchment) 12%, transparent)",
+            borderRadius: "12px",
+            overflow: "hidden",
+            background: "var(--bx-ink-soft)",
           }}
         >
-          Appearance
-        </h2>
-        <p style={{ fontSize: "0.75rem", color: "var(--bx-slate)", margin: "0 0 1rem", opacity: 0.8 }}>
-          Choose a color theme. Your preference is saved and applied on every device.
-        </p>
-        <ThemeGrid userId={user.id} savedTheme={userPrefs?.theme ?? null} />
-      </div>
-
-      {/* ── Notification preferences ── */}
-      <div style={{ marginBottom: "1.5rem" }}>
-        <NotificationPreferencesSection
-          userId={user.id}
-          initialPrefs={initialNotifPrefs}
-        />
+          {!reservations || reservations.length === 0 ? (
+            <div style={{ padding: "2.5rem 1.5rem", textAlign: "center", color: "var(--bx-slate)" }}>
+              <p style={{ margin: "0 0 0.5rem" }}>No reservations yet.</p>
+              <Link href="/reserve" style={{ color: "var(--bx-brass)", fontWeight: 600, textDecoration: "none" }}>
+                Make your first reservation →
+              </Link>
+            </div>
+          ) : (
+            reservations.map((r, i) => (
+              <div
+                key={r.id}
+                style={{
+                  padding: "0.875rem 1.25rem",
+                  borderTop:
+                    i === 0
+                      ? "none"
+                      : "1px solid color-mix(in srgb, var(--bx-parchment) 6%, transparent)",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: "0.75rem",
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: "0.9375rem", color: "var(--bx-parchment)" }}>
+                    {r.event_name || r.space || "Reservation"}
+                  </div>
+                  <div style={{ fontSize: "0.8125rem", color: "var(--bx-slate)", marginTop: "0.15rem" }}>
+                    {r.start_date
+                      ? new Date(r.start_date).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })
+                      : new Date(r.created_at).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                  </div>
+                </div>
+                {statusChip(r.status)}
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
       {/* ── Pending invites ── */}
@@ -436,90 +456,70 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         </div>
       )}
 
-      {/* ── My reservations ── */}
-      <div className="bx-fade-in" style={{ marginBottom: "1.5rem" }}>
-        <div
+      {/* ── Editable contact info ── */}
+      <div
+        style={{
+          border: "1px solid color-mix(in srgb, var(--bx-parchment) 12%, transparent)",
+          borderRadius: "12px",
+          padding: "1.25rem 1.5rem",
+          marginBottom: "1.5rem",
+          background: "var(--bx-ink-soft)",
+        }}
+      >
+        <h2
           style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "0.75rem",
+            margin: "0 0 1rem",
+            fontSize: "0.75rem",
+            fontWeight: 700,
+            letterSpacing: "0.05em",
+            textTransform: "uppercase",
+            color: "var(--bx-slate)",
           }}
         >
-          <h2
-            style={{
-              margin: 0,
-              fontSize: "0.75rem",
-              fontWeight: 700,
-              letterSpacing: "0.05em",
-              textTransform: "uppercase",
-              color: "var(--bx-slate)",
-            }}
-          >
-            My reservations
-          </h2>
-          <Link
-            href="/reserve"
-            style={{ fontSize: "0.875rem", color: "var(--bx-brass)", fontWeight: 600, textDecoration: "none" }}
-          >
-            + New request
-          </Link>
-        </div>
+          Contact info
+        </h2>
+        <ProfileForm
+          displayName={profile?.display_name ?? null}
+          phone={profile?.phone ?? null}
+          organization={profile?.organization ?? null}
+          email={user.email}
+        />
+      </div>
 
-        <div
+      {/* ── Appearance (theme picker) ── */}
+      <div
+        style={{
+          border: "1px solid color-mix(in srgb, var(--bx-parchment) 12%, transparent)",
+          borderRadius: "12px",
+          padding: "1.25rem 1.5rem",
+          marginBottom: "1.5rem",
+          background: "var(--bx-ink-soft)",
+        }}
+      >
+        <h2
           style={{
-            border: "1px solid color-mix(in srgb, var(--bx-parchment) 12%, transparent)",
-            borderRadius: "12px",
-            overflow: "hidden",
-            background: "var(--bx-ink-soft)",
+            margin: "0 0 0.25rem",
+            fontSize: "0.75rem",
+            fontWeight: 700,
+            letterSpacing: "0.05em",
+            textTransform: "uppercase",
+            color: "var(--bx-slate)",
           }}
         >
-          {!reservations || reservations.length === 0 ? (
-            <div style={{ padding: "2.5rem 1.5rem", textAlign: "center", color: "var(--bx-slate)" }}>
-              <p style={{ margin: "0 0 0.5rem" }}>No reservations yet.</p>
-              <Link href="/reserve" style={{ color: "var(--bx-brass)", fontWeight: 600, textDecoration: "none" }}>
-                Make your first reservation →
-              </Link>
-            </div>
-          ) : (
-            reservations.map((r, i) => (
-              <div
-                key={r.id}
-                style={{
-                  padding: "0.875rem 1.25rem",
-                  borderTop:
-                    i === 0
-                      ? "none"
-                      : "1px solid color-mix(in srgb, var(--bx-parchment) 6%, transparent)",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: "0.75rem",
-                }}
-              >
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: "0.9375rem", color: "var(--bx-parchment)" }}>
-                    {r.event_name || r.space || "Reservation"}
-                  </div>
-                  <div style={{ fontSize: "0.8125rem", color: "var(--bx-slate)", marginTop: "0.15rem" }}>
-                    {r.start_date
-                      ? new Date(r.start_date).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })
-                      : new Date(r.created_at).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                  </div>
-                </div>
-                {statusChip(r.status)}
-              </div>
-            ))
-          )}
-        </div>
+          Appearance
+        </h2>
+        <p style={{ fontSize: "0.75rem", color: "var(--bx-slate)", margin: "0 0 1rem", opacity: 0.8 }}>
+          Choose a color theme. Your preference is saved and applied on every device.
+        </p>
+        <ThemeGrid userId={user.id} savedTheme={userPrefs?.theme ?? null} />
+      </div>
+
+      {/* ── Notification preferences ── */}
+      <div style={{ marginBottom: "1.5rem" }}>
+        <NotificationPreferencesSection
+          userId={user.id}
+          initialPrefs={initialNotifPrefs}
+        />
       </div>
 
       {/* ── Sign out ── */}
