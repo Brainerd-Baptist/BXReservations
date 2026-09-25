@@ -1074,6 +1074,7 @@ function MinistriesTab({
   newMinistryDesc: string; setNewMinistryDesc: (v: string) => void;
   savingMinistry: boolean; setSavingMinistry: (v: boolean) => void;
 }) {
+  const [hoveredMinistryId, setHoveredMinistryId] = useState<string | null>(null);
   const selected = MOCK_MINISTRIES.find(m => m.id === selectedMinistryId) ?? null;
 
   async function createMinistry() {
@@ -1103,9 +1104,19 @@ function MinistriesTab({
               <button
                 key={m.id}
                 onClick={() => setSelectedMinistryId(selectedMinistryId === m.id ? null : m.id)}
-                className={`w-full text-left px-4 py-3.5 transition-colors ${
-                  selectedMinistryId === m.id ? "bg-parchment/10" : "hover:bg-parchment/5"
-                }`}
+                onMouseEnter={() => setHoveredMinistryId(m.id)}
+                onMouseLeave={() => setHoveredMinistryId(null)}
+                className="w-full text-left px-4 py-3.5 transition-colors cursor-pointer"
+                style={{
+                  background: selectedMinistryId === m.id
+                    ? "color-mix(in srgb, var(--bx-parchment) 12%, transparent)"
+                    : hoveredMinistryId === m.id
+                    ? "color-mix(in srgb, var(--bx-parchment) 5%, transparent)"
+                    : "transparent",
+                  borderLeft: selectedMinistryId === m.id
+                    ? "2px solid var(--bx-brass)"
+                    : "2px solid transparent",
+                }}
               >
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-semibold text-parchment">{m.name}</p>
