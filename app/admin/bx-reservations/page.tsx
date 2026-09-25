@@ -153,7 +153,18 @@ export default function BxReservationsAdmin() {
   const [filter, setFilter] = useState<Status | "All">("All");
   const [selected, setSelected] = useState<Request | null>(null);
   const [calOpen, setCalOpen] = useState(false);
-  const [tab, setTab] = useState<"requests" | "settings">("requests");
+  const [tab, setTab] = useState<"requests" | "users" | "ministries" | "settings">("requests");
+
+  // ── Users tab state ──────────────────────────────────────────────────────────
+  const [userSearch, setUserSearch] = useState("");
+  const [pendingRoles, setPendingRoles] = useState<Record<string, string>>({});
+  const [savingRole, setSavingRole] = useState<string | null>(null);
+
+  // ── Ministries tab state ─────────────────────────────────────────────────────
+  const [selectedMinistryId, setSelectedMinistryId] = useState<string | null>(null);
+  const [newMinistryName, setNewMinistryName] = useState("");
+  const [newMinistryDesc, setNewMinistryDesc] = useState("");
+  const [savingMinistry, setSavingMinistry] = useState(false);
 
   // ── Agreements ─────────────────────────────────────────────────────────────
   type AgreementMeta = { token: string; customer_signed_at: string | null; staff_signed_at: string | null };
@@ -312,17 +323,22 @@ Send this to ${req.name} (${req.email}).`);
       {/* Tab nav */}
       <div className="border-b border-white/10 bg-[var(--bbc-navy)]">
         <div className="max-w-7xl mx-auto px-4 flex gap-1">
-          {(["requests", "settings"] as const).map(t => (
+          {([
+            { id: "requests",   label: "Requests" },
+            { id: "users",      label: "Users" },
+            { id: "ministries", label: "Ministries" },
+            { id: "settings",   label: "Settings" },
+          ] as const).map(({ id, label }) => (
             <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`px-4 py-2.5 text-sm font-semibold capitalize transition-colors border-b-2 ${
-                tab === t
+              key={id}
+              onClick={() => setTab(id)}
+              className={`px-4 py-2.5 text-sm font-semibold transition-colors border-b-2 ${
+                tab === id
                   ? "border-white text-white"
                   : "border-transparent text-white/50 hover:text-white/80"
               }`}
             >
-              {t === "requests" ? "Requests" : "Settings"}
+              {label}
             </button>
           ))}
         </div>
@@ -547,6 +563,32 @@ Send this to ${req.name} (${req.email}).`);
             ))}
           </div>
           </>)}
+
+          {/* ── Users tab ─────────────────────────────────────────────────── */}
+          {tab === "users" && (
+            <UsersTab
+              userSearch={userSearch}
+              setUserSearch={setUserSearch}
+              pendingRoles={pendingRoles}
+              setPendingRoles={setPendingRoles}
+              savingRole={savingRole}
+              setSavingRole={setSavingRole}
+            />
+          )}
+
+          {/* ── Ministries tab ────────────────────────────────────────────── */}
+          {tab === "ministries" && (
+            <MinistriesTab
+              selectedMinistryId={selectedMinistryId}
+              setSelectedMinistryId={setSelectedMinistryId}
+              newMinistryName={newMinistryName}
+              setNewMinistryName={setNewMinistryName}
+              newMinistryDesc={newMinistryDesc}
+              setNewMinistryDesc={setNewMinistryDesc}
+              savingMinistry={savingMinistry}
+              setSavingMinistry={setSavingMinistry}
+            />
+          )}
         </div>
 
         {/* Right: Calendar sidebar */}
@@ -781,6 +823,372 @@ function BlackoutSettings({
             {saving ? "Adding…" : "Add rule"}
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Mock data for Users and Ministries tabs ───────────────────────────────────
+type MockUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: "owner" | "system_admin" | "booking_admin" | "ministry_coordinator" | "member";
+  lastActive: string;
+  reservationCount: number;
+  orphaned?: boolean;
+};
+
+type MockMinistry = {
+  id: string;
+  name: string;
+  description: string;
+  members: { userId: string; name: string; email: string; isCoordinator: boolean }[];
+  reservationCount: number;
+};
+
+const MOCK_USERS: MockUser[] = [
+  { id: "u1", name: "Josiah King",     email: "jking@brainerdbaptist.org",   role: "owner",               lastActive: "Today",    reservationCount: 12 },
+  { id: "u2", name: "Sarah Mitchell",  email: "smitchell@brainerdbaptist.org", role: "system_admin",      lastActive: "Yesterday", reservationCount: 4  },
+  { id: "u3", name: "Tom Alvarez",     email: "talvarez@brainerdbaptist.org", role: "booking_admin",       lastActive: "2 days ago", reservationCount: 2 },
+  { id: "u4", name: "Rachel Brooks",   email: "rbrooks@example.com",          role: "ministry_coordinator", lastActive: "1 week ago", reservationCount: 7 },
+  { id: "u5", name: "Mark Nguyen",     email: "mnguyen@example.com",          role: "member",              lastActive: "3 days ago", reservationCount: 3 },
+  { id: "u6", name: "Olivia Carter",   email: "ocarter@example.com",          role: "member",              lastActive: "2 weeks ago", reservationCount: 1 },
+  { id: "u7", name: "(Deleted user)",  email: "—",                            role: "member",              lastActive: "—",         reservationCount: 2, orphaned: true },
+];
+
+const MOCK_MINISTRIES: MockMinistry[] = [
+  {
+    id: "m1", name: "Youth Ministry", description: "Student ministry, grades 6–12.",
+    reservationCount: 8,
+    members: [
+      { userId: "u4", name: "Rachel Brooks", email: "rbrooks@example.com", isCoordinator: true },
+      { userId: "u5", name: "Mark Nguyen",   email: "mnguyen@example.com", isCoordinator: false },
+    ],
+  },
+  {
+    id: "m2", name: "Worship Team", description: "Sunday worship and special events.",
+    reservationCount: 5,
+    members: [
+      { userId: "u6", name: "Olivia Carter", email: "ocarter@example.com", isCoordinator: true },
+    ],
+  },
+  {
+    id: "m3", name: "Care & Counseling", description: "Pastoral care programs.",
+    reservationCount: 3,
+    members: [],
+  },
+];
+
+const ROLE_LABELS_DISPLAY: Record<MockUser["role"], string> = {
+  owner: "Owner",
+  system_admin: "System Admin",
+  booking_admin: "Booking Admin",
+  ministry_coordinator: "Ministry Coordinator",
+  member: "Member",
+};
+
+const ROLE_BADGE_COLORS: Record<MockUser["role"], string> = {
+  owner:                "bg-amber-100 text-amber-800 border-amber-200",
+  system_admin:         "bg-purple-100 text-purple-800 border-purple-200",
+  booking_admin:        "bg-blue-100 text-blue-800 border-blue-200",
+  ministry_coordinator: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  member:               "bg-parchment/15 text-slate border-parchment/20",
+};
+
+// ─── UsersTab component ────────────────────────────────────────────────────────
+function UsersTab({
+  userSearch, setUserSearch,
+  pendingRoles, setPendingRoles,
+  savingRole, setSavingRole,
+}: {
+  userSearch: string; setUserSearch: (v: string) => void;
+  pendingRoles: Record<string, string>; setPendingRoles: (v: Record<string, string>) => void;
+  savingRole: string | null; setSavingRole: (v: string | null) => void;
+}) {
+  const search = userSearch.toLowerCase();
+  const filtered = MOCK_USERS.filter(
+    u => u.name.toLowerCase().includes(search) || u.email.toLowerCase().includes(search)
+  );
+  const orphaned = MOCK_USERS.filter(u => u.orphaned);
+
+  async function saveRole(userId: string) {
+    if (!pendingRoles[userId]) return;
+    setSavingRole(userId);
+    // TODO: POST /api/bx/roles { userId, role: pendingRoles[userId] }
+    await new Promise(r => setTimeout(r, 600));
+    setSavingRole(null);
+    setPendingRoles({ ...pendingRoles, [userId]: "" });
+  }
+
+  return (
+    <div className="space-y-6 max-w-4xl">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h2 className="text-lg font-bold text-parchment">User Management</h2>
+          <p className="text-sm text-slate mt-0.5">Assign roles and manage access for all BX accounts.</p>
+        </div>
+        <input
+          type="search"
+          placeholder="Search by name or email…"
+          value={userSearch}
+          onChange={e => setUserSearch(e.target.value)}
+          className="border border-parchment/20 rounded-lg px-3 py-2 text-sm bg-ink text-parchment w-64"
+        />
+      </div>
+
+      {/* Orphaned reservations alert */}
+      {orphaned.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4">
+          <p className="text-sm font-semibold text-amber-800 mb-1">⚠ Orphaned reservations</p>
+          <p className="text-xs text-amber-700 mb-3">
+            {orphaned.length} reservation{orphaned.length > 1 ? "s" : ""} have no owner because their account was deleted and no co-owner existed.
+            Reassign them to a member below.
+          </p>
+          {orphaned.map(u => (
+            <div key={u.id} className="flex items-center justify-between gap-3 bg-white/60 rounded-lg px-4 py-2 mt-2 border border-amber-100">
+              <span className="text-sm font-medium text-amber-900">
+                {u.reservationCount} orphaned reservation{u.reservationCount > 1 ? "s" : ""}
+              </span>
+              <button className="btn-outline text-xs border-amber-300 text-amber-800 hover:border-amber-500">
+                Reassign →
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* User list */}
+      <div className="bg-ink-soft rounded-xl border border-parchment/10 divide-y divide-parchment/5">
+        {filtered.length === 0 && (
+          <p className="px-5 py-5 text-sm text-slate">No users match your search.</p>
+        )}
+        {filtered.filter(u => !u.orphaned).map(user => {
+          const pending = pendingRoles[user.id];
+          const isSaving = savingRole === user.id;
+          return (
+            <div key={user.id} className="flex flex-wrap items-center gap-4 px-5 py-4">
+              {/* Identity */}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-parchment truncate">{user.name}</p>
+                <p className="text-xs text-slate truncate">{user.email}</p>
+              </div>
+
+              {/* Stats */}
+              <div className="text-right hidden sm:block flex-shrink-0">
+                <p className="text-xs text-slate">{user.reservationCount} reservations</p>
+                <p className="text-xs text-slate/60">Active {user.lastActive}</p>
+              </div>
+
+              {/* Current role badge */}
+              <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold border flex-shrink-0 ${ROLE_BADGE_COLORS[user.role]}`}>
+                {ROLE_LABELS_DISPLAY[user.role]}
+              </span>
+
+              {/* Role reassignment (system_admin+ only in production) */}
+              {user.role !== "owner" && (
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <select
+                    value={pending || user.role}
+                    onChange={e => setPendingRoles({ ...pendingRoles, [user.id]: e.target.value })}
+                    className="border border-parchment/20 rounded-lg px-2 py-1.5 text-xs bg-ink text-parchment"
+                  >
+                    <option value="booking_admin">Booking Admin</option>
+                    <option value="ministry_coordinator">Ministry Coordinator</option>
+                    <option value="member">Member</option>
+                  </select>
+                  {pending && pending !== user.role && (
+                    <button
+                      onClick={() => saveRole(user.id)}
+                      disabled={isSaving}
+                      className="btn-primary text-xs disabled:opacity-40"
+                    >
+                      {isSaving ? "Saving…" : "Save"}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="text-xs text-slate">
+        Role changes take effect immediately. The <strong className="text-parchment">Owner</strong> role can only be transferred through account settings.
+        System Admins cannot promote to System Admin or Owner.
+      </p>
+    </div>
+  );
+}
+
+// ─── MinistriesTab component ───────────────────────────────────────────────────
+function MinistriesTab({
+  selectedMinistryId, setSelectedMinistryId,
+  newMinistryName, setNewMinistryName,
+  newMinistryDesc, setNewMinistryDesc,
+  savingMinistry, setSavingMinistry,
+}: {
+  selectedMinistryId: string | null; setSelectedMinistryId: (v: string | null) => void;
+  newMinistryName: string; setNewMinistryName: (v: string) => void;
+  newMinistryDesc: string; setNewMinistryDesc: (v: string) => void;
+  savingMinistry: boolean; setSavingMinistry: (v: boolean) => void;
+}) {
+  const selected = MOCK_MINISTRIES.find(m => m.id === selectedMinistryId) ?? null;
+
+  async function createMinistry() {
+    if (!newMinistryName.trim()) return;
+    setSavingMinistry(true);
+    // TODO: POST /api/bx/ministries { name, description }
+    await new Promise(r => setTimeout(r, 600));
+    setNewMinistryName("");
+    setNewMinistryDesc("");
+    setSavingMinistry(false);
+  }
+
+  return (
+    <div className="space-y-6 max-w-4xl">
+      <div>
+        <h2 className="text-lg font-bold text-parchment">Ministries</h2>
+        <p className="text-sm text-slate mt-0.5">
+          Group members into ministries. Ministry Coordinators can book on behalf of their group.
+        </p>
+      </div>
+
+      <div className="grid md:grid-cols-[1fr_1.4fr] gap-5">
+        {/* Left: ministry list */}
+        <div className="space-y-3">
+          <div className="bg-ink-soft rounded-xl border border-parchment/10 divide-y divide-parchment/5">
+            {MOCK_MINISTRIES.map(m => (
+              <button
+                key={m.id}
+                onClick={() => setSelectedMinistryId(selectedMinistryId === m.id ? null : m.id)}
+                className={`w-full text-left px-4 py-3.5 transition-colors ${
+                  selectedMinistryId === m.id ? "bg-parchment/10" : "hover:bg-parchment/5"
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-parchment">{m.name}</p>
+                  <span className="text-xs text-slate flex-shrink-0">
+                    {m.members.length} member{m.members.length !== 1 ? "s" : ""}
+                  </span>
+                </div>
+                {m.description && (
+                  <p className="text-xs text-slate mt-0.5 truncate">{m.description}</p>
+                )}
+                <p className="text-xs text-slate/60 mt-0.5">{m.reservationCount} reservations</p>
+              </button>
+            ))}
+          </div>
+
+          {/* Create new ministry */}
+          <div className="bg-ink-soft rounded-xl border border-parchment/10 p-4 space-y-3">
+            <p className="text-xs font-semibold text-slate uppercase tracking-widest">New Ministry</p>
+            <input
+              type="text"
+              placeholder="Ministry name"
+              value={newMinistryName}
+              onChange={e => setNewMinistryName(e.target.value)}
+              className="w-full border border-parchment/20 rounded-lg px-3 py-2 text-sm bg-ink text-parchment"
+            />
+            <input
+              type="text"
+              placeholder="Description (optional)"
+              value={newMinistryDesc}
+              onChange={e => setNewMinistryDesc(e.target.value)}
+              className="w-full border border-parchment/20 rounded-lg px-3 py-2 text-sm bg-ink text-parchment"
+            />
+            <button
+              onClick={createMinistry}
+              disabled={savingMinistry || !newMinistryName.trim()}
+              className="btn-primary text-sm w-full disabled:opacity-40"
+            >
+              {savingMinistry ? "Creating…" : "Create Ministry"}
+            </button>
+          </div>
+        </div>
+
+        {/* Right: selected ministry detail */}
+        {selected ? (
+          <div className="bg-ink-soft rounded-xl border border-parchment/10 p-5 space-y-4">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <h3 className="text-base font-bold text-parchment">{selected.name}</h3>
+                {selected.description && (
+                  <p className="text-sm text-slate mt-0.5">{selected.description}</p>
+                )}
+              </div>
+              <button className="text-xs text-slate hover:text-parchment border border-parchment/20 rounded px-2 py-1">
+                Rename
+              </button>
+            </div>
+
+            {/* Members */}
+            <div>
+              <p className="text-xs font-semibold text-slate uppercase tracking-widest mb-2">Members</p>
+              {selected.members.length === 0 && (
+                <p className="text-sm text-slate">No members yet — add someone below.</p>
+              )}
+              <div className="space-y-2">
+                {selected.members.map(mem => (
+                  <div key={mem.userId} className="flex items-center justify-between gap-3 bg-ink rounded-lg px-3 py-2 border border-parchment/10">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-parchment truncate">{mem.name}</p>
+                      <p className="text-xs text-slate truncate">{mem.email}</p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {mem.isCoordinator ? (
+                        <span className="text-xs bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-semibold">
+                          Coordinator
+                        </span>
+                      ) : (
+                        <button className="text-xs text-slate hover:text-emerald-600 border border-parchment/20 rounded px-2 py-0.5">
+                          Make coordinator
+                        </button>
+                      )}
+                      <button className="text-xs text-red-500 hover:text-red-700 font-semibold">
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Add member */}
+            <div className="pt-2 border-t border-parchment/10">
+              <p className="text-xs font-semibold text-slate uppercase tracking-widest mb-2">Add Member</p>
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  placeholder="Email address"
+                  className="flex-1 border border-parchment/20 rounded-lg px-3 py-2 text-sm bg-ink text-parchment"
+                />
+                <button className="btn-primary text-sm flex-shrink-0">Add</button>
+              </div>
+              <p className="text-xs text-slate mt-1">User must have a BX account. They&apos;ll be notified by email.</p>
+            </div>
+
+            {/* Ministry reservations link */}
+            <div className="pt-2 border-t border-parchment/10">
+              <p className="text-xs text-slate">
+                <span className="font-semibold text-parchment">{selected.reservationCount}</span> reservations under this ministry.{" "}
+                <button
+                  onClick={() => setSelectedMinistryId(null)}
+                  className="text-[var(--bbc-blue)] hover:underline text-xs"
+                >
+                  View in Requests →
+                </button>
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-ink-soft rounded-xl border border-parchment/10 p-10 flex items-center justify-center text-center">
+            <div>
+              <p className="text-2xl mb-2">⛪</p>
+              <p className="text-sm text-slate">Select a ministry to view and manage its members.</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
