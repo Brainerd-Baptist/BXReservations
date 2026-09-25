@@ -83,8 +83,8 @@ export function RoomLightbox({ room, isSelected, isNP, onClose, onToggle, galler
         </button>
 
         {/* ── Image carousel ── */}
-        <div className="relative lg:w-[55%] flex-shrink-0">
-          <div className="relative w-full" style={{ aspectRatio: "4/3" }}>
+        <div className="relative lg:w-[55%] flex-shrink-0 flex flex-col">
+          <div className="relative w-full overflow-hidden" style={{ aspectRatio: "4/3", maxHeight: "clamp(160px, 45vh, 480px)" }}>
             <Image
               src={photo.src}
               alt={photo.caption}
@@ -128,7 +128,7 @@ export function RoomLightbox({ room, isSelected, isNP, onClose, onToggle, galler
         </div>
 
         {/* ── Details panel ── */}
-        <div className="flex-1 p-6 flex flex-col gap-5 overflow-y-auto">
+        <div className="flex-1 p-6 flex flex-col gap-5 overflow-y-auto min-h-0">
           {/* Header */}
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest mb-1"

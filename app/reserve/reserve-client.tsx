@@ -1083,33 +1083,51 @@ interface MockCollaborator {
   accepted: boolean;
 }
 
+interface InviteRow {
+  id: string;
+  email: string;
+  role: CollabRole;
+}
+
 function ShareSection({ reservationId }: { reservationId: string }) {
-  const [inviteEmail, setInviteEmail]     = useState("");
-  const [inviteRole, setInviteRole]       = useState<CollabRole>("viewer");
+  const [rows, setRows] = useState<InviteRow[]>([
+    { id: crypto.randomUUID(), email: "", role: "viewer" },
+  ]);
   const [inviting, setInviting]           = useState(false);
   const [inviteError, setInviteError]     = useState("");
   const [collaborators, setCollaborators] = useState<MockCollaborator[]>([]);
   const [revoking, setRevoking]           = useState<string | null>(null);
 
-  async function handleInvite() {
-    // Support comma-separated list of emails
-    const emails = inviteEmail
-      .split(/[,\s]+/)
-      .map(e => e.trim().toLowerCase())
-      .filter(Boolean);
+  function addRow() {
+    setRows(prev => [...prev, { id: crypto.randomUUID(), email: "", role: "viewer" }]);
+  }
 
-    if (emails.length === 0) {
+  function updateRow(id: string, field: "email" | "role", value: string) {
+    setRows(prev => prev.map(r => r.id === id ? { ...r, [field]: value } : r));
+    setInviteError("");
+  }
+
+  function removeRow(id: string) {
+    setRows(prev => prev.length === 1 ? prev : prev.filter(r => r.id !== id));
+  }
+
+  async function handleInvite() {
+    const toSend = rows
+      .map(r => ({ ...r, email: r.email.trim().toLowerCase() }))
+      .filter(r => r.email.length > 0);
+
+    if (toSend.length === 0) {
       setInviteError("Please enter at least one email address.");
       return;
     }
-    const invalid = emails.find(e => !/^[^@]+@[^@]+\.[^@]+$/.test(e));
+    const invalid = toSend.find(r => !/^[^@]+@[^@]+\.[^@]+$/.test(r.email));
     if (invalid) {
-      setInviteError(`"${invalid}" doesn't look like a valid email address.`);
+      setInviteError(`"${invalid.email}" doesn't look like a valid email.`);
       return;
     }
-    const alreadyAdded = emails.find(e => collaborators.some(c => c.email === e));
+    const alreadyAdded = toSend.find(r => collaborators.some(c => c.email === r.email));
     if (alreadyAdded) {
-      setInviteError(`${alreadyAdded} has already been invited.`);
+      setInviteError(`${alreadyAdded.email} has already been invited.`);
       return;
     }
 
@@ -1119,26 +1137,27 @@ function ShareSection({ reservationId }: { reservationId: string }) {
     const added: MockCollaborator[] = [];
 
     try {
-      for (const email of emails) {
+      for (const row of toSend) {
         try {
           const res = await fetch("/api/collaborators/invite", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ reservationId, email, role: inviteRole }),
+            body: JSON.stringify({ reservationId, email: row.email, role: row.role }),
           });
           if (!res.ok) {
             const data = await res.json().catch(() => ({}));
-            errors.push(`${email}: ${(data as { error?: string }).error ?? "failed"}`);
+            errors.push(`${row.email}: ${(data as { error?: string }).error ?? "failed"}`);
           } else {
-            added.push({ id: crypto.randomUUID(), email, role: inviteRole, accepted: false });
+            added.push({ id: crypto.randomUUID(), email: row.email, role: row.role, accepted: false });
           }
         } catch {
-          errors.push(`${email}: network error`);
+          errors.push(`${row.email}: network error`);
         }
       }
       if (added.length > 0) {
         setCollaborators(prev => [...prev, ...added]);
-        setInviteEmail("");
+        // Reset rows to a single blank row
+        setRows([{ id: crypto.randomUUID(), email: "", role: "viewer" }]);
       }
       if (errors.length > 0) {
         setInviteError(errors.join(" · "));
@@ -1160,6 +1179,8 @@ function ShareSection({ reservationId }: { reservationId: string }) {
     }
   }
 
+  const canSend = rows.some(r => r.email.trim().length > 0);
+
   return (
     <div className="mt-6 p-4 bg-ink-soft border border-brass/30 rounded-2xl text-left">
       <div className="flex items-center gap-2 mb-3">
@@ -1169,50 +1190,74 @@ function ShareSection({ reservationId }: { reservationId: string }) {
         <p className="text-sm font-semibold text-parchment">Share this reservation</p>
       </div>
       <p className="text-xs text-slate mb-4">
-        Invite a co-organizer or viewer. They&apos;ll get an email with a link to access the reservation.
+        Invite co-organizers or viewers. Each person gets an email with a link to access the reservation.
       </p>
 
-      {/* Invite form */}
-      <div className="flex flex-col sm:flex-row gap-2 mb-2">
-        <input
-          type="email"
-          value={inviteEmail}
-          onChange={e => { setInviteEmail(e.target.value); setInviteError(""); }}
-          onKeyDown={e => { if (e.key === "Enter") void handleInvite(); }}
-          placeholder="colleague@example.com, another@example.com"
-          className="flex-1 border border-parchment/20 rounded-xl px-3 py-2 text-sm bg-ink text-parchment placeholder:text-slate/50 focus:outline-none focus:ring-2 focus:ring-brass/30 focus:border-brass transition-colors"
-        />
-        <select
-          value={inviteRole}
-          onChange={e => setInviteRole(e.target.value as CollabRole)}
-          className="border border-parchment/20 rounded-xl px-3 py-2 text-sm bg-ink text-parchment focus:outline-none focus:ring-2 focus:ring-brass/30 focus:border-brass transition-colors"
-        >
-          {(["co_owner", "viewer"] as const).map(role => (
-            <option key={role} value={role}>{COLLAB_ROLE_LABELS[role]}</option>
-          ))}
-        </select>
-        <button
-          onClick={() => { void handleInvite(); }}
-          disabled={inviting || !inviteEmail.trim()}
-          className="px-4 py-2 rounded-xl bg-brass text-ink text-sm font-semibold hover:bg-brass/90 disabled:opacity-50 transition-colors whitespace-nowrap"
-        >
-          {inviting ? "Sending…" : "Invite"}
-        </button>
+      {/* Invite rows */}
+      <div className="flex flex-col gap-2 mb-3">
+        {rows.map((row, idx) => (
+          <div key={row.id} className="flex flex-col sm:flex-row gap-2">
+            <input
+              type="email"
+              value={row.email}
+              onChange={e => updateRow(row.id, "email", e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") void handleInvite(); }}
+              placeholder="colleague@example.com"
+              className="flex-1 border border-parchment/20 rounded-xl px-3 py-2 text-sm bg-ink text-parchment placeholder:text-slate/50 focus:outline-none focus:ring-2 focus:ring-brass/30 focus:border-brass transition-colors"
+            />
+            <select
+              value={row.role}
+              onChange={e => updateRow(row.id, "role", e.target.value)}
+              className="border border-parchment/20 rounded-xl px-3 py-2 text-sm bg-ink text-parchment focus:outline-none focus:ring-2 focus:ring-brass/30 focus:border-brass transition-colors"
+            >
+              {(["co_owner", "viewer"] as const).map(role => (
+                <option key={role} value={role}>{COLLAB_ROLE_LABELS[role]}</option>
+              ))}
+            </select>
+            {rows.length > 1 && (
+              <button
+                onClick={() => removeRow(row.id)}
+                className="text-slate hover:text-red-400 transition-colors text-sm px-2 py-1 rounded-lg hover:bg-parchment/5 shrink-0"
+                aria-label="Remove"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        ))}
       </div>
 
-      {/* Role description hint */}
-      <p className="text-xs text-slate mb-3 leading-relaxed">
-        <span className="font-medium text-parchment/80">{COLLAB_ROLE_LABELS[inviteRole]}:</span>{" "}
-        {COLLAB_ROLE_DESCRIPTIONS[inviteRole]}
-      </p>
+      {/* Role legend */}
+      <div className="text-xs text-slate mb-3 space-y-0.5">
+        <p><span className="font-medium text-parchment/80">Co-organizer:</span> {COLLAB_ROLE_DESCRIPTIONS["co_owner"]}</p>
+        <p><span className="font-medium text-parchment/80">Viewer:</span> {COLLAB_ROLE_DESCRIPTIONS["viewer"]}</p>
+      </div>
 
       {inviteError && (
         <p className="text-xs text-red-400 mb-3">{inviteError}</p>
       )}
 
+      {/* Actions */}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={addRow}
+          className="text-xs text-brass hover:text-brass/80 font-medium transition-colors px-2 py-1.5 rounded-lg hover:bg-parchment/5 flex items-center gap-1"
+        >
+          <span className="text-base leading-none">+</span> Add person
+        </button>
+        <div className="flex-1" />
+        <button
+          onClick={() => { void handleInvite(); }}
+          disabled={inviting || !canSend}
+          className="px-4 py-2 rounded-xl bg-brass text-ink text-sm font-semibold hover:bg-brass/90 disabled:opacity-50 transition-colors whitespace-nowrap"
+        >
+          {inviting ? "Sending…" : `Invite${rows.filter(r => r.email.trim()).length > 1 ? ` (${rows.filter(r => r.email.trim()).length})` : ""}`}
+        </button>
+      </div>
+
       {/* Collaborator list */}
       {collaborators.length > 0 && (
-        <div className="border-t border-parchment/10 pt-3 space-y-2">
+        <div className="border-t border-parchment/10 pt-3 mt-3 space-y-2">
           {collaborators.map(c => (
             <div key={c.id} className="flex items-center justify-between gap-3">
               <div className="min-w-0">
