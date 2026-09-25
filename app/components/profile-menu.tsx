@@ -6,7 +6,7 @@ import { THEMES, type ThemeId, DEFAULT_THEME, THEME_STORAGE_KEY, applyTheme, isV
 import { createClient } from "@/lib/supabase/client";
 
 // Quick-pick themes shown in the dropdown (first 3 — Brainerd, Midnight, Daylight)
-const QUICK_THEMES = THEMES.filter((t) => t.quick);
+const QUICK_THEMES = THEMES.filter((t): t is typeof t & { quick: true } => 'quick' in t && !!(t as { quick?: boolean }).quick);
 
 interface ProfileMenuProps {
   userId: string;
@@ -37,7 +37,7 @@ export default function ProfileMenu({
 }: ProfileMenuProps) {
   const [open, setOpen] = useState(false);
   const [activeTheme, setActiveTheme] = useState<ThemeId>(() => {
-    if (isValidTheme(savedTheme)) return savedTheme;
+    if (isValidTheme(savedTheme ?? null)) return savedTheme as ThemeId;
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem(THEME_STORAGE_KEY);
       if (isValidTheme(stored)) return stored;
