@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { BlackoutRule, ruleDescription } from "@/lib/blackouts";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 type Status = "Requested" | "Proposal Sent" | "Deposit Received" | "Confirmed" | "Declined";
@@ -152,6 +153,52 @@ export default function BxReservationsAdmin() {
   const [filter, setFilter] = useState<Status | "All">("All");
   const [selected, setSelected] = useState<Request | null>(null);
   const [calOpen, setCalOpen] = useState(false);
+  const [tab, setTab] = useState<"requests" | "settings">("requests");
+
+  // ── Blackout rules ────────────────────────────────────────────────────────
+  const [blackouts, setBlackouts] = useState<BlackoutRule[]>([]);
+  const [blackoutsLoading, setBlackoutsLoading] = useState(true);
+  const [newRuleType, setNewRuleType] = useState<"dow" | "dow_slot" | "date">("dow");
+  const [newDow, setNewDow] = useState(0);
+  const [newSlot, setNewSlot] = useState("evening");
+  const [newDate, setNewDate] = useState("");
+  const [newLabel, setNewLabel] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/blackouts")
+      .then(r => r.json())
+      .then((data: BlackoutRule[]) => { setBlackouts(data); setBlackoutsLoading(false); })
+      .catch(() => setBlackoutsLoading(false));
+  }, []);
+
+  async function addBlackout() {
+    let data: Record<string, unknown> = {};
+    if (newRuleType === "dow") data = { dow: newDow };
+    else if (newRuleType === "dow_slot") data = { dow: newDow, slot: newSlot };
+    else if (newRuleType === "date") data = { date: newDate };
+    setSaving(true);
+    const res = await fetch("/api/blackouts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rule_type: newRuleType, data, label: newLabel }),
+    });
+    if (res.ok) {
+      const rule = await res.json() as BlackoutRule;
+      setBlackouts(prev => [...prev, rule]);
+      setNewLabel(""); setNewDate("");
+    }
+    setSaving(false);
+  }
+
+  async function removeBlackout(id: string) {
+    await fetch("/api/blackouts", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    setBlackouts(prev => prev.filter(r => r.id !== id));
+  }
 
   const filtered =
     filter === "All" ? requests : requests.filter((r) => r.status === filter);
@@ -206,9 +253,43 @@ export default function BxReservationsAdmin() {
         </button>
       </header>
 
+      {/* Tab nav */}
+      <div className="border-b border-white/10 bg-[var(--bbc-navy)]">
+        <div className="max-w-7xl mx-auto px-4 flex gap-1">
+          {(["requests", "settings"] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`px-4 py-2.5 text-sm font-semibold capitalize transition-colors border-b-2 ${
+                tab === t
+                  ? "border-white text-white"
+                  : "border-transparent text-white/50 hover:text-white/80"
+              }`}
+            >
+              {t === "requests" ? "Requests" : "Settings"}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="max-w-7xl mx-auto px-4 py-6 grid lg:grid-cols-[1fr_320px] gap-6">
-        {/* Left: queue */}
+        {/* Left: queue / settings */}
         <div className="space-y-5">
+          {tab === "settings" && (
+            <BlackoutSettings
+              rules={blackouts}
+              loading={blackoutsLoading}
+              newRuleType={newRuleType} setNewRuleType={setNewRuleType}
+              newDow={newDow} setNewDow={setNewDow}
+              newSlot={newSlot} setNewSlot={setNewSlot}
+              newDate={newDate} setNewDate={setNewDate}
+              newLabel={newLabel} setNewLabel={setNewLabel}
+              saving={saving}
+              onAdd={addBlackout}
+              onRemove={removeBlackout}
+            />
+          )}
+          {tab === "requests" && (<>
           {/* KPI row */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <KPI label="Pending Review" value={String(pending)} color="text-amber-600" />
@@ -358,6 +439,7 @@ export default function BxReservationsAdmin() {
               </div>
             ))}
           </div>
+          </>)}
         </div>
 
         {/* Right: Calendar sidebar */}
@@ -432,6 +514,167 @@ function LegendItem({ color, label }: { color: string; label: string }) {
     <div className="flex items-center gap-2">
       <span className={`rounded px-2 py-0.5 text-xs border ${color}`}>Sample</span>
       <span className="text-xs text-gray-500">{label}</span>
+    </div>
+  );
+}
+
+// ─── Blackout Settings panel ───────────────────────────────────────────────────
+const DOW_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const SLOT_OPTIONS = [
+  { value: "morning",   label: "Morning (8a–12p)" },
+  { value: "afternoon", label: "Afternoon (12p–5p)" },
+  { value: "evening",   label: "Evening (5p–10p)" },
+];
+
+function BlackoutSettings({
+  rules, loading,
+  newRuleType, setNewRuleType,
+  newDow, setNewDow,
+  newSlot, setNewSlot,
+  newDate, setNewDate,
+  newLabel, setNewLabel,
+  saving, onAdd, onRemove,
+}: {
+  rules: BlackoutRule[];
+  loading: boolean;
+  newRuleType: "dow" | "dow_slot" | "date"; setNewRuleType: (v: "dow" | "dow_slot" | "date") => void;
+  newDow: number; setNewDow: (v: number) => void;
+  newSlot: string; setNewSlot: (v: string) => void;
+  newDate: string; setNewDate: (v: string) => void;
+  newLabel: string; setNewLabel: (v: string) => void;
+  saving: boolean;
+  onAdd: () => void;
+  onRemove: (id: string) => void;
+}) {
+  return (
+    <div className="space-y-6 max-w-2xl">
+      <div>
+        <h2 className="text-lg font-bold text-gray-900">Blackout Rules</h2>
+        <p className="text-sm text-gray-500 mt-1">
+          Dates and times blocked on the public reservation form. PCO calendar is unaffected.
+        </p>
+      </div>
+
+      {/* Current rules */}
+      <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-50">
+        {loading && (
+          <p className="px-5 py-4 text-sm text-gray-400">Loading…</p>
+        )}
+        {!loading && rules.length === 0 && (
+          <p className="px-5 py-4 text-sm text-gray-400">No blackout rules yet.</p>
+        )}
+        {rules.map(rule => (
+          <div key={rule.id} className="flex items-center justify-between gap-4 px-5 py-3">
+            <div>
+              <p className="text-sm font-semibold text-gray-800">{rule.label || ruleDescription(rule)}</p>
+              {rule.label && (
+                <p className="text-xs text-gray-400">{ruleDescription(rule)}</p>
+              )}
+            </div>
+            <button
+              onClick={() => onRemove(rule.id)}
+              className="text-xs text-red-500 hover:text-red-700 font-semibold flex-shrink-0"
+            >
+              Remove
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* Add new rule */}
+      <div className="bg-white rounded-xl border border-gray-100 p-5 space-y-4">
+        <p className="text-sm font-semibold text-gray-700">Add a rule</p>
+
+        {/* Rule type */}
+        <div className="flex gap-2 flex-wrap">
+          {([
+            { value: "dow",      label: "Block whole day (weekly)" },
+            { value: "dow_slot", label: "Block time slot (weekly)" },
+            { value: "date",     label: "Block specific date" },
+          ] as const).map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => setNewRuleType(opt.value)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ${
+                newRuleType === opt.value
+                  ? "bg-[#00205B] text-white border-[#00205B]"
+                  : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap gap-3 items-end">
+          {/* Day of week picker */}
+          {(newRuleType === "dow" || newRuleType === "dow_slot") && (
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">Day of week</label>
+              <select
+                value={newDow}
+                onChange={e => setNewDow(Number(e.target.value))}
+                className="border border-gray-200 rounded-lg px-3 py-2 text-sm"
+              >
+                {DOW_NAMES.map((name, i) => (
+                  <option key={i} value={i}>{name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Slot picker */}
+          {newRuleType === "dow_slot" && (
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">Time slot</label>
+              <select
+                value={newSlot}
+                onChange={e => setNewSlot(e.target.value)}
+                className="border border-gray-200 rounded-lg px-3 py-2 text-sm"
+              >
+                {SLOT_OPTIONS.map(s => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Date picker */}
+          {newRuleType === "date" && (
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1">Date</label>
+              <input
+                type="date"
+                value={newDate}
+                onChange={e => setNewDate(e.target.value)}
+                className="border border-gray-200 rounded-lg px-3 py-2 text-sm"
+              />
+            </div>
+          )}
+
+          {/* Label */}
+          <div className="flex-1 min-w-[160px]">
+            <label className="block text-xs font-semibold text-gray-500 mb-1">
+              Label <span className="font-normal opacity-60">(optional)</span>
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Christmas, Church Night…"
+              value={newLabel}
+              onChange={e => setNewLabel(e.target.value)}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
+            />
+          </div>
+
+          <button
+            onClick={onAdd}
+            disabled={saving || (newRuleType === "date" && !newDate)}
+            className="btn-primary text-sm disabled:opacity-40"
+          >
+            {saving ? "Adding…" : "Add rule"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

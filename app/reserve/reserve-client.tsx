@@ -1,7 +1,7 @@
 
 "use client";
-
 import { useState, useEffect, useCallback } from "react";
+import { BlackoutRule, isDateBlackedOut, isSlotBlackedOut, blackoutReason } from "@/lib/blackouts";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -413,7 +413,7 @@ function ContactStep({
 function BuilderStep({
   days, setDays, startDate, setStartDate, endDate, setEndDate,
   defaultHeadcount, setDefaultHeadcount, spaceMode, breakoutGroupSize, setBreakoutGroupSize,
-  isNP, onBack, onNext,
+  isNP, blackoutRules, onBack, onNext,
 }: {
   days: DayConfig[];
   setDays: React.Dispatch<React.SetStateAction<DayConfig[]>>;
@@ -423,6 +423,7 @@ function BuilderStep({
   spaceMode: SpaceMode;
   breakoutGroupSize: number; setBreakoutGroupSize: (v: number) => void;
   isNP: boolean;
+  blackoutRules: BlackoutRule[];
   onBack: () => void; onNext: () => void;
 }) {
   // Fetch availability whenever included days change
@@ -450,15 +451,17 @@ function BuilderStep({
     if (!dates.length) { setDays([]); return; }
     setDays(prev => {
       const byDate = Object.fromEntries(prev.map(d => [d.date, d]));
-      return dates.map(date => byDate[date] ?? {
-        date, included: true,
+      return dates.map(date => {
+        const isBlocked = isDateBlackedOut(date, blackoutRules);
+        return byDate[date] ?? {
+        date, included: !isBlocked,
         headcount: defaultHeadcount,
         timeBlock: "full" as TimeBlockId,
         customStart: "08:00", customEnd: "22:00",
         rooms: [],
         availability: Object.fromEntries(ROOMS.map(r => [r.id, "loading" as Signal])),
         availabilityFetched: false,
-      });
+      };});
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startDate, endDate]);
@@ -585,6 +588,7 @@ function BuilderStep({
                 }, 50);
               }}
               onApplyToAll={() => applyToAll(idx)}
+              blackoutRules={blackoutRules}
             />
           </div>
         ))}
@@ -628,7 +632,7 @@ function BuilderStep({
 function DayCard({
   day, dayIdx, total, isNP, spaceMode, breakoutGroupSize, onBreakoutGroupSize,
   onToggleInclude, onHeadcount, onTimeSlot, onTimeBlock, onCustomTime,
-  onToggleRoom, onUpdateRoom, onCopyToNext, onApplyToAll,
+  onToggleRoom, onUpdateRoom, onCopyToNext, onApplyToAll, blackoutRules,
 }: {
   day: DayConfig; dayIdx: number; total: number; isNP: boolean;
   spaceMode: SpaceMode;
@@ -643,12 +647,20 @@ function DayCard({
   onUpdateRoom: (roomId: string, patch: Partial<RoomSelection>) => void;
   onCopyToNext: () => void;
   onApplyToAll: () => void;
+  blackoutRules?: BlackoutRule[];
 }) {
   const [expanded, setExpanded] = useState(true);
+  const isDayBlocked = !!(blackoutRules && isDateBlackedOut(day.date, blackoutRules));
   const est = dayEstimate(day, isNP);
 
   return (
-    <div className={`rounded-2xl border transition-all ${day.included ? "border-gray-200 bg-white shadow-sm" : "border-dashed border-gray-200 bg-gray-50 opacity-60"}`}>
+    <div className={`rounded-2xl border transition-all ${isDayBlocked ? "border-red-200 bg-red-50" : day.included ? "border-gray-200 bg-white shadow-sm" : "border-dashed border-gray-200 bg-gray-50 opacity-60"}`}>
+      {isDayBlocked && (
+        <div className="flex items-center gap-2 px-4 py-2 bg-red-50 rounded-t-2xl border-b border-red-100 text-xs text-red-700 font-medium">
+          <span>🚫</span>
+          <span>{blackoutReason(day.date, null, blackoutRules ?? []) ?? "Not available"} — this date is not open for reservations</span>
+        </div>
+      )}
       {/* Day header */}
       <div className="flex items-center gap-3 px-5 py-4 cursor-pointer" onClick={() => setExpanded(e => !e)}>
         <button
@@ -713,23 +725,28 @@ function DayCard({
                 <label className="block text-xs font-medium text-gray-500 mb-1">Time of day</label>
                 <div className="flex gap-1 flex-wrap">
                   {(["any", "morning", "afternoon", "evening"] as const).map(slot => {
-                    const labels: Record<string, string> = {
+                    const slotLabels: Record<string, string> = {
                       any: "Any time",
                       morning: "Morning (8a–12p)",
                       afternoon: "Afternoon (12p–5p)",
                       evening: "Evening (5p–10p)",
                     };
+                    const slotBlocked = slot !== "any" && blackoutRules && isSlotBlackedOut(day.date, slot, blackoutRules);
                     return (
                       <button
                         key={slot}
-                        onClick={() => onTimeSlot(slot)}
+                        onClick={() => !slotBlocked && onTimeSlot(slot)}
+                        disabled={!!slotBlocked}
+                        title={slotBlocked ? blackoutReason(day.date, slot, blackoutRules ?? []) ?? "Not available" : undefined}
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                          day.timeSlot === slot
+                          slotBlocked
+                            ? "bg-gray-50 text-gray-300 cursor-not-allowed line-through"
+                            : day.timeSlot === slot
                             ? "bg-[#00205B] text-white"
                             : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                         }`}
                       >
-                        {labels[slot]}
+                        {slotLabels[slot]}
                       </button>
                     );
                   })}
@@ -1197,6 +1214,14 @@ export default function ReserveClient({ initialContact }: ReserveClientProps) {
   const [defaultHeadcount, setDefaultHeadcount] = useState(50);
   const [days, setDays] = useState<DayConfig[]>([]);
   const [notes, setNotes] = useState("");
+  const [blackoutRules, setBlackoutRules] = useState<BlackoutRule[]>([]);
+
+  useEffect(() => {
+    fetch("/api/blackouts")
+      .then(r => r.json())
+      .then((data: BlackoutRule[]) => setBlackoutRules(data))
+      .catch(() => {}); // fail silently — no rules = no blocking
+  }, []);
 
   function goToStep(n: number) {
     setStep(n);
@@ -1262,6 +1287,7 @@ export default function ReserveClient({ initialContact }: ReserveClientProps) {
             spaceMode={spaceMode}
             breakoutGroupSize={breakoutGroupSize} setBreakoutGroupSize={setBreakoutGroupSize}
             isNP={contact.isNonProfit}
+            blackoutRules={blackoutRules}
             onBack={() => goToStep(0)}
             onNext={() => goToStep(2)}
           />
