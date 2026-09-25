@@ -709,7 +709,7 @@ function BlackoutSettings({
   onRemove: (id: string) => void;
 }) {
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6 max-w-2xl mx-auto">
       <div>
         <h2 className="text-lg font-bold text-parchment">Blackout Rules</h2>
         <p className="text-sm text-slate mt-1">
@@ -938,7 +938,7 @@ function UsersTab({
   }
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-lg font-bold text-parchment">User Management</h2>
@@ -1069,7 +1069,7 @@ function MinistriesTab({
   }
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-4xl mx-auto">
       <div>
         <h2 className="text-lg font-bold text-parchment">Ministries</h2>
         <p className="text-sm text-slate mt-0.5">
@@ -1282,7 +1282,7 @@ function ReportsTab() {
   const maxGuest = Math.max(...d.guestBuckets.map(g => g.count));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-4xl mx-auto">
       <div>
         <h2 className="text-lg font-bold" style={{ color: "var(--bx-parchment)" }}>Historical Reports</h2>
         <p className="text-sm mt-0.5" style={{ color: "var(--bx-slate)" }}>
