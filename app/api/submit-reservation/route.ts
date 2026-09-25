@@ -83,8 +83,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing required contact fields" }, { status: 400 });
   }
 
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_ANON_KEY;
+  const supabaseUrl = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   // ── Path A: Supabase configured ───────────────────────────────────────────
   if (supabaseUrl && supabaseServiceKey) {

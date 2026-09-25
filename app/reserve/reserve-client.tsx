@@ -1,6 +1,6 @@
 
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { BlackoutRule, isDateBlackedOut, isSlotBlackedOut, blackoutReason } from "@/lib/blackouts";
 import { COLLAB_ROLE_LABELS, COLLAB_ROLE_DESCRIPTIONS, type CollabRole } from "@/lib/roles";
 import { ROOMS, type Room } from "@/lib/rooms";
@@ -454,18 +454,21 @@ function BuilderStep({
           );
         })()}
         <Field label={`Default headcount (applies to all days unless overridden)`}>
-          <input type="text" inputMode="numeric" pattern="[0-9]*" value={defaultHeadcount}
+          <input type="text" inputMode="numeric" pattern="[0-9]*"
+            value={rawDefaultHeadcount}
             onChange={e => {
               const raw = e.target.value.replace(/[^0-9]/g, "");
-              const n = raw === "" ? 1 : Math.max(1, parseInt(raw, 10));
+              setRawDefaultHeadcount(raw);
               if (raw !== "") {
+                const n = Math.max(1, parseInt(raw, 10));
                 setDefaultHeadcount(n);
                 setDays(prev => prev.map(d => ({ ...d, headcount: n })));
               }
             }}
-            onBlur={e => {
-              const n = Math.max(1, parseInt(e.target.value, 10) || 1);
+            onBlur={() => {
+              const n = Math.max(1, parseInt(rawDefaultHeadcount, 10) || 1);
               setDefaultHeadcount(n);
+              setRawDefaultHeadcount(String(n));
               setDays(prev => prev.map(d => ({ ...d, headcount: n })));
             }}
             className={`${input} w-32`} />
@@ -567,6 +570,16 @@ function DayCard({
 }) {
   const [expanded, setExpanded] = useState(true);
   const [previewRoom, setPreviewRoom] = useState<Room | null>(null);
+  const [rawHeadcount, setRawHeadcount] = useState(String(day.headcount));
+  // Sync display value when parent changes headcount (e.g. +/- buttons)
+  const prevHeadcountRef = useRef(day.headcount);
+  if (prevHeadcountRef.current !== day.headcount) {
+    prevHeadcountRef.current = day.headcount;
+    // Only override raw if the user isn't mid-edit (raw matches a valid number)
+    if (parseInt(rawHeadcount, 10) !== day.headcount) {
+      setRawHeadcount(String(day.headcount));
+    }
+  }
   const isDayBlocked = !!(blackoutRules && isDateBlackedOut(day.date, blackoutRules));
   const est = dayEstimate(day, isNP);
 
@@ -632,12 +645,18 @@ function DayCard({
               <div className="flex items-center gap-2">
                 <button onClick={() => onHeadcount(Math.max(1, day.headcount - 10))}
                   className="w-7 h-7 rounded-lg border border-parchment/15 text-slate hover:bg-parchment/5 font-bold">−</button>
-                <input type="text" inputMode="numeric" pattern="[0-9]*" value={day.headcount}
+                <input type="text" inputMode="numeric" pattern="[0-9]*"
+                  value={rawHeadcount}
                   onChange={e => {
                     const raw = e.target.value.replace(/[^0-9]/g, "");
+                    setRawHeadcount(raw);
                     if (raw !== "") onHeadcount(Math.max(1, parseInt(raw, 10)));
                   }}
-                  onBlur={e => onHeadcount(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                  onBlur={() => {
+                    const n = Math.max(1, parseInt(rawHeadcount, 10) || 1);
+                    onHeadcount(n);
+                    setRawHeadcount(String(n));
+                  }}
                   className="w-16 text-center border border-parchment/15 rounded-lg py-1 text-sm bg-ink text-parchment" />
                 <button onClick={() => onHeadcount(day.headcount + 10)}
                   className="w-7 h-7 rounded-lg border border-parchment/15 text-slate hover:bg-parchment/5 font-bold">+</button>
@@ -1246,6 +1265,7 @@ export default function ReserveClient({ initialContact, userId }: ReserveClientP
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [defaultHeadcount, setDefaultHeadcount] = useState(50);
+  const [rawDefaultHeadcount, setRawDefaultHeadcount] = useState("50");
   const [days, setDays] = useState<DayConfig[]>([]);
   const [notes, setNotes] = useState("");
   const [blackoutRules, setBlackoutRules] = useState<BlackoutRule[]>([]);
