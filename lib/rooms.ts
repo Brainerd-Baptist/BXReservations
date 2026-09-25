@@ -195,7 +195,7 @@ export const ROOMS: Room[] = [
     image: U("photo-1517502884422-41eaead166d4"),
     photos: [
       { src: U("photo-1517502884422-41eaead166d4"), caption: "Casual lounge" },
-      { src: U("photo-1549637642-d5b4c2aa17c7"), caption: "Small group setup" },
+      { src: U("photo-1524758631624-e2822e304c36"), caption: "Small group setup" },
     ],
     setups: ["classroom", "reception", "custom"],
   },
@@ -230,9 +230,9 @@ export const ROOMS: Room[] = [
     capacity: 20,
     baseNP: 125,
     basePro: 150,
-    image: U("photo-1549637642-d5b4c2aa17c7"),
+    image: U("photo-1556909114-f6e7ad7d3136"),
     photos: [
-      { src: U("photo-1549637642-d5b4c2aa17c7"), caption: "Small group" },
+      { src: U("photo-1556909114-f6e7ad7d3136"), caption: "Small group" },
       { src: U("photo-1519389950473-47ba0277781c"), caption: "Casual setup" },
     ],
     setups: ["classroom", "reception", "custom"],

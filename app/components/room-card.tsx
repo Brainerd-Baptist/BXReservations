@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import { useState } from "react";
 import { Room } from "@/lib/rooms";
 
 type Signal = "available" | "ask" | "unavailable" | "loading";
@@ -48,6 +49,7 @@ function signalLabel(signal: Signal) {
 export function RoomCard({ room, signal, isSelected, isDisabled, isNP, tag, onToggle, onPreview, role, galleryMode = false }: Props) {
   const unavailable = signal === "unavailable";
   const price = isNP ? room.baseNP : room.basePro;
+  const [imgError, setImgError] = useState(false);
 
   return (
     <div
@@ -66,15 +68,23 @@ export function RoomCard({ room, signal, isSelected, isDisabled, isNP, tag, onTo
     >
       {/* ── Photo ── */}
       <div className="relative w-full" style={{ aspectRatio: "16/9" }}>
-        <Image
-          src={room.image}
-          alt={room.name}
-          fill
-          sizes="(max-width: 640px) 100vw, 50vw"
-          className={`object-cover transition-all duration-500 group-hover:scale-105 ${
-            unavailable && !isSelected ? "opacity-40 grayscale" : ""
-          }`}
-        />
+        {!imgError ? (
+          <Image
+            src={room.image}
+            alt=""
+            fill
+            sizes="(max-width: 640px) 100vw, 50vw"
+            className={`object-cover transition-all duration-500 group-hover:scale-105 ${
+              unavailable && !isSelected ? "opacity-40 grayscale" : ""
+            }`}
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center"
+            style={{ background: "color-mix(in srgb, var(--bx-parchment) 6%, var(--bx-ink-soft))" }}>
+            <span className="text-3xl opacity-20">🏛️</span>
+          </div>
+        )}
 
         {/* Gradient overlay — always present */}
         <div className="absolute inset-0"
@@ -93,7 +103,7 @@ export function RoomCard({ room, signal, isSelected, isDisabled, isNP, tag, onTo
         {/* Top-left: capacity tag */}
         {tag && (
           <div className="absolute top-3 left-3">
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold" style={tag.style}>
+            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold leading-none" style={tag.style}>
               {tag.label}
             </span>
           </div>
