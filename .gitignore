@@ -40,3 +40,4 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 bx-reservations-deploy_pat.txt
+*.patch

@@ -571,17 +571,19 @@ function DayCard({
         </div>
       )}
       {/* Day header */}
-      <div className="flex items-center gap-3 px-5 py-4 cursor-pointer" onClick={() => setExpanded(e => !e)}>
-        <button
-          type="button"
-          onClick={e => { e.stopPropagation(); onToggleInclude(); }}
-          title={day.included ? "Remove this day" : "Include this day"}
-          className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-            day.included ? "bg-brass border-brass text-white" : "border-parchment/20 bg-ink"
-          }`}
-        >
-          {day.included && <span className="text-xs font-bold">✓</span>}
-        </button>
+      <div className={`flex items-center gap-3 px-5 py-4 ${isDayBlocked ? "" : "cursor-pointer"}`} onClick={isDayBlocked ? undefined : () => setExpanded(e => !e)}>
+        {!isDayBlocked && (
+          <button
+            type="button"
+            onClick={e => { e.stopPropagation(); onToggleInclude(); }}
+            title={day.included ? "Remove this day" : "Include this day"}
+            className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+              day.included ? "bg-brass border-brass text-white" : "border-parchment/20 bg-ink"
+            }`}
+          >
+            {day.included && <span className="text-xs font-bold">✓</span>}
+          </button>
+        )}
         <div className="flex-1">
           <p className="font-semibold text-parchment">{fmtDate(day.date)}</p>
           {day.included && (
@@ -609,7 +611,7 @@ function DayCard({
             )}
           </div>
         )}
-        <span className="text-slate/40 text-sm">{expanded && day.included ? "▲" : "▼"}</span>
+        {!isDayBlocked && <span className="text-slate/40 text-sm">{expanded && day.included ? "▲" : "▼"}</span>}
       </div>
 
       {/* Day body */}
