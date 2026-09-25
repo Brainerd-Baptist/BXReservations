@@ -1230,7 +1230,7 @@ export default function ReserveClient({ initialContact }: ReserveClientProps) {
   return (
     <div className="min-h-screen bg-ink relative overflow-hidden">
       <div className="bx-bloom" aria-hidden="true" />
-      <div className="relative px-4 pb-16">
+      <div className="relative px-4 pt-20 pb-16">
         <StepBar step={step} />
 
         {step === 0 && (
