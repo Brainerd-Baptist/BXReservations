@@ -368,3 +368,71 @@ export async function sendStatusUpdateEmail(opts: {
     html,
   });
 }
+
+/** Sent 48 hours before the first day of a confirmed booking */
+export async function sendBookingReminder(opts: {
+  to:            string;
+  name:          string;
+  bookingNumber: string;
+  eventName:     string;
+  firstDate:     string;   // e.g. "Monday, September 28, 2026"
+  startTime:     string;   // e.g. "8:00 AM"
+  endTime:       string;   // e.g. "10:00 PM"
+  rooms:         string[];
+  headcount:     number;
+}) {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn("[email] RESEND_API_KEY not set — skipping reminder");
+    return;
+  }
+  const { to, name, bookingNumber, eventName, firstDate, startTime, endTime, rooms, headcount } = opts;
+
+  const html = brandedEmailHtml({
+    preheader: `Your event "${eventName}" is coming up in 48 hours — here's everything you need.`,
+    headline:  "Your booking is coming up.",
+    body: `
+      <p>Hi ${name},</p>
+      <p>This is a reminder that your space reservation at Brainerd Baptist Church is
+         <strong>48 hours away</strong>. Here's a quick summary:</p>
+      <table border="0" cellpadding="0" cellspacing="0" role="presentation"
+        style="width:100%;border-collapse:collapse;margin:16px 0 8px;">
+        <tr>
+          <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;font-weight:600;color:#374151;font-size:14px;width:38%;">Booking #</td>
+          <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;color:#0f172a;font-size:14px;font-weight:700;">${bookingNumber}</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;font-weight:600;color:#374151;font-size:14px;">Event</td>
+          <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;color:#374151;font-size:14px;">${eventName}</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;font-weight:600;color:#374151;font-size:14px;">Date</td>
+          <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;color:#374151;font-size:14px;">${firstDate}</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;font-weight:600;color:#374151;font-size:14px;">Time</td>
+          <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;color:#374151;font-size:14px;">${startTime} – ${endTime}</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;font-weight:600;color:#374151;font-size:14px;">Space(s)</td>
+          <td style="padding:10px 0;border-bottom:1px solid #e5e7eb;color:#374151;font-size:14px;">${rooms.join(", ")}</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 0;font-weight:600;color:#374151;font-size:14px;">Headcount</td>
+          <td style="padding:10px 0;color:#374151;font-size:14px;">${headcount} attendees</td>
+        </tr>
+      </table>
+      <p style="margin-top:16px;">If you have any questions or need to make last-minute changes,
+         please contact the church office as soon as possible.</p>
+      <p>We look forward to hosting you!</p>`,
+    ctaText:    "View Your Booking",
+    ctaUrl:     `${SITE_URL}/account`,
+    footerNote: `Reference: ${bookingNumber}`,
+  });
+
+  await getResend().emails.send({
+    from:    FROM,
+    to,
+    subject: `Reminder: "${eventName}" is in 48 hours — ${bookingNumber}`,
+    html,
+  });
+}
