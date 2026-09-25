@@ -23,7 +23,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
-const APP_VERSION = "0.9.6";
+const APP_VERSION = "0.9.7";
 
 export default function RootLayout({
   children,

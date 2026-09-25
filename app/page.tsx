@@ -7,10 +7,10 @@ export default async function Home() {
   const { user } = await getUserAndRole();
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-ink">
 
       {/* ── Hero ── */}
-      <section className="bg-white border-b border-gray-100">
+      <section className="bg-ink-soft border-b border-parchment/10">
         <div className="max-w-2xl mx-auto px-5 pt-10 pb-12 sm:pt-16 sm:pb-16 text-center">
           <div className="flex justify-center mb-5">
             <Image
@@ -23,10 +23,10 @@ export default async function Home() {
             />
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold text-[#00205B] leading-tight mb-2">
+          <h1 className="text-3xl sm:text-4xl font-bold text-parchment leading-tight mb-2">
             Welcome to BX Reservations
           </h1>
-          <p className="text-base sm:text-[1.1rem] text-gray-500 mb-8 max-w-md mx-auto leading-relaxed">
+          <p className="text-base sm:text-[1.1rem] text-slate mb-8 max-w-md mx-auto leading-relaxed">
             Reserve a space at the BX Community Center for your event, meeting, class, or gathering.
           </p>
 
@@ -34,13 +34,13 @@ export default async function Home() {
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
                 href="/reserve"
-                className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl bg-[#00abc9] text-white font-bold text-base shadow-sm hover:bg-[#0099b5] active:scale-[0.98] transition-all"
+                className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl bg-brass text-white font-bold text-base shadow-sm hover:opacity-90 active:scale-[0.98] transition-all"
               >
                 Reserve a Space →
               </Link>
               <Link
                 href="/account"
-                className="inline-flex items-center justify-center px-7 py-4 rounded-xl border border-gray-200 text-gray-700 font-semibold text-base hover:bg-gray-50 transition-colors"
+                className="inline-flex items-center justify-center px-7 py-4 rounded-xl border border-parchment/20 text-parchment font-semibold text-base hover:bg-parchment/10 transition-colors"
               >
                 My Reservations
               </Link>
@@ -49,13 +49,13 @@ export default async function Home() {
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
                 href="/reserve"
-                className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl bg-[#00abc9] text-white font-bold text-base shadow-sm hover:bg-[#0099b5] active:scale-[0.98] transition-all"
+                className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl bg-brass text-white font-bold text-base shadow-sm hover:opacity-90 active:scale-[0.98] transition-all"
               >
                 Reserve a Space →
               </Link>
               <Link
                 href="/login"
-                className="inline-flex items-center justify-center px-7 py-4 rounded-xl border border-gray-200 text-gray-700 font-semibold text-base hover:bg-gray-50 transition-colors"
+                className="inline-flex items-center justify-center px-7 py-4 rounded-xl border border-parchment/20 text-parchment font-semibold text-base hover:bg-parchment/10 transition-colors"
               >
                 Sign in / Sign up
               </Link>
@@ -67,18 +67,22 @@ export default async function Home() {
       {/* ── Account value prop (only show if not signed in) ── */}
       {!user && (
         <section className="max-w-2xl mx-auto px-5 pt-8">
-          <div className="bg-[#00205B] rounded-2xl px-6 py-5 flex items-start gap-4">
+          <div
+            className="rounded-2xl px-6 py-5 flex items-start gap-4"
+            style={{ background: "var(--bx-parchment)" }}
+          >
             <div className="text-2xl shrink-0 mt-0.5">🔐</div>
             <div>
-              <p className="text-white font-semibold text-sm mb-1">
+              <p className="font-semibold text-sm mb-1" style={{ color: "var(--bx-ink)" }}>
                 Create a free account to get the most out of BX Reservations
               </p>
-              <p className="text-blue-200 text-xs leading-relaxed mb-3">
+              <p className="text-xs leading-relaxed mb-3" style={{ color: "color-mix(in srgb, var(--bx-ink) 70%, transparent)" }}>
                 Sign in with Google to save your progress as you go, submit your request with one tap, and follow your reservation status — from Pending all the way to Confirmed — right here online.
               </p>
               <Link
                 href="/login"
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-white/15 hover:bg-white/25 transition-colors px-3 py-1.5 rounded-lg"
+                className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors"
+                style={{ color: "var(--bx-ink)", background: "color-mix(in srgb, var(--bx-ink) 15%, transparent)" }}
               >
                 Create your account →
               </Link>
@@ -89,24 +93,24 @@ export default async function Home() {
 
       {/* ── Spaces overview ── */}
       <section className="max-w-2xl mx-auto px-5 py-9">
-        <h2 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-4 text-center">
+        <h2 className="text-[10px] font-bold uppercase tracking-widest text-slate mb-4 text-center">
           Available spaces
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {SPACES.map((s) => (
             <div
               key={s.name}
-              className="bg-white rounded-xl border border-gray-200 p-4"
+              className="bg-ink-soft rounded-xl border border-parchment/10 p-4"
             >
-              <div className="font-semibold text-gray-900 text-sm">{s.name}</div>
-              <div className="text-xs text-gray-500 mt-0.5 leading-relaxed">{s.desc}</div>
+              <div className="font-semibold text-parchment text-sm">{s.name}</div>
+              <div className="text-xs text-slate mt-0.5 leading-relaxed">{s.desc}</div>
             </div>
           ))}
         </div>
         <div className="mt-7 text-center">
           <Link
             href="/reserve"
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#00abc9] hover:underline"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-brass hover:underline"
           >
             Check availability and make a request →
           </Link>
@@ -114,9 +118,9 @@ export default async function Home() {
       </section>
 
       {/* ── How it works ── */}
-      <section className="bg-white border-t border-gray-100">
+      <section className="bg-ink-soft border-t border-parchment/10">
         <div className="max-w-2xl mx-auto px-5 py-9">
-          <h2 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-6 text-center">
+          <h2 className="text-[10px] font-bold uppercase tracking-widest text-slate mb-6 text-center">
             How it works
           </h2>
           <ol className="space-y-5">
@@ -124,13 +128,13 @@ export default async function Home() {
               <li key={i} className="flex items-start gap-4">
                 <div
                   className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0 mt-0.5"
-                  style={{ background: "#00abc9" }}
+                  style={{ background: "var(--bx-brass)" }}
                 >
                   {i + 1}
                 </div>
                 <div>
-                  <div className="font-semibold text-gray-900 text-sm">{s.title}</div>
-                  <div className="text-xs text-gray-500 mt-0.5 leading-relaxed">{s.desc}</div>
+                  <div className="font-semibold text-parchment text-sm">{s.title}</div>
+                  <div className="text-xs text-slate mt-0.5 leading-relaxed">{s.desc}</div>
                 </div>
               </li>
             ))}
@@ -140,12 +144,12 @@ export default async function Home() {
 
       {/* ── Meet the team ── */}
       <section className="max-w-2xl mx-auto px-5 py-9">
-        <h2 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-6 text-center">
+        <h2 className="text-[10px] font-bold uppercase tracking-widest text-slate mb-6 text-center">
           Questions? We&#39;re here to help
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Barb */}
-          <div className="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col items-center text-center">
+          <div className="bg-ink-soft border border-parchment/10 rounded-2xl p-5 flex flex-col items-center text-center">
             <div className="mb-3">
               <StaffPhoto
                 thumbSrc="/staff/barb.jpg"
@@ -154,20 +158,20 @@ export default async function Home() {
                 size={80}
               />
             </div>
-            <div className="font-bold text-gray-900 text-sm">Barb</div>
-            <div className="text-[11px] text-gray-400 mb-3">BX Coordinator</div>
-            <p className="text-xs text-gray-500 leading-relaxed mb-4">
+            <div className="font-bold text-parchment text-sm">Barb</div>
+            <div className="text-[11px] text-slate mb-3">BX Coordinator</div>
+            <p className="text-xs text-slate leading-relaxed mb-4">
               Pricing, setup requests, and anything specific to your event.
             </p>
             <a
               href="mailto:barb@brainerdbaptist.org"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#00abc9] hover:underline"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-brass hover:underline"
             >
               Contact Barb →
             </a>
           </div>
           {/* Jo */}
-          <div className="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col items-center text-center">
+          <div className="bg-ink-soft border border-parchment/10 rounded-2xl p-5 flex flex-col items-center text-center">
             <div className="mb-3">
               <StaffPhoto
                 thumbSrc="/staff/jo.jpg"
@@ -176,14 +180,14 @@ export default async function Home() {
                 size={80}
               />
             </div>
-            <div className="font-bold text-gray-900 text-sm">Jo</div>
-            <div className="text-[11px] text-gray-400 mb-3">BX Director</div>
-            <p className="text-xs text-gray-500 leading-relaxed mb-4">
+            <div className="font-bold text-parchment text-sm">Jo</div>
+            <div className="text-[11px] text-slate mb-3">BX Director</div>
+            <p className="text-xs text-slate leading-relaxed mb-4">
               General questions about the BX, partnerships, or larger events.
             </p>
             <a
               href="mailto:jo@brainerdbaptist.org"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#00abc9] hover:underline"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-brass hover:underline"
             >
               Contact Jo →
             </a>
@@ -192,7 +196,7 @@ export default async function Home() {
       </section>
 
       {/* ── Footer ── */}
-      <footer className="text-center pb-10 text-xs text-gray-400">
+      <footer className="text-center pb-10 text-xs text-slate">
         BX Community Center · Brainerd Baptist Church
       </footer>
     </main>

@@ -86,9 +86,9 @@ export default function ThemeGrid({ userId, savedTheme }: ThemeGridProps) {
             <ThemeSwatch colors={t.swatch} />
             <span
               style={{
-                fontSize: "0.6875rem",
-                fontWeight: isActive ? 600 : 400,
-                color: isActive ? "var(--bx-brass)" : "var(--bx-slate)",
+                fontSize: "0.75rem",
+                fontWeight: isActive ? 700 : 500,
+                color: isActive ? "var(--bx-brass)" : "color-mix(in srgb, var(--bx-parchment) 75%, transparent)",
                 lineHeight: 1.2,
                 textAlign: "center",
               }}
