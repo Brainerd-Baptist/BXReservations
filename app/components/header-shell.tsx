@@ -74,7 +74,7 @@ export default function HeaderShell({
                 alt="Brainerd Baptist Church"
                 width={130}
                 height={38}
-                className="h-8 sm:h-9 w-auto object-contain"
+                className="h-8 sm:h-9 w-auto object-contain bbc-logo"
                 priority
               />
               <div className="flex items-center gap-2 ml-1">

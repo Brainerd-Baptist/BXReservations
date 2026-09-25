@@ -197,3 +197,13 @@ body {
 }
 
 
+
+/* ── BBC stacked logo: black artwork — invert to white on dark-header themes */
+[data-theme="ledger"] .bbc-logo,
+[data-theme="glass-dark"] .bbc-logo,
+[data-theme="harbor"] .bbc-logo,
+[data-theme="heather"] .bbc-logo,
+[data-theme="moss"] .bbc-logo,
+[data-theme="orbit"] .bbc-logo {
+  filter: brightness(0) invert(1);
+}
