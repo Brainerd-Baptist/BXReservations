@@ -322,26 +322,7 @@ Send this to ${req.name} (${req.email}).`);
   return (
     <div className="min-h-screen bg-ink font-sans">
 
-      {/* ── Tab nav ────────────────────────────────────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-4 pt-4 pb-0 flex items-center gap-1 flex-wrap border-b" style={{ borderColor: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>
-        {(["requests", "users", "ministries", "settings", "reports"] as const).map((id) => {
-          const labels: Record<string, string> = { requests: "Requests", users: "Users", ministries: "Ministries", settings: "Settings", reports: "Reports" };
-          return (
-            <button
-              key={id}
-              onClick={() => setTab(id)}
-              className="px-4 py-2.5 text-sm font-semibold transition-colors relative"
-              style={tab === id
-                ? { color: "var(--bx-brass)", borderBottom: "2px solid var(--bx-brass)", marginBottom: "-1px" }
-                : { color: "var(--bx-slate)", borderBottom: "2px solid transparent", marginBottom: "-1px" }}
-            >
-              {labels[id]}
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 py-6 grid lg:grid-cols-[1fr_320px] gap-6">
+      <div className={`max-w-7xl mx-auto px-4 py-6 gap-6 ${tab === "requests" ? "grid lg:grid-cols-[1fr_320px]" : "block"}`}>
         {/* Left: queue / settings */}
         <div className="space-y-5">
           {tab === "settings" && (
@@ -591,8 +572,8 @@ Send this to ${req.name} (${req.email}).`);
           {tab === "reports" && <ReportsTab />}
         </div>
 
-        {/* Right: Calendar sidebar */}
-        <div className={`${calOpen ? "block" : "hidden lg:block"}`}>
+        {/* Right: Calendar sidebar — Requests tab only */}
+        {tab === "requests" && <div className={`${calOpen ? "block" : "hidden lg:block"}`}>
           <div className="sticky top-20 bg-ink-soft rounded-xl border border-parchment/10 p-5 space-y-4">
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold text-slate uppercase tracking-widest">Combined Calendar</p>
@@ -656,7 +637,7 @@ Send this to ${req.name} (${req.email}).`);
               />
             </div>
           </div>
-        </div>
+        </div>}
       </div>
     </div>
   );
