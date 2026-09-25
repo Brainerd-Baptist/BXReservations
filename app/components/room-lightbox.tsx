@@ -133,7 +133,7 @@ export function RoomLightbox({ room, isSelected, isNP, onClose, onToggle, galler
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest mb-1"
               style={{ color: "var(--bx-brass)" }}>
-              {room.floor === "upper" ? "Upper Level" : room.floor === "lower" ? "Lower Level" : "Main Level"}
+              {room.floor === "upstairs" ? "Upstairs" : "Downstairs"}
             </p>
             <h2 className="text-2xl font-bold mb-1" style={{ color: "var(--bx-parchment)" }}>
               {room.name}

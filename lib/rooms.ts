@@ -16,7 +16,7 @@ export interface Room {
   name: string;
   tagline: string;          // short punchy card headline
   description: string;
-  floor: "upper" | "main" | "lower";
+  floor: "upstairs" | "downstairs";
   features: string[];
   capacityTheater: number;
   capacityBanquet: number;
@@ -38,7 +38,7 @@ export const ROOMS: Room[] = [
     tagline: "Grand event hall with stage & mezzanine",
     description:
       "Main event space with mezzanine and stage. Galas, conferences, large gatherings.",
-    floor: "main",
+    floor: "downstairs",
     features: ["Stage", "Mezzanine", "Full AV", "Lighting Rig", "Green Room", "Catering Access"],
     capacityTheater: 400,
     capacityBanquet: 300,
@@ -60,7 +60,7 @@ export const ROOMS: Room[] = [
     tagline: "Intimate upstairs space for meetings & workshops",
     description:
       "Intimate upstairs space. Great for meetings, small workshops, and rehearsals.",
-    floor: "upper",
+    floor: "upstairs",
     features: ["Natural Light", "Whiteboard Wall", "Video Conferencing", "Lounge Seating"],
     capacityTheater: 100,
     capacityBanquet: 80,
@@ -81,7 +81,7 @@ export const ROOMS: Room[] = [
     tagline: "Bright open space for classes & community events",
     description:
       "Bright open space — excellent for workshops, classes, and community events.",
-    floor: "main",
+    floor: "upstairs",
     features: ["Panoramic Windows", "Projector", "Movable Furniture", "Whiteboard"],
     capacityTheater: 50,
     capacityBanquet: 40,
@@ -102,7 +102,7 @@ export const ROOMS: Room[] = [
     tagline: "Flexible breakout — opens into B & C",
     description:
       "Flexible breakout room — can open into B and C for a combined space.",
-    floor: "main",
+    floor: "downstairs",
     features: ["Operable Wall", "Display Screen", "Conference Phone", "Acoustic Panels"],
     capacityTheater: 40,
     capacityBanquet: 30,
@@ -123,7 +123,7 @@ export const ROOMS: Room[] = [
     tagline: "Flexible breakout — opens into A & C",
     description:
       "Flexible breakout room — can open into A and C for a combined space.",
-    floor: "main",
+    floor: "downstairs",
     features: ["Operable Wall", "Display Screen", "Conference Phone", "Acoustic Panels"],
     capacityTheater: 40,
     capacityBanquet: 30,
@@ -144,7 +144,7 @@ export const ROOMS: Room[] = [
     tagline: "Flexible breakout — opens into A & B",
     description:
       "Flexible breakout room — can open into A and B for a combined space.",
-    floor: "main",
+    floor: "downstairs",
     features: ["Operable Wall", "Display Screen", "Conference Phone", "Acoustic Panels"],
     capacityTheater: 40,
     capacityBanquet: 30,
@@ -165,7 +165,7 @@ export const ROOMS: Room[] = [
     tagline: "Café-style social space for casual gatherings",
     description:
       "Café-style space, perfect for casual meet-ups and coffee conversations.",
-    floor: "lower",
+    floor: "upstairs",
     features: ["Café Bar", "Lounge Seating", "Ambient Lighting", "WiFi"],
     capacityTheater: 60,
     capacityBanquet: 50,
@@ -185,7 +185,7 @@ export const ROOMS: Room[] = [
     name: "CrossTies A",
     tagline: "Casual lower-level gathering space",
     description: "Casual lower-level gathering space.",
-    floor: "lower",
+    floor: "upstairs",
     features: ["Lounge Seating", "Display Screen", "Casual Atmosphere"],
     capacityTheater: 20,
     capacityBanquet: 10,
@@ -204,7 +204,7 @@ export const ROOMS: Room[] = [
     name: "CrossTies B",
     tagline: "Casual lower-level gathering space",
     description: "Casual lower-level gathering space.",
-    floor: "lower",
+    floor: "upstairs",
     features: ["Lounge Seating", "Display Screen", "Casual Atmosphere"],
     capacityTheater: 20,
     capacityBanquet: 10,
@@ -223,7 +223,7 @@ export const ROOMS: Room[] = [
     name: "CrossTies C",
     tagline: "Casual lower-level gathering space",
     description: "Casual lower-level gathering space.",
-    floor: "lower",
+    floor: "upstairs",
     features: ["Lounge Seating", "Display Screen", "Casual Atmosphere"],
     capacityTheater: 20,
     capacityBanquet: 10,

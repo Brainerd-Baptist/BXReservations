@@ -7,7 +7,7 @@ import { RoomCard } from "@/app/components/room-card";
 import { RoomLightbox } from "@/app/components/room-lightbox";
 
 // ── Filter types ─────────────────────────────────────────────────────────────
-type FloorFilter = "all" | "upper" | "main" | "lower";
+type FloorFilter = "all" | "upstairs" | "downstairs";
 type CapacityFilter = "all" | "small" | "medium" | "large";
 const SETUP_FILTER_IDS: SetupId[] = ["theater", "banquet", "reception", "cocktail", "classroom", "boardroom"];
 
@@ -17,7 +17,7 @@ const SETUP_LABELS: Record<SetupId, string> = {
 };
 
 const FLOOR_LABELS: Record<FloorFilter, string> = {
-  all: "All Floors", upper: "Upper Level", main: "Main Level", lower: "Lower Level",
+  all: "All Floors", upstairs: "Upstairs", downstairs: "Downstairs",
 };
 
 const CAP_LABELS: Record<CapacityFilter, string> = {
@@ -57,7 +57,7 @@ export function RoomsClient() {
 
           {/* Floor */}
           <div className="flex items-center gap-1 mr-1">
-            {(["all", "upper", "main", "lower"] as FloorFilter[]).map(f => (
+            {(["all", "upstairs", "downstairs"] as FloorFilter[]).map(f => (
               <button key={f} onClick={() => setFloor(f)}
                 className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
                 style={floor === f
@@ -131,10 +131,10 @@ export function RoomsClient() {
           </div>
         ) : (
           <>
-            {(["main", "upper", "lower"] as const).map(f => {
+            {(["upstairs", "downstairs"] as const).map(f => {
               const rooms = filtered.filter(r => r.floor === f);
               if (rooms.length === 0) return null;
-              const floorLabel = f === "main" ? "Main Level" : f === "upper" ? "Upper Level" : "Lower Level";
+              const floorLabel = f === "upstairs" ? "Upstairs" : "Downstairs";
               return (
                 <div key={f} className="mb-10">
                   {floor === "all" && (
