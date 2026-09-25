@@ -101,10 +101,20 @@ export default async function Home() {
           {SPACES.map((s) => (
             <div
               key={s.name}
-              className="bg-ink-soft rounded-xl border border-parchment/10 p-4"
+              className="relative rounded-xl overflow-hidden border border-parchment/10 h-28"
             >
-              <div className="font-semibold text-parchment text-sm">{s.name}</div>
-              <div className="text-xs text-slate mt-0.5 leading-relaxed">{s.desc}</div>
+              <Image
+                src={s.image}
+                alt={s.name}
+                fill
+                sizes="(max-width:640px) 100vw, 50vw"
+                className="object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
+              <div className="absolute bottom-0 left-0 right-0 p-3">
+                <div className="font-semibold text-white text-sm leading-tight">{s.name}</div>
+                <div className="text-[11px] text-white/70 mt-0.5 leading-snug">{s.desc}</div>
+              </div>
             </div>
           ))}
         </div>
@@ -211,13 +221,16 @@ export default async function Home() {
   );
 }
 
+const U = (id: string) =>
+  `https://images.unsplash.com/${id}?w=600&q=80&fit=crop&auto=format`;
+
 const SPACES = [
-  { name: "The Crossing", desc: "Large auditorium-style main event space" },
-  { name: "The Loft", desc: "Flexible upper-level meeting area" },
-  { name: "Crosspointe A / B / C", desc: "Configurable breakout rooms — use one or combine all three" },
-  { name: "Crossview", desc: "Intimate gathering or overflow space" },
-  { name: "Crossties A / B / C", desc: "Small group & classroom rooms" },
-  { name: "Crossties Café", desc: "Coffee & community space for smaller groups" },
+  { name: "The Crossing", desc: "Large auditorium-style main event space", image: U("photo-1519167758481-83f550bb49b3") },
+  { name: "The Loft", desc: "Flexible upper-level meeting area", image: U("photo-1497366216548-37526070297c") },
+  { name: "Crosspointe A / B / C", desc: "Configurable breakout rooms — use one or combine all three", image: U("photo-1568992687947-868a62a9f521") },
+  { name: "Crossview", desc: "Intimate gathering or overflow space", image: U("photo-1580582932707-520aed937b7b") },
+  { name: "Crossties A / B / C", desc: "Small group & classroom rooms", image: U("photo-1517502884422-41eaead166d4") },
+  { name: "Crossties Café", desc: "Coffee & community space for smaller groups", image: U("photo-1554118811-1e0d58224f24") },
 ];
 
 const STEPS = [

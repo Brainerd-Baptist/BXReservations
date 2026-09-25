@@ -402,11 +402,16 @@ function BuilderStep({
                 // Default end date to start date if unset or before new start
                 if (!endDate || endDate < e.target.value) setEndDate(e.target.value);
               }}
-              className={`${input} min-w-0`} />
+              onClick={e => { try { (e.target as HTMLInputElement).showPicker(); } catch {} }}
+              style={{ colorScheme: "dark" }}
+              className={`${input} min-w-0 cursor-pointer`} />
           </Field>
           <Field label="End date" required>
             <input type="date" value={endDate} min={startDate}
-              onChange={e => setEndDate(e.target.value)} className={`${input} min-w-0`} />
+              onChange={e => setEndDate(e.target.value)}
+              onClick={e => { try { (e.target as HTMLInputElement).showPicker(); } catch {} }}
+              style={{ colorScheme: "dark" }}
+              className={`${input} min-w-0 cursor-pointer`} />
           </Field>
         </div>
         <Field label={`Default headcount (applies to all days unless overridden)`}>
