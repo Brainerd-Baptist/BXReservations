@@ -3,6 +3,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { BlackoutRule, isDateBlackedOut, isSlotBlackedOut, blackoutReason } from "@/lib/blackouts";
 import { COLLAB_ROLE_LABELS, COLLAB_ROLE_DESCRIPTIONS, type CollabRole } from "@/lib/roles";
+import { ROOMS, type Room } from "@/lib/rooms";
+import { RoomCard } from "@/app/components/room-card";
+import { RoomLightbox } from "@/app/components/room-lightbox";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -55,128 +58,7 @@ interface ContactInfo {
 // Capacities and pricing from official BX Room Rental Information sheet (Rev. 6/24).
 // baseNP = non-profit 4-hr rate; basePro = profit/standard 4-hr rate.
 // capacityTheater / capacityBanquet = official room seating capacity by style.
-const ROOMS = [
-  {
-    id: "crossing",
-    name: "The Crossing",
-    description: "Main event space with mezzanine and stage. Galas, conferences, large gatherings.",
-    capacityTheater: 400,
-    capacityBanquet: 300,
-    capacity: 400,
-    baseNP: 600,
-    basePro: 800,
-    image: "/images/rooms/crossing-11.jpg",
-    setups: ["theater", "banquet", "reception", "cocktail", "custom"],
-  },
-  {
-    id: "loft",
-    name: "The Loft",
-    description: "Intimate upstairs space. Great for meetings, small workshops, and rehearsals.",
-    capacityTheater: 100,
-    capacityBanquet: 80,
-    capacity: 100,
-    baseNP: 275,
-    basePro: 475,
-    image: null,
-    setups: ["theater", "classroom", "reception", "boardroom", "custom"],
-  },
-  {
-    id: "crossview",
-    name: "CrossView",
-    description: "Bright open space — excellent for workshops, classes, and community events.",
-    capacityTheater: 50,
-    capacityBanquet: 40,
-    capacity: 50,
-    baseNP: 200,
-    basePro: 250,
-    image: null,
-    setups: ["theater", "classroom", "banquet", "reception", "custom"],
-  },
-  {
-    id: "crosspointe-a",
-    name: "CrossPointe A",
-    description: "Flexible breakout room — can open into B and C for a combined space.",
-    capacityTheater: 40,
-    capacityBanquet: 30,
-    capacity: 40,
-    baseNP: 150,
-    basePro: 200,
-    image: null,
-    setups: ["classroom", "boardroom", "theater", "custom"],
-  },
-  {
-    id: "crosspointe-b",
-    name: "CrossPointe B",
-    description: "Flexible breakout room — can open into A and C for a combined space.",
-    capacityTheater: 40,
-    capacityBanquet: 30,
-    capacity: 40,
-    baseNP: 150,
-    basePro: 200,
-    image: null,
-    setups: ["classroom", "boardroom", "theater", "custom"],
-  },
-  {
-    id: "crosspointe-c",
-    name: "CrossPointe C",
-    description: "Flexible breakout room — can open into A and B for a combined space.",
-    capacityTheater: 40,
-    capacityBanquet: 30,
-    capacity: 40,
-    baseNP: 150,
-    basePro: 200,
-    image: null,
-    setups: ["classroom", "boardroom", "theater", "custom"],
-  },
-  {
-    id: "crosstiescafe",
-    name: "CrossTies Café",
-    description: "Café-style space, perfect for casual meet-ups and coffee conversations.",
-    capacityTheater: 60,
-    capacityBanquet: 50,
-    capacity: 60,
-    baseNP: 175,
-    basePro: 225,
-    image: null,
-    setups: ["reception", "cocktail", "custom"],
-  },
-  {
-    id: "crosstiesA",
-    name: "CrossTies A",
-    description: "Casual lower-level gathering space.",
-    capacityTheater: 20,
-    capacityBanquet: 10,
-    capacity: 20,
-    baseNP: 125,
-    basePro: 150,
-    image: null,
-    setups: ["classroom", "reception", "custom"],
-  },
-  {
-    id: "crosstiesB",
-    name: "CrossTies B",
-    description: "Casual lower-level gathering space.",
-    capacityTheater: 20,
-    capacityBanquet: 10,
-    capacity: 20,
-    baseNP: 125,
-    basePro: 150,
-    image: null,
-    setups: ["classroom", "reception", "custom"],
-  },
-  {
-    id: "crosstiesC",
-    name: "CrossTies C",
-    description: "Casual lower-level gathering space.",
-    capacityTheater: 20,
-    capacityBanquet: 10,
-    capacity: 20,
-    baseNP: 125,
-    basePro: 150,
-    image: null,
-    setups: ["classroom", "reception", "custom"],
-  },
-] as const;
+
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
@@ -221,25 +103,20 @@ function totalEstimate(days: DayConfig[], isNP: boolean): number {
 
 /** Returns a recommendation tag (label + color) based on headcount vs. room capacity. */
 function getRoomTag(headcount: number, capacityTheater: number, capacityBanquet: number): {
-  label: string; color: string;
+  label: string; style: React.CSSProperties;
 } | null {
   if (headcount <= 0) return null;
   const ratio = headcount / capacityTheater;
   if (headcount > capacityTheater) {
-    // Exceeds theater — always warn
-    return { label: "Too small", color: "text-red-500 bg-red-50 border-red-200" };
+    return { label: "Too small", style: { background: "rgba(239,68,68,0.15)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.3)" } };
   }
   if (ratio >= 0.6 && ratio <= 1.0) {
-    return { label: "Best fit", color: "text-emerald-700 bg-emerald-50 border-emerald-200" };
+    return { label: "Best fit", style: { background: "rgba(34,197,94,0.15)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.3)" } };
   }
   if (ratio >= 0.25 && ratio < 0.6) {
-    return { label: "Good fit", color: "text-brass bg-brass/5 border-brass/30" };
+    return { label: "Good fit", style: { background: "color-mix(in srgb, var(--bx-brass) 12%, transparent)", color: "var(--bx-brass)", border: "1px solid color-mix(in srgb, var(--bx-brass) 30%, transparent)" } };
   }
-  // ratio < 0.25 — much bigger than needed
-  if (capacityBanquet > 0 && headcount <= capacityBanquet) {
-    return { label: "Oversized", color: "text-slate bg-ink border-parchment/15" };
-  }
-  return { label: "Oversized", color: "text-slate bg-ink border-parchment/15" };
+  return { label: "Oversized", style: { background: "rgba(0,0,0,0.25)", color: "var(--bx-slate)", border: "1px solid rgba(255,255,255,0.1)" } };
 }
 
 function signalBadge(sig: Signal) {
@@ -637,6 +514,7 @@ function DayCard({
   blackoutRules?: BlackoutRule[];
 }) {
   const [expanded, setExpanded] = useState(true);
+  const [previewRoom, setPreviewRoom] = useState<Room | null>(null);
   const isDayBlocked = !!(blackoutRules && isDateBlackedOut(day.date, blackoutRules));
   const est = dayEstimate(day, isNP);
 
@@ -774,79 +652,59 @@ function DayCard({
             {/* Main / single space picker */}
             {(spaceMode === "single" || spaceMode === "main-plus") && (
               <div>
-                <p className="text-xs font-medium text-slate mb-3 uppercase tracking-wide">
+                <p className="text-xs font-medium mb-3 uppercase tracking-wide" style={{ color: "var(--bx-slate)" }}>
                   {spaceMode === "main-plus" ? "🏛️ Main Space" : "Select your space"}
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {ROOMS.map(room => {
                     const sig = day.availability[room.id] ?? "loading";
                     const sel = day.rooms.find(r => r.roomId === room.id);
                     const isSelected = !!sel && sel.role === "main";
-                    const isUnavailable = sig === "unavailable";
                     const mainPicked = day.rooms.find(r => r.role === "main");
                     const isDisabled = spaceMode === "single" && !!mainPicked && mainPicked.roomId !== room.id;
                     const tag = getRoomTag(day.headcount, room.capacityTheater, room.capacityBanquet);
                     return (
-                      <div key={room.id}
-                        className={`rounded-xl border-2 transition-all overflow-hidden ${
-                          isDisabled ? "opacity-40 pointer-events-none" :
-                          isSelected
-                            ? isUnavailable && sel?.requested ? "border-amber-400 bg-amber-50" : "border-brass bg-brass/5"
-                            : "border-parchment/15 bg-ink-soft hover:border-parchment/30"
-                        }`}>
-                        {room.image && (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={room.image} alt={room.name}
-                            className={`w-full h-24 object-cover ${isUnavailable && !isSelected ? "opacity-40" : ""}`} />
-                        )}
-                        <div className="p-3">
-                          <div className="flex items-start justify-between gap-2 mb-1">
-                            <div>
-                              <p className={`font-semibold text-sm ${isUnavailable && !isSelected ? "text-slate" : "text-parchment"}`}>{room.name}</p>
-                              <p className="text-xs text-slate">Theater {room.capacityTheater} · Banquet {room.capacityBanquet}</p>
-                              {tag && <span className={`inline-block mt-1 px-1.5 py-0.5 rounded border text-[10px] font-semibold leading-tight ${tag.color}`}>{tag.label}</span>}
+                      <div key={room.id}>
+                        <RoomCard
+                          room={room}
+                          signal={sig}
+                          isSelected={isSelected}
+                          isDisabled={isDisabled}
+                          isNP={isNP}
+                          tag={tag}
+                          onToggle={() => onToggleRoom(room.id, "main")}
+                          onPreview={() => setPreviewRoom(room)}
+                          role="main"
+                        />
+                        {isSelected && !sel?.requested && (
+                          <div className="mt-2 px-3 py-3 rounded-xl border" style={{ background: "color-mix(in srgb, var(--bx-brass) 5%, transparent)", borderColor: "color-mix(in srgb, var(--bx-brass) 20%, transparent)" }}>
+                            <p className="text-xs font-medium mb-2" style={{ color: "var(--bx-slate)" }}>Setup style</p>
+                            <div className="flex flex-wrap gap-1">
+                              {(room.setups as readonly string[]).map(sid => {
+                                const s = SETUP_STYLES.find(x => x.id === sid);
+                                if (!s) return null;
+                                return (
+                                  <button key={sid} onClick={() => onUpdateRoom(room.id, { setup: sid as SetupId })} title={s.desc}
+                                    className="px-2 py-1 rounded-md text-xs font-medium transition-colors"
+                                    style={sel?.setup === sid
+                                      ? { background: "var(--bx-parchment)", color: "var(--bx-ink)" }
+                                      : { background: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)", color: "var(--bx-slate)" }
+                                    }>
+                                    {s.label}
+                                  </button>
+                                );
+                              })}
                             </div>
-                            {signalBadge(sig)}
+                            {sel?.setup === "custom" && (
+                              <input type="text" placeholder="Describe your setup…" value={sel.customSetup}
+                                onChange={e => onUpdateRoom(room.id, { customSetup: e.target.value })}
+                                className={`${input} mt-2 text-xs`} />
+                            )}
                           </div>
-                          <p className={`text-xs mb-3 leading-relaxed ${isUnavailable && !isSelected ? "text-slate/40" : "text-slate"}`}>{room.description}</p>
-                          <p className={`text-xs font-medium mb-3 ${isUnavailable && !isSelected ? "text-slate/40" : "text-slate"}`}>From ${(isNP ? room.baseNP : room.basePro).toLocaleString()} / 4 hrs</p>
-                          {!isUnavailable ? (
-                            <button onClick={() => onToggleRoom(room.id, "main")}
-                              className={`w-full py-1.5 rounded-lg text-xs font-semibold transition-colors ${isSelected ? "bg-brass text-white hover:bg-brass/90" : "bg-parchment/10 text-slate hover:bg-parchment/20"}`}>
-                              {isSelected ? "✓ Selected — click to remove" : spaceMode === "main-plus" ? "Select as main space" : "Select this space"}
-                            </button>
-                          ) : (
-                            <button onClick={() => onToggleRoom(room.id, "main")}
-                              className={`w-full py-1.5 rounded-lg text-xs font-semibold transition-colors ${isSelected && sel?.requested ? "bg-amber-400 text-white hover:bg-amber-500" : "bg-gray-100 text-gray-500 hover:bg-amber-100 hover:text-amber-700"}`}>
-                              {isSelected && sel?.requested ? "✓ Added to request — click to remove" : "Request anyway"}
-                            </button>
-                          )}
-                          {isSelected && !sel?.requested && (
-                            <div className="mt-3 border-t border-parchment/10 pt-3">
-                              <p className="text-xs font-medium text-slate mb-2">Setup style</p>
-                              <div className="flex flex-wrap gap-1">
-                                {(room.setups as readonly string[]).map(sid => {
-                                  const s = SETUP_STYLES.find(x => x.id === sid);
-                                  if (!s) return null;
-                                  return (
-                                    <button key={sid} onClick={() => onUpdateRoom(room.id, { setup: sid as SetupId })} title={s.desc}
-                                      className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${sel?.setup === sid ? "bg-parchment text-ink" : "bg-parchment/10 text-slate hover:bg-parchment/20"}`}>
-                                      {s.label}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                              {sel?.setup === "custom" && (
-                                <input type="text" placeholder="Describe your setup…" value={sel.customSetup}
-                                  onChange={e => onUpdateRoom(room.id, { customSetup: e.target.value })}
-                                  className={`${input} mt-2 text-xs`} />
-                              )}
-                            </div>
-                          )}
-                          {isSelected && sel?.requested && (
-                            <p className="mt-2 text-xs text-amber-600 italic">This space may be in conflict. We will review and follow up with you.</p>
-                          )}
-                        </div>
+                        )}
+                        {isSelected && sel?.requested && (
+                          <p className="mt-1 text-xs italic" style={{ color: "#d97706" }}>This space may be in conflict. We will review and follow up with you.</p>
+                        )}
                       </div>
                     );
                   })}
@@ -857,78 +715,59 @@ function DayCard({
             {/* Extra / additional spaces (main-plus and multiple modes) */}
             {(spaceMode === "main-plus" || spaceMode === "multiple") && (
               <div>
-                <p className="text-xs font-medium text-slate mb-3 uppercase tracking-wide">
+                <p className="text-xs font-medium mb-3 uppercase tracking-wide" style={{ color: "var(--bx-slate)" }}>
                   {spaceMode === "main-plus" ? "➕ Additional Spaces" : "Select spaces for this day"}
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {ROOMS.map(room => {
                     const sig = day.availability[room.id] ?? "loading";
                     const sel = day.rooms.find(r => r.roomId === room.id);
                     if (spaceMode === "main-plus" && sel?.role === "main") return null;
                     const isSelected = !!sel && sel.role === "extra";
-                    const isUnavailable = sig === "unavailable";
                     const effectiveHC = spaceMode === "main-plus" ? breakoutGroupSize : day.headcount;
                     const tag = getRoomTag(effectiveHC, room.capacityTheater, room.capacityBanquet);
                     return (
-                      <div key={room.id}
-                        className={`rounded-xl border-2 transition-all overflow-hidden ${
-                          isSelected
-                            ? isUnavailable && sel?.requested ? "border-amber-400 bg-amber-50" : "border-brass bg-brass/5"
-                            : "border-parchment/15 bg-ink-soft hover:border-parchment/30"
-                        }`}>
-                        {room.image && (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={room.image} alt={room.name}
-                            className={`w-full h-24 object-cover ${isUnavailable && !isSelected ? "opacity-40" : ""}`} />
-                        )}
-                        <div className="p-3">
-                          <div className="flex items-start justify-between gap-2 mb-1">
-                            <div>
-                              <p className={`font-semibold text-sm ${isUnavailable && !isSelected ? "text-slate" : "text-parchment"}`}>{room.name}</p>
-                              <p className="text-xs text-slate">Theater {room.capacityTheater} · Banquet {room.capacityBanquet}</p>
-                              {tag && <span className={`inline-block mt-1 px-1.5 py-0.5 rounded border text-[10px] font-semibold leading-tight ${tag.color}`}>{tag.label}</span>}
+                      <div key={room.id}>
+                        <RoomCard
+                          room={room}
+                          signal={sig}
+                          isSelected={isSelected}
+                          isDisabled={false}
+                          isNP={isNP}
+                          tag={tag}
+                          onToggle={() => onToggleRoom(room.id, "extra")}
+                          onPreview={() => setPreviewRoom(room)}
+                          role="extra"
+                        />
+                        {isSelected && !sel?.requested && (
+                          <div className="mt-2 px-3 py-3 rounded-xl border" style={{ background: "color-mix(in srgb, var(--bx-brass) 5%, transparent)", borderColor: "color-mix(in srgb, var(--bx-brass) 20%, transparent)" }}>
+                            <p className="text-xs font-medium mb-2" style={{ color: "var(--bx-slate)" }}>Setup style</p>
+                            <div className="flex flex-wrap gap-1">
+                              {(room.setups as readonly string[]).map(sid => {
+                                const s = SETUP_STYLES.find(x => x.id === sid);
+                                if (!s) return null;
+                                return (
+                                  <button key={sid} onClick={() => onUpdateRoom(room.id, { setup: sid as SetupId })} title={s.desc}
+                                    className="px-2 py-1 rounded-md text-xs font-medium transition-colors"
+                                    style={sel?.setup === sid
+                                      ? { background: "var(--bx-parchment)", color: "var(--bx-ink)" }
+                                      : { background: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)", color: "var(--bx-slate)" }
+                                    }>
+                                    {s.label}
+                                  </button>
+                                );
+                              })}
                             </div>
-                            {signalBadge(sig)}
+                            {sel?.setup === "custom" && (
+                              <input type="text" placeholder="Describe your setup…" value={sel.customSetup}
+                                onChange={e => onUpdateRoom(room.id, { customSetup: e.target.value })}
+                                className={`${input} mt-2 text-xs`} />
+                            )}
                           </div>
-                          <p className={`text-xs mb-3 leading-relaxed ${isUnavailable && !isSelected ? "text-slate/40" : "text-slate"}`}>{room.description}</p>
-                          <p className={`text-xs font-medium mb-3 ${isUnavailable && !isSelected ? "text-slate/40" : "text-slate"}`}>From ${(isNP ? room.baseNP : room.basePro).toLocaleString()} / 4 hrs</p>
-                          {!isUnavailable ? (
-                            <button onClick={() => onToggleRoom(room.id, "extra")}
-                              className={`w-full py-1.5 rounded-lg text-xs font-semibold transition-colors ${isSelected ? "bg-brass text-white hover:bg-brass/90" : "bg-parchment/10 text-slate hover:bg-parchment/20"}`}>
-                              {isSelected ? "✓ Added — click to remove" : "Add this space"}
-                            </button>
-                          ) : (
-                            <button onClick={() => onToggleRoom(room.id, "extra")}
-                              className={`w-full py-1.5 rounded-lg text-xs font-semibold transition-colors ${isSelected && sel?.requested ? "bg-amber-400 text-white hover:bg-amber-500" : "bg-gray-100 text-gray-500 hover:bg-amber-100 hover:text-amber-700"}`}>
-                              {isSelected && sel?.requested ? "✓ Added to request — click to remove" : "Request anyway"}
-                            </button>
-                          )}
-                          {isSelected && !sel?.requested && (
-                            <div className="mt-3 border-t border-parchment/10 pt-3">
-                              <p className="text-xs font-medium text-slate mb-2">Setup style</p>
-                              <div className="flex flex-wrap gap-1">
-                                {(room.setups as readonly string[]).map(sid => {
-                                  const s = SETUP_STYLES.find(x => x.id === sid);
-                                  if (!s) return null;
-                                  return (
-                                    <button key={sid} onClick={() => onUpdateRoom(room.id, { setup: sid as SetupId })} title={s.desc}
-                                      className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${sel?.setup === sid ? "bg-parchment text-ink" : "bg-parchment/10 text-slate hover:bg-parchment/20"}`}>
-                                      {s.label}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                              {sel?.setup === "custom" && (
-                                <input type="text" placeholder="Describe your setup…" value={sel.customSetup}
-                                  onChange={e => onUpdateRoom(room.id, { customSetup: e.target.value })}
-                                  className={`${input} mt-2 text-xs`} />
-                              )}
-                            </div>
-                          )}
-                          {isSelected && sel?.requested && (
-                            <p className="mt-2 text-xs text-amber-600 italic">This space may be in conflict. We will review and follow up with you.</p>
-                          )}
-                        </div>
+                        )}
+                        {isSelected && sel?.requested && (
+                          <p className="mt-1 text-xs italic" style={{ color: "#d97706" }}>This space may be in conflict. We will review and follow up with you.</p>
+                        )}
                       </div>
                     );
                   })}
@@ -938,6 +777,20 @@ function DayCard({
           </div>
         </div>
       )}
+      {/* Room lightbox — renders on top when a card is previewed */}
+      <RoomLightbox
+        room={previewRoom}
+        isSelected={previewRoom ? !!day.rooms.find(r => r.roomId === previewRoom.id) : false}
+        isNP={isNP}
+        onClose={() => setPreviewRoom(null)}
+        onToggle={() => {
+          if (!previewRoom) return;
+          const sel = day.rooms.find(r => r.roomId === previewRoom.id);
+          const role = sel?.role ?? "main";
+          onToggleRoom(previewRoom.id, role as "main" | "extra");
+          setPreviewRoom(null);
+        }}
+      />
     </div>
   );
 }
