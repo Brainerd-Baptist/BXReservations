@@ -155,6 +155,13 @@ export default function BxReservationsAdmin() {
   const [calOpen, setCalOpen] = useState(false);
   const [tab, setTab] = useState<"requests" | "settings">("requests");
 
+  // ── Agreements ─────────────────────────────────────────────────────────────
+  type AgreementMeta = { token: string; customer_signed_at: string | null; staff_signed_at: string | null };
+  const [agreements, setAgreements] = useState<Record<string, AgreementMeta>>({});
+  const [sendingAgreement, setSendingAgreement] = useState<string | null>(null);
+  const [countersigning, setCountersigning] = useState<string | null>(null);
+  const [countersignName, setCountersignName] = useState("");
+
   // ── Blackout rules ────────────────────────────────────────────────────────
   const [blackouts, setBlackouts] = useState<BlackoutRule[]>([]);
   const [blackoutsLoading, setBlackoutsLoading] = useState(true);
@@ -230,6 +237,55 @@ export default function BxReservationsAdmin() {
   // KPIs
   const pending = requests.filter((r) => r.status === "Requested").length;
   const awaitingDeposit = requests.filter((r) => r.status === "Proposal Sent").length;
+  // ── Agreement helpers ────────────────────────────────────────────────────────
+  const siteUrl = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_SITE_URL ?? "");
+
+  async function sendAgreement(req: Request) {
+    setSendingAgreement(req.id);
+    try {
+      const roomLabel = req.room;
+      const dateLabel = new Date(req.date + "T00:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+      const summary = `${roomLabel} — ${dateLabel}`;
+      const res = await fetch("/api/agreements", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reservation_id: req.id, reservation_summary: summary, contact_name: req.name }),
+      });
+      const data = await res.json();
+      if (!res.ok) { alert("Error creating agreement: " + (data.error ?? "Unknown")); return; }
+      const { token } = data;
+      setAgreements(prev => ({ ...prev, [req.id]: { token, customer_signed_at: null, staff_signed_at: null } }));
+      const link = `${siteUrl}/agree/${token}`;
+      await navigator.clipboard.writeText(link);
+      alert(`Agreement link copied to clipboard:
+
+${link}
+
+Send this to ${req.name} (${req.email}).`);
+    } catch { alert("Failed to create agreement — please try again."); }
+    finally { setSendingAgreement(null); }
+  }
+
+  async function doCountersign(req: Request) {
+    const name = countersignName.trim();
+    if (!name) return;
+    const ag = agreements[req.id];
+    if (!ag) return;
+    try {
+      const res = await fetch("/api/agreements", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: ag.token, staff_name: name }),
+      });
+      const data = await res.json();
+      if (!res.ok) { alert("Error countersigning: " + (data.error ?? "Unknown")); return; }
+      setAgreements(prev => ({ ...prev, [req.id]: { ...ag, staff_signed_at: data.staff_signed_at } }));
+      setCountersigning(null);
+      setCountersignName("");
+      alert("Agreement fully executed! Both parties have signed.");
+    } catch { alert("Failed to countersign — please try again."); }
+  }
+
   const confirmedThisMonth = requests.filter(
     (r) => r.status === "Confirmed" && r.date.startsWith("2026-10")
   ).length;
@@ -428,9 +484,60 @@ export default function BxReservationsAdmin() {
                         </button>
                       </div>
                     )}
-                    {req.status === "Confirmed" && (
-                      <p className="text-xs font-semibold text-emerald-600">✓ Confirmed — no action needed</p>
-                    )}
+                    {req.status === "Confirmed" && (() => {
+                      const ag = agreements[req.id];
+                      const customerSigned = !!ag?.customer_signed_at;
+                      const staffSigned    = !!ag?.staff_signed_at;
+                      return (
+                        <div className="space-y-2 pt-1">
+                          <p className="text-xs font-semibold text-emerald-600">✓ Confirmed</p>
+                          {/* Agreement status */}
+                          {!ag && (
+                            <button
+                              className="btn-outline text-xs"
+                              disabled={sendingAgreement === req.id}
+                              onClick={(e) => { e.stopPropagation(); sendAgreement(req); }}
+                            >
+                              {sendingAgreement === req.id ? "Creating…" : "Send Agreement →"}
+                            </button>
+                          )}
+                          {ag && !customerSigned && (
+                            <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                              ⏳ Agreement sent — awaiting customer signature
+                            </p>
+                          )}
+                          {ag && customerSigned && !staffSigned && (
+                            countersigning === req.id ? (
+                              <div className="flex gap-2 items-center" onClick={(e) => e.stopPropagation()}>
+                                <input
+                                  type="text"
+                                  className="border border-stone-300 rounded px-2 py-1 text-xs w-44"
+                                  placeholder="Your full name"
+                                  value={countersignName}
+                                  onChange={(e) => setCountersignName(e.target.value)}
+                                  onKeyDown={(e) => { if (e.key === "Enter") doCountersign(req); }}
+                                  autoFocus
+                                />
+                                <button className="btn-primary text-xs" onClick={() => doCountersign(req)}>Sign</button>
+                                <button className="text-xs text-gray-400 hover:text-gray-600" onClick={() => { setCountersigning(null); setCountersignName(""); }}>Cancel</button>
+                              </div>
+                            ) : (
+                              <button
+                                className="btn-primary text-xs bg-emerald-600 hover:bg-emerald-700"
+                                onClick={(e) => { e.stopPropagation(); setCountersigning(req.id); setCountersignName(""); }}
+                              >
+                                ✍ Countersign Agreement
+                              </button>
+                            )
+                          )}
+                          {ag && customerSigned && staffSigned && (
+                            <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-2 py-1">
+                              ✓ Agreement fully executed — both parties signed
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
                     {req.status === "Declined" && (
                       <p className="text-xs text-gray-400">This request was declined.</p>
                     )}
