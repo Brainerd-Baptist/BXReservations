@@ -454,9 +454,17 @@ function BuilderStep({
           );
         })()}
         <Field label={`Default headcount (applies to all days unless overridden)`}>
-          <input type="number" min={1} value={defaultHeadcount}
+          <input type="text" inputMode="numeric" pattern="[0-9]*" value={defaultHeadcount}
             onChange={e => {
-              const n = parseInt(e.target.value) || 1;
+              const raw = e.target.value.replace(/[^0-9]/g, "");
+              const n = raw === "" ? 1 : Math.max(1, parseInt(raw, 10));
+              if (raw !== "") {
+                setDefaultHeadcount(n);
+                setDays(prev => prev.map(d => ({ ...d, headcount: n })));
+              }
+            }}
+            onBlur={e => {
+              const n = Math.max(1, parseInt(e.target.value, 10) || 1);
               setDefaultHeadcount(n);
               setDays(prev => prev.map(d => ({ ...d, headcount: n })));
             }}
@@ -624,8 +632,12 @@ function DayCard({
               <div className="flex items-center gap-2">
                 <button onClick={() => onHeadcount(Math.max(1, day.headcount - 10))}
                   className="w-7 h-7 rounded-lg border border-parchment/15 text-slate hover:bg-parchment/5 font-bold">−</button>
-                <input type="number" min={1} value={day.headcount}
-                  onChange={e => onHeadcount(parseInt(e.target.value) || 1)}
+                <input type="text" inputMode="numeric" pattern="[0-9]*" value={day.headcount}
+                  onChange={e => {
+                    const raw = e.target.value.replace(/[^0-9]/g, "");
+                    if (raw !== "") onHeadcount(Math.max(1, parseInt(raw, 10)));
+                  }}
+                  onBlur={e => onHeadcount(Math.max(1, parseInt(e.target.value, 10) || 1))}
                   className="w-16 text-center border border-parchment/15 rounded-lg py-1 text-sm bg-ink text-parchment" />
                 <button onClick={() => onHeadcount(day.headcount + 10)}
                   className="w-7 h-7 rounded-lg border border-parchment/15 text-slate hover:bg-parchment/5 font-bold">+</button>
