@@ -1,6 +1,11 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy-initialize so the build succeeds even before RESEND_API_KEY is set in Vercel
+let _resend: Resend | null = null;
+function getResend(): Resend {
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY);
+  return _resend;
+}
 
 const FROM = process.env.EMAIL_FROM ?? "BX Reservations <noreply@brainerdhq.app>";
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "jking@brainerdbaptist.org";
@@ -189,7 +194,7 @@ export async function sendReservationConfirmation(opts: {
     footerNote: `Reference: ${bookingNumber}`,
   });
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from:    FROM,
     to,
     subject: `Reservation Received — ${bookingNumber}`,
@@ -249,7 +254,7 @@ export async function sendAdminNewReservationAlert(opts: {
     ctaUrl:  `${SITE_URL}/admin/bx-reservations`,
   });
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from:    FROM,
     to:      ADMIN_EMAIL,
     subject: `[BX] New Request — ${bookingNumber} · ${submitterName}`,
@@ -290,7 +295,7 @@ export async function sendCollaboratorInvite(opts: {
     ctaUrl:  acceptUrl,
   });
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from:    FROM,
     to,
     subject: `${inviterName} invited you to a reservation — ${eventName}`,
@@ -356,7 +361,7 @@ export async function sendStatusUpdateEmail(opts: {
     footerNote: `Reference: ${bookingNumber}`,
   });
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from:    FROM,
     to,
     subject: cfg.subject,
