@@ -260,7 +260,7 @@ function signalBadge(sig: Signal) {
 
 // ─── Step indicator ───────────────────────────────────────────────────────────
 
-const STEPS = ["About You", "Build Your Event", "Review & Request"] as const;
+const STEPS = ["About You", "Build Your Event", "Review"] as const;
 
 function StepBar({ step }: { step: number }) {
   return (
@@ -268,20 +268,20 @@ function StepBar({ step }: { step: number }) {
       <div className="flex items-center gap-0">
         {STEPS.map((label, i) => (
           <div key={i} className="flex items-center flex-1 last:flex-none">
-            <div className="flex flex-col items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all ${
+            <div className="flex flex-col items-center min-w-0">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all shrink-0 ${
                 i < step  ? "bg-[#00abc9] border-[#00abc9] text-white" :
                 i === step ? "bg-white border-[#00abc9] text-[#00abc9]" :
                              "bg-white border-gray-200 text-gray-400"
               }`}>
                 {i < step ? "✓" : i + 1}
               </div>
-              <span className={`text-xs mt-1 whitespace-nowrap font-medium ${i === step ? "text-[#00205B]" : "text-gray-400"}`}>
+              <span className={`text-[10px] mt-1 text-center leading-tight font-medium ${i === step ? "text-[#00205B]" : "text-gray-400"}`}>
                 {label}
               </span>
             </div>
             {i < STEPS.length - 1 && (
-              <div className={`flex-1 h-0.5 mb-4 mx-1 transition-all ${i < step ? "bg-[#00abc9]" : "bg-gray-200"}`} />
+              <div className={`flex-1 h-0.5 mb-5 mx-1 transition-all ${i < step ? "bg-[#00abc9]" : "bg-gray-200"}`} />
             )}
           </div>
         ))}
@@ -607,8 +607,15 @@ function BuilderStep({
         </div>
       )}
 
+      {submitError && (
+        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+          {submitError}
+        </div>
+      )}
+
       <div className="mt-6 flex justify-between">
-        <button onClick={onBack} className="px-6 py-3 rounded-xl text-gray-500 font-medium text-sm hover:bg-gray-100 transition-colors">
+        <button onClick={onBack} disabled={submitting}
+          className="px-6 py-3 rounded-xl text-gray-500 font-medium text-sm hover:bg-gray-100 disabled:opacity-40 transition-colors">
           ← Back
         </button>
         <button onClick={onNext} disabled={!canContinue}
@@ -936,7 +943,7 @@ function DayCard({
 // ─── Step 2: Review ───────────────────────────────────────────────────────────
 
 function ReviewStep({
-  contact, days, isNP, notes, setNotes, onBack, onSubmit, submitted, bookingNumber,
+  contact, days, isNP, notes, setNotes, onBack, onSubmit, submitted, submitting, bookingNumber, submitError,
 }: {
   contact: ContactInfo;
   days: DayConfig[];
@@ -945,7 +952,9 @@ function ReviewStep({
   onBack: () => void;
   onSubmit: () => Promise<void>;
   submitted: boolean;
+  submitting: boolean;
   bookingNumber: string;
+  submitError: string;
 }) {
   const activeDays = days.filter(d => d.included);
   const total = totalEstimate(days, isNP);
@@ -1104,9 +1113,17 @@ function ReviewStep({
         <button onClick={onBack} className="px-6 py-3 rounded-xl text-gray-500 font-medium text-sm hover:bg-gray-100 transition-colors">
           ← Back
         </button>
-        <button onClick={() => { void onSubmit(); }}
-          className="px-8 py-3 rounded-xl bg-[#00205B] text-white font-semibold text-sm hover:bg-[#001a4a] transition-colors">
-          Send Request →
+        <button onClick={() => { void onSubmit(); }} disabled={submitting}
+          className="px-8 py-3 rounded-xl bg-[#00205B] text-white font-semibold text-sm hover:bg-[#001a4a] disabled:opacity-60 transition-colors flex items-center gap-2">
+          {submitting ? (
+            <>
+              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+              </svg>
+              Sending…
+            </>
+          ) : "Send Request →"}
         </button>
       </div>
     </div>
@@ -1139,6 +1156,7 @@ export default function ReserveClient({ initialContact }: ReserveClientProps) {
   const [submitted, setSubmitted] = useState(false);
   const [bookingNumber, setBookingNumber] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const [contact, setContact] = useState<ContactInfo>({
     name: initialContact?.name ?? "",
@@ -1157,8 +1175,15 @@ export default function ReserveClient({ initialContact }: ReserveClientProps) {
   const [days, setDays] = useState<DayConfig[]>([]);
   const [notes, setNotes] = useState("");
 
+  function goToStep(n: number) {
+    setStep(n);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   async function handleSubmit() {
+    if (submitting) return;
     setSubmitting(true);
+    setSubmitError("");
     try {
       const res = await fetch("/api/submit-reservation", {
         method: "POST",
@@ -1166,13 +1191,18 @@ export default function ReserveClient({ initialContact }: ReserveClientProps) {
         body: JSON.stringify({ contact, days, spaceMode, notes }),
       });
       const data = await res.json();
+      if (!res.ok) {
+        setSubmitError(data.error ?? "Something went wrong. Please try again or contact us directly.");
+        return;
+      }
       if (data.bookingNumber) setBookingNumber(data.bookingNumber);
+      setSubmitted(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       console.error("Submission error:", err);
+      setSubmitError("Network error. Please check your connection and try again.");
     } finally {
       setSubmitting(false);
-      setSubmitted(true);
-      setStep(2);
     }
   }
 
@@ -1196,7 +1226,7 @@ export default function ReserveClient({ initialContact }: ReserveClientProps) {
             onChange={p => setContact(c => ({ ...c, ...p }))}
             spaceMode={spaceMode}
             onSpaceMode={setSpaceMode}
-            onNext={() => setStep(1)}
+            onNext={() => goToStep(1)}
             isSignedIn={!!initialContact}
           />
         )}
@@ -1209,8 +1239,8 @@ export default function ReserveClient({ initialContact }: ReserveClientProps) {
             spaceMode={spaceMode}
             breakoutGroupSize={breakoutGroupSize} setBreakoutGroupSize={setBreakoutGroupSize}
             isNP={contact.isNonProfit}
-            onBack={() => setStep(0)}
-            onNext={() => setStep(2)}
+            onBack={() => goToStep(0)}
+            onNext={() => goToStep(2)}
           />
         )}
         {step === 2 && (
@@ -1219,9 +1249,11 @@ export default function ReserveClient({ initialContact }: ReserveClientProps) {
             days={days}
             isNP={contact.isNonProfit}
             notes={notes} setNotes={setNotes}
-            onBack={() => setStep(1)}
+            onBack={() => goToStep(1)}
             onSubmit={handleSubmit}
             submitted={submitted}
+            submitting={submitting}
+            submitError={submitError}
             bookingNumber={bookingNumber}
           />
         )}
