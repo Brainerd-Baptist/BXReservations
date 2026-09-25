@@ -10,8 +10,9 @@ export default async function Home() {
     <main className="min-h-screen bg-ink">
 
       {/* ── Hero ── */}
-      <section className="bg-ink-soft border-b border-parchment/10">
-        <div className="max-w-2xl mx-auto px-5 pt-10 pb-12 sm:pt-16 sm:pb-16 text-center">
+      <section className="bg-ink-soft border-b border-parchment/10 relative overflow-hidden">
+        <div className="bx-bloom" aria-hidden="true" />
+        <div className="relative max-w-2xl mx-auto px-5 pt-10 pb-12 sm:pt-16 sm:pb-16 text-center">
           <div className="flex justify-center mb-5">
             <Image
               src="/bx-logo.png"
@@ -92,7 +93,7 @@ export default async function Home() {
       )}
 
       {/* ── Spaces overview ── */}
-      <section className="max-w-2xl mx-auto px-5 py-9">
+      <section className="max-w-2xl mx-auto px-5 py-9 bx-fade-in">
         <h2 className="text-[10px] font-bold uppercase tracking-widest text-slate mb-4 text-center">
           Available spaces
         </h2>
@@ -125,7 +126,7 @@ export default async function Home() {
       </section>
 
       {/* ── How it works ── */}
-      <section className="bg-ink-soft border-t border-parchment/10">
+      <section className="bg-ink-soft border-t border-parchment/10 bx-fade-in">
         <div className="max-w-2xl mx-auto px-5 py-9">
           <h2 className="text-[10px] font-bold uppercase tracking-widest text-slate mb-6 text-center">
             How it works
@@ -150,7 +151,7 @@ export default async function Home() {
       </section>
 
       {/* ── Meet the team ── */}
-      <section className="max-w-2xl mx-auto px-5 py-9">
+      <section className="max-w-2xl mx-auto px-5 py-9 bx-fade-in">
         <h2 className="text-[10px] font-bold uppercase tracking-widest text-slate mb-6 text-center">
           Questions? We&#39;re here to help
         </h2>

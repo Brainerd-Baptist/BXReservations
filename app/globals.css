@@ -208,7 +208,7 @@ body {
   filter: brightness(0) invert(1);
 }
 
-/* ── Phase 4: Background life ────────────────────────────────────────────── */
+/* ── Phase 5: Background life ────────────────────────────────────────────── */
 
 /* Noise texture overlay — ultra-subtle grain on every theme */
 body::before {

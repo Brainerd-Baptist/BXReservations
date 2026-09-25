@@ -47,7 +47,9 @@ export function RoomsClient() {
   }), [floor, cap, setup]);
 
   return (
-    <main className="min-h-screen" style={{ background: "var(--bx-ink)" }}>
+    <main className="min-h-screen relative overflow-x-hidden" style={{ background: "var(--bx-ink)" }}>
+      {/* Bloom glow */}
+      <div className="bx-bloom" aria-hidden="true" />
 
       {/* ── Filters ── */}
       <section className="sticky top-14 z-10 border-b" style={{ background: "color-mix(in srgb, var(--bx-ink) 92%, transparent)", backdropFilter: "blur(12px)", borderColor: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>

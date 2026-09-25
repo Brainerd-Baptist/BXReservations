@@ -251,7 +251,7 @@ export default async function AccountPage() {
 
       {/* ── Pending invites ── */}
       {pendingInvites && pendingInvites.length > 0 && (
-        <div style={{ marginBottom: "1.5rem" }}>
+        <div className="bx-fade-in" style={{ marginBottom: "1.5rem" }}>
           <div
             style={{
               display: "flex",
@@ -348,7 +348,7 @@ export default async function AccountPage() {
 
       {/* ── Shared with me ── */}
       {sharedCollabs && sharedCollabs.length > 0 && (
-        <div style={{ marginBottom: "1.5rem" }}>
+        <div className="bx-fade-in" style={{ marginBottom: "1.5rem" }}>
           <div style={{ marginBottom: "0.75rem" }}>
             <h2
               style={{
@@ -407,7 +407,7 @@ export default async function AccountPage() {
       )}
 
       {/* ── My reservations ── */}
-      <div style={{ marginBottom: "1.5rem" }}>
+      <div className="bx-fade-in" style={{ marginBottom: "1.5rem" }}>
         <div
           style={{
             display: "flex",

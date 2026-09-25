@@ -1228,11 +1228,13 @@ export default function ReserveClient({ initialContact }: ReserveClientProps) {
   }
 
   return (
-    <div className="min-h-screen bg-ink">
-      <div className="px-4 pb-16">
+    <div className="min-h-screen bg-ink relative overflow-hidden">
+      <div className="bx-bloom" aria-hidden="true" />
+      <div className="relative px-4 pb-16">
         <StepBar step={step} />
 
         {step === 0 && (
+          <div className="bx-fade-in">
           <ContactStep
             contact={contact}
             onChange={p => setContact(c => ({ ...c, ...p }))}
@@ -1241,8 +1243,10 @@ export default function ReserveClient({ initialContact }: ReserveClientProps) {
             onNext={() => goToStep(1)}
             isSignedIn={!!initialContact}
           />
+          </div>
         )}
         {step === 1 && (
+          <div className="bx-fade-in">
           <BuilderStep
             days={days} setDays={setDays}
             startDate={startDate} setStartDate={setStartDate}
@@ -1255,8 +1259,10 @@ export default function ReserveClient({ initialContact }: ReserveClientProps) {
             onBack={() => goToStep(0)}
             onNext={() => goToStep(2)}
           />
+          </div>
         )}
         {step === 2 && (
+          <div className="bx-fade-in">
           <ReviewStep
             contact={contact}
             days={days}
@@ -1270,6 +1276,7 @@ export default function ReserveClient({ initialContact }: ReserveClientProps) {
             bookingNumber={bookingNumber}
             reservationId={reservationId ?? undefined}
           />
+          </div>
         )}
       </div>
     </div>
