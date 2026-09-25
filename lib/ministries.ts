@@ -43,10 +43,10 @@ export async function getUserMinistries(
 
   if (error || !data) return [];
 
-  return data.map((row: { is_coordinator: boolean; bx_ministries: Ministry }) => ({
-    ...row.bx_ministries,
-    is_coordinator: row.is_coordinator,
-  }));
+  return data.map((row: { is_coordinator: boolean; bx_ministries: Ministry | Ministry[] }) => {
+    const ministry = Array.isArray(row.bx_ministries) ? row.bx_ministries[0] : row.bx_ministries;
+    return { ...ministry, is_coordinator: row.is_coordinator };
+  });
 }
 
 /** All ministries (for dropdowns in admin and booking form). */
