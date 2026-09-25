@@ -1,23 +1,152 @@
 @import "tailwindcss";
 
-:root {
-  /* BBC Brand Colors */
-  --bbc-blue: #00abc9;
-  --bbc-blue-dark: #0090a8;
-  --bbc-blue-light: #33c1d9;
-  --bbc-navy: #00205B;
-  --bbc-navy-light: #0a2d6e;
-  --black: #111111;
-  --gray-100: #f7f7f7;
-  --gray-200: #efefef;
-  --gray-600: #6b7280;
-  --gray-800: #1f2937;
-  --white: #ffffff;
-  --text-muted: rgba(0,32,91,0.55);
-  --glass-border: rgba(0,171,201,0.15);
-  --glass-bg: rgba(0,171,201,0.06);
+/* ── Tailwind v4 theme tokens ──────────────────────────────────────────────
+   Define named color tokens so Tailwind generates bg-ink, text-parchment,
+   text-brass, etc. All values reference CSS variables that are swapped per
+   [data-theme]. Using @theme inline lets the CSS vars serve as the source
+   of truth without a static fallback that would override them.
+   ──────────────────────────────────────────────────────────────────────── */
+@theme inline {
+  --color-ink:        var(--bx-ink);
+  --color-ink-soft:   var(--bx-ink-soft);
+  --color-parchment:  var(--bx-parchment);
+  --color-brass:      var(--bx-brass);
+  --color-brass-soft: var(--bx-brass-soft);
+  --color-slate:      var(--bx-slate);
+  --color-clay:       var(--bx-clay);
+  --color-sage:       var(--bx-sage);
 }
 
+/* ── Default (Brainerd) theme — applied when no data-theme is set ──────── */
+:root,
+[data-theme="brainerd"] {
+  --bx-ink:        #f4f7fa;
+  --bx-ink-soft:   #ffffff;
+  --bx-parchment:  #00205b;
+  --bx-brass:      #00abc9;
+  --bx-brass-soft: #33c1d9;
+  --bx-slate:      #6b7280;
+  --bx-clay:       #dc2626;
+  --bx-sage:       #059669;
+
+  /* keep legacy vars for any existing components that use them */
+  --bbc-blue:       #00abc9;
+  --bbc-blue-dark:  #0090a8;
+  --bbc-blue-light: #33c1d9;
+  --bbc-navy:       #00205B;
+  --bbc-navy-light: #0a2d6e;
+  --black:          #111111;
+  --gray-100:       #f7f7f7;
+  --gray-200:       #efefef;
+  --gray-600:       #6b7280;
+  --gray-800:       #1f2937;
+  --white:          #ffffff;
+  --text-muted:     rgba(0,32,91,0.55);
+  --glass-border:   rgba(0,171,201,0.15);
+  --glass-bg:       rgba(0,171,201,0.06);
+}
+
+/* ── Classic (Ledger) ───────────────────────────────────────────────────── */
+[data-theme="ledger"] {
+  --bx-ink:        #282a2d;
+  --bx-ink-soft:   #313438;
+  --bx-parchment:  #ededeb;
+  --bx-brass:      #e5a00d;
+  --bx-brass-soft: #f0b429;
+  --bx-slate:      #9ca3af;
+  --bx-clay:       #ef4444;
+  --bx-sage:       #34d399;
+}
+
+/* ── Midnight (glass-dark) ──────────────────────────────────────────────── */
+[data-theme="glass-dark"] {
+  --bx-ink:        #0c1018;
+  --bx-ink-soft:   #1e293b;
+  --bx-parchment:  #f1f5f9;
+  --bx-brass:      #38bdf8;
+  --bx-brass-soft: #7dd3fc;
+  --bx-slate:      #94a3b8;
+  --bx-clay:       #f87171;
+  --bx-sage:       #4ade80;
+}
+
+/* ── Daylight (glass-light) ─────────────────────────────────────────────── */
+[data-theme="glass-light"] {
+  --bx-ink:        #eef2f7;
+  --bx-ink-soft:   #ffffff;
+  --bx-parchment:  #1e293b;
+  --bx-brass:      #00abc9;
+  --bx-brass-soft: #33c1d9;
+  --bx-slate:      #64748b;
+  --bx-clay:       #dc2626;
+  --bx-sage:       #059669;
+}
+
+/* ── Harbor ─────────────────────────────────────────────────────────────── */
+[data-theme="harbor"] {
+  --bx-ink:        #0c1218;
+  --bx-ink-soft:   #16202a;
+  --bx-parchment:  #e8eef0;
+  --bx-brass:      #5a8c96;
+  --bx-brass-soft: #7aaab4;
+  --bx-slate:      #90a4ae;
+  --bx-clay:       #ef5350;
+  --bx-sage:       #4caf50;
+}
+
+/* ── Heather ─────────────────────────────────────────────────────────────── */
+[data-theme="heather"] {
+  --bx-ink:        #181420;
+  --bx-ink-soft:   #241d2e;
+  --bx-parchment:  #f0ecf4;
+  --bx-brass:      #a67ca0;
+  --bx-brass-soft: #c09abc;
+  --bx-slate:      #a395ae;
+  --bx-clay:       #e57373;
+  --bx-sage:       #81c784;
+}
+
+/* ── Moss ────────────────────────────────────────────────────────────────── */
+[data-theme="moss"] {
+  --bx-ink:        #10160f;
+  --bx-ink-soft:   #1b2419;
+  --bx-parchment:  #f0ece1;
+  --bx-brass:      #8a9a5b;
+  --bx-brass-soft: #a8b878;
+  --bx-slate:      #8d9e7a;
+  --bx-clay:       #e57373;
+  --bx-sage:       #aed581;
+}
+
+/* ── Orbit ───────────────────────────────────────────────────────────────── */
+[data-theme="orbit"] {
+  --bx-ink:        #0a0c10;
+  --bx-ink-soft:   #181b21;
+  --bx-parchment:  #e2e6ec;
+  --bx-brass:      #7a8a9c;
+  --bx-brass-soft: #9aaabb;
+  --bx-slate:      #6b7a8d;
+  --bx-clay:       #ef5350;
+  --bx-sage:       #4caf50;
+}
+
+/* ── Glass theme special backgrounds ────────────────────────────────────── */
+[data-theme="glass-dark"] body {
+  background: linear-gradient(135deg, #0c1018 0%, #1a2744 50%, #0c1018 100%);
+}
+[data-theme="glass-light"] body {
+  background: linear-gradient(135deg, #eef2f7 0%, #dde8f5 50%, #eef2f7 100%);
+}
+
+/* ── Dropdown panel utility ─────────────────────────────────────────────── */
+.dropdown-panel {
+  background: var(--bx-ink-soft);
+  border: 1px solid color-mix(in srgb, var(--bx-brass) 20%, transparent);
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+}
+
+/* ── Base resets ─────────────────────────────────────────────────────────── */
 * { box-sizing: border-box; }
 
 html {
@@ -26,34 +155,43 @@ html {
 }
 
 body {
-  background: #ffffff;
-  color: var(--black);
+  background: var(--bx-ink, #ffffff);
+  color: var(--bx-parchment, #111111);
   font-family: var(--font-inter), sans-serif;
   overflow-x: hidden;
+  transition: background 0.25s, color 0.25s;
 }
 
+/* ── Legacy button classes (backward compat) ─────────────────────────────── */
 .btn-primary {
   font-weight: 600;
   font-size: 0.875rem;
-  background: var(--bbc-blue);
+  background: var(--bx-brass, #00abc9);
   color: #fff;
   padding: 0.625rem 1.5rem;
   border-radius: 9999px;
-  transition: background 0.2s;
+  transition: background 0.2s, box-shadow 0.2s;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  box-shadow: 0 0 0 0 transparent;
 }
-.btn-primary:hover { background: var(--bbc-blue-dark); }
+.btn-primary:hover {
+  background: var(--bx-brass-soft, #0090a8);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--bx-brass) 25%, transparent);
+}
 
 .btn-outline {
   font-weight: 600;
   font-size: 0.875rem;
   background: transparent;
-  color: var(--bbc-navy);
-  border: 1.5px solid rgba(0,32,91,0.2);
+  color: var(--bx-parchment, #00205b);
+  border: 1.5px solid color-mix(in srgb, var(--bx-parchment) 20%, transparent);
   padding: 0.625rem 1.5rem;
   border-radius: 9999px;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, color 0.2s;
 }
-.btn-outline:hover { border-color: var(--bbc-blue); color: var(--bbc-blue); }
+.btn-outline:hover {
+  border-color: var(--bx-brass);
+  color: var(--bx-brass);
+}

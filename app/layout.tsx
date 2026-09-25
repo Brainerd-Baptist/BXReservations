@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import SiteHeader from "./site-header";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
 const inter = Inter({
@@ -22,7 +23,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
-const APP_VERSION = "0.9.5";
+const APP_VERSION = "0.9.6";
 
 export default function RootLayout({
   children,
@@ -31,13 +32,18 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="flex flex-col min-h-screen bg-gray-50">
+      <head>
+        {/* Blocking theme-init script — must run before first paint to prevent flash */}
+        {/* eslint-disable-next-line @next/next/no-before-interactive-script-component */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
+      <body className="flex flex-col min-h-screen">
         <SiteHeader />
         <main className="flex-1">{children}</main>
 
         {/* Version footer */}
-        <footer className="border-t border-gray-100 bg-white py-3 px-4">
-          <p className="text-center text-xs text-gray-300 font-mono">
+        <footer className="border-t py-3 px-4" style={{ borderColor: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>
+          <p className="text-center text-xs font-mono" style={{ color: "color-mix(in srgb, var(--bx-slate) 60%, transparent)" }}>
             BX Reservations v{APP_VERSION}
           </p>
         </footer>

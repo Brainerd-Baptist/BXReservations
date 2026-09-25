@@ -4,21 +4,47 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import NavSidebar from "./nav-sidebar";
+import ProfileMenu from "./profile-menu";
 
 interface HeaderShellProps {
   initials: string;
   role: "admin" | "user" | null;
   hasUser: boolean;
+  userId?: string;
+  email?: string;
+  displayName?: string | null;
+  savedTheme?: string | null;
 }
 
-export default function HeaderShell({ initials, role, hasUser }: HeaderShellProps) {
+export default function HeaderShell({
+  initials,
+  role,
+  hasUser,
+  userId,
+  email,
+  displayName,
+  savedTheme,
+}: HeaderShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <>
-      <NavSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <NavSidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        role={role}
+        hasUser={hasUser}
+        displayName={displayName ?? null}
+        email={email ?? null}
+      />
 
-      <header className="border-b border-gray-200 bg-white z-30 print:hidden sticky top-0">
+      <header
+        className="z-30 print:hidden sticky top-0 border-b"
+        style={{
+          background: "var(--bx-ink-soft)",
+          borderColor: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)",
+        }}
+      >
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
 
           {/* Left: hamburger + logo */}
@@ -26,9 +52,17 @@ export default function HeaderShell({ initials, role, hasUser }: HeaderShellProp
             <button
               onClick={() => setSidebarOpen(true)}
               aria-label="Open menu"
-              className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors -ml-1"
+              className="p-1.5 rounded-lg transition-colors -ml-1"
+              style={{ color: "var(--bx-slate)" }}
+              onMouseEnter={(e) =>
+                ((e.currentTarget as HTMLButtonElement).style.background =
+                  "color-mix(in srgb, var(--bx-parchment) 8%, transparent)")
+              }
+              onMouseLeave={(e) =>
+                ((e.currentTarget as HTMLButtonElement).style.background = "transparent")
+              }
             >
-              <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
@@ -43,36 +77,60 @@ export default function HeaderShell({ initials, role, hasUser }: HeaderShellProp
                 priority
               />
               <div className="hidden sm:flex items-center gap-2">
-                <div className="w-px h-4 bg-gray-200" />
-                <span className="text-[11px] uppercase tracking-[0.18em] text-gray-400 whitespace-nowrap font-medium">
+                <div
+                  className="w-px h-4"
+                  style={{ background: "color-mix(in srgb, var(--bx-parchment) 15%, transparent)" }}
+                />
+                <span
+                  className="text-[11px] uppercase tracking-[0.18em] whitespace-nowrap font-medium"
+                  style={{ color: "var(--bx-slate)" }}
+                >
                   Reservations
                 </span>
               </div>
             </Link>
           </div>
 
-          {/* Right: new request + avatar */}
+          {/* Right: new request + avatar/sign-in */}
           <div className="flex items-center gap-3">
             <Link
               href="/reserve"
-              className="text-sm text-gray-500 hover:text-[#00205B] transition-colors hidden sm:inline"
+              className="text-sm transition-colors hidden sm:inline"
+              style={{ color: "var(--bx-slate)" }}
+              onMouseEnter={(e) =>
+                ((e.currentTarget as HTMLAnchorElement).style.color = "var(--bx-parchment)")
+              }
+              onMouseLeave={(e) =>
+                ((e.currentTarget as HTMLAnchorElement).style.color = "var(--bx-slate)")
+              }
             >
               New request
             </Link>
 
-            {hasUser ? (
-              <Link
-                href="/account"
-                title={role === "admin" ? "Admin" : "My account"}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0 hover:opacity-85 transition-opacity"
-                style={{ background: "#00205B" }}
-              >
-                {initials || "?"}
-              </Link>
+            {hasUser && userId && email ? (
+              <ProfileMenu
+                userId={userId}
+                initials={initials}
+                role={role}
+                email={email}
+                displayName={displayName ?? null}
+                savedTheme={savedTheme}
+              />
             ) : (
               <Link
                 href="/login"
-                className="inline-flex items-center text-sm font-medium text-[#00205B] border border-[#00205B]/30 rounded-lg px-3 py-1.5 hover:bg-[#00205B]/5 transition-colors"
+                className="inline-flex items-center text-sm font-medium rounded-lg px-3 py-1.5 transition-colors border"
+                style={{
+                  color: "var(--bx-parchment)",
+                  borderColor: "color-mix(in srgb, var(--bx-parchment) 30%, transparent)",
+                }}
+                onMouseEnter={(e) =>
+                  ((e.currentTarget as HTMLAnchorElement).style.background =
+                    "color-mix(in srgb, var(--bx-parchment) 5%, transparent)")
+                }
+                onMouseLeave={(e) =>
+                  ((e.currentTarget as HTMLAnchorElement).style.background = "transparent")
+                }
               >
                 Sign in / Sign up
               </Link>
