@@ -321,19 +321,7 @@ Send this to ${req.name} (${req.email}).`);
 
   return (
     <div className="min-h-screen bg-ink font-sans">
-      {/* Top bar */}
-      <header className="bg-[var(--bbc-navy)] text-white px-6 py-4 flex items-center justify-between sticky top-0 z-20">
-        <div>
-          <p className="text-xs opacity-50 font-semibold uppercase tracking-widest">BX Community Center</p>
-          <h1 className="text-lg font-bold">Reservations</h1>
-        </div>
-        <button
-          className="text-xs font-semibold opacity-70 hover:opacity-100 transition-opacity border border-white/20 rounded-lg px-3 py-1.5"
-          onClick={() => setCalOpen((v) => !v)}
-        >
-          {calOpen ? "Hide" : "Show"} Calendar ↗
-        </button>
-      </header>
+
 
 
 
@@ -586,7 +574,7 @@ Send this to ${req.name} (${req.email}).`);
 
         {/* Right: Calendar sidebar */}
         <div className={`${calOpen ? "block" : "hidden lg:block"}`}>
-          <div className="sticky top-24 bg-ink-soft rounded-xl border border-parchment/10 p-5 space-y-4">
+          <div className="sticky top-20 bg-ink-soft rounded-xl border border-parchment/10 p-5 space-y-4">
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold text-slate uppercase tracking-widest">Combined Calendar</p>
               <p className="text-xs text-slate">Oct – Nov 2026</p>
@@ -603,13 +591,27 @@ Send this to ${req.name} (${req.email}).`);
                     <p className="text-xs text-slate">{ev.room}</p>
                   </div>
                   <div
-                    className={`flex-1 rounded-lg px-2 py-1 text-xs font-medium leading-snug border ${
+                    className="flex-1 rounded-lg px-2 py-1 text-xs font-medium leading-snug border"
+                    style={
                       ev.kind === "rental"
-                        ? "bg-[var(--glass-bg)] border-[var(--glass-border)] text-[var(--bbc-navy)]"
+                        ? {
+                            background: "color-mix(in srgb, var(--bx-brass) 12%, transparent)",
+                            borderColor: "color-mix(in srgb, var(--bx-brass) 30%, transparent)",
+                            color: "var(--bx-parchment)",
+                          }
                         : ev.kind === "flex"
-                        ? "bg-amber-50 border-amber-200 text-amber-800"
-                        : "bg-ink border-parchment/15 text-slate line-through"
-                    }`}
+                        ? {
+                            background: "color-mix(in srgb, #f59e0b 12%, transparent)",
+                            borderColor: "color-mix(in srgb, #f59e0b 30%, transparent)",
+                            color: "color-mix(in srgb, #f59e0b 90%, var(--bx-parchment))",
+                          }
+                        : {
+                            background: "color-mix(in srgb, var(--bx-slate) 8%, transparent)",
+                            borderColor: "color-mix(in srgb, var(--bx-parchment) 12%, transparent)",
+                            color: "var(--bx-slate)",
+                            textDecoration: "line-through",
+                          }
+                    }
                   >
                     {ev.kind === "flex" && <span className="mr-1">⟳</span>}
                     {ev.label}
@@ -621,9 +623,18 @@ Send this to ${req.name} (${req.email}).`);
             {/* Legend */}
             <div className="pt-3 border-t border-parchment/10 space-y-1.5">
               <p className="text-xs font-semibold text-slate uppercase tracking-widest mb-2">Legend</p>
-              <LegendItem color="bg-[var(--glass-bg)] border-[var(--glass-border)] text-[var(--bbc-navy)]" label="Rental / confirmed event" />
-              <LegendItem color="bg-amber-50 border-amber-200 text-amber-800" label="⟳ Standing use · may flex" />
-              <LegendItem color="bg-ink border-parchment/15 text-slate" label="Declined" />
+              <LegendItemStyled
+                style={{ background: "color-mix(in srgb, var(--bx-brass) 12%, transparent)", borderColor: "color-mix(in srgb, var(--bx-brass) 30%, transparent)", color: "var(--bx-parchment)" }}
+                label="Rental / confirmed event"
+              />
+              <LegendItemStyled
+                style={{ background: "color-mix(in srgb, #f59e0b 12%, transparent)", borderColor: "color-mix(in srgb, #f59e0b 30%, transparent)", color: "color-mix(in srgb, #f59e0b 90%, var(--bx-parchment))" }}
+                label="⟳ Standing use · may flex"
+              />
+              <LegendItemStyled
+                style={{ background: "color-mix(in srgb, var(--bx-slate) 8%, transparent)", borderColor: "color-mix(in srgb, var(--bx-parchment) 12%, transparent)", color: "var(--bx-slate)" }}
+                label="Declined"
+              />
             </div>
           </div>
         </div>
@@ -656,6 +667,15 @@ function LegendItem({ color, label }: { color: string; label: string }) {
     <div className="flex items-center gap-2">
       <span className={`rounded px-2 py-0.5 text-xs border ${color}`}>Sample</span>
       <span className="text-xs text-slate">{label}</span>
+    </div>
+  );
+}
+
+function LegendItemStyled({ style, label }: { style: React.CSSProperties; label: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="rounded px-2 py-0.5 text-xs border" style={style}>Sample</span>
+      <span className="text-xs" style={{ color: "var(--bx-slate)" }}>{label}</span>
     </div>
   );
 }
