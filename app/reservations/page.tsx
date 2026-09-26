@@ -8,14 +8,20 @@ export const metadata = { title: "My Reservations · BX Reservations" };
 
 function statusChip(status: string) {
   const map: Record<string, { label: string; bg: string; color: string }> = {
-    pending:   { label: "Pending",   bg: "#FEF3C7", color: "#92400E" },
-    approved:           { label: "Approved",      bg: "#D1FAE5", color: "#065F46" },
-    confirmed:          { label: "Confirmed",     bg: "#D1FAE5", color: "#065F46" },
-    completed:          { label: "Completed",     bg: "#D1FAE5", color: "#065F46" },
-    rejected:           { label: "Declined",      bg: "#FEE2E2", color: "#991B1B" },
-    cancelled:          { label: "Cancelled",     bg: "#F3F4F6", color: "#374151" },
-    under_review:       { label: "Proposal Sent", bg: "#E0E7FF", color: "#3730A3" },
-    pending_insurance:  { label: "Requested",     bg: "#FEF9C3", color: "#713F12" },
+    pending:            { label: "Requested",   bg: "#FEF9C3", color: "#713F12" },
+    under_review:       { label: "In Review",   bg: "#E0E7FF", color: "#3730A3" },
+    needs_info:         { label: "Info Needed", bg: "#FEF3C7", color: "#92400E" },
+    pending_documents:  { label: "Docs Needed", bg: "#FEF3C7", color: "#92400E" },
+    pending_payment:    { label: "Payment Due", bg: "#FEF3C7", color: "#92400E" },
+    pending_insurance:  { label: "Requested",   bg: "#FEF9C3", color: "#713F12" },
+    approved:           { label: "Approved",    bg: "#D1FAE5", color: "#065F46" },
+    confirmed:          { label: "Confirmed",   bg: "#D1FAE5", color: "#065F46" },
+    completed:          { label: "Completed",   bg: "#F3F4F6", color: "#374151" },
+    rejected:           { label: "Not Approved",bg: "#FEE2E2", color: "#991B1B" },
+    cancelled:          { label: "Cancelled",   bg: "#F3F4F6", color: "#374151" },
+    cancelled_by_admin: { label: "Cancelled",   bg: "#FEE2E2", color: "#991B1B" },
+    cancelled_by_user:  { label: "Cancelled",   bg: "#F3F4F6", color: "#374151" },
+    auto_cancelled:     { label: "Expired",     bg: "#F3F4F6", color: "#374151" },
   };
   const s = map[status] ?? { label: status, bg: "#F3F4F6", color: "#374151" };
   return (

@@ -10,7 +10,9 @@ import COIUploadCard from "./COIUploadCard";
 const STATUS_META: Record<string, { dot: string }> = {
   pending:            { dot: "#FBBF24" },
   under_review:       { dot: "#818CF8" },
+  needs_info:         { dot: "#F59E0B" },
   pending_documents:  { dot: "#F59E0B" },
+  pending_payment:    { dot: "#F59E0B" },
   approved:           { dot: "#34D399" },
   confirmed:          { dot: "#34D399" },
   completed:          { dot: "#9CA3AF" },
@@ -22,17 +24,19 @@ const STATUS_META: Record<string, { dot: string }> = {
 };
 
 const STATUS_EXPLANATION: Record<string, { headline: string; detail?: string }> = {
-  pending:            { headline: "Awaiting Review",        detail: "Your reservation request has been received and is waiting for staff review." },
-  under_review:       { headline: "Under Review",           detail: "Staff is reviewing your request and will notify you of any updates." },
-  pending_documents:  { headline: "Documents Required",     detail: "Your reservation requires additional documents before it can be confirmed." },
-  approved:           { headline: "Approved",               detail: "Your reservation has been approved." },
-  confirmed:          { headline: "Confirmed",               detail: "Your reservation is confirmed — see you there!" },
-  completed:          { headline: "Completed",              detail: "This reservation has concluded." },
-  rejected:           { headline: "Not Approved",           detail: "This reservation was not approved. Please contact us if you have questions." },
-  cancelled:          { headline: "Cancelled" },
-  cancelled_by_admin: { headline: "Cancelled by Staff" },
-  cancelled_by_user:  { headline: "Cancelled",              detail: "You cancelled this reservation." },
-  auto_cancelled:     { headline: "Automatically Cancelled" },
+  pending:            { headline: "Awaiting Review",           detail: "Your reservation request has been received and is waiting for staff review." },
+  under_review:       { headline: "Under Review",              detail: "Staff is reviewing your request and will notify you of any updates." },
+  needs_info:         { headline: "More Information Needed",   detail: "Staff needs additional information from you before this reservation can move forward. Please reply to the message in the thread below." },
+  pending_documents:  { headline: "Documents Required",        detail: "Your reservation requires additional documents before it can be confirmed. Please upload the requested items below." },
+  pending_payment:    { headline: "Payment Required",          detail: "A payment is required to confirm your reservation. Please follow the instructions from staff." },
+  approved:           { headline: "Approved",                  detail: "Your reservation has been approved." },
+  confirmed:          { headline: "Confirmed",                 detail: "Your reservation is confirmed — see you there!" },
+  completed:          { headline: "Completed",                 detail: "This reservation has concluded. Thank you for using BX Reservations." },
+  rejected:           { headline: "Not Approved",              detail: "This reservation was not approved. Please contact us if you have questions." },
+  cancelled:          { headline: "Cancelled",                 detail: "This reservation has been cancelled." },
+  cancelled_by_admin: { headline: "Cancelled by Staff",        detail: "Staff has cancelled this reservation. Please contact us if you have questions." },
+  cancelled_by_user:  { headline: "Cancelled",                 detail: "You cancelled this reservation. Submit a new request if you'd like to rebook." },
+  auto_cancelled:     { headline: "Automatically Cancelled",   detail: "This reservation was automatically cancelled due to inactivity. Submit a new request if you'd still like to book." },
 };
 
 const SELF_CANCEL_STATUSES = new Set(["pending", "under_review", "approved", "pending_documents"]);
@@ -41,13 +45,19 @@ export const metadata = { title: "Reservation · BX Reservations" };
 
 function statusChip(status: string) {
   const map: Record<string, { label: string; bg: string; color: string }> = {
-    pending:      { label: "Requested", bg: "#FEF9C3", color: "#713F12" },
-    under_review: { label: "In Review", bg: "#E0E7FF", color: "#3730A3" },
-    approved:  { label: "Approved",  bg: "#D1FAE5", color: "#065F46" },
-    confirmed: { label: "Confirmed", bg: "#D1FAE5", color: "#065F46" },
-    completed: { label: "Completed", bg: "#F3F4F6", color: "#374151" },
-    rejected:  { label: "Rejected",  bg: "#FEE2E2", color: "#991B1B" },
-    cancelled: { label: "Cancelled", bg: "#F3F4F6", color: "#374151" },
+    pending:            { label: "Requested",   bg: "#FEF9C3", color: "#713F12" },
+    under_review:       { label: "In Review",   bg: "#E0E7FF", color: "#3730A3" },
+    needs_info:         { label: "Info Needed", bg: "#FEF3C7", color: "#92400E" },
+    pending_documents:  { label: "Docs Needed", bg: "#FEF3C7", color: "#92400E" },
+    pending_payment:    { label: "Payment Due", bg: "#FEF3C7", color: "#92400E" },
+    approved:           { label: "Approved",    bg: "#D1FAE5", color: "#065F46" },
+    confirmed:          { label: "Confirmed",   bg: "#D1FAE5", color: "#065F46" },
+    completed:          { label: "Completed",   bg: "#F3F4F6", color: "#374151" },
+    rejected:           { label: "Not Approved",bg: "#FEE2E2", color: "#991B1B" },
+    cancelled:          { label: "Cancelled",   bg: "#F3F4F6", color: "#374151" },
+    cancelled_by_admin: { label: "Cancelled",   bg: "#FEE2E2", color: "#991B1B" },
+    cancelled_by_user:  { label: "Cancelled",   bg: "#F3F4F6", color: "#374151" },
+    auto_cancelled:     { label: "Expired",     bg: "#F3F4F6", color: "#374151" },
   };
   const s = map[status] ?? { label: status, bg: "#F3F4F6", color: "#374151" };
   return (
