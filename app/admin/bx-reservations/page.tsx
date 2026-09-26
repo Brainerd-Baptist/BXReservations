@@ -183,6 +183,10 @@ export default function BxReservationsAdmin() {
   const [newMinistryDesc, setNewMinistryDesc] = useState("");
   const [savingMinistry, setSavingMinistry] = useState(false);
 
+  // ── Calendar events (live from DB) ──────────────────────────────────────────
+  type CalEvent = { date: string; room: string; label: string; kind: "rental" | "flex" | "declined" };
+  const [calendarEvents, setCalendarEvents] = useState<CalEvent[]>([]);
+
   // ── Agreements ─────────────────────────────────────────────────────────────
   type AgreementMeta = { token: string; customer_signed_at: string | null; staff_signed_at: string | null };
   const [agreements, setAgreements] = useState<Record<string, AgreementMeta>>({});
@@ -213,6 +217,13 @@ export default function BxReservationsAdmin() {
       .then(r => r.json())
       .then((data: BlackoutRule[]) => { setBlackouts(data); setBlackoutsLoading(false); })
       .catch(() => setBlackoutsLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/admin/calendar")
+      .then(r => r.json())
+      .then((data: { events?: CalEvent[] }) => { if (data.events) setCalendarEvents(data.events); })
+      .catch(err => console.error("Failed to load calendar events:", err));
   }, []);
 
   async function addBlackout() {
@@ -613,7 +624,7 @@ Send this to ${req.name} (${req.email}).`);
             </p>
 
             <div className="space-y-2">
-              {CALENDAR_EVENTS.sort((a, b) => a.date.localeCompare(b.date)).map((ev, i) => (
+              {calendarEvents.sort((a, b) => a.date.localeCompare(b.date)).map((ev, i) => (
                 <div key={i} className="flex gap-3 items-start">
                   <div className="flex-shrink-0 w-14">
                     <p className="text-xs font-bold text-parchment">{ev.date.slice(5)}</p>
@@ -959,9 +970,22 @@ function UsersTab({
     const newRole = pendingRoles[userId];
     if (!newRole) return;
     setSavingRole(userId);
-    // TODO: POST /api/bx/roles { userId, role: newRole }
-    await new Promise(r => setTimeout(r, 600));
-    setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole as MockUser["role"] } : u));
+    try {
+      const res = await fetch("/api/bx/roles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, role: newRole }),
+      });
+      if (!res.ok) {
+        const err = await res.json() as { error?: string };
+        alert(err.error ?? "Failed to save role. Please try again.");
+        setSavingRole(null);
+        return;
+      }
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole as MockUser["role"] } : u));
+    } catch {
+      alert("Network error saving role. Please try again.");
+    }
     setSavingRole(null);
     setPendingRoles({ ...pendingRoles, [userId]: "" });
   }
@@ -1087,15 +1111,43 @@ function MinistriesTab({
   savingMinistry: boolean; setSavingMinistry: (v: boolean) => void;
 }) {
   const [hoveredMinistryId, setHoveredMinistryId] = useState<string | null>(null);
-  const selected = MOCK_MINISTRIES.find(m => m.id === selectedMinistryId) ?? null;
+  type Ministry = { id: string; name: string; description: string | null; created_at: string };
+  const [ministries, setMinistries] = useState<Ministry[]>([]);
+  const [ministriesLoading, setMinistriesLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/bx/ministries")
+      .then(r => r.json())
+      .then((data: { ministries?: Ministry[] }) => {
+        if (data.ministries) setMinistries(data.ministries);
+        setMinistriesLoading(false);
+      })
+      .catch(() => setMinistriesLoading(false));
+  }, []);
+
+  const selected = ministries.find(m => m.id === selectedMinistryId) ?? null;
 
   async function createMinistry() {
     if (!newMinistryName.trim()) return;
     setSavingMinistry(true);
-    // TODO: POST /api/bx/ministries { name, description }
-    await new Promise(r => setTimeout(r, 600));
-    setNewMinistryName("");
-    setNewMinistryDesc("");
+    try {
+      const res = await fetch("/api/bx/ministries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newMinistryName.trim(), description: newMinistryDesc.trim() || null }),
+      });
+      const data = await res.json() as { ministry?: Ministry; error?: string };
+      if (!res.ok || !data.ministry) {
+        alert(data.error ?? "Failed to create ministry. Please try again.");
+        setSavingMinistry(false);
+        return;
+      }
+      setMinistries(prev => [...prev, data.ministry!].sort((a, b) => a.name.localeCompare(b.name)));
+      setNewMinistryName("");
+      setNewMinistryDesc("");
+    } catch {
+      alert("Network error creating ministry. Please try again.");
+    }
     setSavingMinistry(false);
   }
 
@@ -1112,7 +1164,11 @@ function MinistriesTab({
         {/* Left: ministry list */}
         <div className="space-y-3">
           <div className="bg-ink-soft rounded-xl border border-parchment/10 divide-y divide-parchment/5">
-            {MOCK_MINISTRIES.map(m => (
+            {ministriesLoading ? (
+              <div className="px-4 py-8 text-center text-sm text-slate">Loading…</div>
+            ) : ministries.length === 0 ? (
+              <div className="px-4 py-8 text-center text-sm text-slate">No ministries yet. Create one below.</div>
+            ) : ministries.map(m => (
               <button
                 key={m.id}
                 onClick={() => setSelectedMinistryId(selectedMinistryId === m.id ? null : m.id)}
@@ -1132,14 +1188,10 @@ function MinistriesTab({
               >
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-semibold text-parchment">{m.name}</p>
-                  <span className="text-xs text-slate flex-shrink-0">
-                    {m.members.length} member{m.members.length !== 1 ? "s" : ""}
-                  </span>
                 </div>
                 {m.description && (
                   <p className="text-xs text-slate mt-0.5 truncate">{m.description}</p>
                 )}
-                <p className="text-xs text-slate/60 mt-0.5">{m.reservationCount} reservations</p>
               </button>
             ))}
           </div>
@@ -1186,36 +1238,10 @@ function MinistriesTab({
               </button>
             </div>
 
-            {/* Members */}
+            {/* Members — placeholder until member management API is built */}
             <div>
               <p className="text-xs font-semibold text-slate uppercase tracking-widest mb-2">Members</p>
-              {selected.members.length === 0 && (
-                <p className="text-sm text-slate">No members yet — add someone below.</p>
-              )}
-              <div className="space-y-2">
-                {selected.members.map(mem => (
-                  <div key={mem.userId} className="flex items-center justify-between gap-3 bg-ink rounded-lg px-3 py-2 border border-parchment/10">
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-parchment truncate">{mem.name}</p>
-                      <p className="text-xs text-slate truncate">{mem.email}</p>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {mem.isCoordinator ? (
-                        <span className="text-xs bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-semibold">
-                          Coordinator
-                        </span>
-                      ) : (
-                        <button className="text-xs text-slate hover:text-emerald-600 border border-parchment/20 rounded px-2 py-0.5">
-                          Make coordinator
-                        </button>
-                      )}
-                      <button className="text-xs text-red-500 hover:text-red-700 font-semibold">
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <p className="text-sm text-slate">Member management coming soon.</p>
             </div>
 
             {/* Add member */}
@@ -1235,7 +1261,7 @@ function MinistriesTab({
             {/* Ministry reservations link */}
             <div className="pt-2 border-t border-parchment/10">
               <p className="text-xs text-slate">
-                <span className="font-semibold text-parchment">{selected.reservationCount}</span> reservations under this ministry.{" "}
+                Reservations under this ministry{" "}
                 <button
                   onClick={() => setSelectedMinistryId(null)}
                   className="text-[var(--bbc-blue)] hover:underline text-xs"

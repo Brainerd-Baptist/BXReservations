@@ -14,6 +14,10 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
+  const [forgotMode, setForgotMode] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetSent, setResetSent] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -47,6 +51,18 @@ export default function LoginPage() {
       setError(oauthError.message);
       setGoogleLoading(false);
     }
+  }
+
+  async function handleForgotPassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (!resetEmail.trim()) return;
+    setResetLoading(true);
+    const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
+    await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
+      redirectTo: `${siteUrl}/auth/reset-password`,
+    });
+    setResetLoading(false);
+    setResetSent(true);
   }
 
   return (
@@ -131,9 +147,26 @@ export default function LoginPage() {
               />
             </div>
 
+            <div className="flex justify-end -mt-1">
+              <button
+                type="button"
+                onClick={() => { setForgotMode(true); setResetEmail(email); setError(""); }}
+                className="text-xs text-slate hover:text-brass transition-colors"
+              >
+                Forgot password?
+              </button>
+            </div>
+
             {error && (
-              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-                {error}
+              <div className="space-y-2">
+                <div className="text-sm text-red-400 bg-red-950/30 border border-red-800/40 rounded-lg px-3 py-2">
+                  {error}
+                </div>
+                {error.toLowerCase().includes("invalid login credentials") && (
+                  <p className="text-xs text-slate leading-relaxed px-1">
+                    Previously signed in with Google? Use the <strong>Continue with Google</strong> button above.
+                  </p>
+                )}
               </div>
             )}
 
@@ -150,6 +183,62 @@ export default function LoginPage() {
         <p className="text-xs text-slate text-center mt-5 leading-relaxed px-2">
           By continuing, you agree to our use of your information to manage your reservation requests.
         </p>
+
+        {/* Forgot-password overlay */}
+        {forgotMode && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-ink/80 backdrop-blur-sm" onClick={() => setForgotMode(false)}>
+            <div className="w-full max-w-sm bg-ink-soft border border-parchment/15 rounded-xl p-7 shadow-xl" onClick={(e) => e.stopPropagation()}>
+              {resetSent ? (
+                <div className="text-center space-y-4">
+                  <div className="text-3xl">✉️</div>
+                  <h2 className="text-lg font-bold text-parchment">Check your email</h2>
+                  <p className="text-sm text-slate leading-relaxed">
+                    If <strong>{resetEmail}</strong> has an account, we sent a password reset link. Check your inbox (and spam folder).
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => { setForgotMode(false); setResetSent(false); }}
+                    className="w-full bg-brass hover:bg-brass/90 text-white font-semibold rounded-lg py-2.5 text-sm transition-colors"
+                  >
+                    Back to sign in
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <h2 className="text-lg font-bold text-parchment mb-1">Reset your password</h2>
+                  <p className="text-sm text-slate mb-5 leading-relaxed">Enter the email address on your account and we&apos;ll send a reset link.</p>
+                  <form onSubmit={handleForgotPassword} className="space-y-4">
+                    <input
+                      type="email"
+                      required
+                      autoFocus
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      className="w-full border border-parchment/20 rounded-lg py-2.5 px-3 text-sm text-parchment placeholder:text-slate/50 bg-ink focus:outline-none focus:ring-2 focus:ring-brass/40 focus:border-brass"
+                    />
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setForgotMode(false)}
+                        className="flex-1 border border-parchment/20 text-slate font-medium rounded-lg py-2.5 text-sm hover:border-parchment/40 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={resetLoading}
+                        className="flex-1 bg-brass hover:bg-brass/90 text-white font-semibold rounded-lg py-2.5 text-sm disabled:opacity-60 transition-colors"
+                      >
+                        {resetLoading ? "Sending…" : "Send reset link"}
+                      </button>
+                    </div>
+                  </form>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

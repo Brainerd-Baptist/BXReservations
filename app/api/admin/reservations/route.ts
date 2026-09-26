@@ -181,10 +181,13 @@ export async function PATCH(req: NextRequest) {
           console.log(`[agreements] created for ${row.booking_number as string}: ${agreementUrl}`);
         }
       } else {
-        console.warn("[agreements] failed to create:", await agmtRes.text());
+        const errText = await agmtRes.text();
+        console.warn("[agreements] failed to create:", errText);
+        return NextResponse.json({ error: "Failed to create facility use agreement — proposal not sent." }, { status: 502 });
       }
     } catch (err) {
       console.warn("[agreements] error creating:", err);
+      return NextResponse.json({ error: "Failed to create facility use agreement — proposal not sent." }, { status: 502 });
     }
   }
 

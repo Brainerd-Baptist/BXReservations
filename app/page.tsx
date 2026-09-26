@@ -267,8 +267,8 @@ const STEPS = [
     desc: "Pick rooms and time blocks — we'll show live availability from our calendar.",
   },
   {
-    title: "Create an account to submit",
-    desc: "Sign in with Google to submit your request and track your status online from Pending to Confirmed.",
+    title: "Track your reservation online",
+    desc: "As part of submitting, you'll sign in with Google — it takes seconds, and means you can follow your reservation from Pending all the way to Confirmed.",
   },
   {
     title: "We review and confirm",
