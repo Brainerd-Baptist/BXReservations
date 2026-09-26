@@ -22,23 +22,32 @@ export async function GET() {
 
     let count = 0;
 
+    // ── Unread bx_notifications for this user (covers status updates, reminders, etc.) ──
+    const { count: bellCount } = await supabase
+      .from("bx_notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .is("read_at", null);
+
+    count += bellCount ?? 0;
+
     if (isAdmin) {
-      // Admins: count reservations that are pending staff review
+      // Admins: also count reservations awaiting staff review (legacy signal)
       const { count: pendingCount } = await supabase
         .from("reservations")
         .select("id", { count: "exact", head: true })
         .eq("status", "pending_insurance");
 
-      count = pendingCount ?? 0;
+      count += pendingCount ?? 0;
     } else {
-      // Regular users: count pending collaboration invites for their email
+      // Regular users: also count pending collaboration invites
       const { count: inviteCount } = await supabase
         .from("reservation_collaborators")
         .select("id", { count: "exact", head: true })
         .eq("invited_email", user.email?.toLowerCase() ?? "")
         .is("accepted_at", null);
 
-      count = inviteCount ?? 0;
+      count += inviteCount ?? 0;
     }
 
     return NextResponse.json({ count }, {

@@ -163,6 +163,36 @@ export async function POST(req: NextRequest) {
         });
       });
 
+      // ── In-app bell notification: alert all admins about new reservation ──
+      (async () => {
+        try {
+          const { createClient: createServiceClient } = await import("@supabase/supabase-js");
+          const adminSupa = createServiceClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!,
+          );
+          const { data: adminRoles } = await adminSupa
+            .from("bx_user_roles")
+            .select("user_id")
+            .in("role", ["owner", "system_admin", "booking_admin"]);
+
+          if (adminRoles && adminRoles.length > 0) {
+            const notifRows = adminRoles.map((r: { user_id: string }) => ({
+              user_id:        r.user_id,
+              reservation_id: reservationId,
+              type:           "new_reservation",
+              title:          `New reservation request`,
+              body:           `${contact.name} submitted a request for "${contact.eventName}" (${bookingNumber}).`,
+            }));
+            const { error: nErr } = await adminSupa.from("bx_notifications").insert(notifRows);
+            if (nErr) console.error("[notif] admin insert error:", nErr);
+            else console.log(`[notif] new_reservation inserted for ${adminRoles.length} admin(s) — ${bookingNumber}`);
+          }
+        } catch (err) {
+          console.error("[notif] admin notification error:", err);
+        }
+      })();
+
       return NextResponse.json({ bookingNumber, reservationId }, { status: 201 });
     } catch (err) {
       console.error("Supabase submit error:", err);
