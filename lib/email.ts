@@ -29,6 +29,25 @@ const FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, 
 // Hosted on the BBC Team Dashboard — stable public URL used for email logo
 const LOGO_URL = "https://bbc-team-dashboard.vercel.app/brainerd-logo.png";
 
+// ─── Reusable secondary pill button (for embedding inside body HTML) ────────────
+// Use this when you need a button inside body content rather than the top-level CTA.
+// Produces a bulletproof nested-table pill that works in Outlook, Gmail, and dark mode.
+export function pillButtonHtml(text: string, url: string): string {
+  return `
+    <table border="0" cellpadding="0" cellspacing="0" role="presentation"
+      style="border-collapse:separate;mso-table-lspace:0pt;mso-table-rspace:0pt;margin:20px 0;">
+      <tr>
+        <td align="center" bgcolor="${C.buttonBg}"
+          style="border-radius:100px;cursor:auto;mso-padding-alt:12px 28px;text-align:center;">
+          <a href="${url}" target="_blank" rel="noopener noreferrer"
+            style="display:inline-block;background:${C.buttonBg};border-radius:100px;color:${C.buttonText};font-family:${FONT};font-size:14px;font-weight:700;line-height:1.4;margin:0;text-decoration:none;padding:12px 28px;letter-spacing:0.01em;mso-padding-alt:0;text-size-adjust:none;">
+            ${text} &rarr;
+          </a>
+        </td>
+      </tr>
+    </table>`;
+}
+
 // ─── Core HTML builder ────────────────────────────────────────────────────────
 
 export function brandedEmailHtml(opts: {
@@ -41,18 +60,18 @@ export function brandedEmailHtml(opts: {
 }): string {
   const { preheader = "", headline, body, ctaText, ctaUrl, footerNote } = opts;
 
-  // Bulletproof CTA — nested table; centers in Gmail mobile where plain <td align="center"> does not
+  // Bulletproof pill CTA — nested table approach; works in Outlook, Gmail, Apple Mail, dark mode
   const ctaBlock = ctaText && ctaUrl ? `
     <tr>
-      <td align="center" style="padding:24px 40px 8px;">
+      <td align="center" style="padding:28px 40px 8px;">
         <table border="0" cellpadding="0" cellspacing="0" role="presentation"
           style="border-collapse:separate;mso-table-lspace:0pt;mso-table-rspace:0pt;">
           <tr>
             <td align="center" bgcolor="${C.buttonBg}"
-              style="border-radius:8px;cursor:auto;mso-padding-alt:12px 28px;text-align:center;">
+              style="border-radius:100px;cursor:auto;mso-padding-alt:14px 32px;text-align:center;">
               <a href="${ctaUrl}" target="_blank" rel="noopener noreferrer"
-                style="display:inline-block;background:${C.buttonBg};border-radius:8px;color:${C.buttonText};font-family:${FONT};font-size:15px;font-weight:600;line-height:1.4;margin:0;text-decoration:none;padding:12px 28px;">
-                ${ctaText}
+                style="display:inline-block;background:${C.buttonBg};border-radius:100px;color:${C.buttonText};font-family:${FONT};font-size:15px;font-weight:700;line-height:1.4;margin:0;text-decoration:none;padding:14px 32px;letter-spacing:0.01em;mso-padding-alt:0;text-size-adjust:none;">
+                ${ctaText} &rarr;
               </a>
             </td>
           </tr>
@@ -350,8 +369,9 @@ export async function sendStatusUpdateEmail(opts: {
     proposal_sent: {
       subject:  `Your BX Reservation — Proposal Ready · ${bookingNumber}`,
       headline: "We've reviewed your request.",
-      body:     `<p style="margin:0 0 16px 0;">Hi ${name},</p><p style="margin:0 0 16px 0;">We've reviewed your space reservation for <strong>${eventName}</strong> (${bookingNumber}). Our team has prepared a proposal and will be reaching out shortly to confirm the next steps.</p>${noteBlock}${agreementUrl ? `<p style="margin:0 0 16px 0;">To move forward, please review and sign the <strong>Facility Use Agreement</strong> using the link below:</p><p style="margin:0 0 16px 0;"><a href="${agreementUrl}" style="color:#00205b;font-weight:600;">Sign Facility Use Agreement →</a></p>` : ""}<p style="margin:0;">Log in to view your reservation details and current status.</p>`,
-      cta:      "View Your Request",
+      body:     `<p style="margin:0 0 16px 0;">Hi ${name},</p><p style="margin:0 0 16px 0;">We've reviewed your space reservation for <strong>${eventName}</strong> (${bookingNumber}). Our team has prepared a proposal and will be reaching out shortly to confirm the next steps.</p>${noteBlock}<p style="margin:0;">Use the button below to ${agreementUrl ? "review and sign the Facility Use Agreement" : "view your reservation details and current status"}.</p>`,
+      cta:      agreementUrl ? "Sign Facility Use Agreement" : "View Your Request",
+      ctaHref:  agreementUrl ?? `${SITE_URL}/reservations/${reservationId}`,
     },
     approved: {
       subject:  `Reservation Approved — ${bookingNumber}`,
@@ -398,13 +418,14 @@ export async function sendStatusUpdateEmail(opts: {
   } as const;
 
   const cfg = configs[newStatus];
+  const cfgAny = cfg as typeof cfg & { ctaHref?: string };
 
   const html = brandedEmailHtml({
     preheader: cfg.subject,
     headline:  cfg.headline,
     body:      cfg.body,
     ctaText:   cfg.cta,
-    ctaUrl:    `${SITE_URL}/reservations/${reservationId}`,
+    ctaUrl:    cfgAny.ctaHref ?? `${SITE_URL}/reservations/${reservationId}`,
     footerNote: `Reference: ${bookingNumber}`,
   });
 

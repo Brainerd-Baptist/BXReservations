@@ -70,20 +70,17 @@ function userReminderHtml(opts: {
         We still need a response from you on your reservation <strong>${bookingNumber}</strong>,
         which is currently in <strong>${status}</strong> status. ${urgency}
       </p>
-      <p style="margin:0 0 24px">
+      <p style="margin:0 0 16px">
         Please log in and take the next step — reply to any open questions or upload the
         requested documents — so we can keep your reservation moving forward.
-      </p>
-      <p style="margin:0 0 24px">
-        <a href="${link}" style="display:inline-block;background:#00abc9;color:#fff;text-decoration:none;padding:12px 24px;border-radius:6px;font-weight:600;">
-          View My Reservation →
-        </a>
       </p>
       <p style="margin:0;color:#6b7280;font-size:13px;">
         If we don't hear back, your reservation may be cancelled after a period of inactivity.
         If you have questions, reply to this email.
       </p>
     `,
+    ctaText: "View My Reservation",
+    ctaUrl: link,
   });
 }
 
@@ -103,18 +100,15 @@ function adminReminderHtml(opts: {
     body: `
       <p style="margin:0 0 16px"><strong>Heads up:</strong> A reservation has been waiting for admin review
         for <strong>${Math.round(daysSinceSubmit)} days</strong>.</p>
-      <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
+      <table style="width:100%;border-collapse:collapse;margin-bottom:16px">
         <tr><td style="padding:6px 0;color:#6b7280;width:140px">Booking</td><td><strong>${bookingNumber}</strong></td></tr>
         <tr><td style="padding:6px 0;color:#6b7280">Contact</td><td>${contactName}</td></tr>
         <tr><td style="padding:6px 0;color:#6b7280">Organization</td><td>${contactOrg || "—"}</td></tr>
         <tr><td style="padding:6px 0;color:#6b7280">Submitted</td><td>${submittedAt.split("T")[0]}</td></tr>
       </table>
-      <p style="margin:0 0 24px">
-        <a href="${link}" style="display:inline-block;background:#00abc9;color:#fff;text-decoration:none;padding:12px 24px;border-radius:6px;font-weight:600;">
-          Review Reservation →
-        </a>
-      </p>
     `,
+    ctaText: "Review Reservation",
+    ctaUrl: link,
   });
 }
 
@@ -162,7 +156,7 @@ function autoCancelHtml(opts: {
         Your reservation <strong>${bookingNumber}</strong> has been cancelled because we didn't receive
         a response after <strong>${inactiveDays} days</strong>.
       </p>
-      <p style="margin:0 0 24px">
+      <p style="margin:0 0 16px">
         We're sorry we weren't able to process your request this time. If you'd still like to book
         space at Brainerd Baptist, please submit a new reservation and we'll be happy to help.
       </p>
@@ -170,6 +164,8 @@ function autoCancelHtml(opts: {
         If you believe this was an error, please reply to this email or contact the BX office.
       </p>
     `,
+    ctaText: "Submit a New Request",
+    ctaUrl: `${SITE}`,
   });
 }
 
