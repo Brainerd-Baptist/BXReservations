@@ -27,21 +27,23 @@ const SETUP_LABELS: Record<string, string> = {
 // DB statuses:  pending | under_review | pending_insurance | approved | rejected | cancelled
 // Admin labels: Requested | Proposal Sent | Deposit Received | Confirmed | Declined
 
+// Allowed DB statuses (from check constraint):
+//   pending_insurance | under_review | approved | confirmed | completed | cancelled
 const DB_TO_ADMIN: Record<string, string> = {
-  pending:          "Requested",
-  under_review:     "Proposal Sent",
-  pending_insurance:"Deposit Received",
-  approved:         "Confirmed",
-  rejected:         "Declined",
-  cancelled:        "Declined",
+  pending_insurance: "Requested",       // new submission
+  under_review:      "Proposal Sent",
+  approved:          "Deposit Received",
+  confirmed:         "Confirmed",
+  completed:         "Confirmed",
+  cancelled:         "Declined",
 };
 
 const ADMIN_TO_DB: Record<string, string> = {
-  "Requested":       "pending",
-  "Proposal Sent":   "under_review",
-  "Deposit Received":"pending_insurance",
-  "Confirmed":       "approved",
-  "Declined":        "rejected",
+  "Requested":        "pending_insurance",
+  "Proposal Sent":    "under_review",
+  "Deposit Received": "approved",
+  "Confirmed":        "confirmed",
+  "Declined":         "cancelled",
 };
 
 // ─── GET — list all reservations ──────────────────────────────────────────────

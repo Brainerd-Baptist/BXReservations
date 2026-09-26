@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
 
       const { data: insertData, error: insertErr } = await supabase.from("reservations").insert({
         booking_number:  bookingNumber,
-        status:          "pending",
+        status:          "pending_insurance",
         contact_name:    contact.name,
         contact_email:   contact.email,
         contact_phone:   contact.phone ?? null,
