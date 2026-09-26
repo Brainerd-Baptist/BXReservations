@@ -427,6 +427,47 @@ function renderPage(
         <Field label="Phone" value={reservation.contact_phone} />
       </div>
 
+      {/* Agreement signing card — show if there's an unsent/unsigned agreement */}
+      {!view.staffView && view.agreement && !view.agreement.customer_signed_at && (
+        <div style={{ border: "1px solid color-mix(in srgb, #C5A95A 35%, transparent)", borderRadius: "12px", padding: "1.25rem 1.5rem", marginBottom: "1rem", background: "color-mix(in srgb, #C5A95A 6%, transparent)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.625rem", marginBottom: "0.75rem" }}>
+            <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#C5A95A", display: "inline-block" }} />
+            <span style={{ fontSize: "0.9375rem", fontWeight: 700, color: "var(--bx-parchment)" }}>Signature Required</span>
+          </div>
+          <p style={{ margin: "0 0 1rem", fontSize: "0.875rem", color: "var(--bx-slate)", lineHeight: 1.55 }}>
+            Please review and sign your Facility Use Agreement to continue with your reservation.
+          </p>
+          <a
+            href={`/reservations/${reservation.id}/agreement?token=${view.agreement.token}`}
+            style={{ display: "inline-block", background: "#C5A95A", color: "#1a1a1a", padding: "0.625rem 1.25rem", borderRadius: 8, fontWeight: 700, fontSize: "0.9rem", textDecoration: "none" }}
+          >
+            Review &amp; Sign Agreement →
+          </a>
+        </div>
+      )}
+
+      {/* Agreement signed confirmation */}
+      {!view.staffView && view.agreement?.customer_signed_at && (
+        <div style={{ border: "1px solid #6EE7B7", borderRadius: "12px", padding: "0.875rem 1.25rem", marginBottom: "1rem", background: "color-mix(in srgb, #10B981 8%, transparent)" }}>
+          <span style={{ fontSize: "0.875rem", color: "#6EE7B7", fontWeight: 600 }}>✓ Facility Use Agreement signed</span>
+        </div>
+      )}
+
+      {/* COI upload card — show when pending_documents and not yet accepted */}
+      {!view.staffView && reservation.status === "pending_documents" && !(reservation as Record<string, unknown>).coi_accepted_at && (
+        <div style={{ marginBottom: "1rem" }}>
+          <COIUploadCard reservationId={reservation.id} />
+        </div>
+      )}
+
+      {/* COI accepted confirmation */}
+      {!view.staffView && !!(reservation as Record<string, unknown>).coi_accepted_at && (
+        <div style={{ border: "1px solid #6EE7B7", borderRadius: "12px", padding: "0.875rem 1.25rem", marginBottom: "1rem", background: "color-mix(in srgb, #10B981 8%, transparent)" }}>
+          <span style={{ fontSize: "0.875rem", color: "#6EE7B7", fontWeight: 600 }}>✓ Certificate of Insurance verified</span>
+        </div>
+      )}
+
+
       {/* Messages thread */}
       <div
         style={{

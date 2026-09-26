@@ -220,6 +220,33 @@ export default function BxReservationsAdmin() {
   type AgreementMeta = { token: string; customer_signed_at: string | null; staff_signed_at: string | null };
   const [agreements, setAgreements] = useState<Record<string, AgreementMeta>>({});
   const [sendingAgreement, setSendingAgreement] = useState<string | null>(null);
+
+  // ── Phase 3: Document & payment state ───────────────────────────────────────
+  type DocStatus = {
+    coi_file_url: string | null;
+    coi_uploaded_at: string | null;
+    coi_accepted_at: string | null;
+    coi_expiry_date: string | null;
+    coi_accepted_by: string | null;
+    payment_received_at: string | null;
+    payment_amount: number | null;
+    payment_method: string | null;
+    payment_receipt_url: string | null;
+    payment_recorded_by: string | null;
+    agreement_sent_at: string | null;
+    agreement_signed_at: string | null;
+    agreement_id: string | null;
+    agreement_pdf_url: string | null;
+  };
+  const [docStatus, setDocStatus] = useState<Record<string, DocStatus>>({});
+  const [docLoading, setDocLoading] = useState<Record<string, boolean>>({});
+  const [coiAction, setCoiAction] = useState<Record<string, "accept" | "flag" | null>>({});
+  const [coiExpiry, setCoiExpiry] = useState<Record<string, string>>({});
+  const [coiFlagNote, setCoiFlagNote] = useState<Record<string, string>>({});
+  const [coiBusy, setCoiBusy] = useState<Record<string, boolean>>({});
+  const [payForm, setPayForm] = useState<Record<string, { amount: string; method: string; received_at: string; receipt_url: string }>>({});
+  const [payBusy, setPayBusy] = useState<Record<string, boolean>>({});
+  const [sendingAgreementV2, setSendingAgreementV2] = useState<Record<string, boolean>>({});
   const [countersigning, setCountersigning] = useState<string | null>(null);
   const [countersignName, setCountersignName] = useState("");
 
@@ -338,6 +365,107 @@ export default function BxReservationsAdmin() {
       console.error("[admin] fetchHistory failed:", e);
     }
     setHistoryLoading(prev => ({ ...prev, [localId]: false }));
+  }
+
+  // ── Phase 3: fetch doc/payment status ───────────────────────────────────────
+  async function fetchDocStatus(localId: string, dbId: string) {
+    if (docStatus[localId] || docLoading[localId]) return;
+    setDocLoading(prev => ({ ...prev, [localId]: true }));
+    try {
+      const res = await fetch(`/api/admin/reservations/${dbId}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const r = data.reservation;
+      const ag = data.agreement;
+      setDocStatus(prev => ({
+        ...prev,
+        [localId]: {
+          coi_file_url:        r.coi_file_url ?? null,
+          coi_uploaded_at:     r.coi_uploaded_at ?? null,
+          coi_accepted_at:     r.coi_accepted_at ?? null,
+          coi_expiry_date:     r.coi_expiry_date ?? null,
+          coi_accepted_by:     r.coi_accepted_by ?? null,
+          payment_received_at: r.payment_received_at ?? null,
+          payment_amount:      r.payment_amount ?? null,
+          payment_method:      r.payment_method ?? null,
+          payment_receipt_url: r.payment_receipt_url ?? null,
+          payment_recorded_by: r.payment_recorded_by ?? null,
+          agreement_sent_at:   ag?.sent_at ?? null,
+          agreement_signed_at: ag?.customer_signed_at ?? null,
+          agreement_id:        ag?.id ?? null,
+          agreement_pdf_url:   ag?.pdf_url ?? null,
+        }
+      }));
+    } catch { /* silent */ }
+    finally { setDocLoading(prev => ({ ...prev, [localId]: false })); }
+  }
+
+  async function handleCoiAction(req: Request, action: "accept" | "flag") {
+    if (!req.dbId) return;
+    setCoiBusy(prev => ({ ...prev, [req.id]: true }));
+    try {
+      const body: Record<string, string> = { action };
+      if (action === "accept") body.expiry_date = coiExpiry[req.id] ?? "";
+      if (action === "flag")   body.note        = coiFlagNote[req.id] ?? "";
+      const res = await fetch(`/api/admin/reservations/${req.dbId}/coi`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error ?? "Error"); return; }
+      setDocStatus(prev => { const n = { ...prev }; delete n[req.id]; return n; });
+      setDocLoading(prev => { const n = { ...prev }; delete n[req.id]; return n; });
+      setCoiAction(prev => ({ ...prev, [req.id]: null }));
+      fetchDocStatus(req.id, req.dbId!);
+    } catch { alert("Request failed — please try again."); }
+    finally { setCoiBusy(prev => ({ ...prev, [req.id]: false })); }
+  }
+
+  async function handlePayment(req: Request) {
+    if (!req.dbId) return;
+    const pf = payForm[req.id] ?? { amount: "", method: "", received_at: "", receipt_url: "" };
+    if (!pf.amount || isNaN(parseFloat(pf.amount)) || parseFloat(pf.amount) <= 0) { alert("Enter a valid payment amount."); return; }
+    if (!pf.method.trim()) { alert("Enter a payment method (e.g. check, card, cash)."); return; }
+    setPayBusy(prev => ({ ...prev, [req.id]: true }));
+    try {
+      const res = await fetch(`/api/admin/reservations/${req.dbId}/payment`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          payment_amount:      parseFloat(pf.amount),
+          payment_method:      pf.method.trim(),
+          payment_received_at: pf.received_at || undefined,
+          payment_receipt_url: pf.receipt_url.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error ?? "Error"); return; }
+      setPayForm(prev => { const n = { ...prev }; delete n[req.id]; return n; });
+      setDocStatus(prev => { const n = { ...prev }; delete n[req.id]; return n; });
+      setDocLoading(prev => { const n = { ...prev }; delete n[req.id]; return n; });
+      fetchDocStatus(req.id, req.dbId!);
+    } catch { alert("Request failed — please try again."); }
+    finally { setPayBusy(prev => ({ ...prev, [req.id]: false })); }
+  }
+
+  async function handleSendAgreementV2(req: Request) {
+    if (!req.dbId) return;
+    setSendingAgreementV2(prev => ({ ...prev, [req.id]: true }));
+    try {
+      const res = await fetch(`/api/admin/reservations/${req.dbId}/send-agreement`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error ?? "Error sending agreement"); return; }
+      alert(`Agreement sent to ${req.email}!`);
+      setDocStatus(prev => { const n = { ...prev }; delete n[req.id]; return n; });
+      setDocLoading(prev => { const n = { ...prev }; delete n[req.id]; return n; });
+      fetchDocStatus(req.id, req.dbId!);
+    } catch { alert("Failed to send — please try again."); }
+    finally { setSendingAgreementV2(prev => ({ ...prev, [req.id]: false })); }
   }
 
   // KPIs
@@ -598,6 +726,196 @@ Send this to ${req.name} (${req.email}).`);
                         </div>
                       );
                     })()}
+                    {/* ── Phase 3: Documents & Payment ──────────────────── */}
+                    {req.dbId && (() => {
+                      const ds = docStatus[req.id];
+                      const loading = docLoading[req.id];
+                      if (!ds && !loading) {
+                        setTimeout(() => fetchDocStatus(req.id, req.dbId!), 0);
+                      }
+                      return (
+                        <div className="space-y-4 border border-parchment/10 rounded-xl p-4 bg-ink/40" onClick={e => e.stopPropagation()}>
+                          <p className="text-xs font-semibold text-slate uppercase tracking-widest">Documents &amp; Payment</p>
+                          {loading && <p className="text-xs text-slate animate-pulse">Loading…</p>}
+                          {!loading && ds && (<>
+
+                            {/* Agreement */}
+                            <div className="space-y-2">
+                              <p className="text-xs font-semibold text-parchment/70">Facility Use Agreement</p>
+                              {!ds.agreement_sent_at && (
+                                <button
+                                  className="btn-outline text-xs"
+                                  disabled={sendingAgreementV2[req.id]}
+                                  onClick={() => handleSendAgreementV2(req)}
+                                >
+                                  {sendingAgreementV2[req.id] ? "Sending…" : "Send Agreement to Customer →"}
+                                </button>
+                              )}
+                              {ds.agreement_sent_at && !ds.agreement_signed_at && (
+                                <div className="space-y-1">
+                                  <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                                    ⏳ Sent {new Date(ds.agreement_sent_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })} — awaiting signature
+                                  </p>
+                                  <button
+                                    className="btn-outline text-xs"
+                                    disabled={sendingAgreementV2[req.id]}
+                                    onClick={() => handleSendAgreementV2(req)}
+                                  >
+                                    {sendingAgreementV2[req.id] ? "Sending…" : "Resend Agreement →"}
+                                  </button>
+                                </div>
+                              )}
+                              {ds.agreement_signed_at && (
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-2 py-1">
+                                    ✓ Signed {new Date(ds.agreement_signed_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                                  </p>
+                                  {ds.agreement_pdf_url && (
+                                    <a href={ds.agreement_pdf_url} target="_blank" rel="noreferrer" className="text-xs text-[var(--bx-brass)] underline">
+                                      View PDF
+                                    </a>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* COI */}
+                            <div className="space-y-2">
+                              <p className="text-xs font-semibold text-parchment/70">Certificate of Insurance</p>
+                              {!ds.coi_uploaded_at && (
+                                <p className="text-xs text-slate">No COI uploaded yet.</p>
+                              )}
+                              {ds.coi_uploaded_at && !ds.coi_accepted_at && (() => {
+                                const act = coiAction[req.id];
+                                const busy = coiBusy[req.id];
+                                return (
+                                  <div className="space-y-2">
+                                    <div className="flex items-center gap-3 flex-wrap">
+                                      <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                                        ⏳ Uploaded {new Date(ds.coi_uploaded_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })} — pending review
+                                      </p>
+                                      {ds.coi_file_url && (
+                                        <a href={ds.coi_file_url} target="_blank" rel="noreferrer" className="text-xs text-[var(--bx-brass)] underline">
+                                          View COI
+                                        </a>
+                                      )}
+                                    </div>
+                                    {!act && (
+                                      <div className="flex gap-2">
+                                        <button className="btn-primary text-xs bg-emerald-600 hover:bg-emerald-700" onClick={() => setCoiAction(prev => ({ ...prev, [req.id]: "accept" }))}>
+                                          ✓ Accept COI
+                                        </button>
+                                        <button className="btn-outline text-xs border-red-300/40 text-red-400 hover:text-red-300" onClick={() => setCoiAction(prev => ({ ...prev, [req.id]: "flag" }))}>
+                                          ⚠ Flag Issue
+                                        </button>
+                                      </div>
+                                    )}
+                                    {act === "accept" && (
+                                      <div className="space-y-2">
+                                        <label className="text-xs text-slate">Expiry date (optional)</label>
+                                        <input
+                                          type="date"
+                                          className="rounded-lg border border-parchment/20 bg-ink text-parchment text-xs px-2 py-1"
+                                          value={coiExpiry[req.id] ?? ""}
+                                          onChange={e => setCoiExpiry(prev => ({ ...prev, [req.id]: e.target.value }))}
+                                        />
+                                        <div className="flex gap-2">
+                                          <button className="btn-primary text-xs bg-emerald-600 hover:bg-emerald-700" disabled={busy} onClick={() => handleCoiAction(req, "accept")}>
+                                            {busy ? "Saving…" : "Confirm Accept"}
+                                          </button>
+                                          <button className="btn-outline text-xs" onClick={() => setCoiAction(prev => ({ ...prev, [req.id]: null }))}>Cancel</button>
+                                        </div>
+                                      </div>
+                                    )}
+                                    {act === "flag" && (
+                                      <div className="space-y-2">
+                                        <textarea
+                                          className="w-full rounded-lg border border-red-300/30 bg-ink text-parchment text-xs px-2 py-1 placeholder-slate resize-none"
+                                          rows={2}
+                                          placeholder="Describe the issue (sent as a message to the customer)"
+                                          value={coiFlagNote[req.id] ?? ""}
+                                          onChange={e => setCoiFlagNote(prev => ({ ...prev, [req.id]: e.target.value }))}
+                                        />
+                                        <div className="flex gap-2">
+                                          <button className="btn-outline text-xs border-red-300/40 text-red-400 hover:text-red-300" disabled={busy} onClick={() => handleCoiAction(req, "flag")}>
+                                            {busy ? "Sending…" : "Send Flag to Customer"}
+                                          </button>
+                                          <button className="btn-outline text-xs" onClick={() => setCoiAction(prev => ({ ...prev, [req.id]: null }))}>Cancel</button>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })()}
+                              {ds.coi_accepted_at && (
+                                <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-2 py-1">
+                                  ✓ Accepted by {ds.coi_accepted_by}{ds.coi_expiry_date ? ` — expires ${ds.coi_expiry_date}` : ""}
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Payment */}
+                            <div className="space-y-2">
+                              <p className="text-xs font-semibold text-parchment/70">Payment</p>
+                              {ds.payment_received_at ? (
+                                <div className="space-y-1">
+                                  <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-2 py-1">
+                                    ✓ ${Number(ds.payment_amount ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })} via {ds.payment_method} — received {new Date(ds.payment_received_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                                  </p>
+                                  {ds.payment_receipt_url && (
+                                    <a href={ds.payment_receipt_url} target="_blank" rel="noreferrer" className="text-xs text-[var(--bx-brass)] underline">
+                                      View receipt
+                                    </a>
+                                  )}
+                                </div>
+                              ) : (() => {
+                                const pf = payForm[req.id] ?? { amount: "", method: "", received_at: "", receipt_url: "" };
+                                const busy = payBusy[req.id];
+                                function updPay(k: string, v: string) {
+                                  setPayForm(prev => ({ ...prev, [req.id]: { ...(prev[req.id] ?? { amount: "", method: "", received_at: "", receipt_url: "" }), [k]: v } }));
+                                }
+                                return (
+                                  <div className="space-y-2">
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <div>
+                                        <label className="text-xs text-slate">Amount ($)</label>
+                                        <input type="number" min="0" step="0.01" placeholder="0.00"
+                                          className="w-full rounded-lg border border-parchment/20 bg-ink text-parchment text-xs px-2 py-1 mt-0.5"
+                                          value={pf.amount} onChange={e => updPay("amount", e.target.value)} />
+                                      </div>
+                                      <div>
+                                        <label className="text-xs text-slate">Method</label>
+                                        <input type="text" placeholder="check, card, cash…"
+                                          className="w-full rounded-lg border border-parchment/20 bg-ink text-parchment text-xs px-2 py-1 mt-0.5"
+                                          value={pf.method} onChange={e => updPay("method", e.target.value)} />
+                                      </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <div>
+                                        <label className="text-xs text-slate">Date received</label>
+                                        <input type="date"
+                                          className="w-full rounded-lg border border-parchment/20 bg-ink text-parchment text-xs px-2 py-1 mt-0.5"
+                                          value={pf.received_at} onChange={e => updPay("received_at", e.target.value)} />
+                                      </div>
+                                      <div>
+                                        <label className="text-xs text-slate">Receipt URL (optional)</label>
+                                        <input type="url" placeholder="https://…"
+                                          className="w-full rounded-lg border border-parchment/20 bg-ink text-parchment text-xs px-2 py-1 mt-0.5"
+                                          value={pf.receipt_url} onChange={e => updPay("receipt_url", e.target.value)} />
+                                      </div>
+                                    </div>
+                                    <button className="btn-primary text-xs" disabled={busy} onClick={() => handlePayment(req)}>
+                                      {busy ? "Saving…" : "Record Payment"}
+                                    </button>
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                          </>)}
+                        </div>
+                      );
+                    })()}
+
                     {/* ── Comments thread */}
                     {req.dbId && (
                       <div className="space-y-2 pt-1" onClick={e => e.stopPropagation()}>

@@ -1,0 +1,174 @@
+import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
+import { adminClient, isStaffRole } from "@/lib/event-map";
+import { sendEmail } from "@/lib/email";
+import crypto from "crypto";
+
+type Params = { params: Promise<{ id: string }> };
+
+function sbServer() {
+  const cookieStore = cookies();
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll(); },
+        setAll(toSet) { try { toSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options)); } catch {} },
+      },
+    }
+  );
+}
+
+async function requireAdmin(sb: ReturnType<typeof sbServer>) {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return null;
+  const { data: role } = await adminClient
+    .from("bx_user_roles").select("role").eq("user_id", user.id).maybeSingle();
+  if (!role || !isStaffRole(role.role)) return null;
+  return { user, role: role.role as string };
+}
+
+function buildAgreementText(r: {
+  contact_name: string; contact_org: string | null;
+  event_name: string; payload: Record<string, unknown>;
+}): string {
+  const dates = (r.payload?.dates as string[])?.join(", ") ?? "dates to be confirmed";
+  const spaces = (r.payload?.spaces as string[])?.join(", ") ?? "spaces to be confirmed";
+  const headcount = (r.payload?.headcount as number) ?? "TBD";
+  const org = r.contact_org ?? r.contact_name;
+
+  return `FACILITY USE AGREEMENT
+Brainerd Baptist Church — BX Event Spaces
+
+This Facility Use Agreement ("Agreement") is entered into between Brainerd Baptist Church ("Church") and ${org} ("Renter"), represented by ${r.contact_name}.
+
+EVENT DETAILS
+Event Name: ${r.event_name}
+Reserved Spaces: ${spaces}
+Event Date(s): ${dates}
+Expected Attendance: ${headcount}
+
+TERMS AND CONDITIONS
+
+1. USE OF FACILITY
+The Renter agrees to use the Church facilities solely for the event described above. The Church reserves the right to deny use of its facilities to any group whose activities conflict with its mission, beliefs, or values.
+
+2. CARE OF PROPERTY
+The Renter agrees to leave all facilities, equipment, and furnishings in the same condition as found. The Renter is responsible for any damage to Church property caused by the Renter, their guests, or any vendors during the event.
+
+3. ALCOHOL AND CONTROLLED SUBSTANCES
+No alcohol or controlled substances are permitted on Church property at any time. Violation of this policy will result in immediate termination of the event and forfeiture of any deposits paid.
+
+4. NOISE AND CONDUCT
+The Renter agrees to control noise levels appropriately and to ensure that all guests conduct themselves in a manner consistent with the values of the Church and the surrounding community.
+
+5. CLEANUP
+The Renter is responsible for cleaning up after the event. All trash must be bagged and disposed of properly. Rented spaces must be cleared and cleaned within the time allotted. Additional cleaning fees may be charged if the space is left in an unacceptable condition.
+
+6. CANCELLATION
+Cancellations made fewer than 14 days before the event may result in forfeiture of the deposit. The Church reserves the right to cancel this agreement with reasonable notice if circumstances require.
+
+7. INDEMNIFICATION
+The Renter agrees to indemnify and hold harmless Brainerd Baptist Church, its staff, volunteers, and agents from any claims, damages, losses, or expenses arising out of the Renter's use of the facilities.
+
+8. INSURANCE
+Where required by the Church, the Renter must provide a valid Certificate of Insurance (COI) naming Brainerd Baptist Church as an additionally insured party before the event may proceed. Minimum coverage: $1,000,000 general liability.
+
+9. COMPLIANCE
+The Renter agrees to comply with all applicable local, state, and federal laws and regulations, as well as all Church policies communicated by staff.
+
+10. ENTIRE AGREEMENT
+This Agreement constitutes the entire agreement between the parties with respect to the subject matter herein and supersedes all prior negotiations, representations, or agreements.
+
+By typing your full legal name below, you acknowledge that you have read, understand, and agree to all terms and conditions in this Facility Use Agreement. You understand that this typed-name signature is legally binding.`;
+}
+
+// POST /api/admin/reservations/[id]/send-agreement
+export async function POST(req: NextRequest, { params }: Params) {
+  const { id } = await params;
+  const sb = sbServer();
+  const actor = await requireAdmin(sb);
+  if (!actor) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { data: res } = await adminClient
+    .from("reservations")
+    .select("id, booking_number, event_name, contact_name, contact_email, contact_org, status, payload")
+    .or(`id.eq.${id},booking_number.eq.${id}`)
+    .single();
+  if (!res) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  // Check for an existing unsent/unsigned agreement
+  const { data: existing } = await adminClient
+    .from("reservation_agreements")
+    .select("id, customer_signed_at")
+    .eq("reservation_id", res.id)
+    .maybeSingle();
+
+  if (existing?.customer_signed_at) {
+    return NextResponse.json({ error: "Agreement already signed." }, { status: 409 });
+  }
+
+  const token = crypto.randomBytes(32).toString("hex");
+  const agreementText = buildAgreementText({
+    contact_name: res.contact_name as string,
+    contact_org:  res.contact_org as string | null,
+    event_name:   res.event_name as string,
+    payload:      (res.payload ?? {}) as Record<string, unknown>,
+  });
+
+  // Upsert agreement row
+  if (existing) {
+    await adminClient.from("reservation_agreements").update({
+      token, agreement_text: agreementText, sent_by: actor.user.id, sent_at: new Date().toISOString(),
+    }).eq("id", existing.id);
+  } else {
+    await adminClient.from("reservation_agreements").insert({
+      reservation_id: res.id,
+      token,
+      agreement_text: agreementText,
+      sent_by: actor.user.id,
+      sent_at: new Date().toISOString(),
+    });
+  }
+
+  // Set status to pending_documents if not already there
+  if (!["pending_documents", "pending_payment", "approved", "confirmed", "completed"].includes(res.status as string)) {
+    await adminClient.from("reservations").update({ status: "pending_documents" }).eq("id", res.id);
+  }
+
+  // History row
+  await adminClient.from("reservation_history").insert({
+    reservation_id: res.id,
+    actor_id:       actor.user.id,
+    actor_name:     actor.user.email ?? "Admin",
+    actor_role:     "admin",
+    action:         "agreement_sent",
+    note:           "Facility Use Agreement sent for signature.",
+  });
+
+  // Email to user
+  const signingUrl = `https://bx.brainerdhq.app/reservations/${res.id}/agreement?token=${token}`;
+  if (res.contact_email) {
+    try {
+      await sendEmail({
+        to: res.contact_email as string,
+        subject: `Action required: Please sign your Facility Use Agreement (${res.booking_number ?? res.id.slice(0, 8)})`,
+        html: `
+          <p>Hi ${res.contact_name ?? "there"},</p>
+          <p>Your reservation for <strong>${res.event_name}</strong> is moving forward. Please review and sign the Facility Use Agreement at the link below to continue:</p>
+          <p style="margin:1.5em 0;">
+            <a href="${signingUrl}" style="background:#C5A95A;color:#1a1a1a;padding:0.75em 1.5em;border-radius:6px;text-decoration:none;font-weight:700;">Sign Agreement →</a>
+          </p>
+          <p>This link is specific to your reservation. If you have any questions, reply to this email or message us through the reservation portal.</p>
+          <p style="color:#888;font-size:0.875em;">Brainerd Baptist — BX Reservations &nbsp;·&nbsp; <a href="https://bx.brainerdhq.app/reservations/${res.id}">View your reservation</a></p>
+        `,
+      });
+    } catch (e) {
+      console.error("[send-agreement] email failed:", e);
+    }
+  }
+
+  return NextResponse.json({ ok: true, token });
+}
