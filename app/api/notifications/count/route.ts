@@ -36,7 +36,7 @@ export async function GET() {
       const { count: pendingCount } = await supabase
         .from("reservations")
         .select("id", { count: "exact", head: true })
-        .eq("status", "pending_insurance");
+        .eq("status", "pending");
 
       count += pendingCount ?? 0;
     } else {

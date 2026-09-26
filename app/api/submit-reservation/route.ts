@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
 
       const { data: insertData, error: insertErr } = await supabase.from("reservations").insert({
         booking_number:  bookingNumber,
-        status:          "pending_insurance",
+        status:          "pending",
         contact_name:    contact.name,
         contact_email:   contact.email,
         contact_phone:   contact.phone ?? null,
@@ -139,6 +139,7 @@ export async function POST(req: NextRequest) {
           to:            contact.email,
           name:          contact.name,
           bookingNumber,
+          reservationId,
           eventName:     contact.eventName,
           dates,
           rooms,
@@ -219,7 +220,7 @@ export async function POST(req: NextRequest) {
   const dates = extractDates(days);
   const rooms = extractRooms(days);
   Promise.allSettled([
-    sendReservationConfirmation({ to: contact.email, name: contact.name, bookingNumber, eventName: contact.eventName, dates, rooms }),
+    sendReservationConfirmation({ to: contact.email, name: contact.name, bookingNumber, reservationId: "", eventName: contact.eventName, dates, rooms }),
     sendAdminNewReservationAlert({ bookingNumber, submitterName: contact.name, submitterEmail: contact.email, eventName: contact.eventName, dates, rooms, notes: notes || undefined }),
   ]).catch(() => {});
 

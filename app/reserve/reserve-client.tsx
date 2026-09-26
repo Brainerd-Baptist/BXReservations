@@ -910,7 +910,7 @@ function ReviewStep({
           <div className="inline-block bg-brass/5 border border-brass/30 rounded-2xl px-6 py-4 mb-6">
             <p className="text-xs font-semibold text-slate uppercase tracking-widest mb-1">Your booking reference</p>
             <p className="text-2xl font-bold text-parchment tracking-widest font-mono">{bookingNumber}</p>
-            <p className="text-xs text-slate mt-1">Save this number — you&apos;ll need it to upload your liability insurance.</p>
+            <p className="text-xs text-slate mt-1">Save this number — you&apos;ll need it if you have questions or need to contact us.</p>
           </div>
         )}
         <p className="text-sm text-slate">A confirmation has been sent to {contact.email}.</p>
@@ -926,7 +926,7 @@ function ReviewStep({
           <div className="min-w-0">
             <p className="text-sm font-semibold text-parchment mb-0.5">Save this to your account</p>
             <p className="text-sm text-slate mb-3">
-              Create a free account to track your booking status, upload your insurance, and see updates — no need to dig through email.
+              Create a free account to track your booking status and see updates — no need to dig through email.
             </p>
             <a
               href="/login?next=/account"
@@ -947,8 +947,8 @@ function ReviewStep({
         )}
 
         <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl text-left">
-          <p className="text-sm font-semibold text-amber-800 mb-1">Next step: Upload your liability insurance</p>
-          <p className="text-sm text-amber-700">To complete your booking, upload a Certificate of Insurance (COI) showing Brainerd Baptist Church as an Additional Insured. We&apos;ll send you a link via email.</p>
+          <p className="text-sm font-semibold text-amber-800 mb-1">What&apos;s next?</p>
+          <p className="text-sm text-amber-700">To complete your booking, we&apos;ll reach out via email with next steps and any required documentation. Keep an eye on your inbox!</p>
         </div>
       </div>
     );

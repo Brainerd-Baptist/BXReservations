@@ -9,7 +9,7 @@ import EventMapEditor from "./event-map-editor";
 export const metadata = { title: "Event map · BX Reservations" };
 
 const STATUS_LABEL: Record<string, string> = {
-  pending_insurance: "Pending insurance",
+  pending:           "Requested",
   under_review: "In review",
   approved: "Approved",
   confirmed: "Confirmed",

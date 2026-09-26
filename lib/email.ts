@@ -171,6 +171,7 @@ export async function sendReservationConfirmation(opts: {
   to:            string;
   name:          string;
   bookingNumber: string;
+  reservationId: string;
   eventName:     string;
   dates:         string[];
   rooms:         string[];
@@ -179,7 +180,7 @@ export async function sendReservationConfirmation(opts: {
     console.warn("[email] RESEND_API_KEY not set — skipping confirmation");
     return;
   }
-  const { to, name, bookingNumber, eventName, dates, rooms } = opts;
+  const { to, name, bookingNumber, reservationId, eventName, dates, rooms } = opts;
 
   const html = brandedEmailHtml({
     preheader: `Your booking reference is ${bookingNumber} — we'll be in touch shortly.`,
@@ -210,7 +211,7 @@ export async function sendReservationConfirmation(opts: {
       <p style="margin:16px 0 0 0;">Our team will review your request and follow up within 2–3 business days.
          You'll receive an email when your status changes.</p>`,
     ctaText: "View Your Request",
-    ctaUrl:  `${SITE_URL}/reservations`,
+    ctaUrl:  `${SITE_URL}/reservations/${reservationId}`,
     footerNote: `Reference: ${bookingNumber}`,
   });
 
@@ -328,6 +329,7 @@ export async function sendStatusUpdateEmail(opts: {
   to:            string;
   name:          string;
   bookingNumber: string;
+  reservationId: string;
   eventName:     string;
   newStatus:     "approved" | "declined" | "needs_info" | "cancelled" | "proposal_sent";
   adminNote?:    string;
@@ -336,7 +338,7 @@ export async function sendStatusUpdateEmail(opts: {
     console.warn("[email] RESEND_API_KEY not set — skipping status update");
     return;
   }
-  const { to, name, bookingNumber, eventName, newStatus, adminNote } = opts;
+  const { to, name, bookingNumber, reservationId, eventName, newStatus, adminNote } = opts;
   const noteBlock = adminNote
     ? `<p style="background:#f8fafc;border-left:3px solid #00abc9;padding:12px 16px;margin:16px 0;border-radius:0 6px 6px 0;color:#374151;font-size:14px;">
          <strong>Note from staff:</strong> ${adminNote}
@@ -383,7 +385,7 @@ export async function sendStatusUpdateEmail(opts: {
     headline:  cfg.headline,
     body:      cfg.body,
     ctaText:   cfg.cta,
-    ctaUrl:    `${SITE_URL}/reservations`,
+    ctaUrl:    `${SITE_URL}/reservations/${reservationId}`,
     footerNote: `Reference: ${bookingNumber}`,
   });
 
@@ -400,6 +402,7 @@ export async function sendBookingReminder(opts: {
   to:            string;
   name:          string;
   bookingNumber: string;
+  reservationId: string;
   eventName:     string;
   firstDate:     string;   // e.g. "Monday, September 28, 2026"
   startTime:     string;   // e.g. "8:00 AM"
@@ -411,7 +414,7 @@ export async function sendBookingReminder(opts: {
     console.warn("[email] RESEND_API_KEY not set — skipping reminder");
     return;
   }
-  const { to, name, bookingNumber, eventName, firstDate, startTime, endTime, rooms, headcount } = opts;
+  const { to, name, bookingNumber, reservationId, eventName, firstDate, startTime, endTime, rooms, headcount } = opts;
 
   const html = brandedEmailHtml({
     preheader: `Your event "${eventName}" is coming up in 48 hours — here's everything you need.`,
@@ -450,7 +453,7 @@ export async function sendBookingReminder(opts: {
       <p style="margin:16px 0 0 0;">If you have any questions or need to make last-minute changes,
          please contact the church office as soon as possible.</p>`,
     ctaText:    "View Your Booking",
-    ctaUrl:     `${SITE_URL}/reservations`,
+    ctaUrl:     `${SITE_URL}/reservations/${reservationId}`,
     footerNote: `Reference: ${bookingNumber}`,
   });
 

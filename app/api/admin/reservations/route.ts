@@ -25,13 +25,13 @@ const SETUP_LABELS: Record<string, string> = {
 };
 
 // ─── Status mapping ────────────────────────────────────────────────────────────
-// DB statuses:  pending | under_review | pending_insurance | approved | rejected | cancelled
+// DB statuses:  pending | under_review | approved | confirmed | completed | cancelled
 // Admin labels: Requested | Proposal Sent | Deposit Received | Confirmed | Declined
 
 // Allowed DB statuses (from check constraint):
-//   pending_insurance | under_review | approved | confirmed | completed | cancelled
+//   pending | under_review | approved | confirmed | completed | cancelled
 const DB_TO_ADMIN: Record<string, string> = {
-  pending_insurance: "Requested",       // new submission
+  pending:           "Requested",       // new submission
   under_review:      "Proposal Sent",
   approved:          "Deposit Received",
   confirmed:         "Confirmed",
@@ -40,7 +40,7 @@ const DB_TO_ADMIN: Record<string, string> = {
 };
 
 const ADMIN_TO_DB: Record<string, string> = {
-  "Requested":        "pending_insurance",
+  "Requested":        "pending",
   "Proposal Sent":    "under_review",
   "Deposit Received": "approved",
   "Confirmed":        "confirmed",
@@ -152,6 +152,7 @@ export async function PATCH(req: NextRequest) {
       to:            row.contact_email as string,
       name:          (row.contact_name as string) || (row.contact_email as string),
       bookingNumber: row.booking_number as string,
+      reservationId: row.id as string,
       eventName:     row.event_name as string,
       newStatus:     emailType,
     }).then(() => {
