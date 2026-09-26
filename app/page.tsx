@@ -48,7 +48,7 @@ export default async function Home() {
                   Reserve a Space →
                 </Link>
                 <Link
-                  href="/account"
+                  href="/reservations"
                   className="inline-flex items-center justify-center px-7 py-4 rounded-xl border border-parchment/20 text-parchment font-semibold text-base hover:bg-parchment/10 transition-colors"
                 >
                   My Reservations
