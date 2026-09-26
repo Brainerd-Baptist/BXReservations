@@ -8,8 +8,7 @@ export const metadata = { title: "Reservation · BX Reservations" };
 
 function statusChip(status: string) {
   const map: Record<string, { label: string; bg: string; color: string }> = {
-    pending:           { label: "Requested",         bg: "#FEF9C3", color: "#713F12" },
-    pending:   { label: "Pending",   bg: "#FEF3C7", color: "#92400E" },
+    pending:      { label: "Requested", bg: "#FEF9C3", color: "#713F12" },
     under_review: { label: "In Review", bg: "#E0E7FF", color: "#3730A3" },
     approved:  { label: "Approved",  bg: "#D1FAE5", color: "#065F46" },
     confirmed: { label: "Confirmed", bg: "#D1FAE5", color: "#065F46" },

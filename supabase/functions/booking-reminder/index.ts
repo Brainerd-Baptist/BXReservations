@@ -10,13 +10,8 @@ import { Resend } from "npm:resend";
 const SITE_URL = Deno.env.get("NEXT_PUBLIC_SITE_URL") ?? "https://bx.brainerdhq.app";
 const FROM     = "BX Reservations <reservations@brainerdhq.app>";
 
-Deno.serve(async (req) => {
-  // Allow only internal cron calls (Authorization header set in pg_net or cron config)
-  const authHeader = req.headers.get("Authorization");
-  if (authHeader !== `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`) {
-    return new Response("Unauthorized", { status: 401 });
-  }
-
+Deno.serve(async (_req) => {
+  // Auth is handled by Supabase's verify_jwt gate (anon JWT from pg_cron passes).
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
@@ -83,7 +78,7 @@ Deno.serve(async (req) => {
 
     try {
       await resend.emails.send({
-        from,
+        from: FROM,
         to:      res.contact_email as string,
         subject: `Reminder: "${res.event_name as string}" is in 48 hours — ${res.booking_number as string}`,
         html,
