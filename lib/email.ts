@@ -483,3 +483,24 @@ export async function sendBookingReminder(opts: {
     html,
   });
 }
+
+// ─── Generic low-level sender ─────────────────────────────────────────────────
+// Used by routes that build their own HTML rather than going through brandedEmailHtml.
+
+export async function sendEmail(opts: {
+  to:      string;
+  subject: string;
+  html:    string;
+  from?:   string;
+}): Promise<void> {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn("[email] RESEND_API_KEY not set — skipping sendEmail");
+    return;
+  }
+  await getResend().emails.send({
+    from:    opts.from ?? FROM,
+    to:      opts.to,
+    subject: opts.subject,
+    html:    opts.html,
+  });
+}
