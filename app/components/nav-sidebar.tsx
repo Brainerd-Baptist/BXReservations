@@ -22,6 +22,7 @@ const navItems = [
 
 const reservationItems = [
   { label: "Spaces", href: "/rooms", icon: "map" },
+  { label: "BX Map", href: "/bx-map", icon: "map" },
   { label: "New Request", href: "/reserve", icon: "plus" },
   { label: "My Reservations", href: "/reservations", icon: "list" },
 ];

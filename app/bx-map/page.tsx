@@ -58,7 +58,7 @@ html,body{height:100%}
 body{margin:0;background:var(--surface);color:var(--fg);font-family:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px;line-height:1.4;overflow:hidden}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
 button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
-.app{height:100%;display:grid;grid-template-rows:auto auto 1fr;padding-top:env(safe-area-inset-top,0px)}
+.app{height:100%;display:grid;grid-template-rows:auto 1fr;padding-top:env(safe-area-inset-top,0px)}
 /* ---------- top bar ---------- */
 .bar{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--surface-raised);border-bottom:1px solid var(--border);flex-wrap:wrap;z-index:5}
 .brand{display:flex;align-items:baseline;gap:10px;min-width:0}
@@ -87,7 +87,7 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:3px so
 .mapwrap{position:relative;overflow:hidden;background:var(--surface);touch-action:none;cursor:grab}
 .mapwrap.dragging{cursor:grabbing}
 .mapwrap svg.map{width:100%;height:100%;display:block}
-.chips{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;padding:6px 14px 4px;scrollbar-width:none;border-bottom:1px solid var(--border);background:var(--surface-raised)}
+.chips{position:absolute;left:12px;right:12px;top:10px;display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;padding:2px 4px 6px;scrollbar-width:none;z-index:3;pointer-events:none}
 .chips::-webkit-scrollbar{display:none}
 .chip{pointer-events:auto;flex:none;display:inline-flex;align-items:center;gap:6px;padding:5px 10px 5px 7px;border-radius:999px;background:var(--surface-raised);border:1px solid var(--border);font-size:12.5px;font-weight:600;color:var(--fg-muted);box-shadow:0 1px 2px rgba(0,0,0,.08)}
 .chip i{width:10px;height:10px;border-radius:3px;border:1px solid rgba(0,0,0,.15)}
@@ -205,16 +205,14 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:3px so
   .welcome .kbd{display:inline-block;border:1px solid var(--border-strong);border-bottom-width:2px;border-radius:5px;padding:0 5px;font-size:12px;font-family:ui-monospace,monospace}
 }
 @media (max-width:859px){
-  .panel.doormode{max-height:36%}
-  .panel{left:0;right:0;bottom:0;border-radius:16px 16px 0 0;max-height:70%;padding-bottom:env(safe-area-inset-bottom,0px)}
-  .panel .grab{display:block;cursor:pointer;touch-action:none;user-select:none}
-  .panel.expanded{max-height:92%}
+  .panel.doormode{max-height:42%}
+  .panel{left:0;right:0;bottom:0;border-radius:16px 16px 0 0;max-height:52%;padding-bottom:env(safe-area-inset-bottom,0px)}
+  .panel .grab{display:block}
   .panel .welcome{display:none}
   .legend{display:none}
+  .hint{bottom:auto;top:52px}
   .bar{gap:8px;padding:8px 12px}
   .brand span{display:none}
-  .brand h1{font-size:17px}
-  .zoom{bottom:calc(12px + env(safe-area-inset-bottom,0px))}
   .search{flex-basis:100%;max-width:none;margin-left:0;order:3}
 }
 @media (prefers-reduced-motion:reduce){.panel,.room{transition:none}.pulse.go{animation:none}}
@@ -239,10 +237,9 @@ const MAP_MARKUP = `
     </div>
   </header>
 
-  <div class="chips" id="chips"></div>
-
   <div class="stage">
     <div class="mapwrap" id="mapwrap">
+      <div class="chips" id="chips"></div>
       <svg class="map" id="map" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="BX floor plan"></svg>
       <div class="legend" id="legend"></div>
       <div class="hint" id="hint">Tap a room · drag to pan · pinch or scroll to zoom</div>

@@ -157,6 +157,24 @@ export function RoomsClient() {
         </div>
       </section>
 
+      {/* ── Map CTA ── */}
+      <div className="max-w-5xl mx-auto px-4 pt-6 pb-0 flex items-center justify-end">
+        <a
+          href="/bx-map"
+          className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+          style={{
+            color: "var(--bx-brass)",
+            background: "color-mix(in srgb, var(--bx-brass) 10%, transparent)",
+            textDecoration: "none",
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
+          </svg>
+          View floor map
+        </a>
+      </div>
+
       {/* ── Content: Map or Grid ── */}
       <section className="max-w-5xl mx-auto px-4 py-8">
         {viewMode === "map" ? (

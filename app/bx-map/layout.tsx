@@ -1,12 +1,29 @@
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'BX Building Map · Brainerd Baptist',
-  description:
-    'Interactive floor plan of the Brainerd Baptist BX building, lower and upper levels.',
-};
-
-export default function BxMapLayout({ children }: { children: React.ReactNode }) {
-  // Children render in a fixed full-screen overlay — no wrapper needed.
-  return <>{children}</>;
+// BX Building Map — route layout
+// Positions the map as a fixed full-bleed panel below the site header,
+// and hides the root version footer on this route.
+export default function BxMapLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <>
+      {/* Hide the root version footer on the map route */}
+      <style>{`body > footer { display: none !important; }`}</style>
+      {/* Fixed panel: starts below the 56px header, fills the rest of the viewport */}
+      <div
+        style={{
+          position: 'fixed',
+          top: 'calc(3.5rem + env(safe-area-inset-top))',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          overflow: 'hidden',
+          zIndex: 20,
+        }}
+      >
+        {children}
+      </div>
+    </>
+  );
 }
