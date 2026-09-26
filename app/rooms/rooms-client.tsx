@@ -2,15 +2,14 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ROOMS, type Room, type SetupId } from "@/lib/rooms";
 import { RoomCard } from "@/app/components/room-card";
 import { RoomLightbox } from "@/app/components/room-lightbox";
-import { FloorPlan } from "@/app/components/floor-plan";
 
 // ── Filter types ─────────────────────────────────────────────────────────────
 type FloorFilter = "all" | "upstairs" | "downstairs";
 type CapacityFilter = "all" | "small" | "medium" | "large";
-type ViewMode = "grid" | "map";
 
 const SETUP_FILTER_IDS: SetupId[] = ["theater", "banquet", "reception", "cocktail", "classroom", "boardroom"];
 
@@ -37,12 +36,11 @@ function matchesCapacity(room: Room, cap: CapacityFilter): boolean {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export function RoomsClient() {
+  const router = useRouter();
   const [floor, setFloor] = useState<FloorFilter>("all");
   const [cap, setCap] = useState<CapacityFilter>("all");
   const [setup, setSetup] = useState<SetupId | "all">("all");
   const [previewRoom, setPreviewRoom] = useState<Room | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
-  const [mapFloor, setMapFloor] = useState<"upstairs" | "downstairs">("upstairs");
 
   const filtered = useMemo(() => ROOMS.filter(r => {
     if (floor !== "all" && r.floor !== floor) return false;
@@ -50,8 +48,6 @@ export function RoomsClient() {
     if (setup !== "all" && !(r.setups as readonly string[]).includes(setup)) return false;
     return true;
   }), [floor, cap, setup]);
-
-  const activeIds = useMemo(() => new Set(filtered.map(r => r.id)), [filtered]);
 
   return (
     <main className="min-h-screen relative overflow-x-hidden" style={{ background: "var(--bx-ink)" }}>
@@ -116,25 +112,8 @@ export function RoomsClient() {
             ))}
           </div>
 
-          {/* Floor tabs (map mode only) */}
-          {viewMode === "map" && (
-            <div className="flex items-center rounded-lg overflow-hidden ml-auto"
-              style={{ border: "1px solid color-mix(in srgb, var(--bx-parchment) 12%, transparent)" }}>
-              {(["upstairs", "downstairs"] as const).map(f => (
-                <button key={f} onClick={() => setMapFloor(f)}
-                  className="px-3 py-1 text-xs font-medium transition-all"
-                  style={mapFloor === f
-                    ? { background: "var(--bx-brass)", color: "var(--bx-ink)" }
-                    : { background: "transparent", color: "var(--bx-slate)" }
-                  }>
-                  {f === "upstairs" ? "↑ Up" : "↓ Down"}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Count + view toggle */}
-          <div className="flex items-center gap-2">
+          {/* Count + Grid/Map toggle */}
+          <div className="flex items-center gap-2 ml-auto">
             {filtered.length < ROOMS.length && (
               <span className="text-xs" style={{ color: "var(--bx-slate)" }}>
                 {filtered.length} of {ROOMS.length}
@@ -142,49 +121,30 @@ export function RoomsClient() {
             )}
             <div className="flex items-center rounded-lg overflow-hidden"
               style={{ border: "1px solid color-mix(in srgb, var(--bx-parchment) 12%, transparent)" }}>
-              {(["grid", "map"] as ViewMode[]).map(v => (
-                <button key={v} onClick={() => setViewMode(v)}
-                  className="px-3 py-1 text-xs font-medium transition-all"
-                  style={viewMode === v
-                    ? { background: "var(--bx-brass)", color: "var(--bx-ink)" }
-                    : { background: "transparent", color: "var(--bx-slate)" }
-                  }>
-                  {v === "grid" ? "⊞ Grid" : "⬜ Map"}
-                </button>
-              ))}
+              {/* Grid — current view */}
+              <button
+                className="px-3 py-1 text-xs font-medium transition-all"
+                style={{ background: "var(--bx-brass)", color: "var(--bx-ink)" }}
+                disabled
+              >
+                ⊞ Grid
+              </button>
+              {/* Map — navigates to the interactive floor plan */}
+              <button
+                onClick={() => router.push("/bx-map")}
+                className="px-3 py-1 text-xs font-medium transition-all"
+                style={{ background: "transparent", color: "var(--bx-slate)" }}
+              >
+                ⬜ Map
+              </button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── Map CTA ── */}
-      <div className="max-w-5xl mx-auto px-4 pt-6 pb-0 flex items-center justify-end">
-        <a
-          href="/bx-map"
-          className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
-          style={{
-            color: "var(--bx-brass)",
-            background: "color-mix(in srgb, var(--bx-brass) 10%, transparent)",
-            textDecoration: "none",
-          }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
-          </svg>
-          View floor map
-        </a>
-      </div>
-
-      {/* ── Content: Map or Grid ── */}
+      {/* ── Content: Grid ── */}
       <section className="max-w-5xl mx-auto px-4 py-8">
-        {viewMode === "map" ? (
-          <FloorPlan
-            activeIds={activeIds}
-            onRoomClick={(room) => setPreviewRoom(room)}
-            floor={mapFloor}
-            onFloorChange={setMapFloor}
-          />
-        ) : filtered.length === 0 ? (
+        {filtered.length === 0 ? (
           <div className="py-20 text-center">
             <p className="text-4xl mb-3">🔍</p>
             <p className="font-semibold mb-1" style={{ color: "var(--bx-parchment)" }}>No spaces match these filters</p>
