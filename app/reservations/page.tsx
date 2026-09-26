@@ -3,74 +3,15 @@ import Link from "next/link";
 import { getUserAndRole } from "@/lib/get-user-role";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import ReservationList from "./ReservationList";
+import type { Reservation, Collab } from "./ReservationList";
 
 export const metadata = { title: "My Reservations · BX Reservations" };
 
-function statusChip(status: string) {
-  const map: Record<string, { label: string; bg: string; color: string }> = {
-    pending:            { label: "Requested",   bg: "#FEF9C3", color: "#713F12" },
-    under_review:       { label: "In Review",   bg: "#E0E7FF", color: "#3730A3" },
-    needs_info:         { label: "Info Needed", bg: "#FEF3C7", color: "#92400E" },
-    pending_documents:  { label: "Docs Needed", bg: "#FEF3C7", color: "#92400E" },
-    pending_payment:    { label: "Payment Due", bg: "#FEF3C7", color: "#92400E" },
-    pending_insurance:  { label: "Requested",   bg: "#FEF9C3", color: "#713F12" },
-    approved:           { label: "Approved",    bg: "#D1FAE5", color: "#065F46" },
-    confirmed:          { label: "Confirmed",   bg: "#D1FAE5", color: "#065F46" },
-    completed:          { label: "Completed",   bg: "#F3F4F6", color: "#374151" },
-    rejected:           { label: "Not Approved",bg: "#FEE2E2", color: "#991B1B" },
-    cancelled:          { label: "Cancelled",   bg: "#F3F4F6", color: "#374151" },
-    cancelled_by_admin: { label: "Cancelled",   bg: "#FEE2E2", color: "#991B1B" },
-    cancelled_by_user:  { label: "Cancelled",   bg: "#F3F4F6", color: "#374151" },
-    auto_cancelled:     { label: "Expired",     bg: "#F3F4F6", color: "#374151" },
-  };
-  const s = map[status] ?? { label: status, bg: "#F3F4F6", color: "#374151" };
-  return (
-    <span
-      style={{
-        padding: "2px 8px",
-        borderRadius: "9999px",
-        fontSize: "0.75rem",
-        fontWeight: 600,
-        background: s.bg,
-        color: s.color,
-        flexShrink: 0,
-      }}
-    >
-      {s.label}
-    </span>
-  );
-}
-
-function formatDate(dateStr?: string | null, fallback?: string | null) {
-  const d = dateStr || fallback;
-  if (!d) return null;
-  return new Date(d).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-const ROOM_LABELS: Record<string, string> = {
-  "crosspointe-a": "Crosspointe A",
-  "crosspointe-b": "Crosspointe B",
-  "crosspointe-c": "Crosspointe C",
-  "crosstiesA": "CrossTies A",
-  "crosstiesB": "CrossTies B",
-  "crosstiesC": "CrossTies C",
-  "crosstiescafe": "CrossTies Café",
-  "crossing": "The Crossing",
-  "crossview": "CrossView",
-  "loft": "The Loft",
-};
-
 function parsePayload(payload: unknown) {
-  const p = payload as { days?: Array<{ date?: string; rooms?: Array<{ roomId?: string }> }>; contact?: { eventName?: string } } | null;
-  const firstDay = p?.days?.[0];
-  const startDate = firstDay?.date ?? null;
-  const roomId = firstDay?.rooms?.[0]?.roomId ?? null;
-  const space = roomId ? (ROOM_LABELS[roomId] ?? roomId) : null;
-  return { startDate, space };
+  const p = payload as { days?: Array<{ date?: string }> } | null;
+  const startDate = p?.days?.[0]?.date ?? null;
+  return { startDate };
 }
 
 export default async function ReservationsPage() {
@@ -115,68 +56,16 @@ export default async function ReservationsPage() {
     .limit(20);
 
   const now = new Date();
-  const upcoming = (reservations ?? []).filter((r) => {
+  const upcoming: Reservation[] = (reservations ?? []).filter((r) => {
     const { startDate } = parsePayload(r.payload);
     const eventDate = startDate ? new Date(startDate) : new Date(r.created_at);
     return r.status !== "cancelled" && r.status !== "rejected" && eventDate >= now;
   });
-  const past = (reservations ?? []).filter((r) => {
+  const past: Reservation[] = (reservations ?? []).filter((r) => {
     const { startDate } = parsePayload(r.payload);
     const eventDate = startDate ? new Date(startDate) : new Date(r.created_at);
     return r.status === "cancelled" || r.status === "rejected" || eventDate < now;
   });
-
-  const sectionHeader = (label: string, count?: number, badge?: { label: string }) => (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "0.5rem",
-        marginBottom: "0.75rem",
-      }}
-    >
-      <h2
-        style={{
-          margin: 0,
-          fontSize: "0.75rem",
-          fontWeight: 700,
-          letterSpacing: "0.05em",
-          textTransform: "uppercase",
-          color: badge ? "var(--bx-brass)" : "var(--bx-slate)",
-        }}
-      >
-        {label}
-      </h2>
-      {badge && (
-        <span
-          style={{
-            padding: "1px 7px",
-            borderRadius: "9999px",
-            fontSize: "0.7rem",
-            fontWeight: 700,
-            background: "color-mix(in srgb, var(--bx-brass) 20%, transparent)",
-            color: "var(--bx-brass)",
-          }}
-        >
-          {badge.label}
-        </span>
-      )}
-      {!badge && count !== undefined && count > 0 && (
-        <span
-          style={{
-            padding: "1px 7px",
-            borderRadius: "9999px",
-            fontSize: "0.7rem",
-            fontWeight: 600,
-            background: "color-mix(in srgb, var(--bx-slate) 15%, transparent)",
-            color: "var(--bx-slate)",
-          }}
-        >
-          {count}
-        </span>
-      )}
-    </div>
-  );
 
   return (
     <main style={{ maxWidth: "640px", margin: "0 auto", padding: "2rem 1rem 4rem" }}>
@@ -216,10 +105,35 @@ export default async function ReservationsPage() {
         </Link>
       </div>
 
-      {/* ── Pending invites ── */}
+      {/* ── Pending invites (server-rendered, no hover handlers) ── */}
       {pendingInvites && pendingInvites.length > 0 && (
         <div className="bx-fade-in" style={{ marginBottom: "1.5rem" }}>
-          {sectionHeader("Pending invites", undefined, { label: String(pendingInvites.length) })}
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
+            <h2
+              style={{
+                margin: 0,
+                fontSize: "0.75rem",
+                fontWeight: 700,
+                letterSpacing: "0.05em",
+                textTransform: "uppercase",
+                color: "var(--bx-brass)",
+              }}
+            >
+              Pending invites
+            </h2>
+            <span
+              style={{
+                padding: "1px 7px",
+                borderRadius: "9999px",
+                fontSize: "0.7rem",
+                fontWeight: 700,
+                background: "color-mix(in srgb, var(--bx-brass) 20%, transparent)",
+                color: "var(--bx-brass)",
+              }}
+            >
+              {pendingInvites.length}
+            </span>
+          </div>
           <div
             style={{
               border: "1px solid color-mix(in srgb, var(--bx-brass) 25%, transparent)",
@@ -230,10 +144,11 @@ export default async function ReservationsPage() {
           >
             {pendingInvites.map((inv, i) => {
               const res = inv.reservations as unknown as { id: string; event_name?: string; payload?: unknown } | null;
-              const { startDate: resStart, space: resSpace } = parsePayload(res?.payload);
-              const label = res?.event_name || resSpace || "A reservation";
-              const dateStr = resStart
-                ? new Date(resStart).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+              const p = res?.payload as { days?: Array<{ date?: string; rooms?: Array<{ roomId?: string }> }> } | null;
+              const startDate = p?.days?.[0]?.date ?? null;
+              const label = res?.event_name || "A reservation";
+              const dateStr = startDate
+                ? new Date(startDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
                 : null;
               const roleLabel = inv.collab_role === "co_owner" ? "Co-owner" : "Viewer";
               return (
@@ -282,204 +197,25 @@ export default async function ReservationsPage() {
         </div>
       )}
 
-      {/* ── Upcoming reservations ── */}
-      <div className="bx-fade-in" style={{ marginBottom: "1.5rem" }}>
-        {sectionHeader("Upcoming", upcoming.length)}
-        <div
-          style={{
-            border: "1px solid color-mix(in srgb, var(--bx-parchment) 12%, transparent)",
-            borderRadius: "12px",
-            overflow: "hidden",
-            background: "var(--bx-ink-soft)",
-          }}
-        >
-          {upcoming.length === 0 ? (
-            <div style={{ padding: "2.5rem 1.5rem", textAlign: "center", color: "var(--bx-slate)" }}>
-              <p style={{ margin: "0 0 0.5rem" }}>No upcoming reservations.</p>
-              <Link href="/reserve" style={{ color: "var(--bx-brass)", fontWeight: 600, textDecoration: "none" }}>
-                Make a request →
-              </Link>
-            </div>
-          ) : (
-            upcoming.map((r, i) => (
-              <Link
-                key={r.id}
-                href={`/reservations/${r.id}`}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: "0.75rem",
-                  padding: "0.875rem 1.25rem",
-                  borderTop: i === 0 ? "none" : "1px solid color-mix(in srgb, var(--bx-parchment) 6%, transparent)",
-                  textDecoration: "none",
-                  transition: "background 0.1s",
-                }}
-                onMouseEnter={(e) =>
-                  ((e.currentTarget as HTMLAnchorElement).style.background = "color-mix(in srgb, var(--bx-parchment) 3%, transparent)")
-                }
-                onMouseLeave={(e) =>
-                  ((e.currentTarget as HTMLAnchorElement).style.background = "transparent")
-                }
-              >
-                <div>
-                  {(() => {
-                    const { startDate, space } = parsePayload(r.payload);
-                    return (<>
-                      <div style={{ fontWeight: 600, fontSize: "0.9375rem", color: "var(--bx-parchment)" }}>
-                        {r.event_name || space || "Reservation"}
-                      </div>
-                      <div style={{ fontSize: "0.8125rem", color: "var(--bx-slate)", marginTop: "0.15rem" }}>
-                        {formatDate(startDate, r.created_at)}
-                        {r.booking_number ? ` · ${r.booking_number}` : ""}
-                      </div>
-                    </>);
-                  })()}
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  {statusChip(r.status)}
-                  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ color: "var(--bx-slate)", flexShrink: 0 }}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                  </svg>
-                </div>
-              </Link>
-            ))
-          )}
-        </div>
-      </div>
+      {/* ── Upcoming / Shared / Past (client component handles hover) ── */}
+      <ReservationList
+        upcoming={upcoming}
+        sharedCollabs={(sharedCollabs ?? []) as Collab[]}
+        past={past}
+      />
 
-      {/* ── Shared with me ── */}
-      {sharedCollabs && sharedCollabs.length > 0 && (
-        <div className="bx-fade-in" style={{ marginBottom: "1.5rem" }}>
-          {sectionHeader("Shared with me", sharedCollabs.length)}
-          <div
-            style={{
-              border: "1px solid color-mix(in srgb, var(--bx-parchment) 12%, transparent)",
-              borderRadius: "12px",
-              overflow: "hidden",
-              background: "var(--bx-ink-soft)",
-            }}
-          >
-            {sharedCollabs.map((collab, i) => {
-              const res = collab.reservations as unknown as { id: string; event_name?: string; payload?: unknown; status?: string } | null;
-              const { startDate: resStart2, space: resSpace2 } = parsePayload(res?.payload);
-              const label = res?.event_name || resSpace2 || "Shared reservation";
-              const dateStr = formatDate(resStart2);
-              const roleLabel = collab.collab_role === "co_owner" ? "Co-owner" : "Viewer";
-              return (
-                <Link
-                  key={collab.id}
-                  href={res?.id ? `/reservations/${res.id}` : "#"}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    gap: "0.75rem",
-                    padding: "0.875rem 1.25rem",
-                    borderTop: i === 0 ? "none" : "1px solid color-mix(in srgb, var(--bx-parchment) 6%, transparent)",
-                    textDecoration: "none",
-                    transition: "background 0.1s",
-                  }}
-                  onMouseEnter={(e) =>
-                    ((e.currentTarget as HTMLAnchorElement).style.background = "color-mix(in srgb, var(--bx-parchment) 3%, transparent)")
-                  }
-                  onMouseLeave={(e) =>
-                    ((e.currentTarget as HTMLAnchorElement).style.background = "transparent")
-                  }
-                >
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: "0.9375rem", color: "var(--bx-parchment)" }}>
-                      {label}
-                    </div>
-                    <div style={{ fontSize: "0.8125rem", color: "var(--bx-slate)", marginTop: "0.15rem" }}>
-                      {dateStr ? dateStr + " · " : ""}{roleLabel}
-                    </div>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    {res?.status && statusChip(res.status)}
-                    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ color: "var(--bx-slate)", flexShrink: 0 }}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                    </svg>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ── Past reservations ── */}
-      {past.length > 0 && (
-        <div className="bx-fade-in" style={{ marginBottom: "1.5rem" }}>
-          {sectionHeader("Past", past.length)}
-          <div
-            style={{
-              border: "1px solid color-mix(in srgb, var(--bx-parchment) 8%, transparent)",
-              borderRadius: "12px",
-              overflow: "hidden",
-              background: "var(--bx-ink-soft)",
-              opacity: 0.75,
-            }}
-          >
-            {past.map((r, i) => (
-              <Link
-                key={r.id}
-                href={`/reservations/${r.id}`}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: "0.75rem",
-                  padding: "0.75rem 1.25rem",
-                  borderTop: i === 0 ? "none" : "1px solid color-mix(in srgb, var(--bx-parchment) 6%, transparent)",
-                  textDecoration: "none",
-                  transition: "background 0.1s",
-                }}
-                onMouseEnter={(e) =>
-                  ((e.currentTarget as HTMLAnchorElement).style.background = "color-mix(in srgb, var(--bx-parchment) 3%, transparent)")
-                }
-                onMouseLeave={(e) =>
-                  ((e.currentTarget as HTMLAnchorElement).style.background = "transparent")
-                }
-              >
-                <div>
-                  {(() => {
-                    const { startDate, space } = parsePayload(r.payload);
-                    return (<>
-                      <div style={{ fontWeight: 500, fontSize: "0.875rem", color: "var(--bx-parchment)" }}>
-                        {r.event_name || space || "Reservation"}
-                      </div>
-                      <div style={{ fontSize: "0.75rem", color: "var(--bx-slate)", marginTop: "0.1rem" }}>
-                        {formatDate(startDate, r.created_at)}
-                        {r.booking_number ? ` · ${r.booking_number}` : ""}
-                      </div>
-                    </>);
-                  })()}
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  {statusChip(r.status)}
-                  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" style={{ color: "var(--bx-slate)", flexShrink: 0 }}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                  </svg>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Empty state when nothing at all */}
+      {/* ── Empty state when nothing at all ── */}
       {(!reservations || reservations.length === 0) &&
         (!pendingInvites || pendingInvites.length === 0) &&
         (!sharedCollabs || sharedCollabs.length === 0) && (
-        <div
-          style={{
-            textAlign: "center",
-            padding: "4rem 1.5rem",
-            color: "var(--bx-slate)",
-          }}
-        >
-          <div style={{ marginBottom: "0.75rem", color: "var(--bx-slate)" }}><svg width="2.5rem" height="2.5rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{display:"block",margin:"0 auto"}}><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg></div>
+        <div style={{ textAlign: "center", padding: "4rem 1.5rem", color: "var(--bx-slate)" }}>
+          <div style={{ marginBottom: "0.75rem", color: "var(--bx-slate)" }}>
+            <svg width="2.5rem" height="2.5rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ display: "block", margin: "0 auto" }}>
+              <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
+              <rect x="9" y="3" width="6" height="4" rx="1" />
+              <path d="M9 12h6M9 16h4" />
+            </svg>
+          </div>
           <p style={{ margin: "0 0 0.5rem", fontWeight: 600, color: "var(--bx-parchment)" }}>No reservations yet</p>
           <p style={{ margin: "0 0 1.25rem", fontSize: "0.875rem" }}>
             When you submit a space request, it'll show up here.
