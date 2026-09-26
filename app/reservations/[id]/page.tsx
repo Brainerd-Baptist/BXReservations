@@ -252,52 +252,40 @@ function renderPage(
         </div>
       </div>
 
-      {/* Status message */}
-      {(reservation.status === "pending" || reservation.status === "under_review") && (
-        <div
-          style={{
-            background: "color-mix(in srgb, #F59E0B 12%, transparent)",
-            border: "1px solid color-mix(in srgb, #F59E0B 30%, transparent)",
-            borderRadius: "10px",
-            padding: "0.875rem 1.125rem",
-            marginBottom: "1rem",
-            fontSize: "0.875rem",
-            color: "var(--bx-parchment)",
-          }}
-        >
-          Your request is pending review. Our team will reach out once it’s been processed.
-        </div>
-      )}
-      {(reservation.status === "approved" || reservation.status === "confirmed") && (
-        <div
-          style={{
-            background: "color-mix(in srgb, #10B981 12%, transparent)",
-            border: "1px solid color-mix(in srgb, #10B981 30%, transparent)",
-            borderRadius: "10px",
-            padding: "0.875rem 1.125rem",
-            marginBottom: "1rem",
-            fontSize: "0.875rem",
-            color: "var(--bx-parchment)",
-          }}
-        >
-          This reservation has been approved. See you there!
-        </div>
-      )}
-      {reservation.status === "rejected" && (
-        <div
-          style={{
-            background: "color-mix(in srgb, #EF4444 10%, transparent)",
-            border: "1px solid color-mix(in srgb, #EF4444 25%, transparent)",
-            borderRadius: "10px",
-            padding: "0.875rem 1.125rem",
-            marginBottom: "1rem",
-            fontSize: "0.875rem",
-            color: "var(--bx-parchment)",
-          }}
-        >
-          This request was not approved. Please contact us if you have questions.
-        </div>
-      )}
+      {/* Status explanation + self-cancel ─────────────────────────────────── */}
+      {(() => {
+        const meta = STATUS_META[reservation.status];
+        const exp  = STATUS_EXPLANATION[reservation.status];
+        if (!meta || !exp) return null;
+        const isTerminal = ["cancelled","cancelled_by_admin","cancelled_by_user","auto_cancelled","completed"].includes(reservation.status);
+        const isGood     = ["confirmed","approved"].includes(reservation.status);
+        const isBad      = isTerminal && reservation.status !== "completed";
+        const accent     = isGood ? "#10B981" : isBad ? "#EF4444" : meta.dot;
+        return (
+          <div
+            style={{
+              background: `color-mix(in srgb, ${accent} 10%, transparent)`,
+              border: `1px solid color-mix(in srgb, ${accent} 28%, transparent)`,
+              borderRadius: "10px",
+              padding: "1rem 1.25rem",
+              marginBottom: "1rem",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "0.625rem", marginBottom: exp.detail ? "0.35rem" : 0 }}>
+              <span style={{ width: 10, height: 10, borderRadius: "50%", background: accent, flex: "none", display: "inline-block" }} />
+              <span style={{ fontSize: "0.9375rem", fontWeight: 700, color: "var(--bx-parchment)" }}>{exp.headline}</span>
+            </div>
+            {exp.detail && (
+              <p style={{ margin: "0 0 0 1.625rem", fontSize: "0.875rem", color: "var(--bx-slate)", lineHeight: 1.55 }}>{exp.detail}</p>
+            )}
+            {SELF_CANCEL_STATUSES.has(reservation.status) && !view.staffView && (
+              <div style={{ marginTop: "0.875rem", marginLeft: "1.625rem" }}>
+                <SelfCancelButton reservationId={reservation.id} />
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Event map */}
       <Link
@@ -440,6 +428,20 @@ function renderPage(
       {/* Actions */}
       <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
         <Link
+          href="/reservations"
+          style={{
+            padding: "0.5rem 1rem",
+            borderRadius: "0.5rem",
+            fontSize: "0.875rem",
+            fontWeight: 500,
+            background: "color-mix(in srgb, var(--bx-parchment) 8%, transparent)",
+            color: "var(--bx-parchment)",
+            textDecoration: "none",
+          }}
+        >
+          ← Back to reservations
+        </Link>
+        <Link
           href="/reserve"
           style={{
             padding: "0.5rem 1rem",
@@ -452,20 +454,6 @@ function renderPage(
           }}
         >
           New request
-        </Link>
-        <Link
-          href="/reservations"
-          style={{
-            padding: "0.5rem 1rem",
-            borderRadius: "0.5rem",
-            fontSize: "0.875rem",
-            fontWeight: 500,
-            background: "color-mix(in srgb, var(--bx-parchment) 8%, transparent)",
-            color: "var(--bx-parchment)",
-            textDecoration: "none",
-          }}
-        >
-          Back to reservations
         </Link>
       </div>
     </main>

@@ -4,7 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { BlackoutRule, ruleDescription } from "@/lib/blackouts";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
-type Status = "Requested" | "Proposal Sent" | "Deposit Received" | "Confirmed" | "Declined";
+type Status = "Requested" | "Proposal Sent" | "Needs Info" | "Pending Documents" | "Pending Payment" | "Deposit Received" | "Confirmed" | "Completed" | "Declined" | "Cancelled by BX" | "Cancelled by User" | "Expired";
 
 interface Request {
   id: string;
@@ -134,20 +134,48 @@ const CALENDAR_EVENTS = [
 
 
 
-const STATUS_ORDER: Status[] = [
+// All statuses in display order (used for filter tabs)
+const ALL_STATUSES: Status[] = [
   "Requested",
   "Proposal Sent",
+  "Needs Info",
+  "Pending Documents",
+  "Pending Payment",
   "Deposit Received",
   "Confirmed",
+  "Completed",
   "Declined",
+  "Cancelled by BX",
+  "Cancelled by User",
+  "Expired",
+];
+
+// Statuses an admin can manually assign
+const ADMIN_SETTABLE_STATUSES: Status[] = [
+  "Proposal Sent",
+  "Needs Info",
+  "Pending Documents",
+  "Pending Payment",
+  "Deposit Received",
+  "Confirmed",
+  "Completed",
+  "Declined",
+  "Cancelled by BX",
 ];
 
 const STATUS_COLORS: Record<Status, string> = {
-  Requested: "bg-amber-100 text-amber-800 border-amber-200",
-  "Proposal Sent": "bg-blue-100 text-blue-800 border-blue-200",
-  "Deposit Received": "bg-purple-100 text-purple-800 border-purple-200",
-  Confirmed: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  Declined: "bg-red-100 text-red-800 border-red-200",
+  Requested:             "bg-amber-100 text-amber-800 border-amber-200",
+  "Proposal Sent":       "bg-blue-100 text-blue-800 border-blue-200",
+  "Needs Info":          "bg-orange-100 text-orange-800 border-orange-200",
+  "Pending Documents":   "bg-yellow-100 text-yellow-800 border-yellow-200",
+  "Pending Payment":     "bg-violet-100 text-violet-800 border-violet-200",
+  "Deposit Received":    "bg-purple-100 text-purple-800 border-purple-200",
+  Confirmed:             "bg-emerald-100 text-emerald-800 border-emerald-200",
+  Completed:             "bg-teal-100 text-teal-800 border-teal-200",
+  Declined:              "bg-red-100 text-red-800 border-red-200",
+  "Cancelled by BX":     "bg-red-100 text-red-800 border-red-200",
+  "Cancelled by User":   "bg-gray-100 text-gray-600 border-gray-200",
+  Expired:               "bg-gray-100 text-gray-500 border-gray-200",
 };
 
 export default function BxReservationsAdmin() {
@@ -193,6 +221,15 @@ export default function BxReservationsAdmin() {
   const [sendingAgreement, setSendingAgreement] = useState<string | null>(null);
   const [countersigning, setCountersigning] = useState<string | null>(null);
   const [countersignName, setCountersignName] = useState("");
+
+  // ── Status control panel state ──────────────────────────────────────
+  type HistoryEntry = { id: string; actor_name: string; actor_role: string; action: string; from_status: string | null; to_status: string; note: string | null; created_at: string };
+  const [statusDraft, setStatusDraft] = useState<Record<string, string>>({});
+  const [statusNote, setStatusNote] = useState<Record<string, string>>({});
+  const [cancelReason, setCancelReason] = useState<Record<string, string>>({});
+  const [changingStatus, setChangingStatus] = useState<string | null>(null);
+  const [history, setHistory] = useState<Record<string, HistoryEntry[]>>({});
+  const [historyLoading, setHistoryLoading] = useState<Record<string, boolean>>({});
 
   // ── Blackout rules ────────────────────────────────────────────────────────
   const [blackouts, setBlackouts] = useState<BlackoutRule[]>([]);
@@ -257,43 +294,50 @@ export default function BxReservationsAdmin() {
   const filtered =
     filter === "All" ? requests : requests.filter((r) => r.status === filter);
 
-  const advance = (id: string) => {
-    setRequests((prev) =>
-      prev.map((r) => {
-        if (r.id !== id) return r;
-        const idx = STATUS_ORDER.indexOf(r.status);
-        const next = STATUS_ORDER[Math.min(idx + 1, STATUS_ORDER.length - 2)];
-        const updated = { ...r, status: next };
-        if (selected?.id === id) setSelected(updated);
-        if (r.dbId) {
-          fetch("/api/admin/reservations", {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ dbId: r.dbId, status: next }),
-          }).catch(err => console.error("[admin] advance failed:", err));
-        }
-        return updated;
-      })
-    );
-  };
+  async function changeStatus(req: Request, newStatus: Status, note?: string, reason?: string) {
+    if (!req.dbId) return;
+    setChangingStatus(req.id);
+    const body: Record<string, string> = { dbId: req.dbId, status: newStatus };
+    if (note) body.note = note;
+    if (reason) body.cancelReason = reason;
+    try {
+      const res = await fetch("/api/admin/reservations", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        const updated = { ...req, status: newStatus };
+        setRequests(prev => prev.map(r => r.id === req.id ? updated : r));
+        if (selected?.id === req.id) setSelected(updated);
+        setStatusDraft(prev => { const n = { ...prev }; delete n[req.id]; return n; });
+        setStatusNote(prev => { const n = { ...prev }; delete n[req.id]; return n; });
+        setCancelReason(prev => { const n = { ...prev }; delete n[req.id]; return n; });
+        fetchHistory(req.id, req.dbId);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert("Status update failed: " + (err.error ?? res.status));
+      }
+    } catch (e) {
+      console.error("[admin] changeStatus failed:", e);
+      alert("Network error — status not updated.");
+    }
+    setChangingStatus(null);
+  }
 
-  const decline = (id: string) => {
-    setRequests((prev) =>
-      prev.map((r) => {
-        if (r.id !== id) return r;
-        const updated = { ...r, status: "Declined" as Status };
-        if (selected?.id === id) setSelected(updated);
-        if (r.dbId) {
-          fetch("/api/admin/reservations", {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ dbId: r.dbId, status: "Declined" }),
-          }).catch(err => console.error("[admin] decline failed:", err));
-        }
-        return updated;
-      })
-    );
-  };
+  async function fetchHistory(localId: string, dbId: string) {
+    setHistoryLoading(prev => ({ ...prev, [localId]: true }));
+    try {
+      const res = await fetch(`/api/reservations/${dbId}/history`);
+      if (res.ok) {
+        const data = await res.json();
+        setHistory(prev => ({ ...prev, [localId]: data }));
+      }
+    } catch (e) {
+      console.error("[admin] fetchHistory failed:", e);
+    }
+    setHistoryLoading(prev => ({ ...prev, [localId]: false }));
+  }
 
   // KPIs
   const pending = requests.filter((r) => r.status === "Requested").length;
@@ -385,7 +429,7 @@ Send this to ${req.name} (${req.email}).`);
 
           {/* Filter pills */}
           <div className="flex flex-wrap gap-2">
-            {(["All", ...STATUS_ORDER] as const).map((s) => (
+            {(["All", ...ALL_STATUSES] as const).map((s) => (
               <button
                 key={s}
                 onClick={() => setFilter(s)}
@@ -463,61 +507,96 @@ Send this to ${req.name} (${req.email}).`);
                       <Detail label="Tablecloths" value={String(req.tablecloths)} />
                     </div>
 
-                    {/* Status pipeline */}
-                    <div>
-                      <p className="text-xs font-semibold text-slate uppercase tracking-widest mb-2">Pipeline</p>
-                      <div className="flex items-center gap-1 flex-wrap">
-                        {STATUS_ORDER.filter((s) => s !== "Declined").map((s, i) => {
-                          const idx = STATUS_ORDER.indexOf(req.status);
-                          const sIdx = STATUS_ORDER.indexOf(s);
-                          return (
-                            <div key={s} className="flex items-center gap-1">
-                              <span
-                                className={`px-2 py-0.5 rounded text-xs font-semibold ${
-                                  req.status === "Declined"
-                                    ? "bg-parchment/10 text-slate"
-                                    : sIdx < idx
-                                    ? "bg-emerald-100 text-emerald-700"
-                                    : sIdx === idx
-                                    ? "bg-[var(--bbc-navy)] text-white"
-                                    : "bg-parchment/10 text-slate"
-                                }`}
+                    {/* ── Status control panel */}
+                    {req.status !== "Cancelled by User" && req.status !== "Expired" && req.status !== "Completed" && req.status !== "Cancelled by BX" && (() => {
+                      const draft = statusDraft[req.id] ?? "";
+                      const note = statusNote[req.id] ?? "";
+                      const isCancelFlow = draft === "Cancelled by BX";
+                      const reason = cancelReason[req.id] ?? "";
+                      const busy = changingStatus === req.id;
+                      return (
+                        <div className="space-y-3 border border-parchment/10 rounded-xl p-4 bg-ink/40" onClick={e => e.stopPropagation()}>
+                          <p className="text-xs font-semibold text-slate uppercase tracking-widest">Update Status</p>
+                          <select
+                            className="w-full rounded-lg border border-parchment/20 bg-ink text-parchment text-sm px-3 py-2"
+                            value={draft}
+                            onChange={e => setStatusDraft(prev => ({ ...prev, [req.id]: e.target.value }))}
+                          >
+                            <option value="">— select new status —</option>
+                            {ADMIN_SETTABLE_STATUSES.filter(s => s !== req.status).map(s => (
+                              <option key={s} value={s}>{s}</option>
+                            ))}
+                          </select>
+                          {draft && !isCancelFlow && (
+                            <textarea
+                              className="w-full rounded-lg border border-parchment/20 bg-ink text-parchment text-sm px-3 py-2 placeholder-slate resize-none"
+                              placeholder="Internal note (optional)"
+                              rows={2}
+                              value={note}
+                              onChange={e => setStatusNote(prev => ({ ...prev, [req.id]: e.target.value }))}
+                            />
+                          )}
+                          {isCancelFlow && (
+                            <textarea
+                              className="w-full rounded-lg border border-red-300/30 bg-ink text-parchment text-sm px-3 py-2 placeholder-slate resize-none"
+                              placeholder="Cancellation reason (required)"
+                              rows={2}
+                              value={reason}
+                              onChange={e => setCancelReason(prev => ({ ...prev, [req.id]: e.target.value }))}
+                            />
+                          )}
+                          {draft && (
+                            <div className="flex gap-2">
+                              <button
+                                className={`btn-primary text-sm ${isCancelFlow ? "bg-red-600 hover:bg-red-700" : ""}`}
+                                disabled={busy || (isCancelFlow && !reason.trim())}
+                                onClick={() => changeStatus(req, draft as Status, note || undefined, reason || undefined)}
                               >
-                                {s}
-                              </span>
-                              {i < STATUS_ORDER.length - 2 && (
-                                <span className="text-slate/40 text-xs">→</span>
-                              )}
+                                {busy ? "Saving…" : isCancelFlow ? "Cancel Reservation" : `Set → ${draft}`}
+                              </button>
+                              <button
+                                className="btn-outline text-sm"
+                                onClick={() => {
+                                  setStatusDraft(prev => { const n = { ...prev }; delete n[req.id]; return n; });
+                                  setStatusNote(prev => { const n = { ...prev }; delete n[req.id]; return n; });
+                                  setCancelReason(prev => { const n = { ...prev }; delete n[req.id]; return n; });
+                                }}
+                              >Clear</button>
                             </div>
-                          );
-                        })}
-                      </div>
-                    </div>
+                          )}
+                        </div>
+                      );
+                    })()}
 
-                    {/* Actions */}
-                    {req.status !== "Confirmed" && req.status !== "Declined" && (
-                      <div className="flex gap-3 flex-wrap">
-                        <button
-                          className="btn-primary text-sm"
-                          onClick={(e) => { e.stopPropagation(); advance(req.id); }}
-                        >
-                          Advance →{" "}
-                          {STATUS_ORDER[Math.min(STATUS_ORDER.indexOf(req.status) + 1, STATUS_ORDER.length - 2)]}
-                        </button>
-                        <button
-                          className="btn-outline text-sm border-red-200 text-red-600 hover:border-red-400"
-                          onClick={(e) => { e.stopPropagation(); decline(req.id); }}
-                        >
-                          Decline
-                        </button>
-                        <button
-                          className="btn-outline text-sm"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          Request Info
-                        </button>
-                      </div>
-                    )}
+                    {/* ── History log */}
+                    {(() => {
+                      const entries = history[req.id];
+                      const loading = historyLoading[req.id];
+                      if (!entries && !loading && req.dbId) {
+                        setTimeout(() => fetchHistory(req.id, req.dbId!), 0);
+                      }
+                      return (
+                        <div className="space-y-2" onClick={e => e.stopPropagation()}>
+                          <p className="text-xs font-semibold text-slate uppercase tracking-widest">History</p>
+                          {loading && <p className="text-xs text-slate animate-pulse">Loading…</p>}
+                          {!loading && entries && entries.length === 0 && <p className="text-xs text-slate">No history yet.</p>}
+                          {!loading && entries && entries.length > 0 && (
+                            <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                              {entries.map(h => (
+                                <div key={h.id} className="flex gap-3 text-xs">
+                                  <span className="text-slate/60 flex-shrink-0 pt-0.5">{new Date(h.created_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span>
+                                  <div className="flex-1">
+                                    <span className="text-parchment font-medium">{h.actor_name || h.actor_role}</span>
+                                    {h.to_status && <span className="text-slate"> → <span className="font-semibold text-parchment/80">{h.to_status.replace(/_/g, " ")}</span></span>}
+                                    {h.note && <p className="text-slate/80 mt-0.5 italic">{h.note}</p>}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                     {req.status === "Confirmed" && (() => {
                       const ag = agreements[req.id];
                       const customerSigned = !!ag?.customer_signed_at;

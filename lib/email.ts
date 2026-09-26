@@ -331,7 +331,7 @@ export async function sendStatusUpdateEmail(opts: {
   bookingNumber: string;
   reservationId: string;
   eventName:     string;
-  newStatus:     "approved" | "declined" | "needs_info" | "cancelled" | "proposal_sent";
+  newStatus:     "approved" | "declined" | "needs_info" | "cancelled" | "proposal_sent" | "pending_documents" | "pending_payment" | "cancelled_by_user";
   adminNote?:    string;
   agreementUrl?: string;
 }) {
@@ -375,6 +375,24 @@ export async function sendStatusUpdateEmail(opts: {
       subject:  `Reservation Cancelled — ${bookingNumber}`,
       headline: "Your reservation has been cancelled.",
       body:     `<p style="margin:0 0 16px 0;">Hi ${name},</p><p style="margin:0 0 16px 0;">Your space reservation for <strong>${eventName}</strong> (${bookingNumber}) has been cancelled.</p>${noteBlock}<p style="margin:0;">If you believe this was an error, please contact the church office.</p>`,
+      cta:      "View Reservation",
+    },
+    pending_documents: {
+      subject:  `Action Required — Documents Needed · ${bookingNumber}`,
+      headline: "Documents required to proceed.",
+      body:     `<p style="margin:0 0 16px 0;">Hi ${name},</p><p style="margin:0 0 16px 0;">We need a few documents before we can finalize your reservation for <strong>${eventName}</strong> (${bookingNumber}).</p>${noteBlock}<p style="margin:0 0 16px 0;">Please log in to your reservation to upload the required documents, including your Certificate of Insurance (COI) and signed Facility Use Agreement.</p><p style="margin:0;">If you have questions about what's required, reply to this email or contact the church office.</p>`,
+      cta:      "Upload Documents",
+    },
+    pending_payment: {
+      subject:  `Action Required — Payment Due · ${bookingNumber}`,
+      headline: "Payment required to confirm your reservation.",
+      body:     `<p style="margin:0 0 16px 0;">Hi ${name},</p><p style="margin:0 0 16px 0;">Your reservation for <strong>${eventName}</strong> (${bookingNumber}) is almost confirmed — we just need to receive your payment to finalize the booking.</p>${noteBlock}<p style="margin:0;">Please log in to view payment instructions and next steps.</p>`,
+      cta:      "View Payment Details",
+    },
+    cancelled_by_user: {
+      subject:  `Reservation Cancelled — ${bookingNumber}`,
+      headline: "Your reservation has been cancelled.",
+      body:     `<p style="margin:0 0 16px 0;">Hi ${name},</p><p style="margin:0 0 16px 0;">Your space reservation for <strong>${eventName}</strong> (${bookingNumber}) has been cancelled at your request.</p>${noteBlock}<p style="margin:0;">If you'd like to book a space in the future, we'd love to have you — just submit a new request.</p>`,
       cta:      "View Reservation",
     },
   } as const;
