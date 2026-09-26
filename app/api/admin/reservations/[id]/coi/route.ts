@@ -6,8 +6,8 @@ import { sendEmail } from "@/lib/email";
 
 type Params = { params: Promise<{ id: string }> };
 
-function sbServer() {
-  const cookieStore = cookies();
+async function sbServer() {
+  const cookieStore = await cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -15,10 +15,10 @@ function sbServer() {
   );
 }
 
-async function requireAdmin(sb: ReturnType<typeof sbServer>) {
+async function requireAdmin(sb: Awaited<ReturnType<typeof sbServer>>) {
   const { data: { user } } = await sb.auth.getUser();
   if (!user) return null;
-  const { data: role } = await adminClient.from("bx_user_roles").select("role").eq("user_id", user.id).maybeSingle();
+  const { data: role } = await adminClient().from("bx_user_roles").select("role").eq("user_id", user.id).maybeSingle();
   if (!role || !isStaffRole(role.role)) return null;
   return { user, role: role.role as string };
 }
@@ -27,7 +27,7 @@ async function requireAdmin(sb: ReturnType<typeof sbServer>) {
 // body: { action: "accept", expiry_date: "2027-06-01" } | { action: "flag", note: "Please fix..." }
 export async function PATCH(req: NextRequest, { params }: Params) {
   const { id } = await params;
-  const sb    = sbServer();
+  const sb    = await sbServer();
   const actor = await requireAdmin(sb);
   if (!actor) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -37,7 +37,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "action must be 'accept' or 'flag'" }, { status: 400 });
   }
 
-  const { data: res } = await adminClient
+  const { data: res } = await adminClient()
     .from("reservations")
     .select("id, booking_number, event_name, contact_name, contact_email, coi_file_url, coi_uploaded_at")
     .or(`id.eq.${id},booking_number.eq.${id}`)
@@ -45,18 +45,18 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   if (!res) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (!res.coi_uploaded_at) return NextResponse.json({ error: "No COI uploaded yet." }, { status: 409 });
 
-  const { data: profile } = await adminClient.from("bx_user_profiles").select("display_name").eq("user_id", actor.user.id).maybeSingle();
+  const { data: profile } = await adminClient().from("bx_user_profiles").select("display_name").eq("user_id", actor.user.id).maybeSingle();
   const actorName = profile?.display_name ?? actor.user.email ?? "Admin";
 
   if (action === "accept") {
     const expiryDate: string | null = body.expiry_date ?? null;
-    await adminClient.from("reservations").update({
+    await adminClient().from("reservations").update({
       coi_accepted_at:  new Date().toISOString(),
       coi_accepted_by:  actorName,
       coi_expiry_date:  expiryDate,
     }).eq("id", res.id);
 
-    await adminClient.from("reservation_history").insert({
+    await adminClient().from("reservation_history").insert({
       reservation_id: res.id,
       actor_id:       actor.user.id,
       actor_name:     actorName,
@@ -80,7 +80,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   } else {
     // flag — post a comment and notify user
     const note: string = (body.note ?? "").trim() || "There is an issue with your Certificate of Insurance. Please review the requirements and re-upload.";
-    await adminClient.from("reservation_comments").insert({
+    await adminClient().from("reservation_comments").insert({
       reservation_id: res.id,
       author_id:       actor.user.id,
       author_name:     actorName,
@@ -88,7 +88,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       body:            note,
       internal_only:   false,
     });
-    await adminClient.from("reservation_history").insert({
+    await adminClient().from("reservation_history").insert({
       reservation_id: res.id,
       actor_id:       actor.user.id,
       actor_name:     actorName,

@@ -21,7 +21,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   }
 
   // Load reservation
-  const { data: res } = await adminClient
+  const { data: res } = await adminClient()
     .from("reservations")
     .select("id, booking_number, event_name, contact_name, contact_email, contact_org, user_id")
     .or(`id.eq.${id},booking_number.eq.${id}`)
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   if (!res) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   // Load agreement by token
-  const { data: agreement } = await adminClient
+  const { data: agreement } = await adminClient()
     .from("reservation_agreements")
     .select("id, token, agreement_text, customer_signed_at")
     .eq("reservation_id", res.id)
@@ -96,12 +96,12 @@ export async function POST(req: NextRequest, { params }: Params) {
 
     const pdfBytes = await pdfDoc.save();
     const fileName = `agreements/${res.id}/${Date.now()}_signed.pdf`;
-    const { error: uploadErr } = await adminClient.storage
+    const { error: uploadErr } = await adminClient().storage
       .from("bx-documents")
       .upload(fileName, Buffer.from(pdfBytes), { contentType: "application/pdf", upsert: true });
 
     if (!uploadErr) {
-      const { data: urlData } = adminClient.storage.from("bx-documents").getPublicUrl(fileName);
+      const { data: urlData } = adminClient().storage.from("bx-documents").getPublicUrl(fileName);
       pdfUrl = urlData?.publicUrl ?? null;
       // If bucket is private, get a signed URL valid for 10 years (we'll store the path instead)
       if (!pdfUrl?.includes("bx-documents")) pdfUrl = fileName; // fallback: store path
@@ -112,7 +112,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   }
 
   // Update agreement row
-  await adminClient.from("reservation_agreements").update({
+  await adminClient().from("reservation_agreements").update({
     customer_name:       typedName,
     customer_signed_at:  signedAt,
     customer_ip:         ip,
@@ -121,7 +121,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   }).eq("id", agreement.id);
 
   // History row
-  await adminClient.from("reservation_history").insert({
+  await adminClient().from("reservation_history").insert({
     reservation_id: res.id,
     actor_id:       res.user_id ?? null,
     actor_name:     typedName,
@@ -133,10 +133,10 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   // Notify admins
   try {
-    const { data: adminRoles } = await adminClient.from("bx_user_roles").select("user_id").in("role", ["admin", "staff"]);
+    const { data: adminRoles } = await adminClient().from("bx_user_roles").select("user_id").in("role", ["admin", "staff"]);
     if (adminRoles?.length) {
       const adminIds = adminRoles.map((a: { user_id: string }) => a.user_id);
-      const { data: authUsers } = await adminClient.auth.admin.listUsers();
+      const { data: authUsers } = await adminClient().auth.admin.listUsers();
       const adminEmails = authUsers?.users?.filter(u => adminIds.includes(u.id)).map(u => u.email).filter(Boolean) ?? [];
       for (const email of adminEmails.slice(0, 5)) {
         await sendEmail({

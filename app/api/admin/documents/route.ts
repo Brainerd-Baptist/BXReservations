@@ -4,8 +4,8 @@ import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { adminClient, isStaffRole } from "@/lib/event-map";
 
-function sbServer() {
-  const cookieStore = cookies();
+async function sbServer() {
+  const cookieStore = await cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -14,10 +14,10 @@ function sbServer() {
 }
 
 async function requireAdmin() {
-  const sb = sbServer();
+  const sb = await sbServer();
   const { data: { user } } = await sb.auth.getUser();
   if (!user) return null;
-  const { data: role } = await adminClient.from("bx_user_roles").select("role").eq("user_id", user.id).maybeSingle();
+  const { data: role } = await adminClient().from("bx_user_roles").select("role").eq("user_id", user.id).maybeSingle();
   if (!role || !isStaffRole(role.role)) return null;
   return { user, role: role.role as string };
 }

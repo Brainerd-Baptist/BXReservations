@@ -5,8 +5,8 @@ import { adminClient, isStaffRole } from "@/lib/event-map";
 
 type Params = { params: Promise<{ id: string }> };
 
-function sbServer() {
-  const cookieStore = cookies();
+async function sbServer() {
+  const cookieStore = await cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -14,10 +14,10 @@ function sbServer() {
   );
 }
 
-async function requireAdmin(sb: ReturnType<typeof sbServer>) {
+async function requireAdmin(sb: Awaited<ReturnType<typeof sbServer>>) {
   const { data: { user } } = await sb.auth.getUser();
   if (!user) return null;
-  const { data: role } = await adminClient.from("bx_user_roles").select("role").eq("user_id", user.id).maybeSingle();
+  const { data: role } = await adminClient().from("bx_user_roles").select("role").eq("user_id", user.id).maybeSingle();
   if (!role || !isStaffRole(role.role)) return null;
   return { user, role: role.role as string };
 }
@@ -26,11 +26,11 @@ async function requireAdmin(sb: ReturnType<typeof sbServer>) {
 // Returns full document/payment status for the admin panel
 export async function GET(_req: NextRequest, { params }: Params) {
   const { id } = await params;
-  const sb    = sbServer();
+  const sb    = await sbServer();
   const actor = await requireAdmin(sb);
   if (!actor) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: res } = await adminClient
+  const { data: res } = await adminClient()
     .from("reservations")
     .select(`
       id, booking_number, status,
@@ -42,7 +42,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
   if (!res) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   // Fetch latest agreement
-  const { data: agreement } = await adminClient
+  const { data: agreement } = await adminClient()
     .from("reservation_agreements")
     .select("id, token, customer_signed_at, customer_name, sent_at, pdf_url")
     .eq("reservation_id", res.id)

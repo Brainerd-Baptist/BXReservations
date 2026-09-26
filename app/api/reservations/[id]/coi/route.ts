@@ -6,8 +6,8 @@ import { sendEmail } from "@/lib/email";
 
 type Params = { params: Promise<{ id: string }> };
 
-function sbServer() {
-  const cookieStore = cookies();
+async function sbServer() {
+  const cookieStore = await cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -23,19 +23,19 @@ function sbServer() {
 // POST /api/reservations/[id]/coi — user uploads COI
 export async function POST(req: NextRequest, { params }: Params) {
   const { id } = await params;
-  const sb = sbServer();
+  const sb = await sbServer();
   const { data: { user } } = await sb.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // Verify ownership
-  const { data: res } = await adminClient
+  const { data: res } = await adminClient()
     .from("reservations")
     .select("id, booking_number, event_name, contact_name, contact_email, user_id, status")
     .or(`id.eq.${id},booking_number.eq.${id}`)
     .single();
   if (!res) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const { data: collab } = await adminClient
+  const { data: collab } = await adminClient()
     .from("reservation_collaborators")
     .select("id")
     .eq("reservation_id", res.id)
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   }
 
   const storagePath = `coi/${res.id}/${Date.now()}_${fileName.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-  const { error: uploadErr } = await adminClient.storage
+  const { error: uploadErr } = await adminClient().storage
     .from("bx-documents")
     .upload(storagePath, fileBytes, { contentType: mimeType, upsert: true });
 
@@ -82,11 +82,11 @@ export async function POST(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Upload failed. Please try again." }, { status: 500 });
   }
 
-  const { data: urlData } = adminClient.storage.from("bx-documents").getPublicUrl(storagePath);
+  const { data: urlData } = adminClient().storage.from("bx-documents").getPublicUrl(storagePath);
   const fileUrl = urlData?.publicUrl ?? storagePath;
 
   // Update reservation COI fields
-  await adminClient.from("reservations").update({
+  await adminClient().from("reservations").update({
     coi_uploaded_at: new Date().toISOString(),
     coi_file_url:    fileUrl,
     // Clear previous acceptance if re-uploading
@@ -96,7 +96,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   }).eq("id", res.id);
 
   // History row
-  await adminClient.from("reservation_history").insert({
+  await adminClient().from("reservation_history").insert({
     reservation_id: res.id,
     actor_id:       user.id,
     actor_name:     res.contact_name ?? user.email ?? "Guest",
@@ -108,10 +108,10 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   // Notify admins
   try {
-    const { data: adminRoles } = await adminClient.from("bx_user_roles").select("user_id").in("role", ["admin", "staff"]);
+    const { data: adminRoles } = await adminClient().from("bx_user_roles").select("user_id").in("role", ["admin", "staff"]);
     if (adminRoles?.length) {
       const adminIds = adminRoles.map((a: { user_id: string }) => a.user_id);
-      const { data: authUsers } = await adminClient.auth.admin.listUsers();
+      const { data: authUsers } = await adminClient().auth.admin.listUsers();
       const adminEmails = authUsers?.users?.filter(u => adminIds.includes(u.id)).map(u => u.email).filter(Boolean) ?? [];
       for (const email of adminEmails.slice(0, 5)) {
         await sendEmail({

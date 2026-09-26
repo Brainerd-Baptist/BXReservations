@@ -7,8 +7,8 @@ import crypto from "crypto";
 
 type Params = { params: Promise<{ id: string }> };
 
-function sbServer() {
-  const cookieStore = cookies();
+async function sbServer() {
+  const cookieStore = await cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -21,10 +21,10 @@ function sbServer() {
   );
 }
 
-async function requireAdmin(sb: ReturnType<typeof sbServer>) {
+async function requireAdmin(sb: Awaited<ReturnType<typeof sbServer>>) {
   const { data: { user } } = await sb.auth.getUser();
   if (!user) return null;
-  const { data: role } = await adminClient
+  const { data: role } = await adminClient()
     .from("bx_user_roles").select("role").eq("user_id", user.id).maybeSingle();
   if (!role || !isStaffRole(role.role)) return null;
   return { user, role: role.role as string };
@@ -35,7 +35,7 @@ async function getAgreementTemplate(r: {
   event_name: string; payload: Record<string, unknown>;
 }): Promise<string> {
   // Try to load from bx_settings first
-  const { data: setting } = await adminClient
+  const { data: setting } = await adminClient()
     .from("bx_settings")
     .select("value")
     .eq("key", "agreement_template")
@@ -69,11 +69,11 @@ async function getAgreementTemplate(r: {
 // POST /api/admin/reservations/[id]/send-agreement
 export async function POST(req: NextRequest, { params }: Params) {
   const { id } = await params;
-  const sb = sbServer();
+  const sb = await sbServer();
   const actor = await requireAdmin(sb);
   if (!actor) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: res } = await adminClient
+  const { data: res } = await adminClient()
     .from("reservations")
     .select("id, booking_number, event_name, contact_name, contact_email, contact_org, status, payload")
     .or(`id.eq.${id},booking_number.eq.${id}`)
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   if (!res) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   // Check for an existing unsent/unsigned agreement
-  const { data: existing } = await adminClient
+  const { data: existing } = await adminClient()
     .from("reservation_agreements")
     .select("id, customer_signed_at")
     .eq("reservation_id", res.id)
@@ -101,11 +101,11 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   // Upsert agreement row
   if (existing) {
-    await adminClient.from("reservation_agreements").update({
+    await adminClient().from("reservation_agreements").update({
       token, agreement_text: agreementText, sent_by: actor.user.id, sent_at: new Date().toISOString(),
     }).eq("id", existing.id);
   } else {
-    await adminClient.from("reservation_agreements").insert({
+    await adminClient().from("reservation_agreements").insert({
       reservation_id: res.id,
       token,
       agreement_text: agreementText,
@@ -116,11 +116,11 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   // Set status to pending_documents if not already there
   if (!["pending_documents", "pending_payment", "approved", "confirmed", "completed"].includes(res.status as string)) {
-    await adminClient.from("reservations").update({ status: "pending_documents" }).eq("id", res.id);
+    await adminClient().from("reservations").update({ status: "pending_documents" }).eq("id", res.id);
   }
 
   // History row
-  await adminClient.from("reservation_history").insert({
+  await adminClient().from("reservation_history").insert({
     reservation_id: res.id,
     actor_id:       actor.user.id,
     actor_name:     actor.user.email ?? "Admin",

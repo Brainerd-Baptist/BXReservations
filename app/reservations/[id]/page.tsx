@@ -5,6 +5,37 @@ import { adminClient, isStaffRole } from "@/lib/event-map";
 import { ROOMS } from "@/lib/rooms";
 import SelfCancelButton from "./SelfCancelButton";
 import CommentsThread from "@/components/bx/CommentsThread";
+import COIUploadCard from "./COIUploadCard";
+
+const STATUS_META: Record<string, { dot: string }> = {
+  pending:            { dot: "#FBBF24" },
+  under_review:       { dot: "#818CF8" },
+  pending_documents:  { dot: "#F59E0B" },
+  approved:           { dot: "#34D399" },
+  confirmed:          { dot: "#34D399" },
+  completed:          { dot: "#9CA3AF" },
+  rejected:           { dot: "#F87171" },
+  cancelled:          { dot: "#9CA3AF" },
+  cancelled_by_admin: { dot: "#F87171" },
+  cancelled_by_user:  { dot: "#9CA3AF" },
+  auto_cancelled:     { dot: "#9CA3AF" },
+};
+
+const STATUS_EXPLANATION: Record<string, { headline: string; detail?: string }> = {
+  pending:            { headline: "Awaiting Review",        detail: "Your reservation request has been received and is waiting for staff review." },
+  under_review:       { headline: "Under Review",           detail: "Staff is reviewing your request and will notify you of any updates." },
+  pending_documents:  { headline: "Documents Required",     detail: "Your reservation requires additional documents before it can be confirmed." },
+  approved:           { headline: "Approved",               detail: "Your reservation has been approved." },
+  confirmed:          { headline: "Confirmed",               detail: "Your reservation is confirmed — see you there!" },
+  completed:          { headline: "Completed",              detail: "This reservation has concluded." },
+  rejected:           { headline: "Not Approved",           detail: "This reservation was not approved. Please contact us if you have questions." },
+  cancelled:          { headline: "Cancelled" },
+  cancelled_by_admin: { headline: "Cancelled by Staff" },
+  cancelled_by_user:  { headline: "Cancelled",              detail: "You cancelled this reservation." },
+  auto_cancelled:     { headline: "Automatically Cancelled" },
+};
+
+const SELF_CANCEL_STATUSES = new Set(["pending", "under_review", "approved", "pending_documents"]);
 
 export const metadata = { title: "Reservation · BX Reservations" };
 
@@ -143,7 +174,7 @@ function renderPage(
     contact_org?: string | null;
     payload?: unknown;
   },
-  view: { isCollab: boolean; staffView: boolean; labelCount: number }
+  view: { isCollab: boolean; staffView: boolean; labelCount: number; agreement?: { customer_signed_at: string | null; token: string } | null }
 ) {
   const submittedDate = new Date(reservation.created_at).toLocaleDateString("en-US", {
     month: "long",

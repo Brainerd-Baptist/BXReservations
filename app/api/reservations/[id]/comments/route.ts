@@ -6,8 +6,8 @@ import { sendEmail } from "@/lib/email";
 
 type Params = { params: Promise<{ id: string }> };
 
-function sbServer() {
-  const cookieStore = cookies();
+async function sbServer() {
+  const cookieStore = await cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -23,12 +23,12 @@ function sbServer() {
 // GET /api/reservations/[id]/comments — returns non-internal comments for this reservation
 export async function GET(_req: NextRequest, { params }: Params) {
   const { id } = await params;
-  const sb = sbServer();
+  const sb = await sbServer();
   const { data: { user } } = await sb.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // Verify ownership via service client
-  const { data: res } = await adminClient
+  const { data: res } = await adminClient()
     .from("reservations")
     .select("id, user_id")
     .or(`id.eq.${id},booking_number.eq.${id}`)
@@ -37,7 +37,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
   if (!res) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   // Allow collaborators too
-  const { data: collab } = await adminClient
+  const { data: collab } = await adminClient()
     .from("reservation_collaborators")
     .select("id")
     .eq("reservation_id", res.id)
@@ -48,7 +48,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { data: comments, error } = await adminClient
+  const { data: comments, error } = await adminClient()
     .from("reservation_comments")
     .select("id, author_name, author_role, body, created_at")
     .eq("reservation_id", res.id)
@@ -62,7 +62,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
 // POST /api/reservations/[id]/comments — user posts a comment
 export async function POST(req: NextRequest, { params }: Params) {
   const { id } = await params;
-  const sb = sbServer();
+  const sb = await sbServer();
   const { data: { user } } = await sb.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   if (!text) return NextResponse.json({ error: "Comment body is required." }, { status: 400 });
   if (text.length > 4000) return NextResponse.json({ error: "Comment too long (max 4000 chars)." }, { status: 400 });
 
-  const { data: res } = await adminClient
+  const { data: res } = await adminClient()
     .from("reservations")
     .select("id, user_id, booking_number, event_name, contact_name, contact_email")
     .or(`id.eq.${id},booking_number.eq.${id}`)
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   if (!res) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const { data: collab } = await adminClient
+  const { data: collab } = await adminClient()
     .from("reservation_collaborators")
     .select("id")
     .eq("reservation_id", res.id)
@@ -91,7 +91,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   }
 
   // Get author display name
-  const { data: profile } = await adminClient
+  const { data: profile } = await adminClient()
     .from("bx_user_profiles")
     .select("display_name")
     .eq("user_id", user.id)
@@ -99,7 +99,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   const authorName = profile?.display_name ?? res.contact_name ?? user.email ?? "Guest";
 
-  const { data: comment, error } = await adminClient
+  const { data: comment, error } = await adminClient()
     .from("reservation_comments")
     .insert({
       reservation_id: res.id,
@@ -115,7 +115,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   // Write history row
-  await adminClient.from("reservation_history").insert({
+  await adminClient().from("reservation_history").insert({
     reservation_id: res.id,
     actor_id:       user.id,
     actor_name:     authorName,
@@ -126,20 +126,20 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   // Notify admins
   try {
-    const { data: admins } = await adminClient
+    const { data: admins } = await adminClient()
       .from("bx_user_roles")
       .select("user_id")
       .in("role", ["admin", "staff"]);
 
     if (admins?.length) {
       const adminIds = admins.map((a: { user_id: string }) => a.user_id);
-      const { data: adminProfiles } = await adminClient
+      const { data: adminProfiles } = await adminClient()
         .from("bx_user_profiles")
         .select("display_name, user_id")
         .in("user_id", adminIds);
 
       // Send to first admin or a configured address
-      const { data: adminAuthUsers } = await adminClient.auth.admin.listUsers();
+      const { data: adminAuthUsers } = await adminClient().auth.admin.listUsers();
       const adminEmails = adminAuthUsers?.users
         ?.filter((u) => adminIds.includes(u.id))
         ?.map((u) => u.email)

@@ -20,7 +20,7 @@ export default async function AgreementPage({ params, searchParams }: Props) {
   }
 
   // Load reservation
-  const { data: res } = await adminClient
+  const { data: res } = await adminClient()
     .from("reservations")
     .select("id, booking_number, event_name, contact_name, contact_org, contact_email, payload")
     .or(`id.eq.${id},booking_number.eq.${id}`)
@@ -29,7 +29,7 @@ export default async function AgreementPage({ params, searchParams }: Props) {
   if (!res) notFound();
 
   // Load agreement by token
-  const { data: agreement } = await adminClient
+  const { data: agreement } = await adminClient()
     .from("reservation_agreements")
     .select("id, token, agreement_text, customer_signed_at, customer_name")
     .eq("reservation_id", res.id)
