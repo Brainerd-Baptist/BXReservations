@@ -268,6 +268,12 @@ export default function BxReservationsAdmin() {
   // ── Blackout rules ────────────────────────────────────────────────────────
   const [blackouts, setBlackouts] = useState<BlackoutRule[]>([]);
   const [blackoutsLoading, setBlackoutsLoading] = useState(true);
+
+  // ── Phase 6: Automation settings state ────────────────────────────────────
+  const [automationSettings, setAutomationSettings] = useState<Record<string, string>>({});
+  const [automationLoading, setAutomationLoading] = useState(false);
+  const [automationSaving, setAutomationSaving] = useState(false);
+  const [automationDraft, setAutomationDraft] = useState<Record<string, string>>({});
   const [newRuleType, setNewRuleType] = useState<"dow" | "dow_slot" | "date">("dow");
   const [newDow, setNewDow] = useState(0);
   const [newSlot, setNewSlot] = useState("evening");
@@ -625,6 +631,35 @@ Send this to ${req.name} (${req.email}).`);
         {/* Left: queue / settings */}
         <div className="space-y-5">
           {tab === "settings" && (
+            <>
+            <AutomationSettings
+              settings={automationSettings}
+              draft={automationDraft}
+              loading={automationLoading}
+              saving={automationSaving}
+              onLoad={() => {
+                setAutomationLoading(true);
+                fetch("/api/admin/automation-settings")
+                  .then(r => r.json())
+                  .then(d => {
+                    setAutomationSettings(d.settings ?? {});
+                    setAutomationDraft(d.settings ?? {});
+                  })
+                  .finally(() => setAutomationLoading(false));
+              }}
+              onChange={(k, v) => setAutomationDraft(prev => ({ ...prev, [k]: v }))}
+              onSave={async () => {
+                setAutomationSaving(true);
+                try {
+                  await fetch("/api/admin/automation-settings", {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ settings: automationDraft }),
+                  });
+                  setAutomationSettings({ ...automationDraft });
+                } finally { setAutomationSaving(false); }
+              }}
+            />
             <BlackoutSettings
               rules={blackouts}
               loading={blackoutsLoading}
@@ -637,6 +672,7 @@ Send this to ${req.name} (${req.email}).`);
               onAdd={addBlackout}
               onRemove={removeBlackout}
             />
+            </>
           )}
           {tab === "requests" && (<>
           {/* KPI row */}
@@ -1366,6 +1402,77 @@ function LegendItemStyled({ style, label }: { style: React.CSSProperties; label:
     <div className="flex items-center gap-2">
       <span className="rounded px-2 py-0.5 text-xs border" style={style}>Sample</span>
       <span className="text-xs" style={{ color: "var(--bx-slate)" }}>{label}</span>
+    </div>
+  );
+}
+
+// ─── Automation Settings panel ─────────────────────────────────────────────────
+const AUTOMATION_KEYS: { key: string; label: string; unit: string; description: string }[] = [
+  { key: "user_reminder_1_days",    label: "First user reminder",       unit: "days", description: "Days of inactivity before sending the first follow-up to the requester" },
+  { key: "user_reminder_2_days",    label: "Second user reminder",      unit: "days", description: "Days of inactivity before sending the second follow-up to the requester" },
+  { key: "auto_cancel_days",        label: "Auto-cancellation",         unit: "days", description: "Days of user inactivity before automatically cancelling a needs_info or pending_documents reservation" },
+  { key: "admin_reminder_days",     label: "Admin review reminder",     unit: "days", description: "Days before sending an internal admin reminder for unreviewed submitted reservations" },
+  { key: "coi_expiry_warning_days", label: "COI expiry warning",        unit: "days", description: "Days before COI expiration to send a renewal reminder to the organization contact" },
+];
+
+function AutomationSettings({
+  settings, draft, loading, saving, onLoad, onChange, onSave,
+}: {
+  settings: Record<string, string>;
+  draft: Record<string, string>;
+  loading: boolean;
+  saving: boolean;
+  onLoad: () => void;
+  onChange: (key: string, value: string) => void;
+  onSave: () => void;
+}) {
+  const [loaded, setLoaded] = useState(false);
+  if (!loaded) { onLoad(); setLoaded(true); }
+
+  const dirty = AUTOMATION_KEYS.some(k => draft[k.key] !== settings[k.key]);
+
+  return (
+    <div className="rounded-2xl bg-ink-soft border border-parchment/10 overflow-hidden mb-4">
+      <div className="px-5 py-4 border-b border-parchment/10 flex items-center justify-between">
+        <div>
+          <p className="text-sm font-semibold text-parchment">Automation Thresholds</p>
+          <p className="text-xs text-slate mt-0.5">Controls when reminder emails and auto-cancellation fire</p>
+        </div>
+        {dirty && (
+          <button
+            onClick={onSave}
+            disabled={saving}
+            className="btn-primary text-xs"
+          >
+            {saving ? "Saving…" : "Save Changes"}
+          </button>
+        )}
+      </div>
+      {loading ? (
+        <p className="px-5 py-4 text-sm text-slate">Loading…</p>
+      ) : (
+        <div className="divide-y divide-parchment/10">
+          {AUTOMATION_KEYS.map(({ key, label, unit, description }) => (
+            <div key={key} className="px-5 py-4 flex items-start gap-4">
+              <div className="flex-1">
+                <p className="text-sm text-parchment font-medium">{label}</p>
+                <p className="text-xs text-slate mt-0.5">{description}</p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <input
+                  type="number"
+                  min={1}
+                  max={365}
+                  value={draft[key] ?? settings[key] ?? ""}
+                  onChange={e => onChange(key, e.target.value)}
+                  className="w-16 rounded-lg border border-parchment/20 bg-ink text-parchment text-sm px-2 py-1 text-center focus:outline-none focus:ring-2 focus:ring-[var(--bbc-blue)]"
+                />
+                <span className="text-xs text-slate">{unit}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
