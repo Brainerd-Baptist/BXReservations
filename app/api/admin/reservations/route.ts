@@ -78,13 +78,22 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("reservations")
-    .select("id, booking_number, status, event_name, contact_name, contact_email, contact_org, is_non_profit, created_at, payload")
+    .select("id, booking_number, status, event_name, contact_name, contact_email, contact_org, is_non_profit, created_at, payload, coi_accepted_at, coi_uploaded_at, payment_received_at")
     .order("created_at", { ascending: false });
 
   if (error) {
     console.error("[admin/reservations] fetch error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  // Fetch signed agreements to build a lookup map
+  const { data: agmtData } = await supabase
+    .from("reservation_agreements")
+    .select("reservation_id, customer_signed_at")
+    .not("customer_signed_at", "is", null);
+  const signedReservations = new Set<string>(
+    (agmtData ?? []).map((a: { reservation_id: string }) => a.reservation_id)
+  );
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const requests = (data ?? []).map((row: any) => {
@@ -114,6 +123,10 @@ export async function GET() {
       avNeeded:   (payload.avNeeded    as boolean) ?? (firstDay.avNeeded    as boolean) ?? false,
       tablecloths:(payload.tablecloths as number)  ?? (firstDay.tablecloths as number)  ?? 0,
       flexible:   (payload.flexible    as boolean) ?? (firstDay.flexible    as boolean) ?? false,
+      // Document completion flags
+      agreementSigned: signedReservations.has(row.id as string),
+      coiAccepted:     !!(row.coi_accepted_at),
+      hasPayment:      !!(row.payment_received_at),
     };
   });
 

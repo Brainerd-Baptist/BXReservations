@@ -25,6 +25,10 @@ interface Request {
   tablecloths: number;
   flexible: boolean; // is the blocked slot a soft block?
   dbId?: string;       // real Supabase UUID — used for API status updates
+  // Phase 4: doc completion flags (populated by API)
+  agreementSigned?: boolean;
+  coiAccepted?: boolean;
+  hasPayment?: boolean;
 }
 
 // ─── Mock data ─────────────────────────────────────────────────────────────────
@@ -183,6 +187,7 @@ export default function BxReservationsAdmin() {
   const [requests, setRequests] = useState<Request[]>([]);
   const [reservationsLoading, setReservationsLoading] = useState(true);
   const [filter, setFilter] = useState<Status | "All">("All");
+  const [searchQuery, setSearchQuery] = useState("");
   const [selected, setSelected] = useState<Request | null>(null);
   const [calOpen, setCalOpen] = useState(false);
   const searchParams = useSearchParams();
@@ -319,8 +324,21 @@ export default function BxReservationsAdmin() {
     setBlackouts(prev => prev.filter(r => r.id !== id));
   }
 
-  const filtered =
-    filter === "All" ? requests : requests.filter((r) => r.status === filter);
+  const filtered = requests.filter(r => {
+    if (filter !== "All" && r.status !== filter) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      return (
+        r.name.toLowerCase().includes(q) ||
+        r.org.toLowerCase().includes(q) ||
+        r.email.toLowerCase().includes(q) ||
+        r.event.toLowerCase().includes(q) ||
+        r.id.toLowerCase().includes(q) ||
+        r.room.toLowerCase().includes(q)
+      );
+    }
+    return true;
+  });
 
   async function changeStatus(req: Request, newStatus: Status, note?: string, reason?: string) {
     if (!req.dbId) return;
@@ -556,6 +574,23 @@ Send this to ${req.name} (${req.email}).`);
             <KPI label="Revenue Pipeline" value={`$${revenue.toLocaleString()}`} color="text-[var(--bbc-blue)]" />
           </div>
 
+          {/* Search bar */}
+          <div className="relative">
+            <input
+              type="search"
+              placeholder="Search by name, org, email, event, booking #…"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="w-full rounded-xl border border-parchment/20 bg-ink-soft text-parchment text-sm px-4 py-2.5 placeholder-slate focus:outline-none focus:ring-2 focus:ring-[var(--bbc-blue)] pr-10"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate hover:text-parchment text-lg leading-none"
+              >×</button>
+            )}
+          </div>
+
           {/* Filter pills */}
           <div className="flex flex-wrap gap-2">
             {(["All", ...ALL_STATUSES] as const).map((s) => (
@@ -615,6 +650,12 @@ Send this to ${req.name} (${req.email}).`);
                     <p className="text-xs text-slate mt-0.5">{req.id} · Submitted {req.submitted}</p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
+                    {/* Doc status indicators */}
+                    <span className="flex gap-1 items-center" title="Agreement / COI / Payment">
+                      <span className={`text-xs ${req.agreementSigned ? "text-emerald-400" : "text-slate/40"}`} title={req.agreementSigned ? "Agreement signed" : "No agreement"}>📄</span>
+                      <span className={`text-xs ${req.coiAccepted ? "text-emerald-400" : "text-slate/40"}`} title={req.coiAccepted ? "COI accepted" : "No COI"}>🛡</span>
+                      <span className={`text-xs ${req.hasPayment ? "text-emerald-400" : "text-slate/40"}`} title={req.hasPayment ? "Payment recorded" : "No payment"}>💰</span>
+                    </span>
                     <span className="font-bold text-sm text-parchment">${req.estimate.toLocaleString()}</span>
                     <span
                       className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${STATUS_COLORS[req.status]}`}
@@ -1022,6 +1063,18 @@ Send this to ${req.name} (${req.email}).`);
 
           {/* ── Reports tab ────────────────────────────────────────────────── */}
           {tab === "reports" && <ReportsTab />}
+
+          {/* ── Documents hub shortcut ─────────────────────────────────── */}
+          {tab === "requests" && (
+            <div className="flex justify-end pt-2">
+              <a
+                href="/admin/bx-reservations/documents"
+                className="inline-flex items-center gap-2 text-xs text-[var(--bx-brass)] hover:underline font-medium"
+              >
+                📂 View Documents Hub (Agreements · COIs · Payments) →
+              </a>
+            </div>
+          )}
         </div>
 
         {/* Right: Calendar sidebar — Requests tab only */}

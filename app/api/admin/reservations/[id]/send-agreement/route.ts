@@ -30,59 +30,40 @@ async function requireAdmin(sb: ReturnType<typeof sbServer>) {
   return { user, role: role.role as string };
 }
 
-function buildAgreementText(r: {
+async function getAgreementTemplate(r: {
   contact_name: string; contact_org: string | null;
   event_name: string; payload: Record<string, unknown>;
-}): string {
+}): Promise<string> {
+  // Try to load from bx_settings first
+  const { data: setting } = await adminClient
+    .from("bx_settings")
+    .select("value")
+    .eq("key", "agreement_template")
+    .maybeSingle();
+
+  let template = (setting?.value as string | null) ?? null;
+
+  if (!template) {
+    // Fallback: build a minimal inline template
+    const dates = (r.payload?.dates as string[])?.join(", ") ?? "dates to be confirmed";
+    const spaces = (r.payload?.spaces as string[])?.join(", ") ?? "spaces to be confirmed";
+    const org = r.contact_org ?? r.contact_name;
+    template = `FACILITY USE AGREEMENT\nBrainerd Baptist Church — BX Event Spaces\n\nThis Facility Use Agreement is entered into between Brainerd Baptist Church ("Church") and ${org} ("Renter"), represented by ${r.contact_name}.\n\nEVENT DETAILS\nEvent Name: ${r.event_name}\nReserved Spaces: ${spaces}\nEvent Date(s): ${dates}\n\nBy typing your full legal name below, you acknowledge that you have read and agree to all terms communicated by BX staff.`;
+  }
+
+  // Interpolate context variables into template
+  const org = r.contact_org ?? r.contact_name;
   const dates = (r.payload?.dates as string[])?.join(", ") ?? "dates to be confirmed";
   const spaces = (r.payload?.spaces as string[])?.join(", ") ?? "spaces to be confirmed";
-  const headcount = (r.payload?.headcount as number) ?? "TBD";
-  const org = r.contact_org ?? r.contact_name;
+  const headcount = String((r.payload?.headcount as number) ?? "TBD");
 
-  return `FACILITY USE AGREEMENT
-Brainerd Baptist Church — BX Event Spaces
-
-This Facility Use Agreement ("Agreement") is entered into between Brainerd Baptist Church ("Church") and ${org} ("Renter"), represented by ${r.contact_name}.
-
-EVENT DETAILS
-Event Name: ${r.event_name}
-Reserved Spaces: ${spaces}
-Event Date(s): ${dates}
-Expected Attendance: ${headcount}
-
-TERMS AND CONDITIONS
-
-1. USE OF FACILITY
-The Renter agrees to use the Church facilities solely for the event described above. The Church reserves the right to deny use of its facilities to any group whose activities conflict with its mission, beliefs, or values.
-
-2. CARE OF PROPERTY
-The Renter agrees to leave all facilities, equipment, and furnishings in the same condition as found. The Renter is responsible for any damage to Church property caused by the Renter, their guests, or any vendors during the event.
-
-3. ALCOHOL AND CONTROLLED SUBSTANCES
-No alcohol or controlled substances are permitted on Church property at any time. Violation of this policy will result in immediate termination of the event and forfeiture of any deposits paid.
-
-4. NOISE AND CONDUCT
-The Renter agrees to control noise levels appropriately and to ensure that all guests conduct themselves in a manner consistent with the values of the Church and the surrounding community.
-
-5. CLEANUP
-The Renter is responsible for cleaning up after the event. All trash must be bagged and disposed of properly. Rented spaces must be cleared and cleaned within the time allotted. Additional cleaning fees may be charged if the space is left in an unacceptable condition.
-
-6. CANCELLATION
-Cancellations made fewer than 14 days before the event may result in forfeiture of the deposit. The Church reserves the right to cancel this agreement with reasonable notice if circumstances require.
-
-7. INDEMNIFICATION
-The Renter agrees to indemnify and hold harmless Brainerd Baptist Church, its staff, volunteers, and agents from any claims, damages, losses, or expenses arising out of the Renter's use of the facilities.
-
-8. INSURANCE
-Where required by the Church, the Renter must provide a valid Certificate of Insurance (COI) naming Brainerd Baptist Church as an additionally insured party before the event may proceed. Minimum coverage: $1,000,000 general liability.
-
-9. COMPLIANCE
-The Renter agrees to comply with all applicable local, state, and federal laws and regulations, as well as all Church policies communicated by staff.
-
-10. ENTIRE AGREEMENT
-This Agreement constitutes the entire agreement between the parties with respect to the subject matter herein and supersedes all prior negotiations, representations, or agreements.
-
-By typing your full legal name below, you acknowledge that you have read, understand, and agree to all terms and conditions in this Facility Use Agreement. You understand that this typed-name signature is legally binding.`;
+  return template
+    .replace(/\{\{renter_name\}\}/g, r.contact_name)
+    .replace(/\{\{renter_org\}\}/g, org)
+    .replace(/\{\{event_name\}\}/g, r.event_name)
+    .replace(/\{\{event_dates\}\}/g, dates)
+    .replace(/\{\{event_spaces\}\}/g, spaces)
+    .replace(/\{\{headcount\}\}/g, headcount);
 }
 
 // POST /api/admin/reservations/[id]/send-agreement
@@ -111,7 +92,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   }
 
   const token = crypto.randomBytes(32).toString("hex");
-  const agreementText = buildAgreementText({
+  const agreementText = await getAgreementTemplate({
     contact_name: res.contact_name as string,
     contact_org:  res.contact_org as string | null,
     event_name:   res.event_name as string,
