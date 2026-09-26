@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 interface Notification {
   id: string;
@@ -44,7 +45,23 @@ export default function NotificationBell() {
     mountedRef.current = true;
     fetchCount();
     const interval = setInterval(fetchCount, 60_000);
-    return () => { mountedRef.current = false; clearInterval(interval); };
+
+    // Realtime: bump count immediately on any new notification row
+    const supabase = createClient();
+    const channel = supabase
+      .channel("bx_notifications_bell")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "bx_notifications" },
+        () => { if (mountedRef.current) fetchCount(); },
+      )
+      .subscribe();
+
+    return () => {
+      mountedRef.current = false;
+      clearInterval(interval);
+      void supabase.removeChannel(channel);
+    };
   }, [fetchCount]);
 
   // Close on outside click

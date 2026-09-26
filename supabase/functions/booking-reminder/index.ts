@@ -51,11 +51,10 @@ Deno.serve(async (_req) => {
       skipped.push(res.booking_number); continue;
     }
 
-    // Extract time slots from the first room block of the first day
+    // Extract time slots — stored on firstDay.customStart / firstDay.customEnd
     const rooms     = (firstDay.rooms as Record<string, unknown>[]) ?? [];
-    const firstRoom = (rooms[0] ?? {}) as Record<string, unknown>;
-    const startTime = (firstRoom.startTime as string) ?? "—";
-    const endTime   = (firstRoom.endTime   as string) ?? "—";
+    const startTime = (firstDay.customStart as string) ?? "—";
+    const endTime   = (firstDay.customEnd   as string) ?? "—";
     const roomNames = rooms.map((r) => (r.roomId as string) ?? "Room").join(", ");
     const headcount = (firstDay.headcount as number) ?? 0;
 

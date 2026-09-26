@@ -85,13 +85,13 @@ export async function GET() {
       event:      (row.event_name  as string) ?? "",
       guests:     (firstDay.headcount as number) ?? 0,
       setup:      SETUP_LABELS[setup] ?? setup,
-      estimate:   0,
+      estimate:   (payload.estimate    as number)  ?? (firstDay.estimate    as number)  ?? 0,
       status:     DB_TO_ADMIN[row.status as string] ?? "Requested",
       submitted:  (row.created_at as string).split("T")[0],
       nonProfit:  (row.is_non_profit as boolean) ?? false,
-      avNeeded:   false,
-      tablecloths:0,
-      flexible:   false,
+      avNeeded:   (payload.avNeeded    as boolean) ?? (firstDay.avNeeded    as boolean) ?? false,
+      tablecloths:(payload.tablecloths as number)  ?? (firstDay.tablecloths as number)  ?? 0,
+      flexible:   (payload.flexible    as boolean) ?? (firstDay.flexible    as boolean) ?? false,
     };
   });
 

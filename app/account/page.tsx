@@ -77,12 +77,36 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           }}
         >
           <span style={{ fontSize: "1.25rem", lineHeight: 1, marginTop: "0.1rem" }}>👋</span>
-          <div>
+          <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, fontSize: "0.9375rem", color: "var(--bx-parchment)", marginBottom: "0.2rem" }}>
               You're in{profile?.display_name ? `, ${profile.display_name.split(" ")[0]}` : ""}!
             </div>
             <div style={{ fontSize: "0.8125rem", color: "var(--bx-slate)", lineHeight: 1.5 }}>
               Add your phone number below so our team can reach you about your reservation requests.
+            </div>
+            {/* What to expect timeline */}
+            <div style={{ marginTop: "0.875rem", paddingTop: "0.875rem", borderTop: "1px solid color-mix(in srgb, var(--bx-brass) 20%, transparent)" }}>
+              <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--bx-brass)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: "0.6rem" }}>
+                What happens after you submit a request
+              </div>
+              {[
+                { step: "1", label: "Requested", desc: "We receive your request and review availability." },
+                { step: "2", label: "Proposal Sent", desc: "We send you a Facility Use Agreement to sign by email." },
+                { step: "3", label: "Confirmed", desc: "Once signed by both parties, your booking is locked in." },
+              ].map(({ step, label, desc }) => (
+                <div key={step} style={{ display: "flex", gap: "0.625rem", marginBottom: "0.5rem", alignItems: "flex-start" }}>
+                  <div style={{
+                    flexShrink: 0, width: 20, height: 20, borderRadius: "50%",
+                    background: "color-mix(in srgb, var(--bx-brass) 25%, transparent)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: "0.6875rem", fontWeight: 700, color: "var(--bx-brass)",
+                  }}>{step}</div>
+                  <div>
+                    <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "var(--bx-parchment)" }}>{label}</span>
+                    <span style={{ fontSize: "0.8125rem", color: "var(--bx-slate)" }}> — {desc}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

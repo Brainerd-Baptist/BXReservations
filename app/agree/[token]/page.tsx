@@ -110,9 +110,29 @@ export default function AgreePage() {
               </p>
             )}
             {status === "pending_staff" && (
-              <p className="text-slate text-sm mt-3">
-                The BX team will countersign shortly. Both parties will receive a copy once the agreement is complete.
-              </p>
+              <div className="mt-4 text-left">
+                <p className="text-slate text-sm mb-3">
+                  The BX team will countersign shortly. Both parties will receive a copy once the agreement is complete.
+                </p>
+                <div style={{ background: "rgba(0,0,0,0.06)", borderRadius: 8, padding: "0.75rem 1rem", fontSize: "0.8125rem", color: "#374151", lineHeight: 1.6 }}>
+                  <p style={{ fontWeight: 600, marginBottom: "0.35rem", color: "#111827" }}>What happens next</p>
+                  <ol style={{ margin: 0, paddingLeft: "1.2rem" }}>
+                    <li>A BX staff member will countersign the agreement (usually within 1 business day).</li>
+                    <li>Both parties will receive a fully-executed copy by email.</li>
+                    <li>Your reservation will move to <strong>Confirmed</strong> status.</li>
+                  </ol>
+                </div>
+                {agreement.reservation_id && (
+                  <div className="mt-3 text-center">
+                    <a
+                      href={`/reservations/${agreement.reservation_id}`}
+                      style={{ fontSize: "0.8125rem", color: "#00abc9", textDecoration: "underline", fontWeight: 500 }}
+                    >
+                      View your reservation →
+                    </a>
+                  </div>
+                )}
+              </div>
             )}
             {status === "complete" && (
               <p className="text-slate text-sm mt-3">

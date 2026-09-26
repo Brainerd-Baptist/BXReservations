@@ -209,6 +209,11 @@ function renderPage(
               )}
             </div>
             {statusChip(reservation.status)}
+            {reservation.status === "under_review" && (
+              <p style={{ fontSize: "0.8125rem", color: "var(--bx-slate)", marginTop: "0.5rem" }}>
+                We&#8217;ve sent a proposal for your review &#8212; check your email for the Facility Use Agreement link to sign.
+              </p>
+            )}
           </div>
 
           {startDate && (
