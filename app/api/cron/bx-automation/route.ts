@@ -63,6 +63,7 @@ function userReminderHtml(opts: {
   const urgency = reminderNum === 2 ? "This is a second reminder." : "";
   return brandedEmailHtml({
     preheader: `Your reservation ${bookingNumber} needs your attention.`,
+    headline: reminderNum === 1 ? "Action Required: Your Reservation Needs a Response" : "Second Reminder: Your Reservation Needs a Response",
     body: `
       <p style="margin:0 0 16px">Hi ${name},</p>
       <p style="margin:0 0 16px">
@@ -98,6 +99,7 @@ function adminReminderHtml(opts: {
   const link = `${SITE}/admin/bx-reservations?selected=${dbId}`;
   return brandedEmailHtml({
     preheader: `Unreviewed reservation ${bookingNumber} (${Math.round(daysSinceSubmit)} days old)`,
+    headline: "Reservation Awaiting Review",
     body: `
       <p style="margin:0 0 16px"><strong>Heads up:</strong> A reservation has been waiting for admin review
         for <strong>${Math.round(daysSinceSubmit)} days</strong>.</p>
@@ -125,6 +127,7 @@ function coiExpiryReminderHtml(opts: {
   const { orgName, expiryDate, daysUntilExpiry } = opts;
   return brandedEmailHtml({
     preheader: `COI for ${orgName} expires in ${Math.round(daysUntilExpiry)} days`,
+    headline: "Certificate of Insurance Expiring Soon",
     body: `
       <p style="margin:0 0 16px">Hi,</p>
       <p style="margin:0 0 16px">
@@ -152,6 +155,7 @@ function autoCancelHtml(opts: {
   const { name, bookingNumber, inactiveDays } = opts;
   return brandedEmailHtml({
     preheader: `Your reservation ${bookingNumber} has been cancelled due to inactivity.`,
+    headline: "Your Reservation Has Been Cancelled",
     body: `
       <p style="margin:0 0 16px">Hi ${name},</p>
       <p style="margin:0 0 16px">
@@ -177,6 +181,7 @@ function postEventFeedbackHtml(opts: {
   const { name, eventName, bookingNumber } = opts;
   return brandedEmailHtml({
     preheader: `Thank you for hosting at Brainerd Baptist — ${eventName}`,
+    headline: "Thank You for Hosting at Brainerd Baptist!",
     body: `
       <p style="margin:0 0 16px">Hi ${name},</p>
       <p style="margin:0 0 16px">
