@@ -278,6 +278,37 @@ function renderPage(
         </div>
       )}
 
+      {/* Event map */}
+      <Link
+        href={`/reservations/${reservation.id}/event-map`}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "1rem",
+          border: "1px solid color-mix(in srgb, var(--bx-brass) 35%, transparent)",
+          borderRadius: "12px",
+          padding: "1rem 1.25rem",
+          marginBottom: "1rem",
+          background: "color-mix(in srgb, var(--bx-brass) 8%, var(--bx-ink-soft))",
+          textDecoration: "none",
+          color: "var(--bx-parchment)",
+        }}
+      >
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--bx-brass)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flex: "none" }}>
+          <path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z" />
+          <path d="M9 4v14M15 6v14" />
+        </svg>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ fontWeight: 700, fontSize: "0.9375rem" }}>Event map</div>
+          <div style={{ fontSize: "0.8125rem", color: "var(--bx-slate)", marginTop: "0.15rem", lineHeight: 1.4 }}>
+            Name each room for your event and tell us how to set it up. Everything saves to this reservation.
+          </div>
+        </div>
+        <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true" style={{ flex: "none", color: "var(--bx-slate)" }}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+        </svg>
+      </Link>
+
       {/* Details card */}
       <div
         style={{
