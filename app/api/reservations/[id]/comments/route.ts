@@ -114,6 +114,16 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  // Write history row
+  await adminClient.from("reservation_history").insert({
+    reservation_id: res.id,
+    actor_id:       user.id,
+    actor_name:     authorName,
+    actor_role:     "user",
+    action:         "comment",
+    note:           text.slice(0, 500),
+  });
+
   // Notify admins
   try {
     const { data: admins } = await adminClient

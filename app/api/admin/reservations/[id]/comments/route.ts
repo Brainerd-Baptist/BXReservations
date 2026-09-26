@@ -99,6 +99,17 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  // Write history row
+  await adminClient.from("reservation_history").insert({
+    reservation_id: res.id,
+    actor_id:       actor.user.id,
+    actor_name:     authorName,
+    actor_role:     "admin",
+    action:         "comment",
+    note:           text.slice(0, 500),
+    metadata:       { internal_only: internalOnly },
+  });
+
   // Notify user if not internal
   if (!internalOnly && res.contact_email) {
     try {
