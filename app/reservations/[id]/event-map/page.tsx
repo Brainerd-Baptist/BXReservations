@@ -76,6 +76,22 @@ export default async function EventMapPage({ params }: { params: Promise<{ id: s
         >
           {STATUS_LABEL[r.status] ?? r.status}
         </span>
+        {/* Changes autosave; "Done" is the explicit way out once the plan looks right */}
+        <Link
+          href={`/reservations/${r.id}`}
+          style={{
+            flex: "none",
+            padding: "0.375rem 0.875rem",
+            borderRadius: "999px",
+            fontSize: "0.8125rem",
+            fontWeight: 700,
+            background: "var(--bx-brass)",
+            color: "#fff",
+            textDecoration: "none",
+          }}
+        >
+          Done
+        </Link>
       </div>
 
       <div style={{ flex: 1, minHeight: 0 }}>
