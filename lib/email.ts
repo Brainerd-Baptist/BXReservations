@@ -333,12 +333,13 @@ export async function sendStatusUpdateEmail(opts: {
   eventName:     string;
   newStatus:     "approved" | "declined" | "needs_info" | "cancelled" | "proposal_sent";
   adminNote?:    string;
+  agreementUrl?: string;
 }) {
   if (!process.env.RESEND_API_KEY) {
     console.warn("[email] RESEND_API_KEY not set — skipping status update");
     return;
   }
-  const { to, name, bookingNumber, reservationId, eventName, newStatus, adminNote } = opts;
+  const { to, name, bookingNumber, reservationId, eventName, newStatus, adminNote, agreementUrl } = opts;
   const noteBlock = adminNote
     ? `<p style="background:#f8fafc;border-left:3px solid #00abc9;padding:12px 16px;margin:16px 0;border-radius:0 6px 6px 0;color:#374151;font-size:14px;">
          <strong>Note from staff:</strong> ${adminNote}
@@ -349,7 +350,7 @@ export async function sendStatusUpdateEmail(opts: {
     proposal_sent: {
       subject:  `Your BX Reservation — Proposal Ready · ${bookingNumber}`,
       headline: "We've reviewed your request.",
-      body:     `<p style="margin:0 0 16px 0;">Hi ${name},</p><p style="margin:0 0 16px 0;">We've reviewed your space reservation for <strong>${eventName}</strong> (${bookingNumber}). Our team has prepared a proposal and will be reaching out shortly to confirm the next steps.</p>${noteBlock}<p style="margin:0;">Log in to view your reservation details and current status.</p>`,
+      body:     `<p style="margin:0 0 16px 0;">Hi ${name},</p><p style="margin:0 0 16px 0;">We've reviewed your space reservation for <strong>${eventName}</strong> (${bookingNumber}). Our team has prepared a proposal and will be reaching out shortly to confirm the next steps.</p>${noteBlock}${agreementUrl ? `<p style="margin:0 0 16px 0;">To move forward, please review and sign the <strong>Facility Use Agreement</strong> using the link below:</p><p style="margin:0 0 16px 0;"><a href="${agreementUrl}" style="color:#00205b;font-weight:600;">Sign Facility Use Agreement →</a></p>` : ""}<p style="margin:0;">Log in to view your reservation details and current status.</p>`,
       cta:      "View Your Request",
     },
     approved: {

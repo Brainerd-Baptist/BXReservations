@@ -119,7 +119,7 @@ export async function PATCH(req: NextRequest) {
   // Fetch the reservation so we can send a status email
   const { data: row, error: fetchErr } = await supabase
     .from("reservations")
-    .select("booking_number, event_name, contact_name, contact_email")
+    .select("id, booking_number, event_name, contact_name, contact_email, status, payload")
     .eq("id", dbId)
     .single();
 
@@ -146,7 +146,48 @@ export async function PATCH(req: NextRequest) {
     Confirmed:          "approved",
     Declined:           "declined",
   };
-  const emailType = EMAIL_TRIGGERS[status];
+
+  // If a confirmed/approved reservation is being declined, send "cancelled" not "declined"
+  const prevStatus = row.status as string;
+  const activeStatuses = ["approved", "confirmed", "completed"];
+  let emailType = EMAIL_TRIGGERS[status] as typeof EMAIL_TRIGGERS[string];
+  if (emailType === "declined" && activeStatuses.includes(prevStatus)) {
+    emailType = "cancelled";
+  }
+
+  // For Proposal Sent — auto-create a facility use agreement and include the link
+  let agreementUrl: string | undefined;
+  if (emailType === "proposal_sent") {
+    try {
+      const payload  = (row.payload ?? {}) as Record<string, unknown>;
+      const days     = (payload.days as Record<string, unknown>[]) ?? [];
+      const firstDay = (days[0] ?? {}) as Record<string, unknown>;
+      const dateStr  = (firstDay.date as string) ?? "";
+      const summary  = `${row.event_name as string}${dateStr ? " — " + dateStr : ""}`;
+      const svcUrl   = process.env.NEXT_PUBLIC_SITE_URL ?? "https://bx.brainerdhq.app";
+      const agmtRes  = await fetch(`${svcUrl}/api/agreements`, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({
+          reservation_id:      row.id as string,
+          reservation_summary: summary,
+          contact_name:        (row.contact_name as string) || (row.contact_email as string),
+        }),
+      });
+      if (agmtRes.ok) {
+        const agmtData = (await agmtRes.json()) as { token?: string };
+        if (agmtData.token) {
+          agreementUrl = `${svcUrl}/agree/${agmtData.token}`;
+          console.log(`[agreements] created for ${row.booking_number as string}: ${agreementUrl}`);
+        }
+      } else {
+        console.warn("[agreements] failed to create:", await agmtRes.text());
+      }
+    } catch (err) {
+      console.warn("[agreements] error creating:", err);
+    }
+  }
+
   if (emailType && row.contact_email) {
     sendStatusUpdateEmail({
       to:            row.contact_email as string,
@@ -155,10 +196,11 @@ export async function PATCH(req: NextRequest) {
       reservationId: row.id as string,
       eventName:     row.event_name as string,
       newStatus:     emailType,
+      agreementUrl,
     }).then(() => {
-      console.log(`[email] status-update(${emailType}) sent OK for ${row.booking_number}`);
+      console.log(`[email] status-update(${emailType}) sent OK for ${row.booking_number as string}`);
     }).catch(err => {
-      console.error(`[email] status-update(${emailType}) FAILED for ${row.booking_number}:`, err);
+      console.error(`[email] status-update(${emailType}) FAILED for ${row.booking_number as string}:`, err);
     });
   }
 
