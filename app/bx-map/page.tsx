@@ -1,8 +1,9 @@
 // BX Building Map — v33 artifact embed
-// APP_VERSION: 1.0.62
+// APP_VERSION: 1.0.64
 // Do not edit geometry, room data, door/window positions, or JS logic here.
 // Source of truth: https://claude.ai/artifact/UXATr4iBvbtnuL8AK4uHmC (v33)
 import type { Metadata } from 'next';
+import Script from 'next/script';
 
 export const metadata: Metadata = {
   title: 'BX Building Map',
@@ -563,12 +564,12 @@ export default function BxMapPage() {
            overflow:hidden prevents page scroll behind the sheet.
            No site footer beneath this (ConditionalFooter suppresses it). */}
       <div
-        style={{ height: '100%', overflow: 'hidden' }}
+        style={{ height: 'calc(100dvh - 56px)', overflow: 'hidden', position: 'relative' }}
         dangerouslySetInnerHTML={{ __html: HTML }}
       />
       {/* Script injected outside the div — React doesn't execute scripts
            that arrive via innerHTML, so this is the correct injection site. */}
-      <script dangerouslySetInnerHTML={{ __html: JS }} />
+      <Script strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: JS }} />
     </>
   );
 }
