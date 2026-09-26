@@ -43,10 +43,15 @@ export default async function InvitesPage({ searchParams }: PageProps) {
     {
       cookies: {
         getAll: () => cookieStore.getAll(),
-        setAll: (cs) =>
-          cs.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options)
-          ),
+        setAll: (cs) => {
+          try {
+            cs.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch {
+            // Server Component — read-only cookie store; middleware handles refresh.
+          }
+        },
       },
     }
   );

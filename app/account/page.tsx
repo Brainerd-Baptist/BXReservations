@@ -24,10 +24,15 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
     {
       cookies: {
         getAll: () => cookieStore.getAll(),
-        setAll: (cs) =>
-          cs.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options)
-          ),
+        setAll: (cs) => {
+          try {
+            cs.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch {
+            // Server Component — read-only cookie store; middleware handles refresh.
+          }
+        },
       },
     }
   );
