@@ -92,7 +92,9 @@ export default async function Home() {
             className="rounded-2xl px-6 py-5 flex items-start gap-4"
             style={{ background: "var(--bx-parchment)" }}
           >
-            <div className="text-2xl shrink-0 mt-0.5">✨</div>
+            <div className="shrink-0 mt-0.5" style={{color:"var(--bx-brass)"}}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>
+            </div>
             <div>
               <p className="font-semibold text-sm mb-1" style={{ color: "var(--bx-ink)" }}>
                 Your Google account is your BX account

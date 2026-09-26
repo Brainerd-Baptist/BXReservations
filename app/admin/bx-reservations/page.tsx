@@ -1274,7 +1274,7 @@ function MinistriesTab({
         ) : (
           <div className="bg-ink-soft rounded-xl border border-parchment/10 p-10 flex items-center justify-center text-center">
             <div>
-              <p className="text-2xl mb-2">⛪</p>
+              <div className="mb-3" style={{color:"var(--bx-slate)"}}><svg width="2rem" height="2rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{display:"block",margin:"0 auto"}}><path d="M3 22V9l9-7 9 7v13"/><path d="M12 2v5M9.5 4.5h5"/><path d="M9 22v-5a3 3 0 016 0v5"/></svg></div>
               <p className="text-sm text-slate">Select a ministry to view and manage its members.</p>
             </div>
           </div>

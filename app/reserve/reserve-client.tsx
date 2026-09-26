@@ -479,7 +479,7 @@ function BuilderStep({
       {/* Day cards */}
       {days.length === 0 && (
         <div className="text-center py-16 text-slate">
-          <p className="text-4xl mb-3">📅</p>
+          <div style={{marginBottom:"0.75rem",color:"var(--bx-slate)"}}><svg width="2.5rem" height="2.5rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{display:"block",margin:"0 auto"}}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></div>
           <p className="font-medium">Pick your dates above to start building.</p>
         </div>
       )}
@@ -588,7 +588,7 @@ function DayCard({
     <div className={`rounded-2xl border transition-all ${isDayBlocked ? "border-red-200 bg-red-50" : day.included ? "border-parchment/15 bg-ink-soft shadow-sm" : "border-dashed border-parchment/15 bg-ink opacity-60"}`}>
       {isDayBlocked && (
         <div className="flex items-center gap-2 px-4 py-2 bg-red-50 rounded-t-2xl border-b border-red-100 text-xs text-red-700 font-medium">
-          <span>🚫</span>
+          <span style={{color:"var(--bx-clay)"}}><svg width="1.5rem" height="1.5rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" style={{display:"inline",verticalAlign:"-0.2em"}}><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg></span>
           <span>{blackoutReason(day.date, null, blackoutRules ?? []) ?? "Not available"} — this date is not open for reservations</span>
         </div>
       )}
@@ -731,7 +731,7 @@ function DayCard({
             {(spaceMode === "single" || spaceMode === "main-plus") && (
               <div>
                 <p className="text-xs font-medium mb-3 uppercase tracking-wide" style={{ color: "var(--bx-slate)" }}>
-                  {spaceMode === "main-plus" ? "🏛️ Main Space" : "Select your space"}
+                  {spaceMode === "main-plus" ? "Main Space" : "Select your space"}
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {ROOMS.map(room => {
@@ -794,7 +794,7 @@ function DayCard({
             {(spaceMode === "main-plus" || spaceMode === "multiple") && (
               <div>
                 <p className="text-xs font-medium mb-3 uppercase tracking-wide" style={{ color: "var(--bx-slate)" }}>
-                  {spaceMode === "main-plus" ? "➕ Additional Spaces" : "Select spaces for this day"}
+                  {spaceMode === "main-plus" ? "Additional Spaces" : "Select spaces for this day"}
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {ROOMS.map(room => {

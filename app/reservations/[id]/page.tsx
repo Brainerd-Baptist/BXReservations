@@ -229,7 +229,7 @@ function renderPage(
                 fontWeight: 500,
               }}
             >
-              📅 {startDate}
+              <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" style={{display:"inline",verticalAlign:"-0.15em"}}><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg> {startDate}
             </div>
           )}
         </div>
@@ -265,7 +265,7 @@ function renderPage(
             color: "var(--bx-parchment)",
           }}
         >
-          ⏳ Your request is pending review. Our team will reach out once it&apos;s been processed.
+          Your request is pending review. Our team will reach out once it’s been processed.
         </div>
       )}
       {(reservation.status === "approved" || reservation.status === "confirmed") && (
@@ -280,7 +280,7 @@ function renderPage(
             color: "var(--bx-parchment)",
           }}
         >
-          ✅ This reservation has been approved. See you there!
+          This reservation has been approved. See you there!
         </div>
       )}
       {reservation.status === "rejected" && (
@@ -295,7 +295,7 @@ function renderPage(
             color: "var(--bx-parchment)",
           }}
         >
-          ❌ This request was not approved. Please contact us if you have questions.
+          This request was not approved. Please contact us if you have questions.
         </div>
       )}
 

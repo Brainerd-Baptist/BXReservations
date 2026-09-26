@@ -82,7 +82,7 @@ export function RoomCard({ room, signal, isSelected, isDisabled, isNP, tag, onTo
         ) : (
           <div className="absolute inset-0 flex items-center justify-center"
             style={{ background: "color-mix(in srgb, var(--bx-parchment) 6%, var(--bx-ink-soft))" }}>
-            <span className="text-3xl opacity-20">🏛️</span>
+            <span style={{opacity:0.2,color:"var(--bx-slate)"}}><svg width="1.5rem" height="1.5rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{display:"inline",verticalAlign:"-0.15em",opacity:0.2}}><path d="M3 22V9l9-7 9 7v13"/><path d="M9 22v-5a3 3 0 016 0v5"/></svg></span>
           </div>
         )}
 

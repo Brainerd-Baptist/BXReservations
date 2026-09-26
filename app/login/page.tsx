@@ -190,7 +190,7 @@ export default function LoginPage() {
             <div className="w-full max-w-sm bg-ink-soft border border-parchment/15 rounded-xl p-7 shadow-xl" onClick={(e) => e.stopPropagation()}>
               {resetSent ? (
                 <div className="text-center space-y-4">
-                  <div className="text-3xl">✉️</div>
+                  <div style={{color:"var(--bx-ink)"}}><svg width="1.75rem" height="1.75rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" style={{display:"block"}}><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg></div>
                   <h2 className="text-lg font-bold text-parchment">Check your email</h2>
                   <p className="text-sm text-slate leading-relaxed">
                     If <strong>{resetEmail}</strong> has an account, we sent a password reset link. Check your inbox (and spam folder).

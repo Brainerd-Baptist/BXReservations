@@ -135,7 +135,7 @@ export function RoomsClient() {
                 className="px-3 py-1 text-xs font-medium transition-all"
                 style={{ background: "transparent", color: "var(--bx-slate)" }}
               >
-                ⬜ Map
+                <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" style={{display:"inline",verticalAlign:"-0.1em"}}><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg> Map
               </button>
             </div>
           </div>
@@ -146,7 +146,7 @@ export function RoomsClient() {
       <section className="max-w-5xl mx-auto px-4 py-8">
         {filtered.length === 0 ? (
           <div className="py-20 text-center">
-            <p className="text-4xl mb-3">🔍</p>
+            <div style={{marginBottom:"0.75rem",color:"var(--bx-slate)"}}><svg width="2.5rem" height="2.5rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{display:"block",margin:"0 auto"}}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></div>
             <p className="font-semibold mb-1" style={{ color: "var(--bx-parchment)" }}>No spaces match these filters</p>
             <button onClick={() => { setFloor("all"); setCap("all"); setSetup("all"); }}
               className="mt-4 text-sm font-medium" style={{ color: "var(--bx-brass)" }}>

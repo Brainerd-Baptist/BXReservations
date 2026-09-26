@@ -202,7 +202,7 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Path B: Supabase not yet configured ───────────────────────────────────
-  console.log("📋 BX RESERVATION SUBMISSION (no DB):", JSON.stringify({
+  console.log("BX RESERVATION SUBMISSION (no DB):", JSON.stringify({
     contact,
     spaceMode,
     notes,

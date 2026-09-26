@@ -473,7 +473,7 @@ export default async function ReservationsPage() {
             color: "var(--bx-slate)",
           }}
         >
-          <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>📋</div>
+          <div style={{ marginBottom: "0.75rem", color: "var(--bx-slate)" }}><svg width="2.5rem" height="2.5rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{display:"block",margin:"0 auto"}}><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg></div>
           <p style={{ margin: "0 0 0.5rem", fontWeight: 600, color: "var(--bx-parchment)" }}>No reservations yet</p>
           <p style={{ margin: "0 0 1.25rem", fontSize: "0.875rem" }}>
             When you submit a space request, it'll show up here.
