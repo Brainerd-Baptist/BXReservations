@@ -1,4 +1,5 @@
 "use client";
+import CommentsThread from "@/components/bx/CommentsThread";
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { BlackoutRule, ruleDescription } from "@/lib/blackouts";
@@ -597,6 +598,20 @@ Send this to ${req.name} (${req.email}).`);
                         </div>
                       );
                     })()}
+                    {/* ── Comments thread */}
+                    {req.dbId && (
+                      <div className="space-y-2 pt-1" onClick={e => e.stopPropagation()}>
+                        <p className="text-xs font-semibold text-slate uppercase tracking-widest">Messages</p>
+                        <CommentsThread
+                          reservationId={req.dbId}
+                          fetchUrl={`/api/admin/reservations/${req.dbId}/comments`}
+                          postUrl={`/api/admin/reservations/${req.dbId}/comments`}
+                          canInternal={true}
+                          autoLoad={false}
+                        />
+                      </div>
+                    )}
+
                     {req.status === "Confirmed" && (() => {
                       const ag = agreements[req.id];
                       const customerSigned = !!ag?.customer_signed_at;

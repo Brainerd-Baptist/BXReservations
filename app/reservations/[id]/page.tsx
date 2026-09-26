@@ -3,6 +3,8 @@ import Link from "next/link";
 import { getUserAndRole } from "@/lib/get-user-role";
 import { adminClient, isStaffRole } from "@/lib/event-map";
 import { ROOMS } from "@/lib/rooms";
+import SelfCancelButton from "./SelfCancelButton";
+import CommentsThread from "@/components/bx/CommentsThread";
 
 export const metadata = { title: "Reservation · BX Reservations" };
 
@@ -423,6 +425,36 @@ function renderPage(
         <Field label="Organization" value={reservation.contact_org} />
         <Field label="Email" value={reservation.contact_email} />
         <Field label="Phone" value={reservation.contact_phone} />
+      </div>
+
+      {/* Messages thread */}
+      <div
+        style={{
+          border: "1px solid color-mix(in srgb, var(--bx-parchment) 12%, transparent)",
+          borderRadius: "12px",
+          padding: "1.25rem 1.5rem",
+          marginBottom: "1rem",
+          background: "var(--bx-ink-soft)",
+        }}
+      >
+        <h2
+          style={{
+            margin: "0 0 1rem",
+            fontSize: "0.75rem",
+            fontWeight: 700,
+            letterSpacing: "0.05em",
+            textTransform: "uppercase",
+            color: "var(--bx-slate)",
+          }}
+        >
+          Messages
+        </h2>
+        <CommentsThread
+          reservationId={reservation.id}
+          fetchUrl={`/api/reservations/${reservation.id}/comments`}
+          postUrl={`/api/reservations/${reservation.id}/comments`}
+          autoLoad={true}
+        />
       </div>
 
       {/* Actions */}
