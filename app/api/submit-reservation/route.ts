@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
 
       const { data: insertData, error: insertErr } = await supabase.from("reservations").insert({
         booking_number:  bookingNumber,
-        status:          "pending_insurance",
+        status:          "pending",
         contact_name:    contact.name,
         contact_email:   contact.email,
         contact_phone:   contact.phone ?? null,
@@ -153,9 +153,12 @@ export async function POST(req: NextRequest) {
           notes:          notes || undefined,
         }),
       ]).then(results => {
+        const labels = ["customer-confirm", "admin-alert"];
         results.forEach((r, i) => {
-          if (r.status === "rejected") {
-            console.error(`[email] send #${i} failed:`, r.reason);
+          if (r.status === "fulfilled") {
+            console.log(`[email] ${labels[i]} sent OK for ${bookingNumber}`);
+          } else {
+            console.error(`[email] ${labels[i]} FAILED for ${bookingNumber}:`, r.reason);
           }
         });
       });

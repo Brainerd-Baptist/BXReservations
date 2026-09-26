@@ -23,6 +23,7 @@ interface Request {
   avNeeded: boolean;
   tablecloths: number;
   flexible: boolean; // is the blocked slot a soft block?
+  dbId?: string;       // real Supabase UUID — used for API status updates
 }
 
 // ─── Mock data ─────────────────────────────────────────────────────────────────
@@ -150,7 +151,8 @@ const STATUS_COLORS: Record<Status, string> = {
 };
 
 export default function BxReservationsAdmin() {
-  const [requests, setRequests] = useState<Request[]>(INITIAL_REQUESTS);
+  const [requests, setRequests] = useState<Request[]>([]);
+  const [reservationsLoading, setReservationsLoading] = useState(true);
   const [filter, setFilter] = useState<Status | "All">("All");
   const [selected, setSelected] = useState<Request | null>(null);
   const [calOpen, setCalOpen] = useState(false);
@@ -198,6 +200,14 @@ export default function BxReservationsAdmin() {
   const [newLabel, setNewLabel] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // ── Load real reservations from DB ─────────────────────────────────────────
+  useEffect(() => {
+    fetch("/api/admin/reservations")
+      .then(r => r.json())
+      .then((data: Request[]) => { setRequests(data); setReservationsLoading(false); })
+      .catch(err => { console.error("Failed to load reservations:", err); setReservationsLoading(false); });
+  }, []);
+
   useEffect(() => {
     fetch("/api/blackouts")
       .then(r => r.json())
@@ -244,6 +254,13 @@ export default function BxReservationsAdmin() {
         const next = STATUS_ORDER[Math.min(idx + 1, STATUS_ORDER.length - 2)];
         const updated = { ...r, status: next };
         if (selected?.id === id) setSelected(updated);
+        if (r.dbId) {
+          fetch("/api/admin/reservations", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ dbId: r.dbId, status: next }),
+          }).catch(err => console.error("[admin] advance failed:", err));
+        }
         return updated;
       })
     );
@@ -255,6 +272,13 @@ export default function BxReservationsAdmin() {
         if (r.id !== id) return r;
         const updated = { ...r, status: "Declined" as Status };
         if (selected?.id === id) setSelected(updated);
+        if (r.dbId) {
+          fetch("/api/admin/reservations", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ dbId: r.dbId, status: "Declined" }),
+          }).catch(err => console.error("[admin] decline failed:", err));
+        }
         return updated;
       })
     );
@@ -372,7 +396,12 @@ Send this to ${req.name} (${req.email}).`);
 
           {/* Request cards */}
           <div className="space-y-3">
-            {filtered.length === 0 && (
+            {reservationsLoading && (
+              <div className="bg-ink-soft rounded-xl border border-parchment/10 p-10 text-center text-slate text-sm animate-pulse">
+                Loading reservations…
+              </div>
+            )}
+            {!reservationsLoading && filtered.length === 0 && (
               <div className="bg-ink-soft rounded-xl border border-parchment/10 p-10 text-center text-slate text-sm">
                 No requests with this status
               </div>
