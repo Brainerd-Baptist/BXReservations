@@ -181,7 +181,7 @@ function zoomAt(factor, cx, cy){
   vb={x:px-(px-vb.x)*f, y:py-(py-vb.y)*f, w:nw, h:vb.h*f}; applyVB();
 }
 function isNarrow(){ return matchMedia('(max-width:859px)').matches; }
-function fitTo(b, padFrac){ const r=wrap.getBoundingClientRect(); const occ = (isNarrow() && $('#panel').classList.contains('open')) ? Math.min(r.height*0.6, $('#panel').getBoundingClientRect().height) : 0; const eh=Math.max(120, r.height-occ); const ar=r.width/eh; let w=(b.x1-b.x0)*(1+padFrac), h=(b.y1-b.y0)*(1+padFrac); if(w/h<ar) w=h*ar; else h=w/ar; w=Math.max(w, fitVB.w/8); h=w/ar; const cx=(b.x0+b.x1)/2, cy=(b.y0+b.y1)/2; const fullH=w*r.height/r.width; const target={x:cx-w/2,y:cy-h/2,w,h:fullH}; animateVB(target); }
+function fitTo(b, padFrac){ const r=wrap.getBoundingClientRect(); const occ = (isNarrow() && $('#panel').classList.contains('open')) ? Math.min(r.height*0.85, $('#panel').getBoundingClientRect().height) : 0; const eh=Math.max(120, r.height-occ); const ar=r.width/eh; let w=(b.x1-b.x0)*(1+padFrac), h=(b.y1-b.y0)*(1+padFrac); if(w/h<ar) w=h*ar; else h=w/ar; w=Math.max(w, fitVB.w/8); h=w/ar; const cx=(b.x0+b.x1)/2, cy=(b.y0+b.y1)/2; const fullH=w*r.height/r.width; const target={x:cx-w/2,y:cy-h/2,w,h:fullH}; animateVB(target); }
 let anim=null;
 function animateVB(t){ if(matchMedia('(prefers-reduced-motion: reduce)').matches){ vb=t; applyVB(); return; } const s={...vb}; const t0=performance.now(); cancelAnimationFrame(anim); const step=n=>{ const k=Math.min(1,(n-t0)/320); const e=1-Math.pow(1-k,3); vb={x:s.x+(t.x-s.x)*e,y:s.y+(t.y-s.y)*e,w:s.w+(t.w-s.w)*e,h:s.h+(t.h-s.h)*e}; applyVB(); if(k<1) anim=requestAnimationFrame(step); }; anim=requestAnimationFrame(step); }
 
@@ -211,15 +211,17 @@ function select(id, zoom){
   if(s.L!==level){ setLevel(s.L); }
   markSelected();
   showPanel(s.r, s.L);
-  if(zoom || isNarrow()){ requestAnimationFrame(()=>fitTo(bbox(s.r.poly), isNarrow()?1.2:1.6)); }
+  if(zoom || isNarrow()){ const _nd=isNarrow()?310:0; setTimeout(()=>fitTo(bbox(s.r.poly),isNarrow()?1.2:1.6),_nd); }
   $('#hint').classList.add('fade');
 }
 function selectExit(i){ const e=DATA[level].exits[i]; selected=null; document.querySelectorAll('.g-room.selected,.exit.selected,.poi.selected').forEach(x=>x.classList.remove('selected')); const g=svg.querySelector(`.exit[data-exit="${i}"]`); g.classList.add('selected');
   showPanel({name:e.name, cat:'exit', poly:[e.pt,e.pt,e.pt], note:'Exterior door. Exits are drawn where the plan shows doors in the outside wall.'}, level, true);
 }
 function selectPoi(i){ const p=DATA[level].pois[i]; selected=null; document.querySelectorAll('.g-room.selected,.exit.selected,.poi.selected').forEach(x=>x.classList.remove('selected')); svg.querySelector(`.poi[data-poi="${i}"]`).classList.add('selected'); showPanel({name:p.name,cat:'poi',poly:[p.pt,p.pt,p.pt],note:p.note},level,true); }
-function clearSel(){ selected=null; document.querySelectorAll('.g-room.selected,.exit.selected,.poi.selected').forEach(x=>x.classList.remove('selected')); $('#panel').classList.remove('open'); }
+function clearSel(){ selected=null; document.querySelectorAll('.g-room.selected,.exit.selected,.poi.selected').forEach(x=>x.classList.remove('selected')); $('#panel').classList.remove('open','expanded'); }
 $('#p-close').onclick=clearSel;
+// grab: tap toggles panel between 60% and 85% snap
+$('#panel .grab').addEventListener('click',()=>{ const p=$('#panel'); p.classList.toggle('expanded'); if(selected!==null) setTimeout(()=>fitTo(bbox(roomById(selected).r.poly),1.2),50); });
 
 function dist(a,b){ return Math.hypot(a[0]-b[0],a[1]-b[1]); }
 function nearest(r, L, pred, n){ const c=centroid(r.poly); return DATA[L].rooms.filter(x=>x!==r && pred(x)).map(x=>({x, d:dist(c,centroid(x.poly))})).sort((a,b)=>a.d-b.d).slice(0,n); }
