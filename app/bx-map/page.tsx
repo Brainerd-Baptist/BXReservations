@@ -205,10 +205,10 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:3px so
   .welcome .kbd{display:inline-block;border:1px solid var(--border-strong);border-bottom-width:2px;border-radius:5px;padding:0 5px;font-size:12px;font-family:ui-monospace,monospace}
 }
 @media (max-width:859px){
-  .panel.doormode{max-height:42%}
-  .panel{left:0;right:0;bottom:0;border-radius:16px 16px 0 0;max-height:60%;padding-bottom:env(safe-area-inset-bottom,0px)}
+  .panel.doormode{max-height:36%}
+  .panel{left:0;right:0;bottom:0;border-radius:16px 16px 0 0;max-height:70%;padding-bottom:env(safe-area-inset-bottom,0px)}
   .panel .grab{display:block;cursor:pointer;touch-action:none;user-select:none}
-  .panel.expanded{max-height:85%}
+  .panel.expanded{max-height:92%}
   .panel .welcome{display:none}
   .legend{display:none}
   .bar{gap:8px;padding:8px 12px}

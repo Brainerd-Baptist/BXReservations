@@ -211,7 +211,7 @@ function select(id, zoom){
   if(s.L!==level){ setLevel(s.L); }
   markSelected();
   showPanel(s.r, s.L);
-  if(zoom || isNarrow()){ const _nd=isNarrow()?310:0; setTimeout(()=>fitTo(bbox(s.r.poly),isNarrow()?1.2:1.6),_nd); }
+  if(zoom || isNarrow()){ const _nd=isNarrow()?310:0; setTimeout(()=>fitTo(bbox(s.r.poly),isNarrow()?0.5:1.6),_nd); }
   $('#hint').classList.add('fade');
 }
 function selectExit(i){ const e=DATA[level].exits[i]; selected=null; document.querySelectorAll('.g-room.selected,.exit.selected,.poi.selected').forEach(x=>x.classList.remove('selected')); const g=svg.querySelector(`.exit[data-exit="${i}"]`); g.classList.add('selected');
@@ -221,7 +221,7 @@ function selectPoi(i){ const p=DATA[level].pois[i]; selected=null; document.quer
 function clearSel(){ selected=null; document.querySelectorAll('.g-room.selected,.exit.selected,.poi.selected').forEach(x=>x.classList.remove('selected')); $('#panel').classList.remove('open','expanded'); }
 $('#p-close').onclick=clearSel;
 // grab: tap toggles panel between 60% and 85% snap
-$('#panel .grab').addEventListener('click',()=>{ const p=$('#panel'); p.classList.toggle('expanded'); if(selected!==null) setTimeout(()=>fitTo(bbox(roomById(selected).r.poly),1.2),50); });
+$('#panel .grab').addEventListener('click',()=>{ const p=$('#panel'); p.classList.toggle('expanded'); if(selected!==null) setTimeout(()=>fitTo(bbox(roomById(selected).r.poly),0.5),50); });
 
 function dist(a,b){ return Math.hypot(a[0]-b[0],a[1]-b[1]); }
 function nearest(r, L, pred, n){ const c=centroid(r.poly); return DATA[L].rooms.filter(x=>x!==r && pred(x)).map(x=>({x, d:dist(c,centroid(x.poly))})).sort((a,b)=>a.d-b.d).slice(0,n); }
