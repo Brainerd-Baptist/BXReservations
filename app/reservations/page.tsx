@@ -9,11 +9,13 @@ export const metadata = { title: "My Reservations · BX Reservations" };
 function statusChip(status: string) {
   const map: Record<string, { label: string; bg: string; color: string }> = {
     pending:   { label: "Pending",   bg: "#FEF3C7", color: "#92400E" },
-    approved:  { label: "Approved",  bg: "#D1FAE5", color: "#065F46" },
-    rejected:  { label: "Rejected",  bg: "#FEE2E2", color: "#991B1B" },
-    cancelled: { label: "Cancelled", bg: "#F3F4F6", color: "#374151" },
-    under_review: { label: "In Review", bg: "#E0E7FF", color: "#3730A3" },
-    pending_insurance: { label: "Pending Insurance", bg: "#FEF9C3", color: "#713F12" },
+    approved:           { label: "Approved",      bg: "#D1FAE5", color: "#065F46" },
+    confirmed:          { label: "Confirmed",     bg: "#D1FAE5", color: "#065F46" },
+    completed:          { label: "Completed",     bg: "#D1FAE5", color: "#065F46" },
+    rejected:           { label: "Declined",      bg: "#FEE2E2", color: "#991B1B" },
+    cancelled:          { label: "Cancelled",     bg: "#F3F4F6", color: "#374151" },
+    under_review:       { label: "Proposal Sent", bg: "#E0E7FF", color: "#3730A3" },
+    pending_insurance:  { label: "Requested",     bg: "#FEF9C3", color: "#713F12" },
   };
   const s = map[status] ?? { label: status, bg: "#F3F4F6", color: "#374151" };
   return (
