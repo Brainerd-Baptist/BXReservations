@@ -140,9 +140,11 @@ export async function PATCH(req: NextRequest) {
   }
 
   // ── Status-change email ─────────────────────────────────────────────────────
-  const EMAIL_TRIGGERS: Partial<Record<string, "approved" | "declined" | "needs_info" | "cancelled">> = {
-    Confirmed: "approved",
-    Declined:  "declined",
+  const EMAIL_TRIGGERS: Partial<Record<string, "approved" | "declined" | "needs_info" | "cancelled" | "proposal_sent">> = {
+    "Proposal Sent":    "proposal_sent",
+    "Deposit Received": "approved",
+    Confirmed:          "approved",
+    Declined:           "declined",
   };
   const emailType = EMAIL_TRIGGERS[status];
   if (emailType && row.contact_email) {

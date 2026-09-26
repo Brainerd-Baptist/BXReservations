@@ -113,10 +113,16 @@ export function brandedEmailHtml(opts: {
             </td>
           </tr>
 
-          <!-- Body -->
+          <!-- Body (nested table for reliable padding across all email clients) -->
           <tr>
-            <td style="padding:12px 40px 0 40px;font-family:${FONT};font-size:15px;line-height:1.65;color:${C.body};">
-              ${body}
+            <td style="padding:12px 0 0 0;">
+              <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+                <tr>
+                  <td style="padding:0 40px;font-family:${FONT};font-size:15px;line-height:1.65;color:${C.body};">
+                    ${body}
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
 
@@ -137,7 +143,7 @@ export function brandedEmailHtml(opts: {
           <!-- Signature / footer -->
           <tr>
             <td style="padding:20px 40px 0 40px;font-family:${FONT};font-size:14px;line-height:1.6;color:${C.body};">
-              <p style="margin:0;">— Josiah King<br />Brainerd Baptist Church</p>
+              <p style="margin:0;">— The BX Team<br />Brainerd Baptist Church</p>
             </td>
           </tr>
           <tr>
@@ -145,7 +151,7 @@ export function brandedEmailHtml(opts: {
               <p style="margin:0;">
                 ${footerNote ? `${footerNote} &middot; ` : ""}Questions? Call or text
                 <a href="tel:4236534670" style="color:${C.light};text-decoration:underline;">(423) 653-4670</a>
-                or email <a href="mailto:jking@brainerdbaptist.org" style="color:${C.light};text-decoration:underline;">jking@brainerdbaptist.org</a>.
+.
               </p>
             </td>
           </tr>
@@ -323,7 +329,7 @@ export async function sendStatusUpdateEmail(opts: {
   name:          string;
   bookingNumber: string;
   eventName:     string;
-  newStatus:     "approved" | "declined" | "needs_info" | "cancelled";
+  newStatus:     "approved" | "declined" | "needs_info" | "cancelled" | "proposal_sent";
   adminNote?:    string;
 }) {
   if (!process.env.RESEND_API_KEY) {
@@ -338,6 +344,12 @@ export async function sendStatusUpdateEmail(opts: {
     : "";
 
   const configs = {
+    proposal_sent: {
+      subject:  `Your BX Reservation — Proposal Ready · ${bookingNumber}`,
+      headline: "We've reviewed your request.",
+      body:     `<p style="margin:0 0 16px 0;">Hi ${name},</p><p style="margin:0 0 16px 0;">We've reviewed your space reservation for <strong>${eventName}</strong> (${bookingNumber}). Our team has prepared a proposal and will be reaching out shortly to confirm the next steps.</p>${noteBlock}<p style="margin:0;">Log in to view your reservation details and current status.</p>`,
+      cta:      "View Your Request",
+    },
     approved: {
       subject:  `Reservation Approved — ${bookingNumber}`,
       headline: "Your reservation has been approved.",
