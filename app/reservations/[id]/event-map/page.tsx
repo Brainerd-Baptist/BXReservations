@@ -15,7 +15,6 @@ const STATUS_LABEL: Record<string, string> = {
   confirmed: "Confirmed",
   completed: "Completed",
   cancelled: "Cancelled",
-  pending: "Pending",
   rejected: "Not approved",
 };
 

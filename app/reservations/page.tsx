@@ -15,7 +15,7 @@ function statusChip(status: string) {
     rejected:           { label: "Declined",      bg: "#FEE2E2", color: "#991B1B" },
     cancelled:          { label: "Cancelled",     bg: "#F3F4F6", color: "#374151" },
     under_review:       { label: "Proposal Sent", bg: "#E0E7FF", color: "#3730A3" },
-    pending:            { label: "Requested",     bg: "#FEF9C3", color: "#713F12" },
+    pending_insurance:  { label: "Requested",     bg: "#FEF9C3", color: "#713F12" },
   };
   const s = map[status] ?? { label: status, bg: "#F3F4F6", color: "#374151" };
   return (

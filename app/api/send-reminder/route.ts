@@ -99,6 +99,7 @@ export async function POST(req: NextRequest) {
   // Send email
   await sendBookingReminder({
     to:            res.contact_email,
+    reservationId: res.id,
     name:          res.contact_name,
     bookingNumber: res.booking_number,
     eventName:     res.event_name,
