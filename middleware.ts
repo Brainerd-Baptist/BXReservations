@@ -51,7 +51,7 @@ export async function middleware(request: NextRequest) {
       .eq("user_id", user.id)
       .single();
 
-    if (!["owner", "system_admin", "booking_admin"].includes(data?.role ?? "")) {
+    if (!["admin", "owner", "system_admin", "booking_admin"].includes(data?.role ?? "")) {
       return NextResponse.redirect(new URL("/", request.url));
     }
   }

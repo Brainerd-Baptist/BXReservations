@@ -205,7 +205,7 @@ export default async function ReservationsPage() {
       {/* ── Upcoming / Shared / Past (client component handles hover) ── */}
       <ReservationList
         upcoming={upcoming}
-        sharedCollabs={(sharedCollabs ?? []) as Collab[]}
+        sharedCollabs={(sharedCollabs ?? []) as unknown as Collab[]}
         past={past}
       />
 
