@@ -26,6 +26,7 @@ interface Request {
   flexible: boolean; // is the blocked slot a soft block?
   dbId?: string;       // real Supabase UUID — used for API status updates
   // Phase 4: doc completion flags (populated by API)
+  organizationId?: string;   // Phase 5: linked org
   agreementSigned?: boolean;
   coiAccepted?: boolean;
   hasPayment?: boolean;
@@ -273,6 +274,78 @@ export default function BxReservationsAdmin() {
   const [newDate, setNewDate] = useState("");
   const [newLabel, setNewLabel] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // ── Phase 5: Org suggestion widget state ───────────────────────────────────
+  interface OrgSuggestion { id: string; name: string; score: number; }
+  interface LinkedOrg { id: string; name: string; has_coi: boolean; coi_expiry_date: string | null; }
+  const [orgSuggestions, setOrgSuggestions] = useState<Record<string, OrgSuggestion[]>>({});
+  const [linkedOrg, setLinkedOrg] = useState<Record<string, LinkedOrg | null>>({});
+  const [orgLinking, setOrgLinking] = useState<Record<string, boolean>>({});
+
+  function loadOrgData(req: Request) {
+    if (req.organizationId) {
+      fetch(`/api/admin/organizations/${req.organizationId}`)
+        .then(r => r.json())
+        .then(d => {
+          if (d.organization) {
+            setLinkedOrg(prev => ({ ...prev, [req.id]: {
+              id: d.organization.id,
+              name: d.organization.name,
+              has_coi: d.organization.has_coi,
+              coi_expiry_date: d.organization.coi_expiry_date,
+            }}));
+          }
+        })
+        .catch(() => {});
+    } else if (req.org) {
+      const params = new URLSearchParams({ contact_org: req.org });
+      fetch(`/api/admin/organizations/suggest?${params}`)
+        .then(r => r.json())
+        .then(d => {
+          if (d.suggestions) {
+            setOrgSuggestions(prev => ({ ...prev, [req.id]: d.suggestions }));
+          }
+        })
+        .catch(() => {});
+    }
+  }
+
+  async function handleLinkOrg(req: Request, orgId: string) {
+    setOrgLinking(prev => ({ ...prev, [req.id]: true }));
+    try {
+      await fetch(`/api/admin/organizations/${orgId}/link-reservation`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reservation_id: req.dbId }),
+      });
+      const updated = { ...req, organizationId: orgId };
+      setRequests(prev => prev.map(r => r.id === req.id ? updated : r));
+      setSelected(updated);
+      setOrgSuggestions(prev => { const n = { ...prev }; delete n[req.id]; return n; });
+      loadOrgData(updated);
+    } finally {
+      setOrgLinking(prev => ({ ...prev, [req.id]: false }));
+    }
+  }
+
+  async function handleUnlinkOrg(req: Request) {
+    if (!req.organizationId) return;
+    setOrgLinking(prev => ({ ...prev, [req.id]: true }));
+    try {
+      await fetch(`/api/admin/organizations/${req.organizationId}/link-reservation`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reservation_id: req.dbId, unlink: true }),
+      });
+      const updated = { ...req, organizationId: undefined };
+      setRequests(prev => prev.map(r => r.id === req.id ? updated : r));
+      setSelected(updated);
+      setLinkedOrg(prev => { const n = { ...prev }; delete n[req.id]; return n; });
+      loadOrgData(updated);
+    } finally {
+      setOrgLinking(prev => ({ ...prev, [req.id]: false }));
+    }
+  }
 
   // ── Load real reservations from DB ─────────────────────────────────────────
   useEffect(() => {
@@ -968,6 +1041,118 @@ Send this to ${req.name} (${req.email}).`);
                           canInternal={true}
                           autoLoad={false}
                         />
+                      </div>
+                    )}
+
+                    {/* ── Phase 5: Organization Intelligence Widget */}
+                    {req.org && (
+                      <div className="space-y-2 pt-1" onClick={e => e.stopPropagation()}>
+                        <p className="text-xs font-semibold text-slate uppercase tracking-widest">Organization</p>
+                        {(() => {
+                          const org = linkedOrg[req.id];
+                          const suggestions = orgSuggestions[req.id];
+                          const busy = orgLinking[req.id];
+
+                          // Lazy-load org data when panel opens
+                          if (org === undefined && !suggestions && req.organizationId) {
+                            loadOrgData(req);
+                          } else if (org === undefined && !suggestions && !req.organizationId && req.org) {
+                            loadOrgData(req);
+                          }
+
+                          if (req.organizationId && org) {
+                            const coiExpiry = org.coi_expiry_date ? new Date(org.coi_expiry_date) : null;
+                            const coiValid = org.has_coi && (!coiExpiry || coiExpiry > new Date());
+                            const coiExpiringSoon = coiExpiry && coiValid && (coiExpiry.getTime() - Date.now()) < 30 * 24 * 60 * 60 * 1000;
+                            return (
+                              <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 space-y-2">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div>
+                                    <a
+                                      href={`/admin/bx-reservations/organizations/${org.id}`}
+                                      className="text-sm font-medium text-blue-600 hover:underline"
+                                      target="_blank"
+                                    >
+                                      {org.name}
+                                    </a>
+                                    <p className="text-xs text-gray-500 mt-0.5">Linked organization</p>
+                                  </div>
+                                  <button
+                                    onClick={() => handleUnlinkOrg(req)}
+                                    disabled={busy}
+                                    className="text-xs text-gray-400 hover:text-red-500 shrink-0"
+                                  >
+                                    {busy ? "…" : "Unlink"}
+                                  </button>
+                                </div>
+                                {/* COI carry-forward banner */}
+                                {org.has_coi && coiValid && (
+                                  <div className={`text-xs rounded px-2 py-1.5 flex items-center gap-1.5 ${coiExpiringSoon ? "bg-amber-50 text-amber-700 border border-amber-200" : "bg-emerald-50 text-emerald-700 border border-emerald-200"}`}>
+                                    <span>{coiExpiringSoon ? "⚠️" : "✓"}</span>
+                                    <span>
+                                      {coiExpiringSoon
+                                        ? `COI expires ${org.coi_expiry_date} — remind org to renew`
+                                        : `Valid COI on file${org.coi_expiry_date ? ` — expires ${org.coi_expiry_date}` : ""}. No new upload required unless coverage changed.`}
+                                    </span>
+                                  </div>
+                                )}
+                                {org.has_coi && !coiValid && coiExpiry && (
+                                  <div className="text-xs rounded px-2 py-1.5 flex items-center gap-1.5 bg-red-50 text-red-700 border border-red-200">
+                                    <span>✗</span>
+                                    <span>COI expired {org.coi_expiry_date} — fresh COI required for upcoming reservations.</span>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          }
+
+                          if (!req.organizationId) {
+                            return (
+                              <div className="rounded-lg border border-dashed border-gray-200 p-3 space-y-2">
+                                <p className="text-xs text-gray-400">
+                                  Submitter listed: <span className="font-medium text-gray-600">{req.org}</span>
+                                </p>
+                                {suggestions && suggestions.length > 0 && (
+                                  <div className="space-y-1">
+                                    <p className="text-xs text-gray-500">Possible matches:</p>
+                                    {suggestions.map(s => (
+                                      <div key={s.id} className="flex items-center justify-between gap-2 text-xs">
+                                        <a
+                                          href={`/admin/bx-reservations/organizations/${s.id}`}
+                                          className="text-blue-600 hover:underline truncate"
+                                          target="_blank"
+                                        >
+                                          {s.name}
+                                        </a>
+                                        <button
+                                          onClick={() => handleLinkOrg(req, s.id)}
+                                          disabled={busy}
+                                          className="btn-outline text-xs shrink-0"
+                                        >
+                                          {busy ? "Linking…" : "Link"}
+                                        </button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                {suggestions && suggestions.length === 0 && (
+                                  <p className="text-xs text-gray-400">No existing org matches found.</p>
+                                )}
+                                <div className="pt-1">
+                                  <a
+                                    href="/admin/bx-reservations/organizations"
+                                    className="text-xs text-blue-600 hover:underline"
+                                    target="_blank"
+                                  >
+                                    Manage organizations →
+                                  </a>
+                                </div>
+                              </div>
+                            );
+                          }
+
+                          return null;
+                        })()}
                       </div>
                     )}
 

@@ -78,7 +78,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("reservations")
-    .select("id, booking_number, status, event_name, contact_name, contact_email, contact_org, is_non_profit, created_at, payload, coi_accepted_at, coi_uploaded_at, payment_received_at")
+    .select("id, booking_number, status, event_name, contact_name, contact_email, contact_org, is_non_profit, created_at, payload, coi_accepted_at, coi_uploaded_at, payment_received_at, organization_id")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -127,6 +127,7 @@ export async function GET() {
       agreementSigned: signedReservations.has(row.id as string),
       coiAccepted:     !!(row.coi_accepted_at),
       hasPayment:      !!(row.payment_received_at),
+      organizationId:  row.organization_id as string | undefined,
     };
   });
 
