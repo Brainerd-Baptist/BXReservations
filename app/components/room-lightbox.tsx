@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Room } from "@/lib/rooms";
@@ -21,6 +21,7 @@ const SETUP_LABELS: Record<string, string> = {
 
 export function RoomLightbox({ room, isSelected, isNP, onClose, onToggle, galleryMode = false }: Props) {
   const [photoIdx, setPhotoIdx] = useState(0);
+  const scrollYRef = useRef(0);
 
   // Reset photo index when room changes
   useEffect(() => { setPhotoIdx(0); }, [room?.id]);
@@ -46,14 +47,25 @@ export function RoomLightbox({ room, isSelected, isNP, onClose, onToggle, galler
     return () => window.removeEventListener("keydown", handler);
   }, [room, onClose, prev, next]);
 
-  // Lock body scroll while open
+  // iOS-safe body scroll lock: fix the body in place at its current scroll position
+  // so it doesn't jump or bounce behind the modal on iOS Safari.
   useEffect(() => {
     if (room) {
-      document.body.style.overflow = "hidden";
+      scrollYRef.current = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollYRef.current}px`;
+      document.body.style.width = "100%";
     } else {
-      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+      window.scrollTo(0, scrollYRef.current);
     }
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+    };
   }, [room]);
 
   if (!room) return null;
@@ -67,24 +79,40 @@ export function RoomLightbox({ room, isSelected, isNP, onClose, onToggle, galler
       onClick={onClose}
       style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)" }}
     >
+      {/* Close button — fixed to viewport so it's always reachable no matter how far the modal scrolls */}
+      <button
+        onClick={onClose}
+        className="fixed top-4 right-4 z-[60] w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-colors"
+        style={{ background: "rgba(0,0,0,0.65)", color: "white", border: "1px solid rgba(255,255,255,0.15)" }}
+        aria-label="Close"
+      >
+        ✕
+      </button>
+
+      {/* Modal card
+          Single scroll container — only this div scrolls; the details panel must NOT have
+          its own overflow-y-auto, otherwise iOS Safari creates nested scroll which breaks. */}
       <div
-        className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl flex flex-col lg:flex-row"
-        style={{ background: "var(--bx-ink-soft)", border: "1px solid color-mix(in srgb, var(--bx-parchment) 12%, transparent)" }}
+        className="relative w-full max-w-4xl rounded-2xl shadow-2xl flex flex-col lg:flex-row"
+        style={{
+          background: "var(--bx-ink-soft)",
+          border: "1px solid color-mix(in srgb, var(--bx-parchment) 12%, transparent)",
+          maxHeight: "min(90dvh, 90vh)",          /* dvh respects iOS address-bar shrink */
+          overflowY: "auto",
+          WebkitOverflowScrolling: "touch",       /* smooth momentum scroll on iOS */
+          overscrollBehavior: "contain",           /* don't let scroll bleed to the page */
+        }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Close */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors"
-          style={{ background: "rgba(0,0,0,0.5)", color: "var(--bx-parchment)" }}
-          aria-label="Close"
-        >
-          ✕
-        </button>
 
         {/* ── Image carousel ── */}
-        <div className="relative lg:w-[55%] flex-shrink-0 flex flex-col">
-          <div className="relative w-full overflow-hidden" style={{ aspectRatio: "4/3", maxHeight: "clamp(160px, 45vh, 480px)" }}>
+        <div className="lg:w-[55%] flex-shrink-0 flex flex-col">
+
+          {/* Image container — arrows are positioned relative to THIS div, not the outer column */}
+          <div
+            className="relative w-full overflow-hidden"
+            style={{ aspectRatio: "4/3", maxHeight: "clamp(200px, 50vw, 480px)" }}
+          >
             <Image
               src={photo.src}
               alt={photo.caption}
@@ -93,42 +121,54 @@ export function RoomLightbox({ room, isSelected, isNP, onClose, onToggle, galler
               sizes="(max-width: 1024px) 100vw, 55vw"
               priority
             />
-            {/* Gradient overlay for caption */}
+            {/* Caption gradient */}
             <div
-              className="absolute inset-x-0 bottom-0 h-20 rounded-bl-none lg:rounded-bl-2xl"
+              className="absolute inset-x-0 bottom-0 h-20"
               style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7), transparent)" }}
             />
-            <p className="absolute bottom-3 left-4 right-12 text-xs text-white/80 font-medium">
+            <p className="absolute bottom-3 left-4 right-4 text-xs text-white/80 font-medium line-clamp-2">
               {photo.caption}
             </p>
+
+            {/* Nav arrows — inside the image container so top-1/2 bisects the image, not the whole column */}
+            {room.photos.length > 1 && (
+              <>
+                <button
+                  onClick={e => { e.stopPropagation(); prev(); }}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-base transition-all hover:scale-105 active:scale-95"
+                  style={{ background: "rgba(0,0,0,0.55)", touchAction: "manipulation" }}
+                  aria-label="Previous photo"
+                >‹</button>
+                <button
+                  onClick={e => { e.stopPropagation(); next(); }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-base transition-all hover:scale-105 active:scale-95"
+                  style={{ background: "rgba(0,0,0,0.55)", touchAction: "manipulation" }}
+                  aria-label="Next photo"
+                >›</button>
+              </>
+            )}
           </div>
 
-          {/* Navigation arrows */}
+          {/* Dot indicators sit below the image, inside the column but outside the image container */}
           {room.photos.length > 1 && (
-            <>
-              <button onClick={prev}
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm transition-all hover:scale-105"
-                style={{ background: "rgba(0,0,0,0.55)" }}
-              >‹</button>
-              <button onClick={next}
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm transition-all hover:scale-105"
-                style={{ background: "rgba(0,0,0,0.55)" }}
-              >›</button>
-              {/* Dot indicators */}
-              <div className="absolute bottom-3 right-4 flex gap-1.5">
-                {room.photos.map((_, i) => (
-                  <button key={i} onClick={() => setPhotoIdx(i)}
-                    className="w-1.5 h-1.5 rounded-full transition-all"
-                    style={{ background: i === photoIdx ? "white" : "rgba(255,255,255,0.35)" }}
-                  />
-                ))}
-              </div>
-            </>
+            <div className="flex justify-center gap-2 py-3">
+              {room.photos.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={e => { e.stopPropagation(); setPhotoIdx(i); }}
+                  className="w-2 h-2 rounded-full transition-all"
+                  style={{ background: i === photoIdx ? "white" : "rgba(255,255,255,0.3)" }}
+                  aria-label={`Photo ${i + 1}`}
+                />
+              ))}
+            </div>
           )}
         </div>
 
-        {/* ── Details panel ── */}
-        <div className="flex-1 p-6 flex flex-col gap-5 overflow-y-auto min-h-0">
+        {/* ── Details panel ──
+            No overflow-y-auto here — the outer modal card is the single scroll container.
+            Removing it prevents the broken nested-scroll on iOS that hid all this content. */}
+        <div className="flex-1 p-6 flex flex-col gap-5">
           {/* Header */}
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest mb-1"
