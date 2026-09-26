@@ -173,22 +173,24 @@ export async function PATCH(req: NextRequest) {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
     );
-    adminSupabase.from("reservations").select("user_id").eq("id", dbId).single()
-      .then(({ data: resRow }) => {
+    (async () => {
+      try {
+        const { data: resRow } = await adminSupabase
+          .from("reservations").select("user_id").eq("id", dbId).single();
         if (!resRow?.user_id) return;
-        return adminSupabase.from("bx_notifications").insert({
-          user_id:        resRow.user_id,
+        const { error: nErr } = await adminSupabase.from("bx_notifications").insert({
+          user_id:        resRow.user_id as string,
           reservation_id: dbId,
           type:           "status_update",
           title:          notifCopy.title,
           body:           notifCopy.body,
         });
-      })
-      .then(result => {
-        if (result?.error) console.error("[notif] insert error:", result.error);
+        if (nErr) console.error("[notif] insert error:", nErr);
         else console.log(`[notif] status_update inserted for ${row.booking_number as string}`);
-      })
-      .catch(err => console.error("[notif] unexpected error:", err));
+      } catch (err) {
+        console.error("[notif] unexpected error:", err);
+      }
+    })();
   }
 
   return NextResponse.json({ ok: true, dbStatus });
