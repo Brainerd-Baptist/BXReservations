@@ -326,7 +326,8 @@ function BuilderStep({
         return byDate[date] ?? {
         date, included: !isBlocked,
         headcount: defaultHeadcount,
-        customStart: "08:00", customEnd: "22:00",
+        timeSlot: "any" as const,
+        customStart: "", customEnd: "",
         rooms: [],
         availability: Object.fromEntries(ROOMS.map(r => [r.id, "loading" as Signal])),
         availabilityFetched: false,
@@ -639,62 +640,65 @@ function DayCard({
       {/* Day body */}
       {expanded && day.included && (
         <div className="border-t border-parchment/10 px-5 py-4 space-y-5">
-          {/* Headcount + time of day */}
-          <div className="flex flex-wrap gap-4 items-end">
-            <div>
-              <label className="block text-xs font-medium text-slate mb-1">Headcount</label>
-              <div className="flex items-center gap-2">
-                <button onClick={() => onHeadcount(Math.max(1, day.headcount - 10))}
-                  className="w-7 h-7 rounded-lg border border-parchment/15 text-slate hover:bg-parchment/5 font-bold">−</button>
-                <input type="text" inputMode="numeric" pattern="[0-9]*"
-                  value={rawHeadcount}
-                  onChange={e => {
-                    const raw = e.target.value.replace(/[^0-9]/g, "");
-                    setRawHeadcount(raw);
-                    if (raw !== "") onHeadcount(Math.max(1, parseInt(raw, 10)));
-                  }}
-                  onBlur={() => {
-                    const n = Math.max(1, parseInt(rawHeadcount, 10) || 1);
-                    onHeadcount(n);
-                    setRawHeadcount(String(n));
-                  }}
-                  className="w-16 text-center border border-parchment/15 rounded-lg py-1 text-sm bg-ink text-parchment" />
-                <button onClick={() => onHeadcount(day.headcount + 10)}
-                  className="w-7 h-7 rounded-lg border border-parchment/15 text-slate hover:bg-parchment/5 font-bold">+</button>
-              </div>
+          {/* Headcount */}
+          <div>
+            <label className="block text-xs font-medium text-slate mb-1">Headcount</label>
+            <div className="flex items-center gap-2">
+              <button onClick={() => onHeadcount(Math.max(1, day.headcount - 10))}
+                className="w-7 h-7 rounded-lg border border-parchment/15 text-slate hover:bg-parchment/5 font-bold">−</button>
+              <input type="text" inputMode="numeric" pattern="[0-9]*"
+                value={rawHeadcount}
+                onChange={e => {
+                  const raw = e.target.value.replace(/[^0-9]/g, "");
+                  setRawHeadcount(raw);
+                  if (raw !== "") onHeadcount(Math.max(1, parseInt(raw, 10)));
+                }}
+                onBlur={() => {
+                  const n = Math.max(1, parseInt(rawHeadcount, 10) || 1);
+                  onHeadcount(n);
+                  setRawHeadcount(String(n));
+                }}
+                className="w-16 text-center border border-parchment/15 rounded-lg py-1 text-sm bg-ink text-parchment" />
+              <button onClick={() => onHeadcount(day.headcount + 10)}
+                className="w-7 h-7 rounded-lg border border-parchment/15 text-slate hover:bg-parchment/5 font-bold">+</button>
             </div>
-            <div>
-              <div>
-                <label className="block text-xs font-medium text-slate mb-1">Time of day</label>
-                <div className="flex gap-1 flex-wrap">
-                  {(["any", "morning", "afternoon", "evening"] as const).map(slot => {
-                    const slotLabels: Record<string, string> = {
-                      any: "Any time",
-                      morning: "Morning (8a–12p)",
-                      afternoon: "Afternoon (12p–5p)",
-                      evening: "Evening (5p–10p)",
-                    };
-                    const slotBlocked = slot !== "any" && blackoutRules && isSlotBlackedOut(day.date, slot, blackoutRules);
-                    return (
-                      <button
-                        key={slot}
-                        onClick={() => !slotBlocked && onTimeSlot(slot)}
-                        disabled={!!slotBlocked}
-                        title={slotBlocked ? blackoutReason(day.date, slot, blackoutRules ?? []) ?? "Not available" : undefined}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                          slotBlocked
-                            ? "bg-ink text-slate/40 cursor-not-allowed line-through"
-                            : day.timeSlot === slot
-                            ? "bg-parchment text-ink"
-                            : "bg-parchment/10 text-slate hover:bg-parchment/20"
-                        }`}
-                      >
-                        {slotLabels[slot]}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+          </div>
+
+          {/* Time of day — full-width prominent section */}
+          <div className="rounded-xl border border-brass/30 bg-brass/5 p-3.5">
+            <p className="text-sm font-semibold text-parchment mb-2.5">
+              <svg style={{display:"inline",verticalAlign:"-0.15em",marginRight:"0.4em"}} width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+              When do you need the space?
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {(["morning", "afternoon", "evening", "any"] as const).map(slot => {
+                const slotLabels: Record<string, { label: string; sub: string }> = {
+                  morning:   { label: "Morning",   sub: "8am – 12pm" },
+                  afternoon: { label: "Afternoon", sub: "12pm – 5pm" },
+                  evening:   { label: "Evening",   sub: "5pm – 10pm" },
+                  any:       { label: "All day",   sub: "8am – 10pm" },
+                };
+                const slotBlocked = slot !== "any" && blackoutRules && isSlotBlackedOut(day.date, slot, blackoutRules);
+                const isSelected = day.timeSlot === slot;
+                return (
+                  <button
+                    key={slot}
+                    onClick={() => !slotBlocked && onTimeSlot(slot)}
+                    disabled={!!slotBlocked}
+                    title={slotBlocked ? blackoutReason(day.date, slot, blackoutRules ?? []) ?? "Not available" : undefined}
+                    className={`flex flex-col items-center justify-center rounded-lg py-2.5 px-2 text-center transition-all ${
+                      slotBlocked
+                        ? "opacity-35 cursor-not-allowed"
+                        : isSelected
+                        ? "bg-parchment text-ink shadow-sm ring-2 ring-parchment/40"
+                        : "bg-ink/60 border border-parchment/15 text-slate hover:border-parchment/30 hover:text-parchment"
+                    }`}
+                  >
+                    <span className={`text-sm font-semibold ${slotBlocked ? "line-through" : ""}`}>{slotLabels[slot].label}</span>
+                    <span className={`text-xs mt-0.5 ${isSelected ? "text-ink/60" : "text-slate/70"}`}>{slotLabels[slot].sub}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
