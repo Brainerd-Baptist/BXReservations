@@ -1,5 +1,6 @@
 "use client";
 import CommentsThread from "@/components/bx/CommentsThread";
+import EventLogoCard from "@/app/components/event-logo-card";
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { BlackoutRule, ruleDescription } from "@/lib/blackouts";
@@ -782,6 +783,19 @@ export default function BxReservationsAdmin() {
                       <Detail label="A/V" value={req.avNeeded ? "Yes" : "No"} />
                       <Detail label="Tablecloths" value={String(req.tablecloths)} />
                     </div>
+
+                    {/* ── Event map + logo review (Phase B) — only for rows backed by a real reservation */}
+                    {req.dbId && (
+                      <div className="grid md:grid-cols-[1fr_auto] gap-3 items-start" onClick={e => e.stopPropagation()}>
+                        <EventLogoCard reservationId={req.dbId} canEdit staff compact />
+                        <a
+                          href={`/reservations/${req.dbId}/event-map`}
+                          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-parchment/15 text-parchment hover:border-[var(--bbc-blue)]"
+                        >
+                          Open event map →
+                        </a>
+                      </div>
+                    )}
 
                     {/* ── Status control panel */}
                     {req.status !== "Cancelled by User" && req.status !== "Expired" && req.status !== "Completed" && req.status !== "Cancelled by BX" && (() => {

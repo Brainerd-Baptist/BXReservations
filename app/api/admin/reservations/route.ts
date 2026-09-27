@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { sendStatusUpdateEmail } from "@/lib/email";
+import { getUserAndRole } from "@/lib/get-user-role";
+import { isStaffRole } from "@/lib/event-map";
+
+/** 401/403 unless the signed-in user holds a staff role — this route lists every reservation and changes statuses. */
+async function requireStaff(): Promise<NextResponse | null> {
+  const { user, role } = await getUserAndRole();
+  if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  if (!isStaffRole(role)) return NextResponse.json({ error: "Staff only" }, { status: 403 });
+  return null;
+}
 
 // ─── Room / setup labels ───────────────────────────────────────────────────────
 const ROOM_LABELS: Record<string, string> = {
@@ -71,6 +81,8 @@ const ADMIN_TO_DB: Record<string, string> = {
 
 // ─── GET — list all reservations ──────────────────────────────────────────────
 export async function GET() {
+  const denied = await requireStaff();
+  if (denied) return denied;
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -136,6 +148,8 @@ export async function GET() {
 
 // ─── PATCH — update status + log history + send email ────────────────────────
 export async function PATCH(req: NextRequest) {
+  const denied = await requireStaff();
+  if (denied) return denied;
   const body = (await req.json()) as {
     dbId:             string;
     status:           string;

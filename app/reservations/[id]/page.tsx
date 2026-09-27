@@ -3,6 +3,9 @@ import Link from "next/link";
 import { getUserAndRole } from "@/lib/get-user-role";
 import { adminClient, isStaffRole } from "@/lib/event-map";
 import { ROOMS } from "@/lib/rooms";
+import { logoState, readLogoRow } from "@/lib/event-logo";
+import type { LogoState } from "@/lib/event-logo-types";
+import EventLogoCard from "@/app/components/event-logo-card";
 import SelfCancelButton from "./SelfCancelButton";
 import CommentsThread from "@/components/bx/CommentsThread";
 import COIUploadCard from "./COIUploadCard";
@@ -160,13 +163,21 @@ export default async function ReservationDetailPage({
     isCollab = true;
   }
 
-  // Rooms named or set up on the event map (the card below shows progress)
-  const { count: labelCount } = await db
-    .from("reservation_map_labels")
-    .select("id", { count: "exact", head: true })
-    .eq("reservation_id", id);
+  // Rooms named or set up on the event map (the card below shows progress), and the logo
+  const [{ count: labelCount }, logoRow] = await Promise.all([
+    db.from("reservation_map_labels").select("id", { count: "exact", head: true }).eq("reservation_id", id),
+    readLogoRow(db, id),
+  ]);
+  const logo = logoRow ? await logoState(db, logoRow) : null;
 
-  return renderPage(reservation, { isCollab, staffView: staff && !isOwner, labelCount: labelCount ?? 0 });
+  return renderPage(reservation, {
+    isCollab,
+    staffView: staff && !isOwner,
+    staff,
+    canEdit: isOwner || staff, // accepted co-owners edit through the event map API; viewers only look
+    labelCount: labelCount ?? 0,
+    logo,
+  });
 }
 
 function renderPage(
@@ -184,7 +195,7 @@ function renderPage(
     contact_org?: string | null;
     payload?: unknown;
   },
-  view: { isCollab: boolean; staffView: boolean; labelCount: number; agreement?: { customer_signed_at: string | null; token: string } | null }
+  view: { isCollab: boolean; staffView: boolean; staff: boolean; canEdit: boolean; labelCount: number; logo: LogoState | null; agreement?: { customer_signed_at: string | null; token: string } | null }
 ) {
   const submittedDate = new Date(reservation.created_at).toLocaleDateString("en-US", {
     month: "long",
@@ -362,6 +373,11 @@ function renderPage(
           <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
         </svg>
       </Link>
+
+      {/* Event logo — goes on the event map header and the door signs, after staff approve it */}
+      {view.logo && (
+        <EventLogoCard reservationId={reservation.id} initial={view.logo} canEdit={view.canEdit} staff={view.staff} />
+      )}
 
       {/* Details card */}
       <div

@@ -359,8 +359,18 @@ export async function buildEventLayer(
     staff: ctx.staff,
     rooms: reservedMapRoomIds(ctx.reservation.payload),
     labels,
-    logoUrl: null, // Phase B: signed URL once the logo is approved
+    logoUrl: await approvedLogoUrlFor(db, ctx.reservation),
   };
+}
+
+/** Signed URL (1 h) of the normalised logo — only once a Booking Admin has approved it. */
+async function approvedLogoUrlFor(
+  db: SupabaseClient,
+  r: { logo_status?: string | null; logo_path?: string | null }
+): Promise<string | null> {
+  if (r.logo_status !== "approved" || !r.logo_path) return null;
+  const { data } = await db.storage.from("event-logos").createSignedUrl(r.logo_path, 3600);
+  return data?.signedUrl ?? null;
 }
 
 /**

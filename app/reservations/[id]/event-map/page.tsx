@@ -75,6 +75,14 @@ export default async function EventMapPage({ params }: { params: Promise<{ id: s
         >
           {STATUS_LABEL[r.status] ?? r.status}
         </span>
+        {ctx.access === "edit" && r.logo_status !== "approved" && (
+          <Link
+            href={`/reservations/${r.id}#logo`}
+            style={{ flex: "none", fontSize: "0.8125rem", fontWeight: 600, color: "var(--bx-brass)", textDecoration: "none" }}
+          >
+            {r.logo_status === "pending" ? "Logo in review" : "Add a logo"}
+          </Link>
+        )}
         {/* Changes autosave; "Done" is the explicit way out once the plan looks right */}
         <Link
           href={`/reservations/${r.id}`}

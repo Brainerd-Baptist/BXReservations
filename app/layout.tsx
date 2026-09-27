@@ -25,7 +25,7 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-const APP_VERSION = "1.27.0";
+const APP_VERSION = "1.28.0";
 
 export default function RootLayout({
   children,
