@@ -38,7 +38,7 @@ export function pillButtonHtml(text: string, url: string): string {
       style="border-collapse:separate;mso-table-lspace:0pt;mso-table-rspace:0pt;margin:20px 0;">
       <tr>
         <td align="center" bgcolor="${C.buttonBg}"
-          style="border-radius:100px;cursor:auto;mso-padding-alt:12px 28px;text-align:center;">
+          style="border-radius:100px;cursor:auto;mso-padding-alt:12px 28px;text-align:center;text-decoration:none;">
           <a href="${url}" target="_blank" rel="noopener noreferrer"
             style="display:inline-block;background:${C.buttonBg};border-radius:100px;color:${C.buttonText};font-family:${FONT};font-size:14px;font-weight:700;line-height:1.4;margin:0;text-decoration:none;padding:12px 28px;letter-spacing:0.01em;mso-padding-alt:0;text-size-adjust:none;">
             ${text} &rarr;
@@ -68,7 +68,7 @@ export function brandedEmailHtml(opts: {
           style="border-collapse:separate;mso-table-lspace:0pt;mso-table-rspace:0pt;">
           <tr>
             <td align="center" bgcolor="${C.buttonBg}"
-              style="border-radius:100px;cursor:auto;mso-padding-alt:14px 32px;text-align:center;">
+              style="border-radius:100px;cursor:auto;mso-padding-alt:14px 32px;text-align:center;text-decoration:none;">
               <a href="${ctaUrl}" target="_blank" rel="noopener noreferrer"
                 style="display:inline-block;background:${C.buttonBg};border-radius:100px;color:${C.buttonText};font-family:${FONT};font-size:15px;font-weight:700;line-height:1.4;margin:0;text-decoration:none;padding:14px 32px;letter-spacing:0.01em;mso-padding-alt:0;text-size-adjust:none;">
                 ${ctaText} &rarr;
@@ -99,10 +99,10 @@ export function brandedEmailHtml(opts: {
   <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation"
     style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;width:100%;">
     <tr>
-      <td align="center" style="padding:40px 16px;">
+      <td align="center" style="padding:40px 24px;">
 
         <table border="0" cellpadding="0" cellspacing="0" role="presentation"
-          style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;width:100%;max-width:480px;background-color:${C.card};border-radius:12px;overflow:hidden;">
+          style="border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;width:100%;max-width:440px;background-color:${C.card};border-radius:12px;overflow:hidden;">
 
           <!-- Logo -->
           <tr>
@@ -170,7 +170,6 @@ export function brandedEmailHtml(opts: {
               <p style="margin:0;">
                 ${footerNote ? `${footerNote} &middot; ` : ""}Questions? Call or text
                 <a href="tel:4236534670" style="color:${C.light};text-decoration:underline;">(423) 653-4670</a>
-.
               </p>
             </td>
           </tr>
