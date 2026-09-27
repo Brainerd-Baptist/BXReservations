@@ -16,18 +16,9 @@ export async function GET() {
     patLength: pat?.length ?? 0,
     patPrefix: pat?.slice(0, 12) ?? "none",
     hasAppId: !!appId,
+    appIdLength: appId?.length ?? 0,
     hasSecret: !!secret,
   };
-
-  // Try PAT as Basic auth: token:<pat>
-  const authBasicPAT = pat
-    ? "Basic " + Buffer.from(`token:${pat}`).toString("base64")
-    : null;
-
-  // Try App ID + Secret Basic auth
-  const authBasicApp = appId && secret
-    ? "Basic " + Buffer.from(`${appId}:${secret}`).toString("base64")
-    : null;
 
   async function tryAuth(label: string, authHeader: string) {
     const res = await fetch("https://api.planningcenteronline.com/calendar/v2/events", {
@@ -46,8 +37,21 @@ export async function GET() {
   }
 
   const results = [];
-  if (authBasicPAT) results.push(await tryAuth("PAT-Basic", authBasicPAT));
-  if (authBasicApp) results.push(await tryAuth("AppSecret-Basic", authBasicApp));
+
+  // 1. The new correct format: Basic base64(APP_ID:PAT)  ← what lib/pco.ts now does
+  if (appId && pat) {
+    results.push(await tryAuth("AppId:PAT-Basic", "Basic " + Buffer.from(`${appId}:${pat}`).toString("base64")));
+  }
+
+  // 2. Legacy: Basic base64(token:PAT)
+  if (pat) {
+    results.push(await tryAuth("token:PAT-Basic", "Basic " + Buffer.from(`token:${pat}`).toString("base64")));
+  }
+
+  // 3. Bearer PAT
+  if (pat) {
+    results.push(await tryAuth("Bearer-PAT", `Bearer ${pat}`));
+  }
 
   return NextResponse.json({ credInfo, results });
 }
