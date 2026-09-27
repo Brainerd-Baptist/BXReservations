@@ -15,11 +15,12 @@
 
 const PCO_BASE = "https://api.planningcenteronline.com/calendar/v2";
 
-const TAG_BX_VENUE   = "70490";
-const TAG_BX_EVENTS  = "248327";
-const TAG_PENDING    = "430562";
-const TAG_CONFIRMED  = "430561";
-const TAG_CANCELED   = "430563";
+const TAG_BX_VENUE      = "70490";
+const TAG_BX_EVENTS     = "248327";
+const TAG_BX_MINISTRY   = "241212";  // Event Type group (required) — "BX Ministry"
+const TAG_PENDING       = "430562";
+const TAG_CONFIRMED     = "430561";
+const TAG_CANCELED      = "430563";
 
 // PCO Person ID of the default event owner (Josiah King)
 // Override via PCO_OWNER_ID env var if needed.
@@ -128,10 +129,14 @@ export async function pcoCreateEvent(opts: {
       relationships: {
         tags: {
           data: [
-            { type: "Tag", id: TAG_PENDING   },
-            { type: "Tag", id: TAG_BX_VENUE  },
-            { type: "Tag", id: TAG_BX_EVENTS },
+            { type: "Tag", id: TAG_PENDING      },
+            { type: "Tag", id: TAG_BX_VENUE     },
+            { type: "Tag", id: TAG_BX_EVENTS    },
+            { type: "Tag", id: TAG_BX_MINISTRY  },
           ],
+        },
+        owner: {
+          data: { type: "Person", id: PCO_OWNER_ID },
         },
       },
     },
@@ -173,9 +178,10 @@ export async function pcoCreateEvent(opts: {
 async function pcoSetStatusTag(pcoEventId: string, statusTagId: string): Promise<void> {
   await pcoFetch(`/events/${pcoEventId}/relationships/tags`, "PATCH", {
     data: [
-      { type: "Tag", id: statusTagId   },
-      { type: "Tag", id: TAG_BX_VENUE  },
-      { type: "Tag", id: TAG_BX_EVENTS },
+      { type: "Tag", id: statusTagId      },
+      { type: "Tag", id: TAG_BX_VENUE     },
+      { type: "Tag", id: TAG_BX_EVENTS    },
+      { type: "Tag", id: TAG_BX_MINISTRY  },
     ],
   });
   console.log(`[pco] updated event ${pcoEventId} → tag ${statusTagId}`);
