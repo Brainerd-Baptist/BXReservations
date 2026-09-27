@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { can, type BxRole } from "@/lib/roles";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -8,7 +9,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 interface NavSidebarProps {
   open: boolean;
   onClose: () => void;
-  role: "admin" | "user" | null;
+  role: BxRole | null;
   hasUser: boolean;
   displayName: string | null;
   email: string | null;
@@ -230,7 +231,7 @@ export default function NavSidebar({
 }: NavSidebarProps) {
   const [mounted, setMounted] = useState(false);
   const [vpHeight, setVpHeight] = useState<number | null>(null);
-  const isAdmin = role === "admin";
+  const isAdmin = can.viewAdminPanel(role);
   const prevOpen = useRef(false);
 
   // Only render portal after hydration

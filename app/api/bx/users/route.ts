@@ -76,8 +76,8 @@ export async function GET() {
 
   // Sort: owners + system_admins first, then by last active
   users.sort((a, b) => {
-    const ra = a.role ? ROLE_RANK[a.role] : 0;
-    const rb = b.role ? ROLE_RANK[b.role] : 0;
+    const ra = a.role ? ROLE_RANK[a.role as BxRole] : 0;
+    const rb = b.role ? ROLE_RANK[b.role as BxRole] : 0;
     if (ra !== rb) return rb - ra;
     return (b.last_active ?? "").localeCompare(a.last_active ?? "");
   });

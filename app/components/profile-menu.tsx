@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { can, type BxRole } from "@/lib/roles";
 import Link from "next/link";
 import { THEMES, type ThemeId, DEFAULT_THEME, THEME_STORAGE_KEY, applyTheme, isValidTheme } from "@/lib/theme";
 import { createClient } from "@/lib/supabase/client";
@@ -11,7 +12,7 @@ const QUICK_THEMES = THEMES.filter((t): t is typeof t & { quick: true } => 'quic
 interface ProfileMenuProps {
   userId: string;
   initials: string;
-  role: "admin" | "user" | null;
+  role: BxRole | null;
   email: string;
   displayName: string | null;
   savedTheme?: string | null;
@@ -111,7 +112,7 @@ export default function ProfileMenu({
         ref={btnRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
-        title={role === "admin" ? "Admin" : "My account"}
+        title={can.viewAdminPanel(role) ? "Admin" : "My account"}
         aria-label="Open account menu"
         aria-expanded={open}
         className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 transition-opacity hover:opacity-85"
@@ -136,7 +137,7 @@ export default function ProfileMenu({
                 {email}
               </p>
             )}
-            {role === "admin" && (
+            {can.viewAdminPanel(role) && (
               <span
                 className="inline-block mt-1 text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded"
                 style={{
@@ -210,7 +211,7 @@ export default function ProfileMenu({
             Account settings
           </Link>
 
-          {role === "admin" && (
+          {can.viewAdminPanel(role) && (
             <Link
               href="/admin/bx-reservations"
               onClick={() => setOpen(false)}

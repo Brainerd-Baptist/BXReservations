@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getUserAndRole } from "@/lib/get-user-role";
+import { can } from "@/lib/roles";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import SignOutButton from "./sign-out-button";
@@ -169,19 +170,19 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                   letterSpacing: "0.05em",
                   textTransform: "uppercase",
                   background:
-                    role === "admin"
+                    can.viewAdminPanel(role)
                       ? "var(--bx-parchment)"
                       : "color-mix(in srgb, var(--bx-slate) 20%, transparent)",
-                  color: role === "admin" ? "var(--bx-ink)" : "var(--bx-slate)",
+                  color: can.viewAdminPanel(role) ? "var(--bx-ink)" : "var(--bx-slate)",
                 }}
               >
-                {role === "admin" ? "Admin" : "User"}
+                {can.viewAdminPanel(role) ? "Admin" : "User"}
               </span>
             </div>
           </div>
         </div>
 
-        {role === "admin" && (
+        {can.viewAdminPanel(role) && (
           <div
             style={{
               borderTop: "1px solid color-mix(in srgb, var(--bx-parchment) 8%, transparent)",

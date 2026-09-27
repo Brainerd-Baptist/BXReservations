@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { can, type BxRole } from "@/lib/roles";
 import Link from "next/link";
 import Image from "next/image";
 import NavSidebar from "./nav-sidebar";
@@ -9,7 +10,7 @@ import NotificationBell from "./notification-bell";
 
 interface HeaderShellProps {
   initials: string;
-  role: "admin" | "user" | null;
+  role: BxRole | null;
   hasUser: boolean;
   userId?: string;
   email?: string;
