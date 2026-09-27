@@ -225,7 +225,6 @@ export default function BxReservationsAdmin() {
   // ── Agreements ─────────────────────────────────────────────────────────────
   type AgreementMeta = { token: string; customer_signed_at: string | null; staff_signed_at: string | null };
   const [agreements, setAgreements] = useState<Record<string, AgreementMeta>>({});
-  const [sendingAgreement, setSendingAgreement] = useState<string | null>(null);
 
   // ── Phase 3: Document & payment state ───────────────────────────────────────
   type DocStatus = {
@@ -572,34 +571,6 @@ export default function BxReservationsAdmin() {
   // KPIs
   const pending = requests.filter((r) => r.status === "Requested").length;
   const awaitingDeposit = requests.filter((r) => r.status === "Proposal Sent").length;
-  // ── Agreement helpers ────────────────────────────────────────────────────────
-  const siteUrl = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_SITE_URL ?? "");
-
-  async function sendAgreement(req: Request) {
-    setSendingAgreement(req.id);
-    try {
-      const roomLabel = req.room;
-      const dateLabel = new Date(req.date + "T00:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-      const summary = `${roomLabel} — ${dateLabel}`;
-      const res = await fetch("/api/agreements", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reservation_id: req.id, reservation_summary: summary, contact_name: req.name }),
-      });
-      const data = await res.json();
-      if (!res.ok) { alert("Error creating agreement: " + (data.error ?? "Unknown")); return; }
-      const { token } = data;
-      setAgreements(prev => ({ ...prev, [req.id]: { token, customer_signed_at: null, staff_signed_at: null } }));
-      const link = `${siteUrl}/agree/${token}`;
-      await navigator.clipboard.writeText(link);
-      alert(`Agreement link copied to clipboard:
-
-${link}
-
-Send this to ${req.name} (${req.email}).`);
-    } catch { alert("Failed to create agreement — please try again."); }
-    finally { setSendingAgreement(null); }
-  }
 
   async function doCountersign(req: Request) {
     const name = countersignName.trim();
@@ -1170,10 +1141,8 @@ Send this to ${req.name} (${req.email}).`);
 
                           if (!req.organizationId) {
                             return (
-                              <div className="rounded-lg border border-dashed border-gray-200 p-3 space-y-2">
-                                <p className="text-xs text-gray-400">
-                                  Submitter listed: <span className="font-medium text-gray-600">{req.org}</span>
-                                </p>
+                              <div className="rounded-lg border border-dashed border-parchment/20 p-3 space-y-2">
+                                <p className="text-xs text-slate">Submitter listed: <span className="font-medium text-parchment/80">{req.org}</span></p>
                                 {suggestions && suggestions.length > 0 && (
                                   <div className="space-y-1">
                                     <p className="text-xs text-gray-500">Possible matches:</p>
@@ -1226,15 +1195,7 @@ Send this to ${req.name} (${req.email}).`);
                         <div className="space-y-2 pt-1">
                           <p className="text-xs font-semibold text-emerald-600">✓ Confirmed</p>
                           {/* Agreement status */}
-                          {!ag && (
-                            <button
-                              className="btn-outline text-xs"
-                              disabled={sendingAgreement === req.id}
-                              onClick={(e) => { e.stopPropagation(); sendAgreement(req); }}
-                            >
-                              {sendingAgreement === req.id ? "Creating…" : "Send Agreement →"}
-                            </button>
-                          )}
+
                           {ag && !customerSigned && (
                             <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-1">
                               ⏳ Agreement sent — awaiting customer signature

@@ -138,12 +138,13 @@ export async function POST(req: NextRequest, { params }: Params) {
         .select("display_name, user_id")
         .in("user_id", adminIds);
 
-      // Send to first admin or a configured address
-      const { data: adminAuthUsers } = await adminClient().auth.admin.listUsers();
-      const adminEmails = adminAuthUsers?.users
-        ?.filter((u) => adminIds.includes(u.id))
-        ?.map((u) => u.email)
-        ?.filter(Boolean) ?? [];
+      // Fetch emails for each admin individually (avoids expensive listUsers())
+      const adminEmailResults = await Promise.all(
+        adminIds.map((uid: string) => adminClient().auth.admin.getUserById(uid))
+      );
+      const adminEmails = adminEmailResults
+        .map((r) => r.data?.user?.email)
+        .filter(Boolean) as string[];
 
       for (const email of adminEmails.slice(0, 5)) {
         await sendEmail({
