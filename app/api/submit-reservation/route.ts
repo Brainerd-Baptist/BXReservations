@@ -6,6 +6,7 @@ import {
   sendAdminNewReservationAlert,
 } from "@/lib/email";
 import { ROOMS } from "@/lib/rooms";
+import { pcoCreateEvent } from "@/lib/pco";
 
 // ─── Types mirrored from reserve/page.tsx ─────────────────────────────────────
 interface ContactInfo {
@@ -129,6 +130,27 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Failed to save reservation" }, { status: 500 });
       }
       const reservationId = insertData.id as string;
+
+      // ── PCO Calendar event creation (non-blocking) ──────────────────────────
+      pcoCreateEvent({
+        eventName:     contact.eventName,
+        orgName:       contact.org ?? undefined,
+        notes:         notes ?? undefined,
+        days,
+        bookingNumber,
+      }).then(pcoEventId => {
+        if (pcoEventId) {
+          // Store the PCO event ID so approval/cancel can update the tag
+          supabase
+            .from("reservations")
+            .update({ pco_event_id: pcoEventId })
+            .eq("id", reservationId)
+            .then(({ error: pErr }) => {
+              if (pErr) console.error("[pco] failed to store pco_event_id:", pErr);
+              else console.log(`[pco] stored pco_event_id ${pcoEventId} for ${bookingNumber}`);
+            });
+        }
+      }).catch((err: unknown) => console.error("[pco] createEvent error:", err));
 
       // ── Send emails (non-blocking — don't fail the request if email fails) ──
       const dates = extractDates(days);

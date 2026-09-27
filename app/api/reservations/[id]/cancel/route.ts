@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { sendStatusUpdateEmail } from "@/lib/email";
+import { pcoCancelEvent } from "@/lib/pco";
 
 // POST /api/reservations/[id]/cancel
 // Allows an authenticated user to cancel their own reservation
@@ -32,7 +33,7 @@ export async function POST(
 
   const { data: row, error: fetchErr } = await supabase
     .from("reservations")
-    .select("id, booking_number, event_name, contact_name, contact_email, status, user_id")
+    .select("id, booking_number, event_name, contact_name, contact_email, status, user_id, pco_event_id")
     .eq("id", id)
     .single();
 
@@ -73,6 +74,13 @@ export async function POST(
 
   if (updateErr) {
     return NextResponse.json({ error: updateErr.message }, { status: 500 });
+  }
+
+  // ── PCO Calendar tag → Canceled (non-blocking) ────────────────────────────
+  if (row.pco_event_id) {
+    pcoCancelEvent(row.pco_event_id as string).catch(
+      err => console.error("[pco] user-cancel tag error:", err)
+    );
   }
 
   // Explicit history row with user details (trigger also fires a minimal row)

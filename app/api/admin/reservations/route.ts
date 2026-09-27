@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { pcoConfirmEvent, pcoCancelEvent } from "@/lib/pco";
 import { createClient } from "@supabase/supabase-js";
 import { sendStatusUpdateEmail } from "@/lib/email";
 import { getUserAndRole } from "@/lib/get-user-role";
@@ -177,7 +178,7 @@ export async function PATCH(req: NextRequest) {
   // Fetch the reservation so we can send a status email + write history
   const { data: row, error: fetchErr } = await supabase
     .from("reservations")
-    .select("id, booking_number, event_name, contact_name, contact_email, status, payload, user_id")
+    .select("id, booking_number, event_name, contact_name, contact_email, status, payload, user_id, pco_event_id")
     .eq("id", dbId)
     .single();
 
@@ -207,6 +208,16 @@ export async function PATCH(req: NextRequest) {
   if (updateErr) {
     console.error("[admin/reservations] update error:", updateErr);
     return NextResponse.json({ error: updateErr.message }, { status: 500 });
+  }
+
+  // ── PCO Calendar tag update (non-blocking) ──────────────────────────────────
+  const pcoEventId = row.pco_event_id as string | null | undefined;
+  if (pcoEventId) {
+    if (dbStatus === "confirmed") {
+      pcoConfirmEvent(pcoEventId).catch(err => console.error("[pco] confirm error:", err));
+    } else if (dbStatus === "cancelled_by_admin" || dbStatus === "cancelled") {
+      pcoCancelEvent(pcoEventId).catch(err => console.error("[pco] cancel error:", err));
+    }
   }
 
   // ── Write a richer history row (the trigger writes a minimal row; we upsert
