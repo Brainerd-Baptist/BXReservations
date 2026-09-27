@@ -81,7 +81,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
             </p>
           `,
           ctaText: "View Your Reservation",
-          ctaUrl: \`https://bx.brainerdhq.app/reservations/\${res.id}\`,
+          ctaUrl: `https://bx.brainerdhq.app/reservations/${res.id}`,
           footnoteHtml: null,
         }),
       }).catch(() => {});
@@ -120,11 +120,11 @@ export async function PATCH(req: NextRequest, { params }: Params) {
               the BX team reviewed your Certificate of Insurance and has a note:
             </p>
             <p style="margin:0 0 20px 0; padding:12px 16px; background-color:#f3f4f6; border-radius:8px; color:#374151;">
-              \${note}
+              ${note}
             </p>
           `,
           ctaText: "View Reservation & Re-upload",
-          ctaUrl: \`https://bx.brainerdhq.app/reservations/\${res.id}\`,
+          ctaUrl: `https://bx.brainerdhq.app/reservations/${res.id}`,
           footnoteHtml: null,
         }),
       }).catch(() => {});
