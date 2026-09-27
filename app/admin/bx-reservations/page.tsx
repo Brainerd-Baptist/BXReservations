@@ -788,12 +788,20 @@ export default function BxReservationsAdmin() {
                     {req.dbId && (
                       <div className="grid md:grid-cols-[1fr_auto] gap-3 items-start" onClick={e => e.stopPropagation()}>
                         <EventLogoCard reservationId={req.dbId} canEdit staff compact />
-                        <a
-                          href={`/reservations/${req.dbId}/event-map`}
-                          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-parchment/15 text-parchment hover:border-[var(--bbc-blue)]"
-                        >
-                          Open event map →
-                        </a>
+                        <div className="flex flex-col gap-2">
+                          <a
+                            href={`/reservations/${req.dbId}/event-map`}
+                            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-parchment/15 text-parchment hover:border-[var(--bbc-blue)]"
+                          >
+                            Open event map →
+                          </a>
+                          <a href={`/api/event-map/${req.dbId}/signs?variant=staff`} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-parchment/15 text-parchment hover:border-[var(--bbc-blue)]">
+                            Staff signs (PDF)
+                          </a>
+                          <a href={`/api/event-map/${req.dbId}/signs`} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-parchment/15 text-parchment hover:border-[var(--bbc-blue)]">
+                            Door signs (PDF)
+                          </a>
+                        </div>
                       </div>
                     )}
 

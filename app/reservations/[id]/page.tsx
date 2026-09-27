@@ -6,6 +6,7 @@ import { ROOMS } from "@/lib/rooms";
 import { logoState, readLogoRow } from "@/lib/event-logo";
 import type { LogoState } from "@/lib/event-logo-types";
 import EventLogoCard from "@/app/components/event-logo-card";
+import { signsUnlocked } from "@/lib/signs/gate";
 import SelfCancelButton from "./SelfCancelButton";
 import CommentsThread from "@/components/bx/CommentsThread";
 import COIUploadCard from "./COIUploadCard";
@@ -378,6 +379,56 @@ function renderPage(
       {view.logo && (
         <EventLogoCard reservationId={reservation.id} initial={view.logo} canEdit={view.canEdit} staff={view.staff} />
       )}
+
+      {/* Door signs — generated from the event map on BX's locked template; the logo is the only variable */}
+      {view.logo && (() => {
+        const gate = signsUnlocked({ status: reservation.status, logo_status: view.logo.status }, view.staff);
+        const api = `/api/event-map/${reservation.id}/signs`;
+        const btn = (primary: boolean): React.CSSProperties => ({
+          display: "inline-block",
+          padding: "0.5rem 1rem",
+          borderRadius: "0.5rem",
+          fontSize: "0.875rem",
+          fontWeight: 600,
+          textDecoration: "none",
+          background: primary ? "var(--bx-brass)" : "transparent",
+          color: primary ? "#fff" : "var(--bx-parchment)",
+          border: primary ? "1px solid transparent" : "1px solid color-mix(in srgb, var(--bx-parchment) 20%, transparent)",
+          opacity: gate.ok ? 1 : 0.45,
+          pointerEvents: gate.ok ? "auto" : "none",
+        });
+        return (
+          <section
+            aria-label="Door signs"
+            style={{
+              border: "1px solid color-mix(in srgb, var(--bx-parchment) 12%, transparent)",
+              borderRadius: "12px",
+              padding: "1.25rem 1.5rem",
+              marginBottom: "1rem",
+              background: "var(--bx-ink-soft)",
+              color: "var(--bx-parchment)",
+            }}
+          >
+            <h2 style={{ margin: "0 0 0.5rem", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--bx-slate)" }}>
+              Door signs
+            </h2>
+            <p style={{ margin: "0 0 0.75rem", fontSize: "0.875rem", lineHeight: 1.5, color: "var(--bx-slate)" }}>
+              One sign for every reserved room and one for each wayfinding note, from the event map, on BX&apos;s template
+              {view.logo.status === "approved" ? " with your logo" : ""}. Letter size, ready to print — regenerate any time a name changes.
+            </p>
+            {!gate.ok && (
+              <p style={{ margin: "0 0 0.75rem", fontSize: "0.8125rem", color: "#92400E" }}>{gate.why}</p>
+            )}
+            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+              <a href={api} style={btn(true)} aria-disabled={!gate.ok}>Download all signs (PDF)</a>
+              <a href={`${api}?inline=1`} target="_blank" rel="noopener" style={btn(false)} aria-disabled={!gate.ok}>Preview</a>
+              {view.staff && (
+                <a href={`${api}?variant=staff`} style={btn(false)}>Staff copy (with setups)</a>
+              )}
+            </div>
+          </section>
+        );
+      })()}
 
       {/* Details card */}
       <div

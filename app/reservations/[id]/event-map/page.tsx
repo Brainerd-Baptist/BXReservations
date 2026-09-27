@@ -5,6 +5,7 @@ import { notFound, redirect } from "next/navigation";
 import { getUserAndRole } from "@/lib/get-user-role";
 import { adminClient, buildEventLayer, getEventMapContext } from "@/lib/event-map";
 import EventMapEditor from "./event-map-editor";
+import { signsUnlocked } from "@/lib/signs/gate";
 
 export const metadata = { title: "Event map · BX Reservations" };
 
@@ -81,6 +82,15 @@ export default async function EventMapPage({ params }: { params: Promise<{ id: s
             style={{ flex: "none", fontSize: "0.8125rem", fontWeight: 600, color: "var(--bx-brass)", textDecoration: "none" }}
           >
             {r.logo_status === "pending" ? "Logo in review" : "Add a logo"}
+          </Link>
+        )}
+        {ctx.access === "edit" && signsUnlocked(r, ctx.staff).ok && (
+          <Link
+            href={`/api/event-map/${r.id}/signs${ctx.staff ? "?variant=staff" : ""}`}
+            prefetch={false}
+            style={{ flex: "none", fontSize: "0.8125rem", fontWeight: 600, color: "var(--bx-brass)", textDecoration: "none" }}
+          >
+            {ctx.staff ? "Staff signs" : "Door signs"}
           </Link>
         )}
         {/* Changes autosave; "Done" is the explicit way out once the plan looks right */}
