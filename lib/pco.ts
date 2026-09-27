@@ -116,10 +116,9 @@ export async function pcoCreateEvent(opts: {
     data: {
       type: "Event",
       attributes: {
-        name:        eventName,
-        description: description || undefined,
-        featured:    false,
-        approval_status: "NeedsApproval",
+        name:     eventName,
+        summary:  description || undefined,
+        featured: false,
       },
     },
   });
