@@ -135,9 +135,9 @@ export async function pcoCreateEvent(opts: {
             { type: "Tag", id: TAG_BX_MINISTRY  },
           ],
         },
-        owner: {
-          data: { type: "Person", id: PCO_OWNER_ID },
-        },
+        // Note: PCO does not allow setting owner_id on event creation
+        // (returns "Forbidden Attribute"). Owner is set by the authenticated
+        // user automatically, or can be patched after creation if needed.
       },
     },
   });
