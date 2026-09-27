@@ -26,15 +26,10 @@ const TAG_CANCELED   = "430563";
 const PCO_OWNER_ID = process.env.PCO_OWNER_ID ?? "20206208";
 
 function authHeader(): string {
-  // Prefer a Personal Access Token (PCO_PAT) when available — it carries
-  // a user identity so PCO can auto-assign the event owner.
-  // Falls back to Basic auth (App ID + Secret) for read-only operations.
-  if (process.env.PCO_PAT) {
-    // PCO PATs use Basic auth: username="token", password=<the token>
-    return "Basic " + Buffer.from(`token:${process.env.PCO_PAT}`).toString("base64");
-  }
-  const id     = process.env.PCO_APP_ID  ?? "";
-  const secret = process.env.PCO_SECRET  ?? "";
+  // PCO Personal Access Tokens use Basic auth: client_id:secret.
+  // PCO_APP_ID = PAT Client ID, PCO_PAT = PAT Secret (or PCO_SECRET as fallback).
+  const id     = process.env.PCO_APP_ID ?? "";
+  const secret = process.env.PCO_PAT ?? process.env.PCO_SECRET ?? "";
   return "Basic " + Buffer.from(`${id}:${secret}`).toString("base64");
 }
 
@@ -43,7 +38,7 @@ async function pcoFetch(
   method: "POST" | "PATCH" | "DELETE" | "GET",
   body?: unknown
 ): Promise<{ data?: Record<string, unknown>; error?: string }> {
-  if (!process.env.PCO_PAT && (!process.env.PCO_APP_ID || !process.env.PCO_SECRET)) {
+  if (!process.env.PCO_APP_ID || !(process.env.PCO_PAT || process.env.PCO_SECRET)) {
     return { error: "PCO credentials not configured" };
   }
   const res = await fetch(`${PCO_BASE}${path}`, {
