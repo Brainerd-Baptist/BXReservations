@@ -14,21 +14,28 @@ async function pcoRaw(path: string) {
     headers: { Authorization: authHeader(), Accept: "application/json" },
   });
   const text = await res.text();
-  return { status: res.status, body: JSON.parse(text) };
+  try { return { status: res.status, body: JSON.parse(text) }; }
+  catch { return { status: res.status, body: text }; }
 }
 
 /**
  * GET /api/debug/pco-live-test
- * Smoke-test: checks authenticated user identity, then tries event creation.
- * REMOVE after confirming PCO writes work end-to-end.
+ * Smoke-test: checks People /me, Calendar /me person, then tries event creation.
  */
 export async function GET() {
-  // 1. Who are we authenticated as?
+  // 1. PCO People — who am I?
   const meRes = await pcoRaw("/people/v2/me");
   const meId   = meRes.body?.data?.id ?? null;
   const meName = meRes.body?.data?.attributes?.name ?? null;
 
-  // 2. Try creating an event
+  // 2. Does this person have a PCO Calendar person record?
+  //    Try /calendar/v2/people/<meId> — will 404 if no Calendar user.
+  const calPersonRes = meId ? await pcoRaw(`/calendar/v2/people/${meId}`) : null;
+  const calPerson = calPersonRes?.body?.data ?? null;
+  const calPersonName = calPerson?.attributes?.name ?? null;
+  const calPersonStatus = calPersonRes?.status ?? null;
+
+  // 3. Try creating an event
   const pcoEventId = await pcoCreateEvent({
     eventName: "BX Auth Test — DELETE ME",
     orgName:   "Claude Debug",
@@ -48,6 +55,7 @@ export async function GET() {
 
   return NextResponse.json({
     auth: { meId, meName, meStatus: meRes.status },
+    calendarPerson: { id: calPerson?.id, name: calPersonName, status: calPersonStatus },
     ok: !!pcoEventId,
     pcoEventId,
   });
