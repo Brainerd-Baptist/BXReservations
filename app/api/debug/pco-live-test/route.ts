@@ -78,22 +78,37 @@ export async function GET() {
   const accessToken = await getAccessToken();
   results.auth_method = accessToken ? "oauth_bearer" : "pat_basic";
 
-  // Test A: create event with all 4 tags (the canonical working payload)
+  // Test A: create event with no owner field (let PCO auto-assign from OAuth session)
   const a = await pcoRaw("/calendar/v2/events", "POST", {
     data: {
       type: "Event",
-      attributes: { name: "BX Debug OAuth — DELETE ME" },
+      attributes: { name: "BX Debug No-Owner — DELETE ME" },
+      relationships: { tags: { data: ALL_TAGS } },
+    },
+  });
+  results.a_no_owner = {
+    status: a.status,
+    id:     a.body?.data?.id,
+    owner:  a.body?.data?.relationships?.owner,
+    errors: a.body?.errors,
+  };
+
+  // Test B: create event with owner as relationship
+  const b = await pcoRaw("/calendar/v2/events", "POST", {
+    data: {
+      type: "Event",
+      attributes: { name: "BX Debug Owner-Rel — DELETE ME" },
       relationships: {
         owner: { data: { type: "Person", id: process.env.PCO_OWNER_ID ?? "20206208" } },
         tags: { data: ALL_TAGS },
       },
     },
   });
-  results.a_create_event = {
-    status: a.status,
-    id:     a.body?.data?.id,
-    owner:  a.body?.data?.relationships?.owner,
-    errors: a.body?.errors,
+  results.b_with_owner_rel = {
+    status: b.status,
+    id:     b.body?.data?.id,
+    owner:  b.body?.data?.relationships?.owner,
+    errors: b.body?.errors,
   };
 
   return NextResponse.json(results);
