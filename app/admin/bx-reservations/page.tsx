@@ -1778,6 +1778,7 @@ function UsersTab({
   savingRole: string | null; setSavingRole: (v: string | null) => void;
 }) {
   const [users, setUsers] = useState<MockUser[]>(MOCK_USERS);
+  const { toast } = useToast();
   const search = userSearch.toLowerCase();
   const filtered = users.filter(
     u => u.name.toLowerCase().includes(search) || u.email.toLowerCase().includes(search)
@@ -1929,6 +1930,7 @@ function MinistriesTab({
   savingMinistry: boolean; setSavingMinistry: (v: boolean) => void;
 }) {
   const [hoveredMinistryId, setHoveredMinistryId] = useState<string | null>(null);
+  const { toast } = useToast();
   type Ministry = { id: string; name: string; description: string | null; created_at: string };
   const [ministries, setMinistries] = useState<Ministry[]>([]);
   const [ministriesLoading, setMinistriesLoading] = useState(true);
