@@ -82,7 +82,7 @@ export async function GET() {
   const a = await pcoRaw("/calendar/v2/events", "POST", {
     data: {
       type: "Event",
-      attributes: { name: "BX Debug OAuth — DELETE ME" },
+      attributes: { name: "BX Debug OAuth — DELETE ME", owner_id: parseInt(process.env.PCO_OWNER_ID ?? "20206208", 10) },
       relationships: { tags: { data: ALL_TAGS } },
     },
   });
