@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 
-const VALID_ROLES = ["member", "booking_admin", "system_admin", "owner"];
+const VALID_ROLES = ["member", "ministry_coordinator", "booking_admin", "system_admin", "owner"];
 
 function serviceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -49,6 +49,37 @@ export async function POST(req: NextRequest) {
   const svc = serviceClient();
   if (!svc) {
     return NextResponse.json({ error: "Service client unavailable" }, { status: 503 });
+  }
+
+  // Safeguard: refuse to demote/remove the last owner
+  if (newRole !== "owner") {
+    const { data: currentRoleRow } = await svc
+      .from("bx_user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .single();
+    if (currentRoleRow?.role === "owner") {
+      const { count } = await svc
+        .from("bx_user_roles")
+        .select("user_id", { count: "exact", head: true })
+        .eq("role", "owner");
+      if ((count ?? 0) <= 1) {
+        return NextResponse.json(
+          { error: "Cannot demote the last owner. Promote another user to owner first." },
+          { status: 409 }
+        );
+      }
+    }
+  }
+
+  // Safeguard: only owners can assign or revoke the owner role
+  if (newRole === "owner" || /* revoking owner */ false) {
+    if (role !== "owner") {
+      return NextResponse.json(
+        { error: "Only an owner can assign the owner role." },
+        { status: 403 }
+      );
+    }
   }
 
   const { error } = await svc
