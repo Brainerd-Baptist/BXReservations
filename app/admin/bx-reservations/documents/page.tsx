@@ -47,8 +47,8 @@ function coiExpiryColor(expiryDate: string | null): string {
   if (!expiryDate) return "text-slate bg-ink-soft border-parchment/10";
   const days = Math.floor((new Date(expiryDate).getTime() - Date.now()) / 86_400_000);
   if (days < 0)  return "text-red-700 bg-red-50 border-red-200";      // expired
-  if (days < 30) return "text-red-700 bg-red-50 border-red-200";      // <30d
-  if (days < 60) return "text-amber-700 bg-amber-50 border-amber-200"; // 30-60d
+  if (days < 14) return "text-red-700 bg-red-50 border-red-200";      // <14d urgent
+  if (days < 45) return "text-amber-700 bg-amber-50 border-amber-200"; // 14-45d warning
   return "text-emerald-700 bg-emerald-50 border-emerald-200";           // >60d
 }
 

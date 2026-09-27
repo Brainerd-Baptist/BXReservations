@@ -189,6 +189,7 @@
 html {
   background: var(--bx-ink, #f4f7fa);
   scroll-behavior: smooth;
+  scroll-padding-top: calc(3.5rem + env(safe-area-inset-top, 0px));
   -webkit-font-smoothing: antialiased;
 }
 
@@ -587,23 +588,45 @@ header:not(.bx-scrolled) {
 .bx-bloom::before {
   content: "";
   position: absolute;
-  width: 600px;
-  height: 600px;
+  width: 900px;
+  height: 900px;
   background: radial-gradient(
     circle,
-    color-mix(in srgb, var(--bx-brass) 14%, transparent),
-    transparent 70%
+    color-mix(in srgb, var(--bx-brass) 28%, transparent) 0%,
+    color-mix(in srgb, var(--bx-brass) 10%, transparent) 50%,
+    transparent 72%
   );
-  top: -200px;
+  top: -220px;
   left: 50%;
   transform: translateX(-50%);
   animation: bxBloomPulse 9s ease-in-out infinite alternate;
-  filter: blur(48px);
+  filter: blur(56px);
+}
+.bx-bloom::after {
+  content: "";
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--bx-parchment) 10%, transparent) 0%,
+    transparent 65%
+  );
+  top: -80px;
+  left: calc(50% + 120px);
+  transform: translateX(-50%);
+  filter: blur(40px);
+  opacity: 0.6;
+  animation: bxBloomPulse2 12s ease-in-out infinite alternate;
 }
 
 @keyframes bxBloomPulse {
-  from { opacity: 0.55; transform: translateX(-50%) scale(1); }
-  to   { opacity: 0.95; transform: translateX(-50%) scale(1.18); }
+  from { opacity: 0.65; transform: translateX(-50%) scale(1); }
+  to   { opacity: 1; transform: translateX(-50%) scale(1.2); }
+}
+@keyframes bxBloomPulse2 {
+  from { opacity: 0.4; transform: translateX(-50%) scale(1); }
+  to   { opacity: 0.7; transform: translateX(-50%) scale(1.15); }
 }
 
 /* Scroll reveal — IntersectionObserver in scroll-reveal.tsx adds .bx-visible */
