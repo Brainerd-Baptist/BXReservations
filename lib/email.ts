@@ -168,8 +168,8 @@ export function brandedEmailHtml(opts: {
           <tr>
             <td style="padding:12px 40px 40px 40px;font-family:${FONT};font-size:12px;line-height:1.6;color:${C.light};">
               <p style="margin:0;">
-                ${footerNote ? `${footerNote} &middot; ` : ""}Questions? Call or text
-                <a href="tel:4236534670" style="color:${C.light};text-decoration:underline;">(423) 653-4670</a>
+                ${footerNote ? `${footerNote} &middot; ` : ""}Questions?
+                Call or text <a href="tel:4236434978" style="color:${C.light};text-decoration:underline;">(423) 643-4978</a> or email <a href="mailto:BXreservations@brainerdbaptist.org" style="color:${C.light};text-decoration:underline;">BXreservations@brainerdbaptist.org</a>
               </p>
             </td>
           </tr>
