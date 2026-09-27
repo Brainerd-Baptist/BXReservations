@@ -138,19 +138,20 @@ export async function renderPacket(job: PacketJob): Promise<Uint8Array> {
     section("When you arrive", job.venue.venue_arrival);
     // entrances come from the map itself (the doors it marks as main entrances), told lot-first the way BX does
     const LOT_FOR: { test: RegExp; line: string }[] = [
-      { test: /BX Entrance/i, line: "Blue Lot → the main entrance: the BX front door on Austin St. (lower level)" },
-      { test: /Elevator Lobby/i, line: "Green Lot → the elevator entrance (elevator to both levels)" },
-      { test: /Soccer Field/i, line: "Pink Lot → the CrossTies Café entrance (upper level)" },
+      { test: /BX Entrance/i, line: "Blue Lot → main entrance on Austin St." },
+      { test: /Elevator Lobby/i, line: "Green Lot → elevator entrance" },
+      { test: /Soccer Field/i, line: "Pink Lot → CrossTies Café entrance (upper level)" },
     ];
     const entrances: string[] = [];
     for (const level of ["lower", "upper"] as const) {
       for (const e of MAP_GEOMETRY[level].exits.filter((x) => x.primary)) {
         const known = LOT_FOR.find((k) => k.test.test(e.name));
-        const line = known ? known.line : `${e.name.replace(/,\s*[a-zé]+ doors/i, "")} — ${level} level`;
+        const line = known ? known.line : `${e.name.replace(/,\s*[a-zé]+ doors/i, "")} (${level} level)`;
         if (!entrances.includes(line)) entrances.push(line);
       }
     }
-    section("Entrances", entrances.map((e) => `• ${e}`).join("\n"));
+    // one line — the parking text above already explains which lot to choose
+    section("Entrances", entrances.join("  ·  "));
     if (job.venue.venue_contact) section("On the day", `Questions on the day: ${job.venue.venue_contact}`);
     footer(page, P.w, P.m);
   }
