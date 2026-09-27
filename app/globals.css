@@ -50,6 +50,13 @@
   --shadow-2: 0 2px 6px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.08);
   --shadow-3: 0 4px 10px rgba(0,0,0,0.09), 0 8px 28px rgba(0,0,0,0.12);
   --shadow-warm: 0 2px 10px rgba(0,100,120,0.12), 0 1px 3px rgba(0,0,0,0.08);
+
+  /* Motion tokens */
+  --ease-out:      cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out:   cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 350ms;
 }
 
 /* ── Classic (Ledger) ───────────────────────────────────────────────────── */
@@ -360,6 +367,96 @@ body::before {
 
 @media (prefers-reduced-motion: reduce) {
   .bx-skeleton { animation: none; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* ── Motion System ───────────────────────────────────────────────────────── */
+@keyframes bx-fade-up {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Page-level content mount animation */
+.animate-in {
+  animation: bx-fade-up var(--duration-base, 200ms) var(--ease-out, cubic-bezier(0.16,1,0.3,1)) both;
+}
+
+/* Stagger helpers for child lists */
+.animate-in-stagger > *:nth-child(1) { animation-delay:  0ms; }
+.animate-in-stagger > *:nth-child(2) { animation-delay: 30ms; }
+.animate-in-stagger > *:nth-child(3) { animation-delay: 60ms; }
+.animate-in-stagger > *:nth-child(4) { animation-delay: 90ms; }
+.animate-in-stagger > *:nth-child(5) { animation-delay:120ms; }
+
+/* Card hover lift — applies to .bx-card and .bx-card-warm */
+.bx-card,
+.bx-card-warm {
+  transition:
+    transform var(--duration-base, 200ms) var(--ease-out, cubic-bezier(0.16,1,0.3,1)),
+    box-shadow var(--duration-base, 200ms) var(--ease-out, cubic-bezier(0.16,1,0.3,1));
+  will-change: transform;
+}
+
+/* Button press physics */
+button,
+[role="button"],
+a[class*="btn"] {
+  transition:
+    background var(--duration-fast, 120ms) var(--ease-out, cubic-bezier(0.16,1,0.3,1)),
+    box-shadow var(--duration-fast, 120ms) var(--ease-out, cubic-bezier(0.16,1,0.3,1)),
+    transform  var(--duration-fast, 120ms) var(--ease-out, cubic-bezier(0.16,1,0.3,1)),
+    opacity    var(--duration-fast, 120ms) var(--ease-out, cubic-bezier(0.16,1,0.3,1));
+}
+button:active,
+[role="button"]:active,
+a[class*="btn"]:active {
+  transform: scale(0.97);
+}
+
+/* Collapsible max-height transition (add data-open attr to toggle) */
+.bx-collapsible {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height var(--duration-slow, 350ms) var(--ease-in-out, cubic-bezier(0.4,0,0.2,1));
+}
+.bx-collapsible[data-open="true"] {
+  max-height: 9999px;
+}
+
+/* Badge color cross-fade */
+.bx-badge {
+  transition:
+    background-color var(--duration-base, 200ms) var(--ease-in-out, cubic-bezier(0.4,0,0.2,1)),
+    color            var(--duration-base, 200ms) var(--ease-in-out, cubic-bezier(0.4,0,0.2,1));
+}
+
+/* Interactive list rows — clickable cards/rows that should lift on hover */
+a.bx-row,
+.bx-row {
+  transition:
+    transform    var(--duration-base, 200ms) var(--ease-out, cubic-bezier(0.16,1,0.3,1)),
+    box-shadow   var(--duration-base, 200ms) var(--ease-out, cubic-bezier(0.16,1,0.3,1)),
+    border-color var(--duration-base, 200ms) var(--ease-out, cubic-bezier(0.16,1,0.3,1));
+}
+a.bx-row:hover,
+.bx-row:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-3);
+}
+a.bx-row:active,
+.bx-row:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-1);
+}
+
+/* Override Tailwind transition-all to use motion tokens */
+.transition-all {
+  transition-timing-function: var(--ease-out, cubic-bezier(0.16,1,0.3,1));
+  transition-duration: var(--duration-base, 200ms);
 }
 
 /* Bloom ambient glow — used in hero sections */

@@ -161,7 +161,7 @@ export default function OrgProfilePage({ params }: { params: Promise<{ id: strin
   }
 
   return (
-    <div className="min-h-screen bg-parchment px-4 py-8 md:px-8">
+    <div className="animate-in min-h-screen bg-parchment px-4 py-8 md:px-8">
       <div className="max-w-4xl mx-auto space-y-6">
 
         {/* Breadcrumb */}
@@ -258,7 +258,7 @@ export default function OrgProfilePage({ params }: { params: Promise<{ id: strin
                   <Link
                     key={r.id}
                     href={`/admin/bx-reservations/${r.id}`}
-                    className="flex items-center justify-between gap-4 bg-white rounded-xl border border-parchment/20 px-5 py-3.5 shadow-sm hover:shadow-md hover:border-blue-200 transition-all group"
+                    className="bx-row flex items-center justify-between gap-4 bg-white rounded-xl border border-parchment/20 px-5 py-3.5 shadow-sm hover:shadow-md hover:border-blue-200 transition-all group"
                   >
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">

@@ -213,7 +213,7 @@ function renderPage(
   const headcount = Math.max(0, ...days.map((d) => Number(d.headcount) || 0)) || null;
 
   return (
-    <main style={{ maxWidth: "640px", margin: "0 auto", padding: "2rem 1rem 4rem" }}>
+    <main className="animate-in" style={{ maxWidth: "640px", margin: "0 auto", padding: "2rem 1rem 4rem" }}>
 
       {/* Back link */}
       <Link

@@ -73,7 +73,7 @@ export default async function ReservationsPage() {
   });
 
   return (
-    <main style={{ maxWidth: "640px", margin: "0 auto", padding: "2rem 1rem 4rem" }}>
+    <main className="animate-in" style={{ maxWidth: "640px", margin: "0 auto", padding: "2rem 1rem 4rem" }}>
 
       {/* Page title */}
       <div

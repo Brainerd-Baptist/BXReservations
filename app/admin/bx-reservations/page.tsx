@@ -628,7 +628,7 @@ export default function BxReservationsAdmin() {
   return (
     <div className="min-h-screen bg-ink font-sans">
 
-      <div className={`max-w-7xl mx-auto px-4 py-6 gap-6 ${tab === "requests" ? "grid lg:grid-cols-[1fr_320px]" : "block"}`}>
+      <div key={tab} className={`animate-in max-w-7xl mx-auto px-4 py-6 gap-6 ${tab === "requests" ? "grid lg:grid-cols-[1fr_320px]" : "block"}`}>
         {/* Left: queue / settings */}
         <div className="space-y-5">
           {tab === "settings" && (
@@ -737,7 +737,7 @@ export default function BxReservationsAdmin() {
             {filtered.map((req) => (
               <div
                 key={req.id}
-                className={`bg-ink-soft rounded-xl border border-parchment/10 p-4 cursor-pointer transition-all hover:shadow-md ${
+                className={`bx-row bg-ink-soft rounded-xl border border-parchment/10 p-4 cursor-pointer transition-all hover:shadow-md ${
                   selected?.id === req.id ? "ring-2 ring-[var(--bbc-blue)]" : ""
                 }`}
                 onClick={() => setSelected(selected?.id === req.id ? null : req)}

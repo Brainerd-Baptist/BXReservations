@@ -73,7 +73,7 @@ export default function OrganizationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-parchment px-4 py-8 md:px-8">
+    <div className="animate-in min-h-screen bg-parchment px-4 py-8 md:px-8">
       {/* Header */}
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-6">
