@@ -4,6 +4,7 @@ import SiteHeader from "./site-header";
 import ScrollReveal from "./components/scroll-reveal";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
+import { ToastProvider } from "./components/Toast";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -40,9 +41,11 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body className="flex flex-col min-h-screen">
-        <SiteHeader />
-        <main className="flex-1 isolate" style={{ paddingTop: "calc(3.5rem + env(safe-area-inset-top))" }}>{children}</main>
-        <ScrollReveal />
+        <ToastProvider>
+          <SiteHeader />
+          <main className="flex-1 isolate" style={{ paddingTop: "calc(3.5rem + env(safe-area-inset-top))" }}>{children}</main>
+          <ScrollReveal />
+        </ToastProvider>
 
         {/* Version footer */}
         <footer className="border-t py-3 px-4" style={{ borderColor: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>

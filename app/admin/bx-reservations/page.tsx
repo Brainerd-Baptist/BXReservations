@@ -1,6 +1,7 @@
 "use client";
 import { FileText, Shield, DollarSign, AlertTriangle, FolderOpen } from "lucide-react";
 import { ReservationListSkeleton, CardSkeleton, InlineSkeleton } from "@/app/components/Skeleton";
+import { useToast } from "@/app/components/Toast";
 import CommentsThread from "@/components/bx/CommentsThread";
 import EventLogoCard from "@/app/components/event-logo-card";
 import VenueSettings from "@/app/components/venue-settings";
@@ -189,6 +190,7 @@ const STATUS_COLORS: Record<Status, string> = {
 };
 
 export default function BxReservationsAdmin() {
+  const { toast } = useToast();
   const [requests, setRequests] = useState<Request[]>([]);
   const [reservationsLoading, setReservationsLoading] = useState(true);
   const [filter, setFilter] = useState<Status | "All">("All");
@@ -448,11 +450,11 @@ export default function BxReservationsAdmin() {
         fetchHistory(req.id, req.dbId);
       } else {
         const err = await res.json().catch(() => ({}));
-        alert("Status update failed: " + (err.error ?? res.status));
+        toast("Status update failed: " + (err.error ?? res.status), "error");
       }
     } catch (e) {
       console.error("[admin] changeStatus failed:", e);
-      alert("Network error — status not updated.");
+      toast("Network error — status not updated.", "error");
     }
     setChangingStatus(null);
   }
@@ -517,20 +519,20 @@ export default function BxReservationsAdmin() {
         body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (!res.ok) { alert(data.error ?? "Error"); return; }
+      if (!res.ok) { toast(data.error ?? "Error", "error"); return; }
       setDocStatus(prev => { const n = { ...prev }; delete n[req.id]; return n; });
       setDocLoading(prev => { const n = { ...prev }; delete n[req.id]; return n; });
       setCoiAction(prev => ({ ...prev, [req.id]: null }));
       fetchDocStatus(req.id, req.dbId!);
-    } catch { alert("Request failed — please try again."); }
+    } catch { toast("Request failed — please try again.", "error"); }
     finally { setCoiBusy(prev => ({ ...prev, [req.id]: false })); }
   }
 
   async function handlePayment(req: Request) {
     if (!req.dbId) return;
     const pf = payForm[req.id] ?? { amount: "", method: "", received_at: "", receipt_url: "" };
-    if (!pf.amount || isNaN(parseFloat(pf.amount)) || parseFloat(pf.amount) <= 0) { alert("Enter a valid payment amount."); return; }
-    if (!pf.method.trim()) { alert("Enter a payment method (e.g. check, card, cash)."); return; }
+    if (!pf.amount || isNaN(parseFloat(pf.amount)) || parseFloat(pf.amount) <= 0) { toast("Enter a valid payment amount.", "error"); return; }
+    if (!pf.method.trim()) { toast("Enter a payment method (e.g. check, card, cash).", "error"); return; }
     setPayBusy(prev => ({ ...prev, [req.id]: true }));
     try {
       const res = await fetch(`/api/admin/reservations/${req.dbId}/payment`, {
@@ -544,12 +546,12 @@ export default function BxReservationsAdmin() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) { alert(data.error ?? "Error"); return; }
+      if (!res.ok) { toast(data.error ?? "Error", "error"); return; }
       setPayForm(prev => { const n = { ...prev }; delete n[req.id]; return n; });
       setDocStatus(prev => { const n = { ...prev }; delete n[req.id]; return n; });
       setDocLoading(prev => { const n = { ...prev }; delete n[req.id]; return n; });
       fetchDocStatus(req.id, req.dbId!);
-    } catch { alert("Request failed — please try again."); }
+    } catch { toast("Request failed — please try again.", "error"); }
     finally { setPayBusy(prev => ({ ...prev, [req.id]: false })); }
   }
 
@@ -563,12 +565,12 @@ export default function BxReservationsAdmin() {
         body: JSON.stringify({}),
       });
       const data = await res.json();
-      if (!res.ok) { alert(data.error ?? "Error sending agreement"); return; }
-      alert(`Agreement sent to ${req.email}!`);
+      if (!res.ok) { toast(data.error ?? "Error sending agreement", "error"); return; }
+      toast(`Agreement sent to ${req.email}!`);
       setDocStatus(prev => { const n = { ...prev }; delete n[req.id]; return n; });
       setDocLoading(prev => { const n = { ...prev }; delete n[req.id]; return n; });
       fetchDocStatus(req.id, req.dbId!);
-    } catch { alert("Failed to send — please try again."); }
+    } catch { toast("Failed to send — please try again.", "error"); }
     finally { setSendingAgreementV2(prev => ({ ...prev, [req.id]: false })); }
   }
 
@@ -588,12 +590,12 @@ export default function BxReservationsAdmin() {
         body: JSON.stringify({ token: ag.token, staff_name: name }),
       });
       const data = await res.json();
-      if (!res.ok) { alert("Error countersigning: " + (data.error ?? "Unknown")); return; }
+      if (!res.ok) { toast("Error countersigning: " + (data.error ?? "Unknown"), "error"); return; }
       setAgreements(prev => ({ ...prev, [req.id]: { ...ag, staff_signed_at: data.staff_signed_at } }));
       setCountersigning(null);
       setCountersignName("");
-      alert("Agreement fully executed! Both parties have signed.");
-    } catch { alert("Failed to countersign — please try again."); }
+      toast("Agreement fully executed! Both parties have signed.");
+    } catch { toast("Failed to countersign — please try again.", "error"); }
   }
 
   const confirmedThisMonth = requests.filter(
@@ -611,7 +613,7 @@ export default function BxReservationsAdmin() {
       const res = await fetch(`/api/admin/reservations/${req.dbId}`, { method: "DELETE" });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        alert(`Delete failed: ${body.error ?? res.status}`);
+        toast(`Delete failed: ${body.error ?? res.status}`, "error");
         return;
       }
       setRequests(prev => prev.filter(r => r.id !== req.id));
@@ -619,7 +621,7 @@ export default function BxReservationsAdmin() {
       setDeleteConfirm(null);
     } catch (err) {
       console.error("[delete reservation]", err);
-      alert("Delete failed — see console.");
+      toast("Delete failed — see console.", "error");
     } finally {
       setDeleting(null);
     }
@@ -730,8 +732,16 @@ export default function BxReservationsAdmin() {
               <ReservationListSkeleton rows={8} />
             )}
             {!reservationsLoading && filtered.length === 0 && (
-              <div className="bg-ink-soft rounded-xl border border-parchment/10 p-10 text-center text-slate text-sm">
-                No requests with this status
+              <div className="bg-ink-soft rounded-xl border border-parchment/10">
+                <div className="bx-empty">
+                  <svg className="bx-empty-icon" width={40} height={40} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+                    <rect x="9" y="3" width="6" height="4" rx="1"/>
+                    <path d="M9 12h6M9 16h4"/>
+                  </svg>
+                  <p className="bx-empty-title">No requests here</p>
+                  <p className="bx-empty-sub">Try a different status filter above</p>
+                </div>
               </div>
             )}
             {filtered.map((req) => (
@@ -1786,13 +1796,13 @@ function UsersTab({
       });
       if (!res.ok) {
         const err = await res.json() as { error?: string };
-        alert(err.error ?? "Failed to save role. Please try again.");
+        toast(err.error ?? "Failed to save role. Please try again.", "error");
         setSavingRole(null);
         return;
       }
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole as MockUser["role"] } : u));
     } catch {
-      alert("Network error saving role. Please try again.");
+      toast("Network error saving role. Please try again.", "error");
     }
     setSavingRole(null);
     setPendingRoles({ ...pendingRoles, [userId]: "" });
@@ -1946,7 +1956,7 @@ function MinistriesTab({
       });
       const data = await res.json() as { ministry?: Ministry; error?: string };
       if (!res.ok || !data.ministry) {
-        alert(data.error ?? "Failed to create ministry. Please try again.");
+        toast(data.error ?? "Failed to create ministry. Please try again.", "error");
         setSavingMinistry(false);
         return;
       }
@@ -1954,7 +1964,7 @@ function MinistriesTab({
       setNewMinistryName("");
       setNewMinistryDesc("");
     } catch {
-      alert("Network error creating ministry. Please try again.");
+      toast("Network error creating ministry. Please try again.", "error");
     }
     setSavingMinistry(false);
   }

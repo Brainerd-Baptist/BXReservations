@@ -459,6 +459,124 @@ a.bx-row:active,
   transition-duration: var(--duration-base, 200ms);
 }
 
+/* ── Phase 5: State Polish & Microinteractions ───────────────────────────── */
+
+/* Focus rings — visible on keyboard nav only, matches brand brass */
+:focus-visible {
+  outline: 2px solid var(--bx-brass);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+/* Suppress default outline on mouse-focus while keeping :focus-visible */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Disabled button / input states */
+button:disabled,
+input:disabled,
+textarea:disabled,
+select:disabled,
+[aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Scroll-linked header shadow */
+header.bx-scrolled {
+  box-shadow: var(--shadow-2);
+  transition: box-shadow var(--duration-fast, 120ms) var(--ease-out, cubic-bezier(0.16,1,0.3,1));
+}
+header:not(.bx-scrolled) {
+  box-shadow: none;
+  transition: box-shadow var(--duration-fast, 120ms) var(--ease-out, cubic-bezier(0.16,1,0.3,1));
+}
+
+/* Toast notification system */
+@keyframes bx-toast-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes bx-toast-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(8px) scale(0.97); }
+}
+
+.bx-toast-stack {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+  pointer-events: none;
+}
+
+.bx-toast {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 1.125rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-3);
+  animation: bx-toast-in var(--duration-base, 200ms) var(--ease-out, cubic-bezier(0.16,1,0.3,1)) both;
+  white-space: nowrap;
+  max-width: min(400px, calc(100vw - 2rem));
+  white-space: normal;
+}
+.bx-toast.dismissing {
+  animation: bx-toast-out var(--duration-base, 200ms) var(--ease-in-out, cubic-bezier(0.4,0,0.2,1)) forwards;
+}
+.bx-toast-success {
+  background: var(--bx-sage);
+  color: #fff;
+}
+.bx-toast-error {
+  background: var(--bx-clay);
+  color: #fff;
+}
+.bx-toast-info {
+  background: var(--bx-ink-soft);
+  color: var(--bx-parchment);
+  border: 1px solid color-mix(in srgb, var(--bx-parchment) 15%, transparent);
+}
+
+/* Designed empty states */
+.bx-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: var(--bx-slate);
+}
+.bx-empty-icon {
+  opacity: 0.45;
+  color: var(--bx-slate);
+}
+.bx-empty-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--bx-parchment);
+  opacity: 0.7;
+  margin: 0;
+}
+.bx-empty-sub {
+  font-size: 0.8125rem;
+  color: var(--bx-slate);
+  margin: 0;
+  max-width: 28ch;
+}
+
 /* Bloom ambient glow — used in hero sections */
 .bx-bloom {
   position: absolute;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import NavSidebar from "./nav-sidebar";
@@ -27,6 +27,13 @@ export default function HeaderShell({
   savedTheme,
 }: HeaderShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
     <>
@@ -40,7 +47,7 @@ export default function HeaderShell({
       />
 
       <header
-        className="z-40 print:hidden fixed top-0 left-0 right-0 w-full border-b"
+        className={`z-40 print:hidden fixed top-0 left-0 right-0 w-full border-b${scrolled ? " bx-scrolled" : ""}`}
         style={{
           background: "var(--bx-ink-soft)",
           paddingTop: "env(safe-area-inset-top)",
