@@ -801,6 +801,9 @@ export default function BxReservationsAdmin() {
                           <a href={`/api/event-map/${req.dbId}/signs`} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-parchment/15 text-parchment hover:border-[var(--bbc-blue)]">
                             Door signs (PDF)
                           </a>
+                          <a href={`/api/event-map/${req.dbId}/setup-sheet`} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-parchment/15 text-parchment hover:border-[var(--bbc-blue)]">
+                            Setup sheet (PDF)
+                          </a>
                         </div>
                       </div>
                     )}

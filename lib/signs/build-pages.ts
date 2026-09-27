@@ -33,6 +33,19 @@ export function setupLine(l: MapLabel | undefined | null): string | null {
 
 const planned = (l: MapLabel | undefined) => !!(l && (l.event_name || l.setup_style || l.notes));
 
+/** The main map room of every reserved catalogue room (The Crossing itself, not its stage or balcony). */
+export function mainMapRooms(payload: unknown): Set<string> {
+  const main = new Set<string>();
+  for (const d of ((payload as { days?: PayloadDay[] } | null)?.days ?? [])) {
+    if (!d || d.included === false) continue;
+    for (const r of d.rooms ?? []) {
+      const ids = RESERVATION_ROOM_TO_MAP[r?.roomId ?? ""];
+      if (ids?.length) main.add(ids[0]);
+    }
+  }
+  return main;
+}
+
 /** The label in force for a room on a given day (names/notes from the whole-event row, setup from the day row when present). */
 function labelFor(labels: MapLabel[], roomId: string, day: number | null): MapLabel | undefined {
   const base = labels.find((l) => l.room_id === roomId && l.day_index === null);
@@ -52,14 +65,7 @@ export function buildSignPages(opts: {
   const { payload, labels, variant } = opts;
   const reserved = new Set(reservedMapRoomIds(payload));
   const dates = reservationDates(payload);
-  const main = new Set<string>();
-  for (const d of ((payload as { days?: PayloadDay[] } | null)?.days ?? [])) {
-    if (!d || d.included === false) continue;
-    for (const r of d.rooms ?? []) {
-      const ids = RESERVATION_ROOM_TO_MAP[r?.roomId ?? ""];
-      if (ids?.length) main.add(ids[0]);
-    }
-  }
+  const main = mainMapRooms(payload);
   const dayLabel = (i: number) => {
     const [y, m, d] = (dates[i] ?? "").split("-").map(Number);
     return dates[i] ? new Date(y, m - 1, d).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }) : `Day ${i + 1}`;

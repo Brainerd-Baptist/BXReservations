@@ -428,7 +428,10 @@ function renderPage(
               <a href={api} style={btn(true)} aria-disabled={!gate.ok}>Download all signs (PDF)</a>
               <a href={`${api}?inline=1`} target="_blank" rel="noopener" style={btn(false)} aria-disabled={!gate.ok}>Preview</a>
               {view.staff && (
-                <a href={`${api}?variant=staff`} style={btn(false)}>Staff copy (with setups)</a>
+                <>
+                  <a href={`${api}?variant=staff`} style={btn(false)}>Staff copy (with setups)</a>
+                  <a href={`/api/event-map/${reservation.id}/setup-sheet`} style={btn(false)}>Setup sheet</a>
+                </>
               )}
             </div>
           </section>

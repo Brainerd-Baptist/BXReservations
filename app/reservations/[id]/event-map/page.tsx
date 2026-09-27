@@ -93,6 +93,15 @@ export default async function EventMapPage({ params }: { params: Promise<{ id: s
             {ctx.staff ? "Staff signs" : "Door signs"}
           </Link>
         )}
+        {ctx.staff && (
+          <Link
+            href={`/api/event-map/${r.id}/setup-sheet`}
+            prefetch={false}
+            style={{ flex: "none", fontSize: "0.8125rem", fontWeight: 600, color: "var(--bx-brass)", textDecoration: "none" }}
+          >
+            Setup sheet
+          </Link>
+        )}
         {/* Changes autosave; "Done" is the explicit way out once the plan looks right */}
         <Link
           href={`/reservations/${r.id}`}
