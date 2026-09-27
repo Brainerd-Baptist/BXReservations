@@ -136,16 +136,21 @@ export async function renderPacket(job: PacketJob): Promise<Uint8Array> {
     };
     section("Parking", job.venue.venue_parking);
     section("When you arrive", job.venue.venue_arrival);
-    // entrances come from the map itself: the doors it marks as main entrances, on both levels
-    const clean = (n: string) => n.replace(/,\s*[a-zé]+ doors/i, "");
+    // entrances come from the map itself (the doors it marks as main entrances), told lot-first the way BX does
+    const LOT_FOR: { test: RegExp; line: string }[] = [
+      { test: /BX Entrance/i, line: "Blue Lot → the main entrance: the BX front door on Austin St. (lower level)" },
+      { test: /Elevator Lobby/i, line: "Green Lot → the elevator entrance (elevator to both levels)" },
+      { test: /Soccer Field/i, line: "Pink Lot → the CrossTies Café entrance (upper level)" },
+    ];
     const entrances: string[] = [];
     for (const level of ["lower", "upper"] as const) {
       for (const e of MAP_GEOMETRY[level].exits.filter((x) => x.primary)) {
-        const line = `${clean(e.name)} — ${level} level`;
+        const known = LOT_FOR.find((k) => k.test.test(e.name));
+        const line = known ? known.line : `${e.name.replace(/,\s*[a-zé]+ doors/i, "")} — ${level} level`;
         if (!entrances.includes(line)) entrances.push(line);
       }
     }
-    section("Entrances", entrances.map((e) => `• ${e}`).join("\n") + "\n• The elevator between levels is at the Green Lot entrance.");
+    section("Entrances", entrances.map((e) => `• ${e}`).join("\n"));
     if (job.venue.venue_contact) section("On the day", `Questions on the day: ${job.venue.venue_contact}`);
     footer(page, P.w, P.m);
   }
@@ -330,9 +335,9 @@ function drawLevel(
     const tw = trackedWidth(f.bold, text, 7, 1.6);
     tracked(page, f.bold, text, x - tw / 2, y, 7, 1.6, SLATE);
   };
-  ctx(level === "lower" ? "AUSTIN ST.  ·  BX ENTRANCE" : "AUSTIN ST.", cxm, ty(y0) + 6);
-  ctx("SOCCER FIELD  ·  PINK LOT", cxm, ty(y1) - 12);
-  page.drawText("GREEN LOT", { x: tx(x0) - 4, y: cym - 18, size: 7, font: f.bold, color: SLATE, rotate: degrees(90) });
+  ctx(level === "lower" ? "AUSTIN ST.  ·  BLUE LOT  ·  MAIN ENTRANCE" : "AUSTIN ST.  ·  BLUE LOT", cxm, ty(y0) + 6);
+  ctx(level === "upper" ? "SOCCER FIELD  ·  PINK LOT  ·  CAFÉ ENTRANCE" : "SOCCER FIELD  ·  PINK LOT", cxm, ty(y1) - 12);
+  page.drawText("GREEN LOT  ·  ELEVATOR ENTRANCE", { x: tx(x0) - 4, y: cym - 60, size: 7, font: f.bold, color: SLATE, rotate: degrees(90) });
   page.drawText("LOADING DOCK", { x: tx(x1) + 10, y: cym + 24, size: 7, font: f.bold, color: SLATE, rotate: degrees(-90) });
 }
 
