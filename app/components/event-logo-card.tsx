@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { LogoState } from "@/lib/event-logo-types";
+import { LOGO_STATUS } from "@/lib/status-tokens";
 
 const BUCKET = "event-logos";
 const ACCEPT = "image/png,image/jpeg,image/svg+xml";
@@ -130,7 +131,7 @@ export default function EventLogoCard({
   );
 
   const s = state ?? { status: "none" as const, meta: null, previewUrl: null, reviewedAt: null };
-  const chip = STATUS[s.status];
+  const chip = LOGO_STATUS[s.status];
   const has = s.status !== "none";
   const soft = !!s.meta?.soft;
   const pad = compact ? "0.875rem 1rem" : "1.25rem 1.5rem";
@@ -193,7 +194,7 @@ export default function EventLogoCard({
             </p>
           )}
           {s.status === "rejected" && s.meta?.review_note && (
-            <p style={{ margin: "0 0 0.5rem", padding: "0.5rem 0.75rem", borderLeft: "3px solid #dc2626", background: "color-mix(in srgb, #dc2626 8%, transparent)", borderRadius: "0 6px 6px 0" }}>
+            <p style={{ margin: "0 0 0.5rem", padding: "0.5rem 0.75rem", borderLeft: "3px solid #D97706", background: "color-mix(in srgb, #D97706 8%, transparent)", borderRadius: "0 6px 6px 0" }}>
               <strong>Note from staff:</strong> {s.meta.review_note}
             </p>
           )}
@@ -242,12 +243,12 @@ export default function EventLogoCard({
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 maxLength={300}
-                rows={2}
+                rows={3}
                 placeholder="What should they send instead? (e.g. a version without the tagline, or a larger file)"
                 style={{ width: "100%", boxSizing: "border-box", padding: "0.5rem 0.625rem", borderRadius: 8, border: "1px solid color-mix(in srgb, var(--bx-parchment) 20%, transparent)", background: "transparent", color: "inherit", font: "inherit", fontSize: "0.8125rem" }}
               />
               <div style={{ display: "flex", gap: "0.5rem" }}>
-                <button type="button" disabled={!!busy} onClick={() => review("reject")} style={btn("danger")}>{busy ?? "Send to planner"}</button>
+                <button type="button" disabled={!!busy} onClick={() => review("reject")} style={btn("action")}>{busy ?? "Send to planner"}</button>
                 <button type="button" disabled={!!busy} onClick={() => { setAsking(false); setNote(""); }} style={btn("ghost")}>Cancel</button>
               </div>
             </div>
@@ -265,7 +266,7 @@ export default function EventLogoCard({
   );
 }
 
-function btn(kind: "primary" | "ghost" | "danger" | "approve"): React.CSSProperties {
+function btn(kind: "primary" | "action" | "confirm" | "ghost" | "danger" | "approve"): React.CSSProperties {
   const base: React.CSSProperties = {
     padding: "0.45rem 0.9rem",
     borderRadius: "0.5rem",
@@ -279,6 +280,8 @@ function btn(kind: "primary" | "ghost" | "danger" | "approve"): React.CSSPropert
   };
   if (kind === "primary") return { ...base, background: "var(--bx-brass)", color: "#fff" };
   if (kind === "approve") return { ...base, background: "#059669", color: "#fff" };
+  if (kind === "action") return { ...base, background: "#D97706", color: "#fff" };
+  if (kind === "confirm") return { ...base, background: "#059669", color: "#fff" };
   if (kind === "danger") return { ...base, background: "#dc2626", color: "#fff" };
   return { ...base, borderColor: "color-mix(in srgb, var(--bx-parchment) 20%, transparent)" };
 }
