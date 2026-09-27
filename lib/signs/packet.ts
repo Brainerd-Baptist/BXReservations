@@ -9,7 +9,8 @@ import { MAP_GEOMETRY, MAP_ROOMS } from "@/app/bx-map/map-bundle";
 import { RESERVATION_ROOM_TO_MAP, reservationDates, reservedMapRoomIds, type MapLabel } from "@/lib/event-map";
 import type { VenueInfo } from "@/lib/venue";
 import { formatDates, TEMPLATE_VERSION } from "./door-signs";
-import { ENTRY, NAVY, PLAN_FILL, PLAN_LINE, RR_FILL, RULE, SLATE, TEAL, TEAL_SOFT, fit, fmtTime, localDate, newDoc, tracked, trackedWidth, wrap, type Fonts } from "./pdf-common";
+import { CAMPUS_MAP_BX_BOX, CAMPUS_MAP_PDF_B64 } from "./assets";
+import { ENTRY, NAVY, PLAN_FILL, PLAN_LINE, RR_FILL, RULE, SLATE, TEAL, TEAL_SOFT, b64, fit, fmtTime, localDate, newDoc, tracked, trackedWidth, wrap, type Fonts } from "./pdf-common";
 
 export interface PacketJob {
   eventName: string;
@@ -147,6 +148,33 @@ export async function renderPacket(job: PacketJob): Promise<Uint8Array> {
     section("Entrances", entrances.map((e) => `• ${e}`).join("\n") + "\n• The elevator between levels is at the Green Lot entrance.");
     if (job.venue.venue_contact) section("On the day", `Questions on the day: ${job.venue.venue_contact}`);
     footer(page, P.w, P.m);
+  }
+
+  // ── 2b. campus map — the church's own map, the BX highlighted ─────────
+  {
+    const [campus] = await pdf.embedPdf(b64(CAMPUS_MAP_PDF_B64), [0]);
+    const page = pdf.addPage([L.w, L.h]);
+    page.drawPage(campus, { x: 0, y: 0, width: L.w, height: L.h });
+    const [bx, by, bw, bh] = CAMPUS_MAP_BX_BOX;
+    const r = 10;
+    const rounded = `M${r} 0 H${bw - r} A${r} ${r} 0 0 1 ${bw} ${r} V${bh - r} A${r} ${r} 0 0 1 ${bw - r} ${bh} H${r} A${r} ${r} 0 0 1 0 ${bh - r} V${r} A${r} ${r} 0 0 1 ${r} 0 Z`;
+    page.drawSvgPath(rounded, { x: bx, y: by + bh, borderColor: TEAL, borderWidth: 3 });
+    // caption pill above the box
+    const cap = `${job.eventName} is here`;
+    const cs = fit(fonts.bold, cap, 260, 11, 8);
+    const cw = fonts.bold.widthOfTextAtSize(cap, cs) + 20;
+    const cx = Math.min(L.w - 16 - cw, Math.max(16, bx + bw / 2 - cw / 2));
+    page.drawRectangle({ x: cx, y: by + bh + 10, width: cw, height: 22, color: TEAL, borderColor: rgb(1, 1, 1), borderWidth: 1.5 });
+    page.drawText(cap, { x: cx + 10, y: by + bh + 16.5, size: cs, font: fonts.bold, color: rgb(1, 1, 1) });
+    // strip: what to know, on the map's own terms
+    const note = job.venue.venue_parking || "The BX is the separate building on Austin St. The lots beside it are the Green Lot (Austin St.), the Pink Lot (by the soccer field) and the Blue Lot (along Mayfair Ave.).";
+    page.drawRectangle({ x: 0, y: 0, width: L.w, height: 34, color: rgb(1, 1, 1), opacity: 0.92 });
+    const nl = wrap(fonts.medium, note, 9.5, L.w - 2 * L.m - 120);
+    page.drawText(nl[0], { x: L.m, y: 20, size: 9.5, font: fonts.medium, color: NAVY });
+    if (nl[1]) page.drawText(nl[1], { x: L.m, y: 8, size: 9.5, font: fonts.medium, color: NAVY });
+    const pg = `Campus map · ${job.eventName}`;
+    page.drawText(pg, { x: L.w - L.m - fonts.medium.widthOfTextAtSize(pg, 8.5), y: 14, size: 8.5, font: fonts.medium, color: SLATE });
+    pageNo += 1;
   }
 
   // ── 3. schedule and rooms ─────────────────────────────────────────────
