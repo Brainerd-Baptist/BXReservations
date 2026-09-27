@@ -473,13 +473,26 @@ export default function NavSidebar({
         >
           {hasUser && (email || displayName) ? (
             <>
-              <div
+              {/* Identity row — clickable to account settings */}
+              <Link
+                href="/account"
+                onClick={onClose}
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: "0.625rem",
                   padding: "0.5rem 0.75rem",
+                  borderRadius: "0.5rem",
+                  textDecoration: "none",
+                  transition: "background 0.1s",
                 }}
+                onMouseEnter={(e) =>
+                  ((e.currentTarget as HTMLAnchorElement).style.background =
+                    "color-mix(in srgb, var(--bx-parchment) 5%, transparent)")
+                }
+                onMouseLeave={(e) =>
+                  ((e.currentTarget as HTMLAnchorElement).style.background = "transparent")
+                }
               >
                 <div
                   style={{
@@ -498,7 +511,7 @@ export default function NavSidebar({
                 >
                   {(displayName ?? email ?? "?")[0].toUpperCase()}
                 </div>
-                <div style={{ minWidth: 0 }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
                   <p
                     style={{
                       fontSize: "0.875rem",
@@ -525,33 +538,42 @@ export default function NavSidebar({
                     </p>
                   )}
                 </div>
-              </div>
-              <Link
-                href="/account"
-                onClick={onClose}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.625rem",
-                  padding: "0.5rem 0.75rem",
-                  borderRadius: "0.5rem",
-                  fontSize: "0.875rem",
-                  color: "var(--bx-slate)",
-                  textDecoration: "none",
-                  background: "transparent",
-                  transition: "background 0.1s",
-                }}
-                onMouseEnter={(e) =>
-                  ((e.currentTarget as HTMLAnchorElement).style.background =
-                    "color-mix(in srgb, var(--bx-parchment) 5%, transparent)")
-                }
-                onMouseLeave={(e) =>
-                  ((e.currentTarget as HTMLAnchorElement).style.background = "transparent")
-                }
-              >
-                <Icon name="user" size={18} />
-                Account settings
               </Link>
+              {/* Sign out */}
+              <form action="/api/auth/sign-out" method="post">
+                <button
+                  type="submit"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.625rem",
+                    width: "100%",
+                    padding: "0.5rem 0.75rem",
+                    borderRadius: "0.5rem",
+                    fontSize: "0.875rem",
+                    color: "var(--bx-slate)",
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    transition: "background 0.1s, color 0.1s",
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.background =
+                      "color-mix(in srgb, var(--bx-clay) 10%, transparent)";
+                    (e.currentTarget as HTMLButtonElement).style.color = "var(--bx-clay)";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+                    (e.currentTarget as HTMLButtonElement).style.color = "var(--bx-slate)";
+                  }}
+                >
+                  <svg width={18} height={18} fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                  </svg>
+                  Sign out
+                </button>
+              </form>
             </>
           ) : (
             <>
