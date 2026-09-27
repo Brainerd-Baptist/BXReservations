@@ -21,6 +21,10 @@ const TAG_PENDING    = "430562";
 const TAG_CONFIRMED  = "430561";
 const TAG_CANCELED   = "430563";
 
+// PCO Person ID of the default event owner (Josiah King)
+// Override via PCO_OWNER_ID env var if needed.
+const PCO_OWNER_ID = process.env.PCO_OWNER_ID ?? "20206208";
+
 function authHeader(): string {
   const id     = process.env.PCO_APP_ID  ?? "";
   const secret = process.env.PCO_SECRET  ?? "";
@@ -119,6 +123,18 @@ export async function pcoCreateEvent(opts: {
       attributes: {
         name: eventName,
       },
+      relationships: {
+        owner: {
+          data: { type: "Person", id: PCO_OWNER_ID },
+        },
+        tags: {
+          data: [
+            { type: "Tag", id: TAG_PENDING   },
+            { type: "Tag", id: TAG_BX_VENUE  },
+            { type: "Tag", id: TAG_BX_EVENTS },
+          ],
+        },
+      },
     },
   });
 
@@ -130,14 +146,8 @@ export async function pcoCreateEvent(opts: {
   const pcoEventId = eventRes.data.id as string;
   console.log(`[pco] created event ${pcoEventId} for ${bookingNumber}`);
 
-  // 2️⃣  Tag the event: Pending|Hold + BX venue + BX Events view
-  await pcoFetch(`/events/${pcoEventId}/relationships/tags`, "POST", {
-    data: [
-      { type: "Tag", id: TAG_PENDING   },
-      { type: "Tag", id: TAG_BX_VENUE  },
-      { type: "Tag", id: TAG_BX_EVENTS },
-    ],
-  });
+  // 2️⃣  Tags are applied at creation time via the relationships block above.
+  //     (PCO requires tags from required tag groups to be present at create time.)
 
   // 3️⃣  Create EventInstances for each included day
   const instancePromises = includedDays.map(day => {
