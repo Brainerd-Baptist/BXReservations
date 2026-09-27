@@ -54,14 +54,14 @@ export async function GET() {
   // Fetch reservation counts
   const { data: resCounts } = await svc
     .from("reservations")
-    .select("owner_id")
-    .in("owner_id", userIds);
+    .select("user_id")
+    .in("user_id", userIds);
 
   const roleMap = Object.fromEntries((roles ?? []).map((r) => [r.user_id, r.role as BxRole]));
   const profileMap = Object.fromEntries((profiles ?? []).map((p) => [p.user_id, p]));
   const countMap: Record<string, number> = {};
   (resCounts ?? []).forEach((r) => {
-    if (r.owner_id) countMap[r.owner_id] = (countMap[r.owner_id] ?? 0) + 1;
+    if (r.user_id) countMap[r.user_id] = (countMap[r.user_id] ?? 0) + 1;
   });
 
   const users = authUsers.map((u) => ({
