@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
-const PCO_BASE = "https://api.planningcenteronline.com";
-const ME_ID    = "20206208";
+const PCO_BASE  = "https://api.planningcenteronline.com";
+const TOKEN_URL = "https://api.planningcenteronline.com/oauth/token";
 
 const ALL_TAGS = [
   { type: "Tag", id: "430562" },
@@ -10,17 +10,38 @@ const ALL_TAGS = [
   { type: "Tag", id: "241212" },
 ];
 
-function authHeader(): string {
+async function getAccessToken(): Promise<string | null> {
+  const refreshToken = process.env.PCO_REFRESH_TOKEN;
+  if (!refreshToken) return null;
+  const res = await fetch(TOKEN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      grant_type:    "refresh_token",
+      refresh_token: refreshToken,
+      client_id:     process.env.PCO_APP_ID,
+      client_secret: process.env.PCO_PAT ?? process.env.PCO_SECRET,
+    }),
+  });
+  if (!res.ok) return null;
+  const data = await res.json() as { access_token?: string };
+  return data.access_token ?? null;
+}
+
+async function authHeader(): Promise<string> {
+  const at = await getAccessToken();
+  if (at) return `Bearer ${at}`;
   const id     = process.env.PCO_APP_ID ?? "";
   const secret = process.env.PCO_PAT ?? process.env.PCO_SECRET ?? "";
   return "Basic " + Buffer.from(`${id}:${secret}`).toString("base64");
 }
 
 async function pcoRaw(path: string, method = "GET", body?: unknown) {
+  const auth = await authHeader();
   const res = await fetch(`${PCO_BASE}${path}`, {
     method,
     headers: {
-      Authorization:  authHeader(),
+      Authorization:  auth,
       "Content-Type": "application/json",
       Accept:         "application/json",
     },
@@ -34,55 +55,23 @@ async function pcoRaw(path: string, method = "GET", body?: unknown) {
 export async function GET() {
   const results: Record<string, unknown> = {};
 
-  // Test A: owner as "null_person" (sentinel that exists in this org)
+  // Report which auth method is active
+  const accessToken = await getAccessToken();
+  results.auth_method = accessToken ? "oauth_bearer" : "pat_basic";
+
+  // Test A: create event with all 4 tags (the canonical working payload)
   const a = await pcoRaw("/calendar/v2/events", "POST", {
     data: {
       type: "Event",
-      attributes: { name: "BX Debug A — DELETE ME" },
-      relationships: {
-        tags:  { data: ALL_TAGS },
-        owner: { data: { type: "Person", id: "null_person" } },
-      },
-    },
-  });
-  results.a_null_person_owner = { status: a.status, id: a.body?.data?.id, errors: a.body?.errors };
-
-  // Test B: owner as numeric integer instead of string
-  const b = await pcoRaw("/calendar/v2/events", "POST", {
-    data: {
-      type: "Event",
-      attributes: {
-        name:     "BX Debug B — DELETE ME",
-        owner_id: Number(ME_ID),  // numeric, not string
-      },
+      attributes: { name: "BX Debug OAuth — DELETE ME" },
       relationships: { tags: { data: ALL_TAGS } },
     },
   });
-  results.b_numeric_owner_id = { status: b.status, id: b.body?.data?.id, errors: b.body?.errors };
-
-  // Test C: POST to /calendar/v2/event_resource_requests without event
-  //         (to see if PCO supports standalone room-request creation)
-  const c = await pcoRaw("/calendar/v2/event_resource_requests", "POST", {
-    data: {
-      type: "EventResourceRequest",
-      attributes: {
-        approval_status: "P",
-        starts_at: "2026-10-01T09:00:00.000Z",
-        ends_at:   "2026-10-01T11:00:00.000Z",
-      },
-      relationships: {
-        resource: { data: { type: "Resource", id: "355074" } }, // The Crossing
-      },
-    },
-  });
-  results.c_standalone_resource_req = { status: c.status, id: c.body?.data?.id, errors: c.body?.errors };
-
-  // Test D: Fetch the existing "null_person" event to check its full structure
-  const d = await pcoRaw("/calendar/v2/events/1541619?include=owner");
-  results.d_null_event_structure = {
-    status: d.status,
-    owner:  d.body?.data?.relationships?.owner,
-    attrs:  d.body?.data?.attributes,
+  results.a_create_event = {
+    status: a.status,
+    id:     a.body?.data?.id,
+    owner:  a.body?.data?.relationships?.owner,
+    errors: a.body?.errors,
   };
 
   return NextResponse.json(results);

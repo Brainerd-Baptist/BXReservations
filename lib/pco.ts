@@ -1,34 +1,81 @@
 /**
  * lib/pco.ts — Planning Center Calendar write integration
  *
- * Uses Basic-auth (PCO_APP_ID:PCO_SECRET) to create and tag events.
- * All public functions are fire-and-forget safe: they log errors but
- * never throw, so PCO failures never block reservation submission/approval.
+ * Auth: OAuth2 (preferred) or PAT Basic-auth fallback.
+ *
+ * OAUTH SETUP (one-time):
+ *   1. Visit /api/pco-auth/start (as Josiah) to authorize the app.
+ *   2. Copy the refresh token from the callback page.
+ *   3. Save it as PCO_REFRESH_TOKEN in Vercel env vars + redeploy.
+ *   4. Delete app/api/pco-auth/ from the repo.
+ *
+ * With PCO_REFRESH_TOKEN set, the app uses OAuth and PCO auto-assigns
+ * the event owner from the authenticated user identity (required for
+ * event creation — PAT auth cannot set owner_id, causing a 422).
  *
  * PCO Tag IDs (live):
  *   BX venue tag     : 70490
  *   BX Events view   : 248327
+ *   BX Ministry type : 241212  (required tag group)
  *   Pending | Hold   : 430562
  *   Confirmed        : 430561
  *   Canceled         : 430563
  */
 
 const PCO_BASE = "https://api.planningcenteronline.com/calendar/v2";
+const TOKEN_URL = "https://api.planningcenteronline.com/oauth/token";
 
-const TAG_BX_VENUE      = "70490";
-const TAG_BX_EVENTS     = "248327";
-const TAG_BX_MINISTRY   = "241212";  // Event Type group (required) — "BX Ministry"
-const TAG_PENDING       = "430562";
-const TAG_CONFIRMED     = "430561";
-const TAG_CANCELED      = "430563";
+const TAG_BX_VENUE    = "70490";
+const TAG_BX_EVENTS   = "248327";
+const TAG_BX_MINISTRY = "241212";
+const TAG_PENDING     = "430562";
+const TAG_CONFIRMED   = "430561";
+const TAG_CANCELED    = "430563";
 
-// PCO Person ID of the default event owner (Josiah King)
-// Override via PCO_OWNER_ID env var if needed.
-const PCO_OWNER_ID = process.env.PCO_OWNER_ID ?? "20206208";
+// ─── Token cache (in-process, resets on cold start) ─────────────────────────
+let cachedToken: string | null = null;
+let tokenExpiresAt = 0;
 
-function authHeader(): string {
-  // PCO Personal Access Tokens use Basic auth: client_id:secret.
-  // PCO_APP_ID = PAT Client ID, PCO_PAT = PAT Secret (or PCO_SECRET as fallback).
+async function getAccessToken(): Promise<string | null> {
+  const refreshToken = process.env.PCO_REFRESH_TOKEN;
+
+  // If no refresh token, fall back to PAT Basic auth (won't work for event
+  // creation but keeps read operations and status-tag PATCHes functional).
+  if (!refreshToken) return null;
+
+  // Return cached token if still valid (with 60s buffer).
+  if (cachedToken && Date.now() < tokenExpiresAt - 60_000) return cachedToken;
+
+  try {
+    const res = await fetch(TOKEN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        grant_type:    "refresh_token",
+        refresh_token: refreshToken,
+        client_id:     process.env.PCO_APP_ID,
+        client_secret: process.env.PCO_PAT ?? process.env.PCO_SECRET,
+      }),
+    });
+    if (!res.ok) {
+      console.error("[pco] token refresh failed:", res.status, await res.text());
+      return null;
+    }
+    const data = await res.json() as { access_token: string; expires_in: number };
+    cachedToken = data.access_token;
+    tokenExpiresAt = Date.now() + data.expires_in * 1000;
+    return cachedToken;
+  } catch (err) {
+    console.error("[pco] token refresh error:", err);
+    return null;
+  }
+}
+
+async function authHeader(): Promise<string> {
+  const accessToken = await getAccessToken();
+  if (accessToken) return `Bearer ${accessToken}`;
+
+  // PAT Basic auth fallback (event creation will fail with owner_id error).
   const id     = process.env.PCO_APP_ID ?? "";
   const secret = process.env.PCO_PAT ?? process.env.PCO_SECRET ?? "";
   return "Basic " + Buffer.from(`${id}:${secret}`).toString("base64");
@@ -39,13 +86,14 @@ async function pcoFetch(
   method: "POST" | "PATCH" | "DELETE" | "GET",
   body?: unknown
 ): Promise<{ data?: Record<string, unknown>; error?: string }> {
-  if (!process.env.PCO_APP_ID || !(process.env.PCO_PAT || process.env.PCO_SECRET)) {
+  if (!process.env.PCO_APP_ID || !(process.env.PCO_PAT || process.env.PCO_SECRET || process.env.PCO_REFRESH_TOKEN)) {
     return { error: "PCO credentials not configured" };
   }
+  const auth = await authHeader();
   const res = await fetch(`${PCO_BASE}${path}`, {
     method,
     headers: {
-      Authorization:  authHeader(),
+      Authorization:  auth,
       "Content-Type": "application/json",
       Accept:         "application/json",
     },
@@ -68,9 +116,8 @@ async function pcoFetch(
 
 // ─── Parse HH:MM time string into an ISO datetime on a given date ─────────────
 function buildISO(dateStr: string, timeStr: string): string {
-  // dateStr: "YYYY-MM-DD", timeStr: "HH:MM"
   const [h, m] = timeStr.split(":").map(Number);
-  const d = new Date(`${dateStr}T12:00:00`); // noon to avoid DST issues
+  const d = new Date(`${dateStr}T12:00:00`);
   d.setHours(h ?? 8, m ?? 0, 0, 0);
   return d.toISOString();
 }
@@ -84,7 +131,6 @@ interface DayConfig {
   headcount: number;
 }
 
-// Derive start/end for a day based on timeBlock
 function dayTimes(day: DayConfig): { starts_at: string; ends_at: string } {
   const blockMap: Record<string, [string, string]> = {
     morning:   ["08:00", "12:00"],
@@ -109,35 +155,25 @@ export async function pcoCreateEvent(opts: {
   days:         DayConfig[];
   bookingNumber: string;
 }): Promise<string | null> {
-  const { eventName, orgName, notes, days, bookingNumber } = opts;
+  const { eventName, days, bookingNumber } = opts;
   const includedDays = days.filter(d => d.included);
 
-  // Build a description from the available info
-  const descParts: string[] = [];
-  if (orgName)        descParts.push(`Organization: ${orgName}`);
-  if (bookingNumber)  descParts.push(`Booking: ${bookingNumber}`);
-  if (notes)          descParts.push(`Notes: ${notes}`);
-  const description = descParts.join("\n");
-
-  // 1️⃣  Create the event
+  // 1️⃣  Create the event (OAuth token auto-assigns owner from Josiah's session)
   const eventRes = await pcoFetch("/events", "POST", {
     data: {
       type: "Event",
       attributes: {
-        name:     eventName,
+        name: eventName,
       },
       relationships: {
         tags: {
           data: [
-            { type: "Tag", id: TAG_PENDING      },
-            { type: "Tag", id: TAG_BX_VENUE     },
-            { type: "Tag", id: TAG_BX_EVENTS    },
-            { type: "Tag", id: TAG_BX_MINISTRY  },
+            { type: "Tag", id: TAG_PENDING     },
+            { type: "Tag", id: TAG_BX_VENUE    },
+            { type: "Tag", id: TAG_BX_EVENTS   },
+            { type: "Tag", id: TAG_BX_MINISTRY },
           ],
         },
-        // Note: PCO does not allow setting owner_id on event creation
-        // (returns "Forbidden Attribute"). Owner is set by the authenticated
-        // user automatically, or can be patched after creation if needed.
       },
     },
   });
@@ -150,10 +186,7 @@ export async function pcoCreateEvent(opts: {
   const pcoEventId = eventRes.data.id as string;
   console.log(`[pco] created event ${pcoEventId} for ${bookingNumber}`);
 
-  // 2️⃣  Tags are applied at creation time via the relationships block above.
-  //     (PCO requires tags from required tag groups to be present at create time.)
-
-  // 3️⃣  Create EventInstances for each included day
+  // 2️⃣  Create EventInstances for each included day
   const instancePromises = includedDays.map(day => {
     const { starts_at, ends_at } = dayTimes(day);
     return pcoFetch("/event_instances", "POST", {
@@ -173,15 +206,13 @@ export async function pcoCreateEvent(opts: {
 }
 
 // ─── Update tag group: swap the status tag out ────────────────────────────────
-// PATCH on relationships/tags replaces the full tag set.
-// We keep BX venue + BX Events and swap the status tag.
 async function pcoSetStatusTag(pcoEventId: string, statusTagId: string): Promise<void> {
   await pcoFetch(`/events/${pcoEventId}/relationships/tags`, "PATCH", {
     data: [
-      { type: "Tag", id: statusTagId      },
-      { type: "Tag", id: TAG_BX_VENUE     },
-      { type: "Tag", id: TAG_BX_EVENTS    },
-      { type: "Tag", id: TAG_BX_MINISTRY  },
+      { type: "Tag", id: statusTagId     },
+      { type: "Tag", id: TAG_BX_VENUE    },
+      { type: "Tag", id: TAG_BX_EVENTS   },
+      { type: "Tag", id: TAG_BX_MINISTRY },
     ],
   });
   console.log(`[pco] updated event ${pcoEventId} → tag ${statusTagId}`);
