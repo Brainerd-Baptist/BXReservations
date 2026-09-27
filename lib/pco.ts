@@ -124,7 +124,8 @@ export async function pcoCreateEvent(opts: {
     data: {
       type: "Event",
       attributes: {
-        name: eventName,
+        name:     eventName,
+        owner_id: PCO_OWNER_ID,
       },
       relationships: {
         tags: {
