@@ -78,6 +78,26 @@ export async function GET() {
   const accessToken = await getAccessToken();
   results.auth_method = accessToken ? "oauth_bearer" : "pat_basic";
 
+  // Diagnostic D: look up authenticated PCO user and Josiah's Calendar person record
+  const meRes = await pcoRaw("/people/v2/me", "GET");
+  results.d_me = { status: meRes.status, id: meRes.body?.data?.id, name: meRes.body?.data?.attributes?.name };
+
+  const calPersonRes = await pcoRaw("/calendar/v2/people/20206208", "GET");
+  results.d_cal_person_20206208 = {
+    status: calPersonRes.status,
+    id: calPersonRes.body?.data?.id,
+    event_permissions_type: calPersonRes.body?.data?.attributes?.event_permissions_type,
+    has_access: calPersonRes.body?.data?.attributes?.has_access,
+    errors: calPersonRes.body?.errors,
+  };
+
+  // Also try listing the first few Calendar people to see who's in the system
+  const calPeopleRes = await pcoRaw("/calendar/v2/people?per_page=5", "GET");
+  results.d_cal_people_sample = {
+    status: calPeopleRes.status,
+    ids: (calPeopleRes.body?.data ?? []).map((p: {id: string; attributes: {name: string}}) => ({ id: p.id, name: p.attributes?.name })),
+  };
+
   // Test A: create event with no owner field (let PCO auto-assign from OAuth session)
   const a = await pcoRaw("/calendar/v2/events", "POST", {
     data: {
