@@ -55,6 +55,25 @@ async function pcoRaw(path: string, method = "GET", body?: unknown) {
 export async function GET() {
   const results: Record<string, unknown> = {};
 
+  // Expose token refresh details
+  const refreshToken = process.env.PCO_REFRESH_TOKEN;
+  results.has_refresh_token = !!refreshToken;
+  results.refresh_token_len = refreshToken?.length ?? 0;
+  if (refreshToken) {
+    const tr = await fetch(TOKEN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        grant_type:    "refresh_token",
+        refresh_token: refreshToken,
+        client_id:     process.env.PCO_APP_ID,
+        client_secret: process.env.PCO_PAT ?? process.env.PCO_SECRET,
+      }),
+    });
+    const trText = await tr.text();
+    results.token_refresh = { status: tr.status, body: (() => { try { return JSON.parse(trText); } catch { return trText; } })() };
+  }
+
   // Report which auth method is active
   const accessToken = await getAccessToken();
   results.auth_method = accessToken ? "oauth_bearer" : "pat_basic";
