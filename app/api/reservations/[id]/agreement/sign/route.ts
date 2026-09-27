@@ -141,25 +141,25 @@ export async function POST(req: NextRequest, { params }: Params) {
       for (const email of adminEmails.slice(0, 5)) {
         await sendEmail({
           to: email as string,
-          subject: \`Agreement signed — \${res.booking_number ?? res.id.slice(0, 8)} (\${res.event_name})\`,
+          subject: `Agreement signed — ${res.booking_number ?? res.id.slice(0, 8)} (${res.event_name})`,
           html: brandedEmailHtml({
             headline: "Facility Use Agreement Signed",
-            body: \`
+            body: `
               <p style="margin:0 0 12px 0;">
-                <strong style="color:#00205b;">\${typedName}</strong> signed the Facility Use Agreement for
-                reservation <strong style="color:#00205b;">\${res.booking_number ?? res.id.slice(0, 8)}</strong> — \${res.event_name}.
+                <strong style="color:#00205b;">${typedName}</strong> signed the Facility Use Agreement for
+                reservation <strong style="color:#00205b;">${res.booking_number ?? res.id.slice(0, 8)}</strong> — ${res.event_name}.
               </p>
               <p style="margin:0 0 20px 0; padding:12px 16px; background-color:#f3f4f6; border-radius:8px; color:#374151; font-size:13px;">
-                Signed \${new Date(signedAt).toLocaleString("en-US", { timeZone: "America/Chicago", dateStyle: "full", timeStyle: "long" })} CT
+                Signed ${new Date(signedAt).toLocaleString("en-US", { timeZone: "America/Chicago", dateStyle: "full", timeStyle: "long" })} CT
               </p>
-            \`,
+            `,
             ctaText: "View in Admin Dashboard",
             ctaUrl: "https://bx.brainerdhq.app/admin/bx-reservations",
-            footnoteHtml: pdfUrl ? \`
+            footnoteHtml: pdfUrl ? `
               <p style="margin:0; font-size:13px; color:#6b7280; text-align:center;">
-                <a href="\${pdfUrl}" style="color:#00abc9; text-decoration:underline;">Download signed PDF</a>
+                <a href="${pdfUrl}" style="color:#00abc9; text-decoration:underline;">Download signed PDF</a>
               </p>
-            \` : null,
+            ` : null,
           }),
         });
       }

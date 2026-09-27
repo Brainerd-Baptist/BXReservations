@@ -115,20 +115,20 @@ export async function POST(req: NextRequest, { params }: Params) {
     try {
       await sendEmail({
         to: res.contact_email,
-        subject: `Update on your reservation${res.booking_number ? \` (\${res.booking_number})\` : ""}`,
+        subject: `Update on your reservation${res.booking_number ? ` (${res.booking_number})` : ""}`,
         html: brandedEmailHtml({
           headline: "A message from the BX team",
           body: `
             <p style="margin:0 0 16px 0;">
               Hi <strong style="color:#00205b;">${res.contact_name ?? "there"}</strong> —
-              the BX team left a message on your reservation${res.event_name ? \` for <strong style="color:#00205b;">\${res.event_name}</strong>\` : ""}:
+              the BX team left a message on your reservation${res.event_name ? ` for <strong style="color:#00205b;">${res.event_name}</strong>` : ""}:
             </p>
             <p style="margin:0 0 20px 0; padding:12px 16px; background-color:#f3f4f6; border-radius:8px; color:#374151;">
-              \${text.replace(/\n/g, "<br>")}
+              ${text.replace(/\n/g, "<br>")}
             </p>
           `,
           ctaText: "View Your Reservation",
-          ctaUrl: \`https://bx.brainerdhq.app/reservations/\${res.id}\`,
+          ctaUrl: `https://bx.brainerdhq.app/reservations/${res.id}`,
           footnoteHtml: null,
         }),
       });
