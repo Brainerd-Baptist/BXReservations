@@ -288,6 +288,10 @@ export default function BxReservationsAdmin() {
   const [linkedOrg, setLinkedOrg] = useState<Record<string, LinkedOrg | null>>({});
   const [orgLinking, setOrgLinking] = useState<Record<string, boolean>>({});
 
+  // ── Delete reservation ───────────────────────────────────────────────────────
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
   function loadOrgData(req: Request) {
     if (req.organizationId) {
       fetch(`/api/admin/organizations/${req.organizationId}`)
@@ -623,6 +627,28 @@ Send this to ${req.name} (${req.email}).`);
   const revenue = requests
     .filter((r) => r.status === "Confirmed" || r.status === "Deposit Received")
     .reduce((s, r) => s + r.estimate, 0);
+
+  // ── Delete reservation ───────────────────────────────────────────────────────
+  async function deleteReservation(req: Request) {
+    if (!req.dbId) return;
+    setDeleting(req.id);
+    try {
+      const res = await fetch(`/api/admin/reservations/${req.dbId}`, { method: "DELETE" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        alert(`Delete failed: ${body.error ?? res.status}`);
+        return;
+      }
+      setRequests(prev => prev.filter(r => r.id !== req.id));
+      setSelected(null);
+      setDeleteConfirm(null);
+    } catch (err) {
+      console.error("[delete reservation]", err);
+      alert("Delete failed — see console.");
+    } finally {
+      setDeleting(null);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-ink font-sans">
@@ -1249,6 +1275,40 @@ Send this to ${req.name} (${req.email}).`);
                     {req.status === "Declined" && (
                       <p className="text-xs text-slate">This request was declined.</p>
                     )}
+
+                    {/* ── Delete reservation (admin only) */}
+                    <div className="pt-2 border-t border-red-900/20">
+                      {deleteConfirm === req.id ? (
+                        <div className="rounded-lg border border-red-400/40 bg-red-950/30 p-3 space-y-2">
+                          <p className="text-xs font-semibold text-red-400">
+                            Permanently delete <span className="font-bold">{req.id}</span>? This removes all comments, history, agreements, and COI files and cannot be undone.
+                          </p>
+                          <div className="flex gap-2">
+                            <button
+                              className="btn-primary text-xs bg-red-600 hover:bg-red-700"
+                              disabled={deleting === req.id}
+                              onClick={() => deleteReservation(req)}
+                            >
+                              {deleting === req.id ? "Deleting…" : "Yes, delete permanently"}
+                            </button>
+                            <button
+                              className="btn-outline text-xs"
+                              disabled={deleting === req.id}
+                              onClick={() => setDeleteConfirm(null)}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          className="text-xs text-red-500/60 hover:text-red-400 transition-colors"
+                          onClick={e => { e.stopPropagation(); setDeleteConfirm(req.id); }}
+                        >
+                          Delete reservation…
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

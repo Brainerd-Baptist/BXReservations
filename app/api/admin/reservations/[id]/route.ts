@@ -52,3 +52,49 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
   return NextResponse.json({ reservation: res, agreement: agreement ?? null });
 }
+
+// DELETE /api/admin/reservations/[id]
+// Permanently deletes a reservation and all child records. Admin-only.
+// Cascade order: comments → history → collaborators → agreements → reservation
+export async function DELETE(_req: NextRequest, { params }: Params) {
+  const { id } = await params;
+  const sb    = await sbServer();
+  const actor = await requireAdmin(sb);
+  if (!actor) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  // Resolve the UUID (id may be a booking_number like BX-12345)
+  const { data: res } = await adminClient()
+    .from("reservations")
+    .select("id, booking_number, coi_file_url")
+    .or(`id.eq.${id},booking_number.eq.${id}`)
+    .single();
+  if (!res) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  const uuid = res.id;
+
+  // Delete child records in dependency order
+  await adminClient().from("reservation_comments").delete().eq("reservation_id", uuid);
+  await adminClient().from("reservation_history").delete().eq("reservation_id", uuid);
+  await adminClient().from("reservation_collaborators").delete().eq("reservation_id", uuid);
+  await adminClient().from("reservation_agreements").delete().eq("reservation_id", uuid);
+
+  // Delete COI file from storage if present
+  if (res.coi_file_url) {
+    try {
+      // Extract the storage path from the public URL: everything after /bx-documents/
+      const match = res.coi_file_url.match(/\/bx-documents\/(.+)$/);
+      if (match?.[1]) {
+        await adminClient().storage.from("bx-documents").remove([match[1]]);
+      }
+    } catch (err) {
+      console.warn("[delete reservation] could not remove COI file:", err);
+      // Non-fatal — proceed with row deletion
+    }
+  }
+
+  // Finally delete the reservation itself
+  const { error } = await adminClient().from("reservations").delete().eq("id", uuid);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  return NextResponse.json({ deleted: true, id: uuid, booking_number: res.booking_number });
+}
