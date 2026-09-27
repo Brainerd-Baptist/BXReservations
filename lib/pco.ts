@@ -10,8 +10,10 @@
  *   4. Delete app/api/pco-auth/ from the repo.
  *
  * With PCO_REFRESH_TOKEN set, the app uses OAuth Bearer tokens.
- * owner_id must be explicitly set (PCO does not auto-assign it even with
- * OAuth); it uses PCO_OWNER_ID env var (default: Josiah King, 20206208).
+ * PCO auto-assigns the owner from the OAuth user's Calendar Person record.
+ * Josiah must be in PCO Calendar > Settings > People as an Event Administrator
+ * for auto-assignment to succeed. Do NOT send owner explicitly — PCO rejects it
+ * as "Forbidden Attribute" in both attribute and relationship forms.
  *
  * PCO Tag IDs (live):
  *   BX venue tag     : 70490
@@ -158,7 +160,12 @@ export async function pcoCreateEvent(opts: {
   const { eventName, days, bookingNumber } = opts;
   const includedDays = days.filter(d => d.included);
 
-  // 1️⃣  Create the event (OAuth token auto-assigns owner from Josiah's session)
+  // 1️⃣  Create the event.
+  //     PCO auto-assigns owner from the OAuth user's Calendar person record.
+  //     Do NOT send owner explicitly — PCO rejects it ("Forbidden Attribute")
+  //     in both attribute and relationship forms.
+  //     Prerequisite: Josiah must be in PCO Calendar > Settings > People
+  //     as an Event Administrator for auto-assignment to succeed.
   const eventRes = await pcoFetch("/events", "POST", {
     data: {
       type: "Event",
@@ -166,9 +173,6 @@ export async function pcoCreateEvent(opts: {
         name: eventName,
       },
       relationships: {
-        owner: {
-          data: { type: "Person", id: process.env.PCO_OWNER_ID ?? "20206208" },
-        },
         tags: {
           data: [
             { type: "Tag", id: TAG_PENDING     },

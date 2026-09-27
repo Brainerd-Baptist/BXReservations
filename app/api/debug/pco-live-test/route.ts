@@ -111,5 +111,29 @@ export async function GET() {
     errors: b.body?.errors,
   };
 
+  // Test C: PAT Basic auth (not OAuth) — no owner field — does PCO auto-assign from PAT identity?
+  const patBasic = "Basic " + Buffer.from(
+    `${process.env.PCO_APP_ID ?? ""}:${process.env.PCO_PAT ?? process.env.PCO_SECRET ?? ""}`
+  ).toString("base64");
+  const cRes = await fetch(`${PCO_BASE}/calendar/v2/events`, {
+    method: "POST",
+    headers: { Authorization: patBasic, "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      data: {
+        type: "Event",
+        attributes: { name: "BX Debug PAT-No-Owner — DELETE ME" },
+        relationships: { tags: { data: ALL_TAGS } },
+      },
+    }),
+  });
+  const cText = await cRes.text();
+  const cBody = (() => { try { return JSON.parse(cText); } catch { return cText; } })();
+  results.c_pat_no_owner = {
+    status: cRes.status,
+    id:     cBody?.data?.id,
+    owner:  cBody?.data?.relationships?.owner,
+    errors: cBody?.errors,
+  };
+
   return NextResponse.json(results);
 }
