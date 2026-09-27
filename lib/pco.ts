@@ -30,7 +30,8 @@ function authHeader(): string {
   // a user identity so PCO can auto-assign the event owner.
   // Falls back to Basic auth (App ID + Secret) for read-only operations.
   if (process.env.PCO_PAT) {
-    return `Bearer ${process.env.PCO_PAT}`;
+    // PCO PATs use Basic auth: username="token", password=<the token>
+    return "Basic " + Buffer.from(`token:${process.env.PCO_PAT}`).toString("base64");
   }
   const id     = process.env.PCO_APP_ID  ?? "";
   const secret = process.env.PCO_SECRET  ?? "";
