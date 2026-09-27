@@ -55,7 +55,7 @@ export function RoomsClient() {
       <div className="bx-bloom" aria-hidden="true" />
 
       {/* ── Filters ── */}
-      <section className="sticky top-14 z-10 border-b" style={{ background: "color-mix(in srgb, var(--bx-ink) 92%, transparent)", backdropFilter: "blur(12px)", borderColor: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>
+      <section className="sticky z-10 border-b" style={{ top: "calc(3.5rem + env(safe-area-inset-top))", background: "color-mix(in srgb, var(--bx-ink) 92%, transparent)", backdropFilter: "blur(12px)", borderColor: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>
         <div className="max-w-5xl mx-auto px-4 py-3 flex flex-wrap gap-2 items-center">
 
           {/* Floor */}

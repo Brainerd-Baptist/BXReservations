@@ -41,7 +41,7 @@ export default function RootLayout({
       </head>
       <body className="flex flex-col min-h-screen">
         <SiteHeader />
-        <main className="flex-1" style={{ paddingTop: "calc(3.5rem + env(safe-area-inset-top))" }}>{children}</main>
+        <main className="flex-1 isolate" style={{ paddingTop: "calc(3.5rem + env(safe-area-inset-top))" }}>{children}</main>
         <ScrollReveal />
 
         {/* Version footer */}

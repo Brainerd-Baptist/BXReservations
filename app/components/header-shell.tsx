@@ -40,7 +40,7 @@ export default function HeaderShell({
       />
 
       <header
-        className="z-30 print:hidden fixed top-0 left-0 right-0 w-full border-b"
+        className="z-40 print:hidden fixed top-0 left-0 right-0 w-full border-b"
         style={{
           background: "var(--bx-ink-soft)",
           paddingTop: "env(safe-area-inset-top)",
