@@ -9,9 +9,9 @@
  *   3. Save it as PCO_REFRESH_TOKEN in Vercel env vars + redeploy.
  *   4. Delete app/api/pco-auth/ from the repo.
  *
- * With PCO_REFRESH_TOKEN set, the app uses OAuth and PCO auto-assigns
- * the event owner from the authenticated user identity (required for
- * event creation — PAT auth cannot set owner_id, causing a 422).
+ * With PCO_REFRESH_TOKEN set, the app uses OAuth Bearer tokens.
+ * owner_id must be explicitly set (PCO does not auto-assign it even with
+ * OAuth); it uses PCO_OWNER_ID env var (default: Josiah King, 20206208).
  *
  * PCO Tag IDs (live):
  *   BX venue tag     : 70490
@@ -164,6 +164,7 @@ export async function pcoCreateEvent(opts: {
       type: "Event",
       attributes: {
         name: eventName,
+        owner_id: parseInt(process.env.PCO_OWNER_ID ?? "20206208", 10),
       },
       relationships: {
         tags: {
