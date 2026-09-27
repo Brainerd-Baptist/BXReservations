@@ -578,55 +578,67 @@ header:not(.bx-scrolled) {
   max-width: 28ch;
 }
 
-/* Bloom ambient glow — used in hero sections */
+/* Hero ambient treatment: slow diagonal gradient wash + animated film grain */
 .bx-bloom {
   position: absolute;
   inset: 0;
   pointer-events: none;
   overflow: hidden;
+  /* Primary diagonal color wash — teal top-left, navy hint bottom-right */
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--bx-brass) 8%, transparent) 0%,
+    transparent 45%,
+    color-mix(in srgb, var(--bx-parchment) 4%, transparent) 100%
+  );
+  animation: bxWashDrift 20s ease-in-out infinite alternate;
 }
+
+/* Animated film grain overlay — oversized so translation never shows edges */
 .bx-bloom::before {
   content: "";
   position: absolute;
-  width: 900px;
-  height: 900px;
-  background: radial-gradient(
-    circle,
-    color-mix(in srgb, var(--bx-brass) 28%, transparent) 0%,
-    color-mix(in srgb, var(--bx-brass) 10%, transparent) 50%,
-    transparent 72%
-  );
-  top: -220px;
-  left: 50%;
-  transform: translateX(-50%);
-  animation: bxBloomPulse 9s ease-in-out infinite alternate;
-  filter: blur(56px);
+  inset: -25%;
+  width: 150%;
+  height: 150%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  opacity: 0.038;
+  animation: bxGrain 0.12s steps(1) infinite;
 }
+
+/* Counter-diagonal secondary wash for depth */
 .bx-bloom::after {
   content: "";
   position: absolute;
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(
-    circle,
-    color-mix(in srgb, var(--bx-parchment) 10%, transparent) 0%,
-    transparent 65%
+  inset: 0;
+  background: linear-gradient(
+    225deg,
+    color-mix(in srgb, var(--bx-brass) 5%, transparent) 0%,
+    transparent 55%
   );
-  top: -80px;
-  left: calc(50% + 120px);
-  transform: translateX(-50%);
-  filter: blur(40px);
-  opacity: 0.6;
-  animation: bxBloomPulse2 12s ease-in-out infinite alternate;
+  opacity: 0.7;
+  animation: bxWashDrift 28s ease-in-out infinite alternate-reverse;
 }
 
-@keyframes bxBloomPulse {
-  from { opacity: 0.65; transform: translateX(-50%) scale(1); }
-  to   { opacity: 1; transform: translateX(-50%) scale(1.2); }
+/* Grain: rapid random translation to simulate film grain movement */
+@keyframes bxGrain {
+  0%  { transform: translate(0,    0); }
+  10% { transform: translate(-5%,  -10%); }
+  20% { transform: translate(10%,  5%); }
+  30% { transform: translate(-7%,  12%); }
+  40% { transform: translate(5%,   -8%); }
+  50% { transform: translate(-10%, 6%); }
+  60% { transform: translate(7%,   -5%); }
+  70% { transform: translate(-4%,  10%); }
+  80% { transform: translate(10%,  -7%); }
+  90% { transform: translate(-8%,  4%); }
 }
-@keyframes bxBloomPulse2 {
-  from { opacity: 0.4; transform: translateX(-50%) scale(1); }
-  to   { opacity: 0.7; transform: translateX(-50%) scale(1.15); }
+
+/* Gradient wash: slow breathing opacity shift */
+@keyframes bxWashDrift {
+  from { opacity: 0.72; }
+  to   { opacity: 1; }
 }
 
 /* Scroll reveal — IntersectionObserver in scroll-reveal.tsx adds .bx-visible */
