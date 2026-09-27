@@ -164,9 +164,11 @@ export async function pcoCreateEvent(opts: {
       type: "Event",
       attributes: {
         name: eventName,
-        owner_id: parseInt(process.env.PCO_OWNER_ID ?? "20206208", 10),
       },
       relationships: {
+        owner: {
+          data: { type: "Person", id: process.env.PCO_OWNER_ID ?? "20206208" },
+        },
         tags: {
           data: [
             { type: "Tag", id: TAG_PENDING     },
