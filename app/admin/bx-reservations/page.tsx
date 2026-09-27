@@ -1777,8 +1777,26 @@ function UsersTab({
   pendingRoles: Record<string, string>; setPendingRoles: (v: Record<string, string>) => void;
   savingRole: string | null; setSavingRole: (v: string | null) => void;
 }) {
-  const [users, setUsers] = useState<MockUser[]>(MOCK_USERS);
+  const [users, setUsers] = useState<MockUser[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
   const { toast } = useToast();
+
+  useEffect(() => {
+    fetch("/api/bx/users")
+      .then(r => r.json())
+      .then((json: { users?: Array<{ id: string; email: string; display_name: string | null; organization: string | null; role: string | null; reservation_count: number; last_active: string | null }> }) => {
+        setUsers((json.users ?? []).map(u => ({
+          id: u.id,
+          name: u.display_name ?? u.email,
+          email: u.email,
+          role: (u.role ?? "member") as MockUser["role"],
+          lastActive: u.last_active ? new Date(u.last_active).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "\u2014",
+          reservationCount: u.reservation_count,
+        })));
+      })
+      .catch(() => {})
+      .finally(() => setLoadingUsers(false));
+  }, []);
   const search = userSearch.toLowerCase();
   const filtered = users.filter(
     u => u.name.toLowerCase().includes(search) || u.email.toLowerCase().includes(search)

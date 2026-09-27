@@ -1,8 +1,7 @@
-// Server-side role gate — non-admins are redirected before the client
-// component ever renders. Belt-and-suspenders on top of the nav sidebar
-// conditional rendering.
+// Server-side role gate — only booking_admin and above can access the admin panel.
 import { redirect } from "next/navigation";
 import { getUserAndRole } from "@/lib/get-user-role";
+import { can } from "@/lib/roles";
 
 export default async function AdminLayout({
   children,
@@ -12,7 +11,7 @@ export default async function AdminLayout({
   const { user, role } = await getUserAndRole();
 
   if (!user) redirect("/login");
-  if (role !== "admin") redirect("/account");
+  if (!can.viewAdminPanel(role)) redirect("/account");
 
   return <>{children}</>;
 }

@@ -1,5 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import type { BxRole } from "@/lib/roles";
+
+export type { BxRole };
 
 export interface UserProfile {
   display_name: string | null;
@@ -9,7 +12,7 @@ export interface UserProfile {
 
 export async function getUserAndRole(): Promise<{
   user: { id: string; email: string } | null;
-  role: "admin" | "user" | null;
+  role: BxRole | null;
   profile: UserProfile | null;
 }> {
   const cookieStore = await cookies();
@@ -58,7 +61,7 @@ export async function getUserAndRole(): Promise<{
 
   return {
     user: { id: user.id, email: user.email ?? "" },
-    role: (roleResult.data?.role as "admin" | "user") ?? "user",
+    role: (roleResult.data?.role as BxRole) ?? null,
     profile: profileResult.data ?? null,
   };
 }
