@@ -4,7 +4,8 @@ import { adminClient, getEventMapContext, listLabels, reservationDates } from "@
 import { downloadLogo } from "@/lib/event-logo";
 import { buildSignPages, signsFilename } from "@/lib/signs/build-pages";
 import { renderDoorSigns, type SignVariant } from "@/lib/signs/door-signs";
-import { signsUnlocked } from "@/lib/signs/gate";
+import { shareUnlocked, signsUnlocked } from "@/lib/signs/gate";
+import { enableShare, getShare, shareState } from "@/lib/event-share";
 
 // ─── GET /api/event-map/[reservationId]/signs ────────────────────────────────
 // ?variant=public|staff   staff copies carry the setup line and notes (staff only)
@@ -45,18 +46,19 @@ export async function GET(req: NextRequest, ctx: Ctx) {
   const onlyDay = dayRaw !== null && /^\d+$/.test(dayRaw) ? Number(dayRaw) : null;
 
   const r = mapCtx.reservation;
-  const [labels, logoPng, share] = await Promise.all([
-    listLabels(db, r.id, mapCtx.staff),
-    downloadLogo(db, r),
-    db.from("reservation_map_shares").select("token").eq("reservation_id", r.id).eq("enabled", true).is("revoked_at", null).maybeSingle(),
-  ]);
+  const [labels, logoPng, shareRow] = await Promise.all([listLabels(db, r.id, mapCtx.staff), downloadLogo(db, r), getShare(db, r.id)]);
   const pages = buildSignPages({ payload: r.payload, labels, variant, onlyRoom, onlyDay });
   if (!pages.length) return NextResponse.json({ error: "Nothing to print yet — name a room on the event map first." }, { status: 422 });
 
-  // QR: the shared event map when a share link is on, otherwise the public building map on this room
+  // The QR is for attendees: it opens the shared event map on that room. Printing a public set for an
+  // approved event turns the link on if it's off (the planner can still turn it off later); a staff preview
+  // of an unapproved event falls back to the plain building map.
+  let share = shareState(shareRow);
+  if (variant === "public" && !share.enabled && shareUnlocked(r, false).ok) {
+    try { share = await enableShare(db, r.id, user.id); } catch { /* the fallback below still works */ }
+  }
   const origin = req.nextUrl.origin;
-  const token = share.data?.token as string | undefined;
-  const qrUrlFor = (roomId: string) => (token ? `${origin}/bx-map?event=${token}#${roomId}` : `${origin}/bx-map#${roomId}`);
+  const qrUrlFor = (roomId: string) => (share.token ? `${origin}/bx-map?event=${share.token}#${roomId}` : `${origin}/bx-map#${roomId}`);
 
   const bytes = await renderDoorSigns({
     eventName: r.event_name,

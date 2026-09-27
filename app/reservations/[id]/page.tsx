@@ -420,6 +420,7 @@ function renderPage(
             <p style={{ margin: "0 0 0.75rem", fontSize: "0.875rem", lineHeight: 1.5, color: "var(--bx-slate)" }}>
               One sign for every reserved room and one for each wayfinding note, from the event map, on BX&apos;s template
               {view.logo.status === "approved" ? " with your logo" : ""}. Letter size, ready to print — regenerate any time a name changes.
+              Each sign carries a QR that opens your shared event map on that room, so attendees can find every room for your event; printing signs turns the share link on.
             </p>
             {!gate.ok && (
               <p style={{ margin: "0 0 0.75rem", fontSize: "0.8125rem", color: "#92400E" }}>{gate.why}</p>

@@ -99,6 +99,7 @@ export async function resolveShareToken(
       rooms: reservedMapRoomIds(r.payload),
       labels,
       logoUrl,
+      public: true,
     },
   };
 }

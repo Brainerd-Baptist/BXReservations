@@ -102,6 +102,8 @@ export interface EventLayer {
   rooms: string[]; // reserved map room ids
   labels: MapLabel[];
   logoUrl?: string | null;
+  /** Attendee view (share link / door-sign QR): names and wayfinding only — the map hides setups and notes. */
+  public?: boolean;
 }
 
 // ----------------------------------------------------------------

@@ -234,7 +234,7 @@ function drawQr(page: PDFPage, f: Fonts, url: string) {
       page.drawRectangle({ x: x0 + c * cell, y: y0 + (n - 1 - r) * cell, width: cell + 0.15, height: cell + 0.15, color: NAVY });
     }
   }
-  const cap = "SCAN FOR THE MAP";
+  const cap = "SCAN FOR THE EVENT MAP";
   const cw = widthTracked(f.bold, cap, 7.5, 1.4);
   drawTracked(page, f.bold, cap, x0 + (QR_SIZE - cw) / 2, y0 - 14, 7.5, 1.4, SLATE);
 }
