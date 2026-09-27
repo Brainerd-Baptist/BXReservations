@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { OrgListSkeleton } from "@/app/components/Skeleton";
 
 interface Org {
   id: string;
