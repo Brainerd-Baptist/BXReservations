@@ -40,8 +40,8 @@ export function pillButtonHtml(text: string, url: string): string {
         <td align="center" bgcolor="${C.buttonBg}"
           style="border-radius:100px;cursor:auto;mso-padding-alt:12px 28px;text-align:center;text-decoration:none;">
           <a href="${url}" target="_blank" rel="noopener noreferrer"
-            style="display:inline-block;background:${C.buttonBg};border-radius:100px;color:${C.buttonText};font-family:${FONT};font-size:14px;font-weight:700;line-height:1.4;margin:0;text-decoration:none;padding:12px 28px;letter-spacing:0.01em;mso-padding-alt:0;text-size-adjust:none;">
-            ${text} &rarr;
+            style="display:inline-block;background:${C.buttonBg};border-radius:100px;color:${C.buttonText};font-family:${FONT};font-size:14px;font-weight:700;line-height:1.4;margin:0;text-decoration:none;border-bottom:none;padding:12px 28px;letter-spacing:0.01em;mso-padding-alt:0;text-size-adjust:none;">
+            <span style="text-decoration:none;border-bottom:none;color:${C.buttonText};">${text} &rarr;</span>
           </a>
         </td>
       </tr>
@@ -70,8 +70,8 @@ export function brandedEmailHtml(opts: {
             <td align="center" bgcolor="${C.buttonBg}"
               style="border-radius:100px;cursor:auto;mso-padding-alt:14px 32px;text-align:center;text-decoration:none;">
               <a href="${ctaUrl}" target="_blank" rel="noopener noreferrer"
-                style="display:inline-block;background:${C.buttonBg};border-radius:100px;color:${C.buttonText};font-family:${FONT};font-size:15px;font-weight:700;line-height:1.4;margin:0;text-decoration:none;padding:14px 32px;letter-spacing:0.01em;mso-padding-alt:0;text-size-adjust:none;">
-                ${ctaText} &rarr;
+                style="display:inline-block;background:${C.buttonBg};border-radius:100px;color:${C.buttonText};font-family:${FONT};font-size:15px;font-weight:700;line-height:1.4;margin:0;text-decoration:none;border-bottom:none;padding:14px 32px;letter-spacing:0.01em;mso-padding-alt:0;text-size-adjust:none;">
+                <span style="text-decoration:none;border-bottom:none;color:${C.buttonText};">${ctaText} &rarr;</span>
               </a>
             </td>
           </tr>
