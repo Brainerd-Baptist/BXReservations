@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { FileText, Shield, DollarSign } from "lucide-react";
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 interface AgreementRow {
@@ -157,9 +158,9 @@ export default function DocumentsHub() {
                   : "text-slate hover:text-parchment"
               }`}
             >
-              {t === "agreements" && "📄 Agreements"}
-              {t === "cois"       && "🛡 COIs"}
-              {t === "payments"   && "💰 Payments"}
+              {t === "agreements" && <span className="flex items-center gap-1.5"><FileText size={14} />Agreements</span>}
+              {t === "cois"       && <span className="flex items-center gap-1.5"><Shield size={14} />COIs</span>}
+              {t === "payments"   && <span className="flex items-center gap-1.5"><DollarSign size={14} />Payments</span>}
             </button>
           ))}
         </div>

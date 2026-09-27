@@ -1,4 +1,5 @@
 "use client";
+import { FileText, Paperclip } from "lucide-react";
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
@@ -75,7 +76,7 @@ export default function COIUploadCard({ reservationId }: Props) {
         <input ref={fileRef} type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileChange} style={{ display: "none" }} />
         {file ? (
           <>
-            <div style={{ fontSize: "1.5rem", marginBottom: "0.35rem" }}>📄</div>
+            <div style={{ marginBottom: "0.35rem", display: "flex", justifyContent: "center" }}><FileText size={28} strokeWidth={1.5} color="var(--bx-parchment)" /></div>
             <div style={{ fontWeight: 600, color: "var(--bx-parchment)", fontSize: "0.875rem" }}>{file.name}</div>
             <div style={{ fontSize: "0.8rem", color: "var(--bx-slate)", marginTop: "0.2rem" }}>
               {(file.size / 1024 / 1024).toFixed(2)} MB · Click to change
@@ -83,7 +84,7 @@ export default function COIUploadCard({ reservationId }: Props) {
           </>
         ) : (
           <>
-            <div style={{ fontSize: "1.5rem", marginBottom: "0.35rem" }}>📎</div>
+            <div style={{ marginBottom: "0.35rem", display: "flex", justifyContent: "center" }}><Paperclip size={28} strokeWidth={1.5} color="var(--bx-slate)" /></div>
             <div style={{ fontWeight: 600, color: "var(--bx-parchment)", fontSize: "0.875rem" }}>Click to choose file</div>
             <div style={{ fontSize: "0.8rem", color: "var(--bx-slate)", marginTop: "0.2rem" }}>PDF, JPG, or PNG · Max 20 MB</div>
           </>

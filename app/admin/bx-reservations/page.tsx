@@ -1,4 +1,5 @@
 "use client";
+import { FileText, Shield, DollarSign, AlertTriangle, FolderOpen } from "lucide-react";
 import CommentsThread from "@/components/bx/CommentsThread";
 import EventLogoCard from "@/app/components/event-logo-card";
 import VenueSettings from "@/app/components/venue-settings";
@@ -749,7 +750,7 @@ export default function BxReservationsAdmin() {
                       {req.org && <p className="text-xs text-slate">· {req.org}</p>}
                       {req.flexible && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                          ⚠ Soft block
+                          <AlertTriangle size={10} className="inline mr-0.5" />Soft block
                         </span>
                       )}
                     </div>
@@ -761,9 +762,9 @@ export default function BxReservationsAdmin() {
                   <div className="flex items-center gap-2 flex-shrink-0">
                     {/* Doc status indicators */}
                     <span className="flex gap-1 items-center" title="Agreement / COI / Payment">
-                      <span className={`text-xs ${req.agreementSigned ? "text-emerald-400" : "text-slate/40"}`} title={req.agreementSigned ? "Agreement signed" : "No agreement"}>📄</span>
-                      <span className={`text-xs ${req.coiAccepted ? "text-emerald-400" : "text-slate/40"}`} title={req.coiAccepted ? "COI accepted" : "No COI"}>🛡</span>
-                      <span className={`text-xs ${req.hasPayment ? "text-emerald-400" : "text-slate/40"}`} title={req.hasPayment ? "Payment recorded" : "No payment"}>💰</span>
+                      <span className={`${req.agreementSigned ? "text-emerald-400" : "text-slate/40"}`} title={req.agreementSigned ? "Agreement signed" : "No agreement"}><FileText size={13} /></span>
+                      <span className={`${req.coiAccepted ? "text-emerald-400" : "text-slate/40"}`} title={req.coiAccepted ? "COI accepted" : "No COI"}><Shield size={13} /></span>
+                      <span className={`${req.hasPayment ? "text-emerald-400" : "text-slate/40"}`} title={req.hasPayment ? "Payment recorded" : "No payment"}><DollarSign size={13} /></span>
                     </span>
                     <span className="font-bold text-sm text-parchment">${req.estimate.toLocaleString()}</span>
                     <span
@@ -980,10 +981,10 @@ export default function BxReservationsAdmin() {
                                     {!act && (
                                       <div className="flex gap-2">
                                         <button className="btn-primary text-xs bg-emerald-600 hover:bg-emerald-700" onClick={() => setCoiAction(prev => ({ ...prev, [req.id]: "accept" }))}>
-                                          ✓ Accept COI
+                                          <span className="flex items-center gap-1"><span>✓</span> Accept COI</span>
                                         </button>
                                         <button className="btn-outline text-xs border-red-300/40 text-red-400 hover:text-red-300" onClick={() => setCoiAction(prev => ({ ...prev, [req.id]: "flag" }))}>
-                                          ⚠ Flag Issue
+                                          <span className="flex items-center gap-1"><AlertTriangle size={12} />Flag Issue</span>
                                         </button>
                                       </div>
                                     )}
@@ -1151,7 +1152,7 @@ export default function BxReservationsAdmin() {
                                 {/* COI carry-forward banner */}
                                 {org.has_coi && coiValid && (
                                   <div className={`text-xs rounded px-2 py-1.5 flex items-center gap-1.5 ${coiExpiringSoon ? "bg-amber-50 text-amber-700 border border-amber-200" : "bg-emerald-50 text-emerald-700 border border-emerald-200"}`}>
-                                    <span>{coiExpiringSoon ? "⚠️" : "✓"}</span>
+                                    <span>{coiExpiringSoon ? <AlertTriangle size={14} className="text-amber-400" /> : <span className="text-emerald-400">✓</span>}</span>
                                     <span>
                                       {coiExpiringSoon
                                         ? `COI expires ${org.coi_expiry_date} — remind org to renew`
@@ -1161,7 +1162,7 @@ export default function BxReservationsAdmin() {
                                 )}
                                 {org.has_coi && !coiValid && coiExpiry && (
                                   <div className="text-xs rounded px-2 py-1.5 flex items-center gap-1.5 bg-red-50 text-red-700 border border-red-200">
-                                    <span>✗</span>
+                                    <span className="text-red-400">✗</span>
                                     <span>COI expired {org.coi_expiry_date} — fresh COI required for upcoming reservations.</span>
                                   </div>
                                 )}
@@ -1223,7 +1224,7 @@ export default function BxReservationsAdmin() {
                       const staffSigned    = !!ag?.staff_signed_at;
                       return (
                         <div className="space-y-2 pt-1">
-                          <p className="text-xs font-semibold text-emerald-600">✓ Confirmed</p>
+                          <p className="text-xs font-semibold text-emerald-600 flex items-center gap-1">✓ Confirmed</p>
                           {/* Agreement status */}
 
                           {ag && !customerSigned && (
@@ -1251,7 +1252,7 @@ export default function BxReservationsAdmin() {
                                 className="btn-primary text-xs bg-emerald-600 hover:bg-emerald-700"
                                 onClick={(e) => { e.stopPropagation(); setCountersigning(req.id); setCountersignName(""); }}
                               >
-                                ✍ Countersign Agreement
+                                <span className="flex items-center gap-1.5"><span>✍</span>Countersign Agreement</span>
                               </button>
                             )
                           )}
@@ -1343,7 +1344,7 @@ export default function BxReservationsAdmin() {
                 href="/admin/bx-reservations/documents"
                 className="inline-flex items-center gap-2 text-xs text-[var(--bx-brass)] hover:underline font-medium"
               >
-                📂 View Documents Hub (Agreements · COIs · Payments) →
+                <FolderOpen size={14} className="inline mr-1.5" />View Documents Hub (Agreements · COIs · Payments) →
               </a>
             </div>
           )}
