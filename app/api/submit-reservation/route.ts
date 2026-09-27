@@ -22,7 +22,7 @@ interface DayConfig {
   date: string;
   included: boolean;
   headcount: number;
-  timeBlock: string;
+  timeSlot: string;
   customStart: string;
   customEnd: string;
   rooms: {
@@ -131,26 +131,28 @@ export async function POST(req: NextRequest) {
       }
       const reservationId = insertData.id as string;
 
-      // ── PCO Calendar event creation (non-blocking) ──────────────────────────
-      pcoCreateEvent({
+      // ── PCO Calendar event creation (awaited — serverless functions terminate on response) ──
+      const pcoEventId = await pcoCreateEvent({
         eventName:     contact.eventName,
         orgName:       contact.org ?? undefined,
         notes:         notes ?? undefined,
         days,
         bookingNumber,
-      }).then(pcoEventId => {
-        if (pcoEventId) {
-          // Store the PCO event ID so approval/cancel can update the tag
-          supabase
-            .from("reservations")
-            .update({ pco_event_id: pcoEventId })
-            .eq("id", reservationId)
-            .then(({ error: pErr }) => {
-              if (pErr) console.error("[pco] failed to store pco_event_id:", pErr);
-              else console.log(`[pco] stored pco_event_id ${pcoEventId} for ${bookingNumber}`);
-            });
-        }
-      }).catch((err: unknown) => console.error("[pco] createEvent error:", err));
+      }).catch((err: unknown) => {
+        console.error("[pco] createEvent threw:", err);
+        return null;
+      });
+
+      if (pcoEventId) {
+        const { error: pErr } = await supabase
+          .from("reservations")
+          .update({ pco_event_id: pcoEventId })
+          .eq("id", reservationId);
+        if (pErr) console.error("[pco] failed to store pco_event_id:", pErr);
+        else console.log(`[pco] stored pco_event_id ${pcoEventId} on ${bookingNumber}`);
+      } else {
+        console.warn("[pco] createEvent returned null — check PCO credentials or API errors above");
+      }
 
       // ── Send emails (non-blocking — don't fail the request if email fails) ──
       const dates = extractDates(days);
@@ -231,7 +233,7 @@ export async function POST(req: NextRequest) {
     days: days.filter(d => d.included).map(d => ({
       date:      d.date,
       headcount: d.headcount,
-      timeBlock: d.timeBlock,
+      timeSlot: d.timeSlot,
       rooms:     d.rooms.filter(r => r.requested).map(r => r.roomId),
     })),
   }, null, 2));

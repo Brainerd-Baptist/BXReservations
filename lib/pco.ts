@@ -73,7 +73,7 @@ interface DayConfig {
   included: boolean;
   customStart: string;
   customEnd: string;
-  timeBlock: string;
+  timeSlot: string;
   headcount: number;
 }
 
@@ -81,12 +81,13 @@ interface DayConfig {
 function dayTimes(day: DayConfig): { starts_at: string; ends_at: string } {
   const blockMap: Record<string, [string, string]> = {
     morning:   ["08:00", "12:00"],
-    afternoon: ["13:00", "17:00"],
-    evening:   ["18:00", "22:00"],
+    afternoon: ["12:00", "17:00"],
+    evening:   ["17:00", "22:00"],
+    any:       ["08:00", "22:00"],
     full:      ["08:00", "22:00"],
     allday:    ["08:00", "22:00"],
   };
-  const [defStart, defEnd] = blockMap[day.timeBlock] ?? ["08:00", "22:00"];
+  const [defStart, defEnd] = blockMap[day.timeSlot] ?? ["08:00", "22:00"];
   return {
     starts_at: buildISO(day.date, day.customStart || defStart),
     ends_at:   buildISO(day.date, day.customEnd   || defEnd),
