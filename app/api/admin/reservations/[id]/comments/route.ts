@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { adminClient, isStaffRole } from "@/lib/event-map";
-import { sendEmail } from "@/lib/email";
+import { sendEmail, brandedEmailHtml } from "@/lib/email";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -115,14 +115,22 @@ export async function POST(req: NextRequest, { params }: Params) {
     try {
       await sendEmail({
         to: res.contact_email,
-        subject: `Update on your reservation${res.booking_number ? ` (${res.booking_number})` : ""}`,
-        html: `
-          <p>Hi ${res.contact_name ?? "there"},</p>
-          <p>The BX team left a message on your reservation${res.event_name ? ` <em>${res.event_name}</em>` : ""}:</p>
-          <blockquote style="border-left:3px solid #C5A95A;padding-left:1em;color:#555;">${text.replace(/\n/g, "<br>")}</blockquote>
-          <p><a href="https://bx.brainerdhq.app/reservations/${res.id}">View your reservation</a></p>
-          <p style="color:#888;font-size:0.875em;">Brainerd Baptist &mdash; BX Reservations</p>
-        `,
+        subject: `Update on your reservation${res.booking_number ? \` (\${res.booking_number})\` : ""}`,
+        html: brandedEmailHtml({
+          headline: "A message from the BX team",
+          body: `
+            <p style="margin:0 0 16px 0;">
+              Hi <strong style="color:#00205b;">${res.contact_name ?? "there"}</strong> —
+              the BX team left a message on your reservation${res.event_name ? \` for <strong style="color:#00205b;">\${res.event_name}</strong>\` : ""}:
+            </p>
+            <p style="margin:0 0 20px 0; padding:12px 16px; background-color:#f3f4f6; border-radius:8px; color:#374151;">
+              \${text.replace(/\n/g, "<br>")}
+            </p>
+          `,
+          ctaText: "View Your Reservation",
+          ctaUrl: \`https://bx.brainerdhq.app/reservations/\${res.id}\`,
+          footnoteHtml: null,
+        }),
       });
     } catch (e) {
       console.error("[admin comments] user notify failed:", e);

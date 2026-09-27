@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { adminClient, isStaffRole } from "@/lib/event-map";
-import { sendEmail } from "@/lib/email";
+import { sendEmail, brandedEmailHtml } from "@/lib/email";
 import crypto from "crypto";
 
 type Params = { params: Promise<{ id: string }> };
@@ -136,15 +136,24 @@ export async function POST(req: NextRequest, { params }: Params) {
       await sendEmail({
         to: res.contact_email as string,
         subject: `Action required: Please sign your Facility Use Agreement (${res.booking_number ?? res.id.slice(0, 8)})`,
-        html: `
-          <p>Hi ${res.contact_name ?? "there"},</p>
-          <p>Your reservation for <strong>${res.event_name}</strong> is moving forward. Please review and sign the Facility Use Agreement at the link below to continue:</p>
-          <p style="margin:1.5em 0;">
-            <a href="${signingUrl}" style="background:#C5A95A;color:#1a1a1a;padding:0.75em 1.5em;border-radius:6px;text-decoration:none;font-weight:700;">Sign Agreement →</a>
-          </p>
-          <p>This link is specific to your reservation. If you have any questions, reply to this email or message us through the reservation portal.</p>
-          <p style="color:#888;font-size:0.875em;">Brainerd Baptist — BX Reservations &nbsp;·&nbsp; <a href="https://bx.brainerdhq.app/reservations/${res.id}">View your reservation</a></p>
-        `,
+        html: brandedEmailHtml({
+          headline: "Facility Use Agreement",
+          body: `
+            <p style="margin:0 0 20px 0;">
+              Hi <strong style="color:#00205b;">${res.contact_name ?? "there"}</strong> —
+              your reservation for <strong style="color:#00205b;">${res.event_name}</strong> is moving forward.
+              Please review and sign the Facility Use Agreement to continue.
+            </p>
+          `,
+          ctaText: "Sign Agreement",
+          ctaUrl: signingUrl,
+          footnoteHtml: `
+            <p style="margin:0 0 12px 0; font-size:13px; color:#6b7280; text-align:center;">
+              This link is specific to your reservation (${res.booking_number ?? (res.id as string).slice(0, 8)}).
+              If you have questions, reply to this email or message us through the portal.
+            </p>
+          `,
+        }),
       });
     } catch (e) {
       console.error("[send-agreement] email failed:", e);

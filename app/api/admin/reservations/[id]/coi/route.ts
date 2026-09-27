@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { adminClient, isStaffRole } from "@/lib/event-map";
-import { sendEmail } from "@/lib/email";
+import { sendEmail, brandedEmailHtml } from "@/lib/email";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -71,7 +71,19 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       await sendEmail({
         to: res.contact_email as string,
         subject: `COI received — reservation ${res.booking_number ?? (res.id as string).slice(0, 8)}`,
-        html: `<p>Hi ${res.contact_name ?? "there"},</p><p>Your Certificate of Insurance has been reviewed and accepted. We'll be in touch with next steps.</p><p><a href="https://bx.brainerdhq.app/reservations/${res.id}">View your reservation</a></p>`,
+        html: brandedEmailHtml({
+          headline: "Certificate of Insurance Accepted",
+          body: `
+            <p style="margin:0 0 20px 0;">
+              Hi <strong style="color:#00205b;">${res.contact_name ?? "there"}</strong> —
+              your Certificate of Insurance has been reviewed and accepted.
+              We'll be in touch with next steps for your reservation.
+            </p>
+          `,
+          ctaText: "View Your Reservation",
+          ctaUrl: \`https://bx.brainerdhq.app/reservations/\${res.id}\`,
+          footnoteHtml: null,
+        }),
       }).catch(() => {});
     }
 
@@ -100,7 +112,21 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       await sendEmail({
         to: res.contact_email as string,
         subject: `Action needed on your COI — ${res.booking_number ?? (res.id as string).slice(0, 8)}`,
-        html: `<p>Hi ${res.contact_name ?? "there"},</p><p>The BX team reviewed your Certificate of Insurance and has a note:</p><blockquote style="border-left:3px solid #C5A95A;padding-left:1em;">${note}</blockquote><p><a href="https://bx.brainerdhq.app/reservations/${res.id}">View your reservation and re-upload</a></p>`,
+        html: brandedEmailHtml({
+          headline: "Action Needed on Your COI",
+          body: `
+            <p style="margin:0 0 16px 0;">
+              Hi <strong style="color:#00205b;">${res.contact_name ?? "there"}</strong> —
+              the BX team reviewed your Certificate of Insurance and has a note:
+            </p>
+            <p style="margin:0 0 20px 0; padding:12px 16px; background-color:#f3f4f6; border-radius:8px; color:#374151;">
+              \${note}
+            </p>
+          `,
+          ctaText: "View Reservation & Re-upload",
+          ctaUrl: \`https://bx.brainerdhq.app/reservations/\${res.id}\`,
+          footnoteHtml: null,
+        }),
       }).catch(() => {});
     }
     return NextResponse.json({ ok: true, action: "flagged" });
