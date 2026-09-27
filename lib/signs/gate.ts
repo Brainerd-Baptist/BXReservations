@@ -13,3 +13,10 @@ export function signsUnlocked(
   if (r.logo_status === "rejected") return { ok: false, why: "Upload a different logo (or remove it) to unlock your signs." };
   return { ok: true };
 }
+
+/** The share link follows the same rule as signs, minus the logo: approved reservations, or staff. */
+export function shareUnlocked(r: { status: string }, staff: boolean): { ok: boolean; why?: string } {
+  if (staff) return { ok: true };
+  if (!UNLOCKED.has(r.status)) return { ok: false, why: "The share link unlocks once your reservation is approved." };
+  return { ok: true };
+}
