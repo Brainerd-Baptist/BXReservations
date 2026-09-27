@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { adminClient } from "@/lib/event-map";
-import { sendEmail } from "@/lib/email";
+import { sendEmail, brandedEmailHtml } from "@/lib/email";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -149,11 +149,21 @@ export async function POST(req: NextRequest, { params }: Params) {
         await sendEmail({
           to: email as string,
           subject: `New comment on reservation ${res.booking_number ?? res.id.slice(0, 8)}`,
-          html: `
-            <p><strong>${authorName}</strong> left a comment on reservation <strong>${res.booking_number ?? res.id.slice(0, 8)}</strong>${res.event_name ? ` — ${res.event_name}` : ""}:</p>
-            <blockquote style="border-left:3px solid #ccc;padding-left:1em;color:#555;">${text.replace(/\n/g, "<br>")}</blockquote>
-            <p><a href="https://bx.brainerdhq.app/admin/bx-reservations">View in admin dashboard</a></p>
-          `,
+          html: brandedEmailHtml({
+            headline: "New Comment on Reservation",
+            body: `
+              <p style="margin:0 0 8px 0;">
+                <strong style="color:#00205b;">${authorName}</strong> left a comment on reservation
+                <strong style="color:#00205b;">${res.booking_number ?? res.id.slice(0, 8)}</strong>${res.event_name ? \` — \${res.event_name}\` : ""}:
+              </p>
+              <p style="margin:0 0 20px 0; padding:12px 16px; background-color:#f3f4f6; border-radius:8px; color:#374151;">
+                \${text.replace(/\n/g, "<br>")}
+              </p>
+            \`,
+            ctaText: "View in Admin Dashboard",
+            ctaUrl: "https://bx.brainerdhq.app/admin/bx-reservations",
+            footnoteHtml: null,
+          }),
         });
       }
     }
