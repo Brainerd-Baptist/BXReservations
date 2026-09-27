@@ -49,12 +49,25 @@ function generateFallbackBookingNumber(): string {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+const timeSlotLabel: Record<string, string> = {
+  morning:   "Morning (8am–12pm)",
+  afternoon: "Afternoon (12pm–5pm)",
+  evening:   "Evening (5pm–10pm)",
+  any:       "All Day (8am–10pm)",
+  full:      "All Day (8am–10pm)",
+  allday:    "All Day (8am–10pm)",
+};
+
 function extractDates(days: DayConfig[]): string[] {
   return days
     .filter(d => d.included)
     .map(d => {
       const dt = new Date(d.date + "T12:00:00");
-      return dt.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+      const dateStr = dt.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+      const label = d.customStart
+        ? `Custom (${d.customStart}–${d.customEnd || "end"})`
+        : (timeSlotLabel[d.timeSlot] ?? "All Day");
+      return `${dateStr} — ${label}`;
     });
 }
 

@@ -234,8 +234,8 @@ export async function sendReservationConfirmation(opts: {
           <td style="padding:10px 0; border-bottom:1px solid #e5e7eb; color:#374151; font-size:14px;">${eventName}</td>
         </tr>
         <tr>
-          <td style="padding:10px 0; border-bottom:1px solid #e5e7eb; font-weight:600; color:#374151; font-size:14px;">Date(s)</td>
-          <td style="padding:10px 0; border-bottom:1px solid #e5e7eb; color:#374151; font-size:14px;">${dates.length ? dates.join(", ") : "See request"}</td>
+          <td style="padding:10px 0; border-bottom:1px solid #e5e7eb; font-weight:600; color:#374151; font-size:14px;">Date(s) &amp; Time</td>
+          <td style="padding:10px 0; border-bottom:1px solid #e5e7eb; color:#374151; font-size:14px;">${dates.length ? dates.join("<br>") : "See request"}</td>
         </tr>
         ${rooms.length > 0 ? `<tr>
           <td style="padding:10px 0; font-weight:600; color:#374151; font-size:14px;">Space(s)</td>
@@ -293,8 +293,8 @@ export async function sendAdminNewReservationAlert(opts: {
           <td style="padding:10px 0; border-bottom:1px solid #e5e7eb; color:#374151; font-size:14px;">${eventName}</td>
         </tr>
         <tr>
-          <td style="padding:10px 0; ${rooms.length > 0 || notes ? "border-bottom:1px solid #e5e7eb;" : ""} font-weight:600; color:#374151; font-size:14px;">Date(s)</td>
-          <td style="padding:10px 0; ${rooms.length > 0 || notes ? "border-bottom:1px solid #e5e7eb;" : ""} color:#374151; font-size:14px;">${dates.length ? dates.join(", ") : "TBD"}</td>
+          <td style="padding:10px 0; ${rooms.length > 0 || notes ? "border-bottom:1px solid #e5e7eb;" : ""} font-weight:600; color:#374151; font-size:14px;">Date(s) &amp; Time</td>
+          <td style="padding:10px 0; ${rooms.length > 0 || notes ? "border-bottom:1px solid #e5e7eb;" : ""} color:#374151; font-size:14px;">${dates.length ? dates.join("<br>") : "TBD"}</td>
         </tr>
         ${rooms.length > 0 ? `<tr>
           <td style="padding:10px 0; ${notes ? "border-bottom:1px solid #e5e7eb;" : ""} font-weight:600; color:#374151; font-size:14px;">Space(s)</td>
