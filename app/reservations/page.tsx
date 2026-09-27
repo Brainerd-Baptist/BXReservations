@@ -133,6 +133,7 @@ export default async function ReservationsPage() {
                 fontSize: "0.7rem",
                 fontWeight: 700,
                 background: "color-mix(in srgb, var(--bx-brass) 20%, transparent)",
+            boxShadow: "var(--shadow-warm)",
                 color: "var(--bx-brass)",
               }}
             >
@@ -145,6 +146,7 @@ export default async function ReservationsPage() {
               borderRadius: "12px",
               overflow: "hidden",
               background: "color-mix(in srgb, var(--bx-brass) 5%, transparent)",
+            boxShadow: "var(--shadow-warm)",
             }}
           >
             {pendingInvites.map((inv, i) => {

@@ -242,6 +242,7 @@ function renderPage(
           overflow: "hidden",
           marginBottom: "1rem",
           background: "var(--bx-ink-soft)",
+          boxShadow: "var(--shadow-2)",
         }}
       >
         <div style={{ padding: "1.25rem 1.5rem" }}>
@@ -399,6 +400,7 @@ function renderPage(
               padding: "1.25rem 1.5rem",
               marginBottom: "1rem",
               background: "var(--bx-ink-soft)",
+          boxShadow: "var(--shadow-2)",
               color: "var(--bx-parchment)",
             }}
           >
@@ -454,6 +456,7 @@ function renderPage(
               padding: "1.25rem 1.5rem",
               marginBottom: "1rem",
               background: "var(--bx-ink-soft)",
+          boxShadow: "var(--shadow-2)",
               color: "var(--bx-parchment)",
             }}
           >
@@ -494,6 +497,7 @@ function renderPage(
           padding: "1.25rem 1.5rem",
           marginBottom: "1rem",
           background: "var(--bx-ink-soft)",
+          boxShadow: "var(--shadow-2)",
         }}
       >
         <h2
@@ -571,6 +575,7 @@ function renderPage(
           padding: "1.25rem 1.5rem",
           marginBottom: "1.5rem",
           background: "var(--bx-ink-soft)",
+          boxShadow: "var(--shadow-2)",
         }}
       >
         <h2
@@ -640,6 +645,7 @@ function renderPage(
           padding: "1.25rem 1.5rem",
           marginBottom: "1rem",
           background: "var(--bx-ink-soft)",
+          boxShadow: "var(--shadow-2)",
         }}
       >
         <h2

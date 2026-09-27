@@ -146,6 +146,7 @@ export default function EventLogoCard({
         padding: pad,
         marginBottom: compact ? 0 : "1rem",
         background: "var(--bx-ink-soft)",
+          boxShadow: "var(--shadow-2)",
         color: "var(--bx-parchment)",
       }}
     >
