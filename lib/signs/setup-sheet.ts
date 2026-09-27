@@ -8,6 +8,7 @@ import { ARCHIVO_BOLD_B64, ARCHIVO_MEDIUM_B64, WORDMARK_ASPECT, WORDMARK_PNG_B64
 import { MAP_GEOMETRY, MAP_ROOMS } from "@/app/bx-map/map-bundle";
 import { formatDates, TEMPLATE_VERSION } from "./door-signs";
 import { mainMapRooms, setupLine } from "./build-pages";
+import { bookingDefaults, bookingLineFor } from "@/lib/booking-defaults";
 import { reservationDates, reservedMapRoomIds, type MapLabel } from "@/lib/event-map";
 
 const PAGE_W = 612, PAGE_H = 792, M = 48, W = PAGE_W - M * 2;
@@ -51,11 +52,13 @@ export async function renderSetupSheet(job: SetupSheetJob): Promise<Uint8Array> 
     return { ...(b ?? own), setup_style: own.setup_style, chairs: own.chairs, tables_6ft: own.tables_6ft, tables_8ft: own.tables_8ft, tables_round: own.tables_round };
   };
   const main = mainMapRooms(job.payload);
+  const booked = bookingDefaults(job.payload);
   const rowsFor = (d: number | null): Row[] =>
     MAP_ROOMS.filter((r) => reserved.has(r.id) && (main.has(r.id) || !!base(r.id)))
       .map((r) => {
         const l = forDay(r.id, d);
-        return { roomId: r.id, level: r.level, realName: r.name, title: l?.event_name?.trim() || r.name, setup: setupLine(l), notes: l?.notes ?? null, staff: l?.staff_notes ?? null };
+        const fromBooking = bookingLineFor(booked, r.id, d);
+        return { roomId: r.id, level: r.level, realName: r.name, title: l?.event_name?.trim() || r.name, setup: setupLine(l) ?? (fromBooking ? `Requested at booking: ${fromBooking}` : null), notes: l?.notes ?? null, staff: l?.staff_notes ?? null };
       });
   const wayfinding = MAP_ROOMS.filter((r) => !reserved.has(r.id) && base(r.id)?.event_name?.trim()).map((r) => ({ realName: r.name, title: base(r.id)!.event_name!.trim(), notes: base(r.id)!.notes, staff: base(r.id)!.staff_notes ?? null }));
 
@@ -82,6 +85,11 @@ export async function renderSetupSheet(job: SetupSheetJob): Promise<Uint8Array> 
   y -= 15;
   const meta = [job.bookingNumber, job.contactName, job.contactOrg, job.contactPhone, job.headcount ? `${job.headcount} expected` : null].filter(Boolean).join("  ·  ");
   for (const l of wrap(medium, meta, 9.5, W - 200)) { page.drawText(l, { x: M, y, size: 9.5, font: medium, color: SLATE }); y -= 13; }
+  const bookingNotes = ((job.payload as { notes?: string } | null)?.notes ?? "").replace(/\s+/g, " ").trim();
+  if (bookingNotes) {
+    y -= 2;
+    for (const l of wrap(medium, `Booking notes: ${bookingNotes}`, 9.5, W - 200).slice(0, 3)) { page.drawText(l, { x: M, y, size: 9.5, font: medium, color: NAVY }); y -= 13; }
+  }
 
   // level insets at top right with every reserved room in teal
   let ix = PAGE_W - M - 84;
@@ -111,7 +119,7 @@ export async function renderSetupSheet(job: SetupSheetJob): Promise<Uint8Array> 
     y -= 4;
     let alt = false;
     for (const r of rows) {
-      const setupLines = wrap(medium, r.setup ?? "As-is — no setup requested", 9.5, COLS.notes - COLS.setup - 12);
+      const setupLines = wrap(medium, r.setup ?? "No setup requested", 9.5, COLS.notes - COLS.setup - 12);
       const noteLines = [...wrap(medium, r.notes ?? "", 9.5, PAGE_W - M - COLS.notes), ...(r.staff ? wrap(medium, `Staff: ${r.staff}`, 9.5, PAGE_W - M - COLS.notes) : [])].filter(Boolean);
       const lines = Math.max(2, setupLines.length, noteLines.length);
       const h = 8 + lines * 12;

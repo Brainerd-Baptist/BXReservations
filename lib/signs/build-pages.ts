@@ -16,6 +16,7 @@ import {
   type MapLabel,
 } from "@/lib/event-map";
 import type { SignPage, SignVariant } from "./door-signs";
+import { bookingDefaults, bookingLineFor } from "@/lib/booking-defaults";
 
 interface PayloadDay { included?: boolean; rooms?: { roomId?: string }[] }
 
@@ -63,6 +64,7 @@ export function buildSignPages(opts: {
   onlyDay?: number | null;
 }): SignPage[] {
   const { payload, labels, variant } = opts;
+  const booked = bookingDefaults(payload);
   const reserved = new Set(reservedMapRoomIds(payload));
   const dates = reservationDates(payload);
   const main = mainMapRooms(payload);
@@ -97,7 +99,8 @@ export function buildSignPages(opts: {
           realName: room.name,
           title,
           dayLabel: day === null ? (dates.length > 1 ? "Every day" : null) : dayLabel(day),
-          setupLine: setupLine(l),
+          // the planner's setup from the map, else what they asked for when booking
+          setupLine: setupLine(l) ?? (bookingLineFor(booked, room.id, day) ? `Requested at booking: ${bookingLineFor(booked, room.id, day)}` : null),
           notes: l?.notes ?? null,
           staffNotes: l?.staff_notes ?? null,
         });

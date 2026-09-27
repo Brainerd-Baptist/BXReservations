@@ -12,6 +12,7 @@
 
 import { createClient as createSupabaseClient, type SupabaseClient } from "@supabase/supabase-js";
 import { ROOMS } from "./rooms";
+import { bookingDefaults } from "./booking-defaults";
 
 // ----------------------------------------------------------------
 // Vocabulary (mirrored in map-script.js — keep the two lists identical)
@@ -104,6 +105,8 @@ export interface EventLayer {
   logoUrl?: string | null;
   /** Attendee view (share link / door-sign QR): names and wayfinding only — the map hides setups and notes. */
   public?: boolean;
+  /** What the booking form asked for, per room and day — offered as a one-tap default in the planner. */
+  defaults?: { room_id: string; day_index: number; label: string; preset: SetupStyle | null; chairs: number | null }[];
 }
 
 // ----------------------------------------------------------------
@@ -362,6 +365,7 @@ export async function buildEventLayer(
     rooms: reservedMapRoomIds(ctx.reservation.payload),
     labels,
     logoUrl: await approvedLogoUrlFor(db, ctx.reservation),
+    defaults: bookingDefaults(ctx.reservation.payload).map(({ room_id, day_index, label, preset, chairs }) => ({ room_id, day_index, label, preset, chairs })),
   };
 }
 
