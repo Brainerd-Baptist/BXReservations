@@ -1,5 +1,6 @@
 "use client";
 import { FileText, Shield, DollarSign, AlertTriangle, FolderOpen } from "lucide-react";
+import { ReservationListSkeleton, CardSkeleton, InlineSkeleton } from "@/app/components/Skeleton";
 import CommentsThread from "@/components/bx/CommentsThread";
 import EventLogoCard from "@/app/components/event-logo-card";
 import VenueSettings from "@/app/components/venue-settings";
@@ -726,9 +727,7 @@ export default function BxReservationsAdmin() {
           {/* Request cards */}
           <div className="space-y-3">
             {reservationsLoading && (
-              <div className="bg-ink-soft rounded-xl border border-parchment/10 p-10 text-center text-slate text-sm animate-pulse">
-                Loading reservations…
-              </div>
+              <ReservationListSkeleton rows={8} />
             )}
             {!reservationsLoading && filtered.length === 0 && (
               <div className="bg-ink-soft rounded-xl border border-parchment/10 p-10 text-center text-slate text-sm">
@@ -885,7 +884,7 @@ export default function BxReservationsAdmin() {
                       return (
                         <div className="space-y-2" onClick={e => e.stopPropagation()}>
                           <p className="text-xs font-semibold text-slate uppercase tracking-widest">History</p>
-                          {loading && <p className="text-xs text-slate animate-pulse">Loading…</p>}
+                          {loading && <InlineSkeleton width="60px" />}
                           {!loading && entries && entries.length === 0 && <p className="text-xs text-slate">No history yet.</p>}
                           {!loading && entries && entries.length > 0 && (
                             <div className="space-y-1.5 max-h-48 overflow-y-auto">
@@ -914,7 +913,7 @@ export default function BxReservationsAdmin() {
                       return (
                         <div className="space-y-4 border border-parchment/10 rounded-xl p-4 bg-ink/40" onClick={e => e.stopPropagation()}>
                           <p className="text-xs font-semibold text-slate uppercase tracking-widest">Documents &amp; Payment</p>
-                          {loading && <p className="text-xs text-slate animate-pulse">Loading…</p>}
+                          {loading && <InlineSkeleton width="60px" />}
                           {!loading && ds && (<>
 
                             {/* Agreement */}
@@ -1501,7 +1500,7 @@ function AutomationSettings({
         )}
       </div>
       {loading ? (
-        <p className="px-5 py-4 text-sm text-slate">Loading…</p>
+        <div className="px-5 py-4"><CardSkeleton lines={2} height="80px" /></div>
       ) : (
         <div className="divide-y divide-parchment/10">
           {AUTOMATION_KEYS.map(({ key, label, unit, description }) => (
@@ -1569,7 +1568,7 @@ function BlackoutSettings({
       {/* Current rules */}
       <div className="bg-ink-soft rounded-xl border border-parchment/10 divide-y divide-parchment/5">
         {loading && (
-          <p className="px-5 py-4 text-sm text-slate">Loading…</p>
+          <div className="px-5 py-4"><CardSkeleton lines={2} height="80px" /></div>
         )}
         {!loading && rules.length === 0 && (
           <p className="px-5 py-4 text-sm text-slate">No blackout rules yet.</p>
@@ -1974,7 +1973,7 @@ function MinistriesTab({
         <div className="space-y-3">
           <div className="bg-ink-soft rounded-xl border border-parchment/10 divide-y divide-parchment/5">
             {ministriesLoading ? (
-              <div className="px-4 py-8 text-center text-sm text-slate">Loading…</div>
+              <div className="px-4 py-4"><CardSkeleton lines={2} height="70px" /></div>
             ) : ministries.length === 0 ? (
               <div className="px-4 py-8 text-center text-sm text-slate">No ministries yet. Create one below.</div>
             ) : ministries.map(m => (

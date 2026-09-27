@@ -103,7 +103,7 @@ export default function OrganizationsPage() {
 
         {/* List */}
         {loading ? (
-          <div className="text-slate/50 text-sm py-8 text-center">Loading…</div>
+          <OrgListSkeleton rows={6} />
         ) : filtered.length === 0 ? (
           <div className="text-slate/50 text-sm py-8 text-center">{q ? "No matches" : "No organizations yet"}</div>
         ) : (

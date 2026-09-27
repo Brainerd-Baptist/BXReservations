@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, use } from "react";
+import { CardSkeleton } from "@/app/components/Skeleton";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -140,8 +141,10 @@ export default function OrgProfilePage({ params }: { params: Promise<{ id: strin
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-parchment flex items-center justify-center">
-        <div className="text-slate/50 text-sm">Loading…</div>
+      <div style={{ padding: "2rem", maxWidth: "700px" }}>
+        <CardSkeleton lines={3} height="100px" />
+        <CardSkeleton lines={2} height="80px" />
+        <CardSkeleton lines={4} height="120px" />
       </div>
     );
   }

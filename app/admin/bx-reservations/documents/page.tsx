@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { FileText, Shield, DollarSign } from "lucide-react";
+import { ReservationListSkeleton } from "@/app/components/Skeleton";
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 interface AgreementRow {
@@ -245,7 +246,7 @@ export default function DocumentsHub() {
             </div>
 
             <div className="bg-ink-soft rounded-xl border border-parchment/10 overflow-hidden">
-              {coisLoading && <p className="p-8 text-center text-slate text-sm animate-pulse">Loading…</p>}
+              {coisLoading && <ReservationListSkeleton rows={5} />}
               {!coisLoading && filteredCois.length === 0 && coisLoaded && (
                 <p className="p-8 text-center text-slate text-sm">No COIs match this filter.</p>
               )}
