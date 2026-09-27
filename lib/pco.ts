@@ -117,8 +117,7 @@ export async function pcoCreateEvent(opts: {
     data: {
       type: "Event",
       attributes: {
-        name:     eventName,
-        summary:  description || undefined,
+        name: eventName,
       },
     },
   });
