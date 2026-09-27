@@ -20,7 +20,7 @@ export default async function Home() {
         <div className="relative max-w-2xl mx-auto px-5 pt-10 pb-12 sm:pt-16 sm:pb-16 text-center">
           <div className="flex justify-center mb-5">
             <Image
-              src="/bx-logo.png"
+              src="/bx-logo-black.png"
               alt="BX Community Center"
               width={68}
               height={68}
