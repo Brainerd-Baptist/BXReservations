@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 
 const PCO_BASE = "https://api.planningcenteronline.com";
-const ME_ID    = "20206208"; // Josiah King — Calendar person confirmed
+const ME_ID    = "20206208";
 
 const ALL_TAGS = [
-  { type: "Tag", id: "430562" }, // Pending
-  { type: "Tag", id: "70490"  }, // BX Venue
-  { type: "Tag", id: "248327" }, // BX Events
-  { type: "Tag", id: "241212" }, // BX Ministry
+  { type: "Tag", id: "430562" },
+  { type: "Tag", id: "70490"  },
+  { type: "Tag", id: "248327" },
+  { type: "Tag", id: "241212" },
 ];
 
 function authHeader(): string {
@@ -34,65 +34,56 @@ async function pcoRaw(path: string, method = "GET", body?: unknown) {
 export async function GET() {
   const results: Record<string, unknown> = {};
 
-  // Test A: standard /events with just name + tags (no owner) — baseline
+  // Test A: owner as "null_person" (sentinel that exists in this org)
   const a = await pcoRaw("/calendar/v2/events", "POST", {
     data: {
       type: "Event",
       attributes: { name: "BX Debug A — DELETE ME" },
-      relationships: { tags: { data: ALL_TAGS } },
+      relationships: {
+        tags:  { data: ALL_TAGS },
+        owner: { data: { type: "Person", id: "null_person" } },
+      },
     },
   });
-  results.a_standard = { status: a.status, body: a.body?.data?.id ?? a.body?.errors };
+  results.a_null_person_owner = { status: a.status, id: a.body?.data?.id, errors: a.body?.errors };
 
-  // Test B: Try creating via person's sub-resource (if it exists)
-  const b = await pcoRaw(`/calendar/v2/people/${ME_ID}/events`, "POST", {
-    data: {
-      type: "Event",
-      attributes: { name: "BX Debug B — DELETE ME" },
-      relationships: { tags: { data: ALL_TAGS } },
-    },
-  });
-  results.b_person_sub = { status: b.status, body: b.body?.data?.id ?? b.body?.errors ?? b.body };
-
-  // Test C: Add visible_in_church_center: false — maybe that's a required attribute
-  const c = await pcoRaw("/calendar/v2/events", "POST", {
+  // Test B: owner as numeric integer instead of string
+  const b = await pcoRaw("/calendar/v2/events", "POST", {
     data: {
       type: "Event",
       attributes: {
-        name: "BX Debug C — DELETE ME",
-        visible_in_church_center: false,
+        name:     "BX Debug B — DELETE ME",
+        owner_id: Number(ME_ID),  // numeric, not string
       },
       relationships: { tags: { data: ALL_TAGS } },
     },
   });
-  results.c_with_church_center = { status: c.status, body: c.body?.data?.id ?? c.body?.errors };
+  results.b_numeric_owner_id = { status: b.status, id: b.body?.data?.id, errors: b.body?.errors };
 
-  // Test D: Try PATCH on a known existing event — can we update it?
-  // (Use event 1546261 = "Test event" owned by Barb)
-  const d = await pcoRaw("/calendar/v2/events/1546261", "PATCH", {
+  // Test C: POST to /calendar/v2/event_resource_requests without event
+  //         (to see if PCO supports standalone room-request creation)
+  const c = await pcoRaw("/calendar/v2/event_resource_requests", "POST", {
     data: {
-      type: "Event",
-      id: "1546261",
-      attributes: { summary: "BX API test patch" },
-    },
-  });
-  results.d_patch_existing = { status: d.status, body: d.body?.data?.id ?? d.body?.errors };
-
-  // Test E: Try creating event with ALL attributes in PCO docs
-  const e = await pcoRaw("/calendar/v2/events", "POST", {
-    data: {
-      type: "Event",
+      type: "EventResourceRequest",
       attributes: {
-        name:                    "BX Debug E — DELETE ME",
-        description:             "Test",
-        summary:                 "Test",
-        featured:                false,
-        visible_in_church_center: false,
+        approval_status: "P",
+        starts_at: "2026-10-01T09:00:00.000Z",
+        ends_at:   "2026-10-01T11:00:00.000Z",
       },
-      relationships: { tags: { data: ALL_TAGS } },
+      relationships: {
+        resource: { data: { type: "Resource", id: "355074" } }, // The Crossing
+      },
     },
   });
-  results.e_full_attrs = { status: e.status, body: e.body?.data?.id ?? e.body?.errors };
+  results.c_standalone_resource_req = { status: c.status, id: c.body?.data?.id, errors: c.body?.errors };
+
+  // Test D: Fetch the existing "null_person" event to check its full structure
+  const d = await pcoRaw("/calendar/v2/events/1541619?include=owner");
+  results.d_null_event_structure = {
+    status: d.status,
+    owner:  d.body?.data?.relationships?.owner,
+    attrs:  d.body?.data?.attributes,
+  };
 
   return NextResponse.json(results);
 }
