@@ -50,15 +50,19 @@ export async function GET(req: NextRequest, ctx: Ctx) {
   const pages = buildSignPages({ payload: r.payload, labels, variant, onlyRoom, onlyDay });
   if (!pages.length) return NextResponse.json({ error: "Nothing to print yet — name a room on the event map first." }, { status: 422 });
 
+  const origin = req.nextUrl.origin;
+  const { data: optRow } = await db.from("reservations").select("sign_options").eq("id", r.id).maybeSingle();
+  const qrSetting = (optRow?.sign_options as { qr?: boolean } | null)?.qr !== false;
+  const qrParam = q.get("qr");
+  const withQr = qrParam === null ? qrSetting : qrParam !== "0" && qrParam !== "false";
   // The QR is for attendees: it opens the shared event map on that room. Printing a public set for an
   // approved event turns the link on if it's off (the planner can still turn it off later); a staff preview
   // of an unapproved event falls back to the plain building map.
   let share = shareState(shareRow);
-  if (variant === "public" && !share.enabled && shareUnlocked(r, false).ok) {
+  if (variant === "public" && withQr && !share.enabled && shareUnlocked(r, false).ok) {
     try { share = await enableShare(db, r.id, user.id); } catch { /* the fallback below still works */ }
   }
-  const origin = req.nextUrl.origin;
-  const qrUrlFor = (roomId: string) => (share.token ? `${origin}/bx-map?event=${share.token}#${roomId}` : `${origin}/bx-map#${roomId}`);
+  const qrUrlFor = withQr ? (roomId: string) => (share.token ? `${origin}/bx-map?event=${share.token}#${roomId}` : `${origin}/bx-map#${roomId}`) : null;
 
   const bytes = await renderDoorSigns({
     eventName: r.event_name,
@@ -79,4 +83,31 @@ export async function GET(req: NextRequest, ctx: Ctx) {
       "X-Sign-Pages": String(pages.length),
     },
   });
+}
+
+// PATCH { qr: boolean } — the planner's sign options (anyone who can edit the map)
+export async function PATCH(req: NextRequest, ctx: Ctx) {
+  const { reservationId } = await ctx.params;
+  if (!UUID.test(reservationId)) return NextResponse.json({ error: "Invalid reservation id" }, { status: 400 });
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const db = adminClient();
+  const mapCtx = await getEventMapContext(db, { id: user.id, email: user.email }, reservationId);
+  if (!mapCtx) return NextResponse.json({ error: "Reservation not found" }, { status: 404 });
+  if (mapCtx.access !== "edit") return NextResponse.json({ error: "View only" }, { status: 403 });
+  let body: { qr?: unknown };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Bad request" }, { status: 400 });
+  }
+  if (typeof body.qr !== "boolean") return NextResponse.json({ error: "qr must be true or false" }, { status: 400 });
+  const { data: cur } = await db.from("reservations").select("sign_options").eq("id", reservationId).maybeSingle();
+  const next = { ...((cur?.sign_options as Record<string, unknown> | null) ?? {}), qr: body.qr };
+  const { error } = await db.from("reservations").update({ sign_options: next }).eq("id", reservationId);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ qr: body.qr });
 }

@@ -60,8 +60,8 @@ export interface SignJob {
   pages: SignPage[];
   /** Normalised PNG of the approved logo, or null for the typographic lockup. */
   logoPng?: Buffer | Uint8Array | null;
-  /** Absolute URL the QR points at, given a room id. */
-  qrUrlFor: (roomId: string) => string;
+  /** Absolute URL the QR points at, given a room id — null prints the sign without a QR. */
+  qrUrlFor: ((roomId: string) => string) | null;
   generatedAt?: Date;
 }
 
@@ -92,7 +92,7 @@ export async function renderDoorSigns(job: SignJob): Promise<Uint8Array> {
     y = drawSubtitle(page, fonts, p, job.eventName, dates.long, y);
     drawInset(page, fonts, p.level, p.roomId);
     if (job.variant === "staff") drawStaffBlock(page, fonts, p, y);   // the crew's column, where attendees get the QR
-    else drawQr(page, fonts, job.qrUrlFor(p.roomId));
+    else if (job.qrUrlFor) drawQr(page, fonts, job.qrUrlFor(p.roomId));
     drawFooter(page, fonts, wordmark, dates.short, job, p);
   }
   return pdf.save();

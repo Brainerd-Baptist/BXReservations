@@ -1,5 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { getUserAndRole } from "@/lib/get-user-role";
+import { isStaffRole } from "@/lib/event-map";
+
+/** 401/403 unless the signed-in user holds a staff role. */
+async function requireStaff(): Promise<NextResponse | null> {
+  const { user, role } = await getUserAndRole();
+  if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  if (!isStaffRole(role)) return NextResponse.json({ error: "Staff only" }, { status: 403 });
+  return null;
+}
 
 const ALLOWED_KEYS = [
   "user_reminder_1_days",
@@ -18,6 +28,8 @@ function adminSb() {
 
 // GET /api/admin/automation-settings
 export async function GET() {
+  const denied = await requireStaff();
+  if (denied) return denied;
   const sb = adminSb();
   const { data, error } = await sb
     .from("bx_settings")
@@ -36,6 +48,8 @@ export async function GET() {
 
 // PATCH /api/admin/automation-settings
 export async function PATCH(req: NextRequest) {
+  const denied = await requireStaff();
+  if (denied) return denied;
   const body = await req.json();
   const settings: Record<string, string> = body.settings ?? {};
 

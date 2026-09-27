@@ -1,6 +1,7 @@
 "use client";
 import CommentsThread from "@/components/bx/CommentsThread";
 import EventLogoCard from "@/app/components/event-logo-card";
+import VenueSettings from "@/app/components/venue-settings";
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { BlackoutRule, ruleDescription } from "@/lib/blackouts";
@@ -658,6 +659,7 @@ export default function BxReservationsAdmin() {
                 } finally { setAutomationSaving(false); }
               }}
             />
+            <VenueSettings />
             <BlackoutSettings
               rules={blackouts}
               loading={blackoutsLoading}
@@ -795,14 +797,17 @@ export default function BxReservationsAdmin() {
                           >
                             Open event map →
                           </a>
-                          <a href={`/api/event-map/${req.dbId}/signs?variant=staff`} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-parchment/15 text-parchment hover:border-[var(--bbc-blue)]">
-                            Staff signs (PDF)
+                          <a href={`/api/event-map/${req.dbId}/signs?inline=1`} target="_blank" rel="noopener" className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-parchment/15 text-parchment hover:border-[var(--bbc-blue)]">
+                            Door signs
                           </a>
-                          <a href={`/api/event-map/${req.dbId}/signs`} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-parchment/15 text-parchment hover:border-[var(--bbc-blue)]">
-                            Door signs (PDF)
+                          <a href={`/api/event-map/${req.dbId}/signs?variant=staff&inline=1`} target="_blank" rel="noopener" className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-parchment/15 text-parchment hover:border-[var(--bbc-blue)]">
+                            Staff signs
                           </a>
-                          <a href={`/api/event-map/${req.dbId}/setup-sheet`} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-parchment/15 text-parchment hover:border-[var(--bbc-blue)]">
-                            Setup sheet (PDF)
+                          <a href={`/api/event-map/${req.dbId}/setup-sheet?inline=1`} target="_blank" rel="noopener" className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-parchment/15 text-parchment hover:border-[var(--bbc-blue)]">
+                            Setup sheet
+                          </a>
+                          <a href={`/api/event-map/${req.dbId}/packet?inline=1`} target="_blank" rel="noopener" className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-parchment/15 text-parchment hover:border-[var(--bbc-blue)]">
+                            Attendee packet
                           </a>
                         </div>
                       </div>

@@ -9,6 +9,7 @@ import EventLogoCard from "@/app/components/event-logo-card";
 import { shareUnlocked, signsUnlocked } from "@/lib/signs/gate";
 import { getShare, shareState } from "@/lib/event-share";
 import ShareMapCard from "@/app/components/share-map-card";
+import SignOptions from "@/app/components/sign-options";
 import SelfCancelButton from "./SelfCancelButton";
 import CommentsThread from "@/components/bx/CommentsThread";
 import COIUploadCard from "./COIUploadCard";
@@ -112,7 +113,7 @@ interface PayloadDay { date?: string; included?: boolean; customStart?: string; 
 interface Payload { days?: PayloadDay[]; spaceMode?: string }
 
 const COLS =
-  "id, booking_number, created_at, status, event_name, space_mode, notes, contact_name, contact_email, contact_phone, contact_org, user_id, payload";
+  "id, booking_number, created_at, status, event_name, space_mode, notes, contact_name, contact_email, contact_phone, contact_org, user_id, payload, sign_options";
 
 const SETUP_NAMES: Record<string, string> = {
   theater: "Theater", banquet: "Banquet", reception: "Reception", cocktail: "Cocktail",
@@ -200,6 +201,7 @@ function renderPage(
     contact_phone?: string | null;
     contact_org?: string | null;
     payload?: unknown;
+    sign_options?: { qr?: boolean } | null;
   },
   view: { isCollab: boolean; staffView: boolean; staff: boolean; canEdit: boolean; labelCount: number; logo: LogoState | null; share: { enabled: boolean; token: string | null; path: string | null }; agreement?: { customer_signed_at: string | null; token: string } | null }
 ) {
@@ -422,18 +424,67 @@ function renderPage(
               {view.logo.status === "approved" ? " with your logo" : ""}. Letter size, ready to print — regenerate any time a name changes.
               Each sign carries a QR that opens your shared event map on that room, so attendees can find every room for your event; printing signs turns the share link on.
             </p>
+            <SignOptions reservationId={reservation.id} initialQr={reservation.sign_options?.qr !== false} canEdit={view.canEdit} />
             {!gate.ok && (
               <p style={{ margin: "0 0 0.75rem", fontSize: "0.8125rem", color: "#92400E" }}>{gate.why}</p>
             )}
             <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-              <a href={api} style={btn(true)} aria-disabled={!gate.ok}>Download all signs (PDF)</a>
-              <a href={`${api}?inline=1`} target="_blank" rel="noopener" style={btn(false)} aria-disabled={!gate.ok}>Preview</a>
+              <a href={`${api}?inline=1`} target="_blank" rel="noopener" style={btn(true)} aria-disabled={!gate.ok}>Preview signs</a>
+              <a href={api} style={btn(false)} aria-disabled={!gate.ok}>Download PDF</a>
               {view.staff && (
                 <>
-                  <a href={`${api}?variant=staff`} style={btn(false)}>Staff copy (with setups)</a>
-                  <a href={`/api/event-map/${reservation.id}/setup-sheet`} style={btn(false)}>Setup sheet</a>
+                  <a href={`${api}?variant=staff&inline=1`} target="_blank" rel="noopener" style={btn(false)}>Staff copy</a>
+                  <a href={`/api/event-map/${reservation.id}/setup-sheet?inline=1`} target="_blank" rel="noopener" style={btn(false)}>Setup sheet</a>
                 </>
               )}
+            </div>
+          </section>
+        );
+      })()}
+
+      {/* Attendee packet — what the planner emails ahead of time */}
+      {view.logo && (() => {
+        const gate = shareUnlocked({ status: reservation.status }, view.staff);
+        const api = `/api/event-map/${reservation.id}/packet`;
+        const btn = (primary: boolean): React.CSSProperties => ({
+          display: "inline-block",
+          padding: "0.5rem 1rem",
+          borderRadius: "0.5rem",
+          fontSize: "0.875rem",
+          fontWeight: 600,
+          textDecoration: "none",
+          background: primary ? "var(--bx-brass)" : "transparent",
+          color: primary ? "#fff" : "var(--bx-parchment)",
+          border: primary ? "1px solid transparent" : "1px solid color-mix(in srgb, var(--bx-parchment) 20%, transparent)",
+          opacity: gate.ok ? 1 : 0.45,
+          pointerEvents: gate.ok ? "auto" : "none",
+        });
+        return (
+          <section
+            aria-label="Attendee packet"
+            style={{
+              border: "1px solid color-mix(in srgb, var(--bx-parchment) 12%, transparent)",
+              borderRadius: "12px",
+              padding: "1.25rem 1.5rem",
+              marginBottom: "1rem",
+              background: "var(--bx-ink-soft)",
+              color: "var(--bx-parchment)",
+            }}
+          >
+            <h2 style={{ margin: "0 0 0.5rem", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--bx-slate)" }}>
+              Attendee packet
+            </h2>
+            <p style={{ margin: "0 0 0.75rem", fontSize: "0.875rem", lineHeight: 1.5, color: "var(--bx-slate)" }}>
+              A PDF to email your attendees ahead of time: a cover with your logo and dates, how to get here and where to park,
+              your schedule and rooms, and a map of each level with every room labeled for your event. Preview it first — it&apos;s
+              rebuilt from the latest details every time you download.
+            </p>
+            {!gate.ok && (
+              <p style={{ margin: "0 0 0.75rem", fontSize: "0.8125rem", color: "#92400E" }}>{gate.why?.replace("The share link unlocks", "The packet unlocks")}</p>
+            )}
+            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+              <a href={`${api}?inline=1`} target="_blank" rel="noopener" style={btn(true)} aria-disabled={!gate.ok}>Preview packet</a>
+              <a href={api} style={btn(false)} aria-disabled={!gate.ok}>Download PDF</a>
             </div>
           </section>
         );
