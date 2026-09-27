@@ -205,7 +205,11 @@ export default function EventLogoCard({
           )}
           {s.meta && !compact && (
             <p style={{ margin: "0 0 0.5rem", fontSize: "0.75rem", color: "var(--bx-slate)" }}>
-              {s.meta.original.name ?? `${s.meta.original.format.toUpperCase()} file`} · {s.meta.original.width}×{s.meta.original.height} · uploaded {new Date(s.meta.uploaded_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+              {(() => {
+                const n = s.meta.original.name;
+                const isUUID = n && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(n);
+                return isUUID || !n ? `${s.meta.original.format.toUpperCase()} file` : n;
+              })()} · {s.meta.original.width}×{s.meta.original.height} · uploaded {new Date(s.meta.uploaded_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
             </p>
           )}
 
@@ -247,9 +251,9 @@ export default function EventLogoCard({
                 placeholder="What should they send instead? (e.g. a version without the tagline, or a larger file)"
                 style={{ width: "100%", boxSizing: "border-box", padding: "0.5rem 0.625rem", borderRadius: 8, border: "1px solid color-mix(in srgb, var(--bx-parchment) 20%, transparent)", background: "transparent", color: "inherit", font: "inherit", fontSize: "0.8125rem" }}
               />
-              <div style={{ display: "flex", gap: "0.5rem" }}>
-                <button type="button" disabled={!!busy} onClick={() => review("reject")} style={btn("action")}>{busy ?? "Send to planner"}</button>
-                <button type="button" disabled={!!busy} onClick={() => { setAsking(false); setNote(""); }} style={btn("ghost")}>Cancel</button>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "0.5rem" }}>
+                <button type="button" disabled={!!busy} onClick={() => review("reject")} style={{ ...btn("action"), width: "100%" }}>{busy ?? "Send to planner"}</button>
+                <button type="button" disabled={!!busy} onClick={() => { setAsking(false); setNote(""); }} style={{ ...btn("ghost"), whiteSpace: "nowrap" }}>Cancel</button>
               </div>
             </div>
           )}
