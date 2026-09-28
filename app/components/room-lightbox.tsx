@@ -75,10 +75,14 @@ export function RoomLightbox({ room, isSelected, isNP, onClose, onToggle, galler
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 overflow-y-auto"
       onClick={onClose}
       style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)" }}
     >
+      {/* Centering wrapper — min-h-full fills the scrollable space so items-center works
+          even when content is shorter than the viewport; when content is taller the
+          overlay scrolls instead of clipping the top on mobile. */}
+      <div className="flex min-h-full items-center justify-center p-4">
       {/* Close button — fixed to viewport so it's always reachable no matter how far the modal scrolls */}
       <button
         onClick={onClose}
@@ -97,10 +101,6 @@ export function RoomLightbox({ room, isSelected, isNP, onClose, onToggle, galler
         style={{
           background: "var(--bx-ink-soft)",
           border: "1px solid color-mix(in srgb, var(--bx-parchment) 12%, transparent)",
-          maxHeight: "min(90dvh, 90vh)",          /* dvh respects iOS address-bar shrink */
-          overflowY: "auto",
-          WebkitOverflowScrolling: "touch",       /* smooth momentum scroll on iOS */
-          overscrollBehavior: "contain",           /* don't let scroll bleed to the page */
         }}
         onClick={e => e.stopPropagation()}
       >
@@ -267,6 +267,7 @@ export function RoomLightbox({ room, isSelected, isNP, onClose, onToggle, galler
             </button>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

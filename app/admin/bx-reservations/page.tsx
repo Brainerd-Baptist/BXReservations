@@ -1280,22 +1280,32 @@ export default function BxReservationsAdmin() {
                     {/* ── Delete reservation (admin only) */}
                     <div className="pt-2 border-t border-red-900/20">
                       {deleteConfirm === req.id ? (
-                        <div className="rounded-lg border border-red-400/40 bg-red-950/30 p-3 space-y-2">
-                          <p className="text-xs font-semibold text-red-400">
-                            Permanently delete <span className="font-bold">{req.id}</span>? This removes all comments, history, agreements, and COI files and cannot be undone.
-                          </p>
+                        <div className="rounded-xl p-4 space-y-3" style={{ background: "color-mix(in srgb, #dc2626 8%, transparent)", border: "1px solid color-mix(in srgb, #dc2626 30%, transparent)" }}>
+                          <div className="flex gap-2.5 items-start">
+                            <span className="text-base leading-none mt-0.5">⚠️</span>
+                            <div>
+                              <p className="text-xs font-bold mb-0.5" style={{ color: "#f87171" }}>
+                                Permanently delete {req.id}?
+                              </p>
+                              <p className="text-xs" style={{ color: "#fca5a5", opacity: 0.85 }}>
+                                Removes all comments, history, agreements, and COI files. Cannot be undone.
+                              </p>
+                            </div>
+                          </div>
                           <div className="flex gap-2">
                             <button
-                              className="btn-primary text-xs bg-red-600 hover:bg-red-700"
                               disabled={deleting === req.id}
                               onClick={() => deleteReservation(req)}
+                              className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-opacity disabled:opacity-50"
+                              style={{ background: "#dc2626", color: "white" }}
                             >
                               {deleting === req.id ? "Deleting…" : "Yes, delete permanently"}
                             </button>
                             <button
-                              className="btn-outline text-xs"
                               disabled={deleting === req.id}
                               onClick={() => setDeleteConfirm(null)}
+                              className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                              style={{ background: "color-mix(in srgb, var(--bx-parchment) 8%, transparent)", color: "var(--bx-parchment)", border: "1px solid color-mix(in srgb, var(--bx-parchment) 15%, transparent)" }}
                             >
                               Cancel
                             </button>
