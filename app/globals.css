@@ -178,20 +178,12 @@
 
 /* ── Glass theme special backgrounds ────────────────────────────────────── */
 [data-theme="glass-dark"] body {
-  background-color: #0c1018;
-  background-image:
-    radial-gradient(circle at center, rgba(241,245,249,0.08) 1px, transparent 1px),
-    linear-gradient(135deg, #0c1018 0%, #1a2744 50%, #0c1018 100%);
-  background-size: 28px 28px, 100% 100%;
-  background-attachment: fixed, fixed;
+  background: linear-gradient(135deg, #0c1018 0%, #1a2744 50%, #0c1018 100%);
+  background-attachment: fixed;
 }
 [data-theme="glass-light"] body {
-  background-color: #eef2f7;
-  background-image:
-    radial-gradient(circle at center, rgba(30,41,59,0.13) 1px, transparent 1px),
-    linear-gradient(135deg, #eef2f7 0%, #dde8f5 50%, #eef2f7 100%);
-  background-size: 28px 28px, 100% 100%;
-  background-attachment: fixed, fixed;
+  background: linear-gradient(135deg, #eef2f7 0%, #dde8f5 50%, #eef2f7 100%);
+  background-attachment: fixed;
 }
 
 /* ── Dropdown panel utility ─────────────────────────────────────────────── */
@@ -214,16 +206,6 @@ html {
 
 body {
   background-color: var(--bx-ink, #ffffff);
-  /* Dot grid — adapts to every theme because it uses the parchment token.
-     background-attachment: fixed keeps it locked to the viewport (no scroll shift).
-     Adjust --bx-grid-opacity per theme below if needed. */
-  background-image: radial-gradient(
-    circle at center,
-    color-mix(in srgb, var(--bx-parchment) var(--bx-grid-opacity, 7%), transparent) 1px,
-    transparent 1px
-  );
-  background-size: 28px 28px;
-  background-attachment: fixed;
   color: var(--bx-parchment, #111111);
   font-family: var(--font-inter), sans-serif;
   overflow-x: hidden;
@@ -371,6 +353,24 @@ body::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
   background-size: 200px 200px;
 }
+/* Fixed dot-grid — sits behind all page content (z-index:-1) and above
+   the raw body colour. Because it's position:fixed it never scrolls and
+   always covers the viewport, regardless of which element has what
+   background. Opacity per-theme via --bx-grid-opacity token. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: radial-gradient(
+    circle at center,
+    color-mix(in srgb, var(--bx-parchment) var(--bx-grid-opacity, 12%), transparent) 1px,
+    transparent 1px
+  );
+  background-size: 28px 28px;
+  pointer-events: none;
+}
+
 
 /* ── Skeleton / Shimmer ──────────────────────────────────────────────────── */
 @keyframes bx-shimmer-sweep {
