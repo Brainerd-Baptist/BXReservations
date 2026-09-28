@@ -205,11 +205,11 @@ html {
 }
 
 body {
-  background-color: var(--bx-ink, #ffffff);
+  background-color: transparent; /* background lives on html so html::before is visible above it */
   color: var(--bx-parchment, #111111);
   font-family: var(--font-inter), sans-serif;
   overflow-x: hidden;
-  transition: background-color 0.25s, color 0.25s;
+  transition: color 0.25s;
   line-height: 1.6;
 }
 
