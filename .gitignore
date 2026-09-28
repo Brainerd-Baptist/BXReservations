@@ -41,3 +41,4 @@ yarn-error.log*
 next-env.d.ts
 bx-reservations-deploy_pat.txt
 *.patch
+*.patch
