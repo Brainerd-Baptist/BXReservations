@@ -162,6 +162,8 @@ function InviteModal({
   onClose: () => void;
   onInvited: () => void;
 }) {
+  const [name, setName] = useState("");
+  const [org, setOrg] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<BxRole>("member");
   const [sending, setSending] = useState(false);
@@ -174,7 +176,7 @@ function InviteModal({
       const res = await fetch("/api/bx/invite", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), role }),
+        body: JSON.stringify({ email: email.trim(), role, name: name.trim() || undefined, organization: org.trim() || undefined }),
       });
       if (!res.ok) throw new Error("Failed");
       setSent(true);
@@ -200,6 +202,28 @@ function InviteModal({
         </div>
 
         <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate mb-1.5">Name <span className="font-normal text-slate/60">(optional)</span></label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Jane Smith"
+                className="w-full bg-ink border border-parchment/15 text-parchment text-sm rounded-lg px-3 py-2.5 placeholder-slate/50 focus:outline-none focus:ring-2 focus:ring-[var(--bbc-blue)]"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate mb-1.5">Organization <span className="font-normal text-slate/60">(optional)</span></label>
+              <input
+                type="text"
+                value={org}
+                onChange={(e) => setOrg(e.target.value)}
+                placeholder="Organization name"
+                className="w-full bg-ink border border-parchment/15 text-parchment text-sm rounded-lg px-3 py-2.5 placeholder-slate/50 focus:outline-none focus:ring-2 focus:ring-[var(--bbc-blue)]"
+              />
+            </div>
+          </div>
           <div>
             <label className="block text-xs font-semibold text-slate mb-1.5">Email address</label>
             <input

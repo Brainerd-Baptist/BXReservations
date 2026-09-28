@@ -33,12 +33,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  let body: { email?: string; role?: string };
+  let body: { email?: string; role?: string; name?: string; organization?: string };
   try { body = await req.json(); } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { email, role } = body;
+  const { email, role, name, organization } = body;
   if (!email || !role) {
     return NextResponse.json({ error: "email and role required" }, { status: 400 });
   }
@@ -64,12 +64,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: inviteErr.message }, { status: 500 });
   }
 
-  // Pre-assign the role in bx_user_roles so it's ready when they confirm
+  // Pre-assign the role and profile so everything is ready when they confirm
   if (inviteData?.user?.id) {
+    const invitedUserId = inviteData.user.id;
+
     await svc.from("bx_user_roles").upsert(
-      { user_id: inviteData.user.id, role, assigned_by: user.id, assigned_at: new Date().toISOString() },
+      { user_id: invitedUserId, role, assigned_by: user.id, assigned_at: new Date().toISOString() },
       { onConflict: "user_id" }
     );
+
+    // Seed the profile if name or org were provided so the admin sees them immediately
+    if (name || organization) {
+      await svc.from("bx_user_profiles").upsert(
+        {
+          user_id: invitedUserId,
+          ...(name ? { display_name: name } : {}),
+          ...(organization ? { organization } : {}),
+        },
+        { onConflict: "user_id" }
+      );
+    }
   }
 
   return NextResponse.json({ ok: true, email });
