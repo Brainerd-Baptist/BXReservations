@@ -252,6 +252,10 @@ export default function BxReservationsAdmin() {
     agreement_signed_at: string | null;
     agreement_id: string | null;
     agreement_pdf_url: string | null;
+    rack_rate_total: number | null;
+    discount_applied: number | null;
+    net_amount: number | null;
+    organization_id: string | null;
   };
   const [docStatus, setDocStatus] = useState<Record<string, DocStatus>>({});
   const [docLoading, setDocLoading] = useState<Record<string, boolean>>({});
@@ -261,6 +265,8 @@ export default function BxReservationsAdmin() {
   const [coiBusy, setCoiBusy] = useState<Record<string, boolean>>({});
   const [payForm, setPayForm] = useState<Record<string, { amount: string; method: string; received_at: string; receipt_url: string }>>({});
   const [payBusy, setPayBusy] = useState<Record<string, boolean>>({});
+  const [bookingDiscounts, setBookingDiscounts] = useState<Record<string, Array<{ id: string; type: string; value: number; scope: string; discount_reason: string | null; note: string | null }>>>({});
+  const [bookingDiscountForm, setBookingDiscountForm] = useState<Record<string, { open: boolean; type: string; value: string; reason: string; note: string; busy: boolean }>>({});
   const [sendingAgreementV2, setSendingAgreementV2] = useState<Record<string, boolean>>({});
   const [countersigning, setCountersigning] = useState<string | null>(null);
   const [countersignName, setCountersignName] = useState("");
@@ -504,6 +510,10 @@ export default function BxReservationsAdmin() {
           agreement_signed_at: ag?.customer_signed_at ?? null,
           agreement_id:        ag?.id ?? null,
           agreement_pdf_url:   ag?.pdf_url ?? null,
+          rack_rate_total:     r.rack_rate_total ?? null,
+          discount_applied:    r.discount_applied ?? null,
+          net_amount:          r.net_amount ?? null,
+          organization_id:     r.organization_id ?? null,
         }
       }));
     } catch { /* silent */ }
@@ -1228,6 +1238,183 @@ export default function BxReservationsAdmin() {
 
                           return null;
                         })()}
+                      </div>
+                    )}
+
+                    {/* ── Phase 4: Pricing Summary Panel */}
+                    {docStatus[req.id] && (docStatus[req.id].rack_rate_total != null || docStatus[req.id].net_amount != null) && (
+                      <div className="space-y-2 pt-1" onClick={e => e.stopPropagation()}>
+                        <p className="text-xs font-semibold text-slate uppercase tracking-widest">Pricing</p>
+                        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 space-y-1.5">
+                          {/* Rate rows */}
+                          <div className="flex justify-between text-xs">
+                            <span className="text-gray-500">Rack Rate</span>
+                            <span className="font-medium text-parchment/80">
+                              {docStatus[req.id].rack_rate_total != null
+                                ? `$${Number(docStatus[req.id].rack_rate_total).toFixed(2)}`
+                                : "—"}
+                            </span>
+                          </div>
+                          {(docStatus[req.id].discount_applied ?? 0) !== 0 && (
+                            <div className="flex justify-between text-xs">
+                              <span className="text-gray-500">Discount Applied</span>
+                              <span className="font-medium text-emerald-600">
+                                −${Number(docStatus[req.id].discount_applied).toFixed(2)}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex justify-between text-xs border-t border-gray-200 pt-1.5">
+                            <span className="text-gray-600 font-medium">Net Amount</span>
+                            <span className="font-semibold text-parchment">
+                              {docStatus[req.id].net_amount != null
+                                ? `$${Number(docStatus[req.id].net_amount).toFixed(2)}`
+                                : "—"}
+                            </span>
+                          </div>
+
+                          {/* Per-booking discount override */}
+                          {(() => {
+                            const bdf = bookingDiscountForm[req.id];
+                            const bds = bookingDiscounts[req.id];
+                            if (!bdf?.open) {
+                              return (
+                                <div className="pt-1 space-y-1">
+                                  {bds && bds.length > 0 && (
+                                    <div className="space-y-1">
+                                      {bds.map(d => (
+                                        <div key={d.id} className="flex items-center justify-between text-xs bg-blue-50 border border-blue-200 rounded px-2 py-1">
+                                          <span className="text-blue-700">
+                                            Override: {d.type === "percent" ? `${d.value}%` : d.type === "flat_dollar" ? `$${Number(d.value).toFixed(2)} off` : `$${Number(d.value).toFixed(2)}/room`}
+                                            {d.discount_reason ? ` (${d.discount_reason.replace(/_/g, " ")})` : ""}
+                                          </span>
+                                          <button
+                                            className="text-red-400 hover:text-red-600 ml-2"
+                                            onClick={async (e) => {
+                                              e.stopPropagation();
+                                              if (!req.dbId) return;
+                                              await fetch(`/api/admin/reservations/${req.dbId}/discount`, {
+                                                method: "DELETE",
+                                                headers: { "Content-Type": "application/json" },
+                                                body: JSON.stringify({ discountId: d.id }),
+                                              });
+                                              setBookingDiscounts(prev => ({
+                                                ...prev,
+                                                [req.id]: (prev[req.id] ?? []).filter(x => x.id !== d.id),
+                                              }));
+                                            }}
+                                          >×</button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                  <button
+                                    className="text-xs text-blue-600 hover:text-blue-800 underline"
+                                    onClick={e => {
+                                      e.stopPropagation();
+                                      // Lazy-load existing discounts on first open
+                                      if (!bds && req.dbId) {
+                                        fetch(`/api/admin/reservations/${req.dbId}/discount`)
+                                          .then(r => r.json())
+                                          .then(data => {
+                                            setBookingDiscounts(prev => ({ ...prev, [req.id]: data.discounts ?? [] }));
+                                          });
+                                      }
+                                      setBookingDiscountForm(prev => ({
+                                        ...prev,
+                                        [req.id]: { open: true, type: "percent", value: "", reason: "", note: "", busy: false },
+                                      }));
+                                    }}
+                                  >+ Add booking discount override</button>
+                                </div>
+                              );
+                            }
+                            return (
+                              <div className="pt-1.5 space-y-2 border-t border-gray-200 mt-1" onClick={e => e.stopPropagation()}>
+                                <p className="text-xs font-medium text-gray-600">Add booking discount override</p>
+                                <div className="grid grid-cols-2 gap-1.5">
+                                  <select
+                                    className="border border-gray-300 rounded px-1.5 py-1 text-xs bg-white col-span-2"
+                                    value={bdf.type}
+                                    onChange={e => setBookingDiscountForm(prev => ({ ...prev, [req.id]: { ...prev[req.id], type: e.target.value } }))}
+                                  >
+                                    <option value="percent">Percent off</option>
+                                    <option value="flat_dollar">Flat dollar off</option>
+                                    <option value="room_rate_override">Room rate override</option>
+                                  </select>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    placeholder={bdf.type === "percent" ? "%" : "$"}
+                                    className="border border-gray-300 rounded px-1.5 py-1 text-xs"
+                                    value={bdf.value}
+                                    onChange={e => setBookingDiscountForm(prev => ({ ...prev, [req.id]: { ...prev[req.id], value: e.target.value } }))}
+                                  />
+                                  <select
+                                    className="border border-gray-300 rounded px-1.5 py-1 text-xs bg-white"
+                                    value={bdf.reason}
+                                    onChange={e => setBookingDiscountForm(prev => ({ ...prev, [req.id]: { ...prev[req.id], reason: e.target.value } }))}
+                                  >
+                                    <option value="">Reason (optional)</option>
+                                    <option value="bbs_default">BBS Default</option>
+                                    <option value="bx_ministry_initiative">Ministry Initiative</option>
+                                    <option value="nonprofit_partner">Nonprofit Partner</option>
+                                    <option value="staff_courtesy">Staff Courtesy</option>
+                                    <option value="other">Other</option>
+                                  </select>
+                                </div>
+                                <input
+                                  type="text"
+                                  placeholder="Note (optional)"
+                                  className="border border-gray-300 rounded px-1.5 py-1 text-xs w-full"
+                                  value={bdf.note}
+                                  onChange={e => setBookingDiscountForm(prev => ({ ...prev, [req.id]: { ...prev[req.id], note: e.target.value } }))}
+                                />
+                                <div className="flex gap-2">
+                                  <button
+                                    disabled={bdf.busy || !bdf.value}
+                                    className="btn-primary text-xs"
+                                    onClick={async e => {
+                                      e.stopPropagation();
+                                      if (!req.dbId || !bdf.value) return;
+                                      setBookingDiscountForm(prev => ({ ...prev, [req.id]: { ...prev[req.id], busy: true } }));
+                                      try {
+                                        const r = await fetch(`/api/admin/reservations/${req.dbId}/discount`, {
+                                          method: "POST",
+                                          headers: { "Content-Type": "application/json" },
+                                          body: JSON.stringify({
+                                            type: bdf.type,
+                                            value: parseFloat(bdf.value),
+                                            scope: "all_rooms",
+                                            discount_reason: bdf.reason || null,
+                                            note: bdf.note || null,
+                                          }),
+                                        });
+                                        const data = await r.json();
+                                        if (data.discount) {
+                                          setBookingDiscounts(prev => ({
+                                            ...prev,
+                                            [req.id]: [data.discount, ...(prev[req.id] ?? [])],
+                                          }));
+                                          setBookingDiscountForm(prev => ({ ...prev, [req.id]: { ...prev[req.id], open: false, busy: false } }));
+                                        }
+                                      } catch {
+                                        setBookingDiscountForm(prev => ({ ...prev, [req.id]: { ...prev[req.id], busy: false } }));
+                                      }
+                                    }}
+                                  >{bdf.busy ? "Saving…" : "Save"}</button>
+                                  <button
+                                    className="text-xs text-gray-500 hover:text-gray-700"
+                                    onClick={e => {
+                                      e.stopPropagation();
+                                      setBookingDiscountForm(prev => ({ ...prev, [req.id]: { ...prev[req.id], open: false } }));
+                                    }}
+                                  >Cancel</button>
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </div>
                       </div>
                     )}
 

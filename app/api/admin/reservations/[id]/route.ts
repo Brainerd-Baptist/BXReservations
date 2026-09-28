@@ -33,9 +33,10 @@ export async function GET(_req: NextRequest, { params }: Params) {
   const { data: res } = await adminClient()
     .from("reservations")
     .select(`
-      id, booking_number, status,
+      id, booking_number, status, organization_id,
       coi_uploaded_at, coi_file_url, coi_expiry_date, coi_accepted_at, coi_accepted_by,
-      payment_received_at, payment_amount, payment_method, payment_receipt_url, payment_recorded_by
+      payment_received_at, payment_amount, payment_method, payment_receipt_url, payment_recorded_by,
+      rack_rate_total, discount_applied, net_amount
     `)
     .or(`id.eq.${id},booking_number.eq.${id}`)
     .single();
