@@ -10,9 +10,18 @@ const ALL_TAGS = [
   { type: "Tag", id: "241212" },
 ];
 
-async function getAccessToken(): Promise<string | null> {
+interface TokenResult {
+  accessToken: string | null;
+  newRefreshToken: string | null;
+  refreshBody: unknown;
+  refreshStatus: number;
+}
+
+async function refreshTokenOnce(): Promise<TokenResult> {
   const refreshToken = process.env.PCO_REFRESH_TOKEN;
-  if (!refreshToken) return null;
+  if (!refreshToken) {
+    return { accessToken: null, newRefreshToken: null, refreshBody: null, refreshStatus: 0 };
+  }
   const res = await fetch(TOKEN_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -23,28 +32,32 @@ async function getAccessToken(): Promise<string | null> {
       client_secret: process.env.PCO_PAT ?? process.env.PCO_SECRET,
     }),
   });
-  if (!res.ok) return null;
-  const data = await res.json() as { access_token?: string };
-  return data.access_token ?? null;
+  const text = await res.text();
+  let body: Record<string, unknown>;
+  try { body = JSON.parse(text) as Record<string, unknown>; }
+  catch { body = { raw: text }; }
+
+  return {
+    accessToken:     (body.access_token  as string) ?? null,
+    newRefreshToken: (body.refresh_token as string) ?? null,
+    refreshBody:     body,
+    refreshStatus:   res.status,
+  };
 }
 
-async function authHeader(): Promise<string> {
-  const at = await getAccessToken();
-  if (at) return `Bearer ${at}`;
-  const id     = process.env.PCO_APP_ID ?? "";
-  const secret = process.env.PCO_PAT ?? process.env.PCO_SECRET ?? "";
-  return "Basic " + Buffer.from(`${id}:${secret}`).toString("base64");
+function makeHeaders(accessToken: string | null): Record<string, string> {
+  const auth = accessToken
+    ? `Bearer ${accessToken}`
+    : "Basic " + Buffer.from(
+        `${process.env.PCO_APP_ID ?? ""}:${process.env.PCO_PAT ?? process.env.PCO_SECRET ?? ""}`
+      ).toString("base64");
+  return { Authorization: auth, "Content-Type": "application/json", Accept: "application/json" };
 }
 
-async function pcoRaw(path: string, method = "GET", body?: unknown) {
-  const auth = await authHeader();
+async function pcoRaw(path: string, method = "GET", accessToken: string | null, body?: unknown) {
   const res = await fetch(`${PCO_BASE}${path}`, {
     method,
-    headers: {
-      Authorization:  auth,
-      "Content-Type": "application/json",
-      Accept:         "application/json",
-    },
+    headers: makeHeaders(accessToken),
     body: body ? JSON.stringify(body) : undefined,
   });
   const text = await res.text();
@@ -55,54 +68,65 @@ async function pcoRaw(path: string, method = "GET", body?: unknown) {
 export async function GET() {
   const results: Record<string, unknown> = {};
 
-  // Expose token refresh details
   const refreshToken = process.env.PCO_REFRESH_TOKEN;
   results.has_refresh_token = !!refreshToken;
   results.refresh_token_len = refreshToken?.length ?? 0;
-  if (refreshToken) {
-    const tr = await fetch(TOKEN_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        grant_type:    "refresh_token",
-        refresh_token: refreshToken,
-        client_id:     process.env.PCO_APP_ID,
-        client_secret: process.env.PCO_PAT ?? process.env.PCO_SECRET,
-      }),
-    });
-    const trText = await tr.text();
-    results.token_refresh = { status: tr.status, body: (() => { try { return JSON.parse(trText); } catch { return trText; } })() };
-  }
 
-  // Report which auth method is active
-  const accessToken = await getAccessToken();
-  results.auth_method = accessToken ? "oauth_bearer" : "pat_basic";
+  const { accessToken, newRefreshToken, refreshBody, refreshStatus } = await refreshTokenOnce();
 
-  // Diagnostic D: look up authenticated PCO user and Josiah's Calendar person record
-  const meRes = await pcoRaw("/people/v2/me", "GET");
-  results.d_me = { status: meRes.status, id: meRes.body?.data?.id, name: meRes.body?.data?.attributes?.name };
+  results.token_refresh = { status: refreshStatus, body: refreshBody };
+  results.auth_method   = accessToken ? "oauth_bearer" : "pat_basic";
 
-  const calPersonRes = await pcoRaw("/calendar/v2/people/20206208", "GET");
+  // IMPORTANT: Save this IMMEDIATELY to Vercel PCO_REFRESH_TOKEN
+  results.new_refresh_token_SAVE_NOW = newRefreshToken ?? "(none returned)";
+
+  // D1: Identify the OAuth user via People module (requires 'people' scope)
+  const meRes = await pcoRaw("/people/v2/me", "GET", accessToken);
+  results.d_me = {
+    status: meRes.status,
+    id:     meRes.body?.data?.id,
+    name:   meRes.body?.data?.attributes?.name,
+    note:   meRes.status === 401 ? "401 = token lacks 'people' scope; re-auth at /api/pco-auth/start" : undefined,
+  };
+
+  // D2: Fetch Josiah's Calendar person record by ID
+  const calPersonRes = await pcoRaw("/calendar/v2/people/20206208", "GET", accessToken);
   results.d_cal_person_20206208 = {
-    status: calPersonRes.status,
-    id: calPersonRes.body?.data?.id,
-    event_permissions_type: calPersonRes.body?.data?.attributes?.event_permissions_type,
-    has_access: calPersonRes.body?.data?.attributes?.has_access,
-    errors: calPersonRes.body?.errors,
+    status:                  calPersonRes.status,
+    id:                      calPersonRes.body?.data?.id,
+    event_permissions_type:  calPersonRes.body?.data?.attributes?.event_permissions_type,
+    has_access:              calPersonRes.body?.data?.attributes?.has_access,
+    errors:                  calPersonRes.body?.errors,
   };
 
-  // Also try listing the first few Calendar people to see who's in the system
-  const calPeopleRes = await pcoRaw("/calendar/v2/people?per_page=5", "GET");
-  results.d_cal_people_sample = {
-    status: calPeopleRes.status,
-    ids: (calPeopleRes.body?.data ?? []).map((p: {id: string; attributes: {name: string}}) => ({ id: p.id, name: p.attributes?.name })),
+  // D3: Paginate Calendar people to see if Josiah (20206208) appears in the list
+  const calPeopleP1 = await pcoRaw("/calendar/v2/people?per_page=100&offset=0", "GET", accessToken);
+  const calPeopleP2 = await pcoRaw("/calendar/v2/people?per_page=100&offset=100", "GET", accessToken);
+  const page1People = (calPeopleP1.body?.data ?? []) as {id: string; attributes: {name: string}}[];
+  const page2People = (calPeopleP2.body?.data ?? []) as {id: string; attributes: {name: string}}[];
+  const allCalPeople = [...page1People, ...page2People];
+  results.d_cal_people = {
+    status:              calPeopleP1.status,
+    total_count:         calPeopleP1.body?.meta?.total_count,
+    josiah_in_list:      allCalPeople.some(p => p.id === "20206208"),
+    count_fetched:       allCalPeople.length,
+    sample:              allCalPeople.slice(0, 10).map(p => ({ id: p.id, name: p.attributes?.name })),
   };
 
-  // Test A: create event with no owner field (let PCO auto-assign from OAuth session)
-  const a = await pcoRaw("/calendar/v2/events", "POST", {
+  // D4: Filter Calendar people where id = 20206208
+  const calPeopleFilterRes = await pcoRaw("/calendar/v2/people?where[id]=20206208", "GET", accessToken);
+  results.d_cal_people_filter_josiah = {
+    status:      calPeopleFilterRes.status,
+    count:       (calPeopleFilterRes.body?.data ?? []).length,
+    data:        calPeopleFilterRes.body?.data,
+    errors:      calPeopleFilterRes.body?.errors,
+  };
+
+  // Test A: No owner — let PCO auto-assign from OAuth session
+  const a = await pcoRaw("/calendar/v2/events", "POST", accessToken, {
     data: {
       type: "Event",
-      attributes: { name: "BX Debug No-Owner — DELETE ME" },
+      attributes: { name: "BX Debug No-Owner - DELETE ME" },
       relationships: { tags: { data: ALL_TAGS } },
     },
   });
@@ -113,14 +137,14 @@ export async function GET() {
     errors: a.body?.errors,
   };
 
-  // Test B: create event with owner as relationship
-  const b = await pcoRaw("/calendar/v2/events", "POST", {
+  // Test B: Owner as JSON:API relationship
+  const b = await pcoRaw("/calendar/v2/events", "POST", accessToken, {
     data: {
       type: "Event",
-      attributes: { name: "BX Debug Owner-Rel — DELETE ME" },
+      attributes: { name: "BX Debug Owner-Rel - DELETE ME" },
       relationships: {
         owner: { data: { type: "Person", id: process.env.PCO_OWNER_ID ?? "20206208" } },
-        tags: { data: ALL_TAGS },
+        tags:  { data: ALL_TAGS },
       },
     },
   });
@@ -131,28 +155,18 @@ export async function GET() {
     errors: b.body?.errors,
   };
 
-  // Test C: PAT Basic auth (not OAuth) — no owner field — does PCO auto-assign from PAT identity?
-  const patBasic = "Basic " + Buffer.from(
-    `${process.env.PCO_APP_ID ?? ""}:${process.env.PCO_PAT ?? process.env.PCO_SECRET ?? ""}`
-  ).toString("base64");
-  const cRes = await fetch(`${PCO_BASE}/calendar/v2/events`, {
-    method: "POST",
-    headers: { Authorization: patBasic, "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({
-      data: {
-        type: "Event",
-        attributes: { name: "BX Debug PAT-No-Owner — DELETE ME" },
-        relationships: { tags: { data: ALL_TAGS } },
-      },
-    }),
+  // Test C: No tags — isolate whether required tag groups affect owner validation
+  const c = await pcoRaw("/calendar/v2/events", "POST", accessToken, {
+    data: {
+      type: "Event",
+      attributes: { name: "BX Debug No-Tags - DELETE ME" },
+    },
   });
-  const cText = await cRes.text();
-  const cBody = (() => { try { return JSON.parse(cText); } catch { return cText; } })();
-  results.c_pat_no_owner = {
-    status: cRes.status,
-    id:     cBody?.data?.id,
-    owner:  cBody?.data?.relationships?.owner,
-    errors: cBody?.errors,
+  results.c_no_tags = {
+    status: c.status,
+    id:     c.body?.data?.id,
+    owner:  c.body?.data?.relationships?.owner,
+    errors: c.body?.errors,
   };
 
   return NextResponse.json(results);
