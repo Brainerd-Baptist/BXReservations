@@ -191,6 +191,7 @@ const STATUS_COLORS: Record<Status, string> = {
 
 export default function BxReservationsAdmin() {
   const { toast } = useToast();
+  const searchParams = useSearchParams();
   const [requests, setRequests] = useState<Request[]>([]);
   const [reservationsLoading, setReservationsLoading] = useState(true);
   const rawStatus = searchParams.get("status") ?? "";
@@ -201,7 +202,6 @@ export default function BxReservationsAdmin() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selected, setSelected] = useState<Request | null>(null);
   const [calOpen, setCalOpen] = useState(() => searchParams.get("view") === "calendar");
-  const searchParams = useSearchParams();
   const router = useRouter();
   const rawTab = searchParams.get("tab") ?? "requests";
   const tab = ["requests", "users", "ministries", "settings", "reports"].includes(rawTab)
