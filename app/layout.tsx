@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Cormorant_Garamond } from "next/font/google";
 import SiteHeader from "./site-header";
 import ScrollReveal from "./components/scroll-reveal";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
@@ -10,6 +10,14 @@ const inter = Inter({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800"],
   variable: "--font-inter",
+  display: "swap",
+});
+
+const cormorant = Cormorant_Garamond({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-cormorant",
   display: "swap",
 });
 
@@ -34,7 +42,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={`${inter.variable} ${cormorant.variable}`}>
       <head>
         {/* Blocking theme-init script — must run before first paint to prevent flash */}
         {/* eslint-disable-next-line @next/next/no-before-interactive-script-component */}
