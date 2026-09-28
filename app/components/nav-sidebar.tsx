@@ -29,9 +29,9 @@ const reservationItems = [
 ];
 
 const adminQueueItems = [
-  { label: "Requests",      href: "/admin/bx-reservations",                      icon: "table" },
-  { label: "Pending Review", href: "/admin/bx-reservations?status=under_review", icon: "clock" },
-  { label: "Calendar",      href: "/admin/bx-reservations?tab=requests",             icon: "calendar" },
+  { label: "Requests",      href: "/admin/bx-reservations",                              icon: "table" },
+  { label: "Pending Review", href: "/admin/bx-reservations?status=Requested",            icon: "clock" },
+  { label: "Calendar",      href: "/admin/bx-reservations?view=calendar",                icon: "calendar" },
 ];
 
 const adminManageItems = [
@@ -171,7 +171,8 @@ function NavLink({
         ? pathname === "/"
         : pathname.startsWith(hrefPath) &&
           !searchParams.get("tab") &&
-          !searchParams.get("status");
+          !searchParams.get("status") &&
+          !searchParams.get("view");
   }
 
   return (

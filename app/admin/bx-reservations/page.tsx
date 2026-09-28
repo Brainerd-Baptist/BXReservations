@@ -193,10 +193,14 @@ export default function BxReservationsAdmin() {
   const { toast } = useToast();
   const [requests, setRequests] = useState<Request[]>([]);
   const [reservationsLoading, setReservationsLoading] = useState(true);
-  const [filter, setFilter] = useState<Status | "All">("All");
+  const rawStatus = searchParams.get("status") ?? "";
+  const [filter, setFilter] = useState<Status | "All">(() => {
+    const ALL_S: (Status | "All")[] = ["All","Requested","Proposal Sent","Needs Info","Pending Documents","Pending Payment","Deposit Received","Confirmed","Completed","Declined","Cancelled by BX","Cancelled by User","Expired"];
+    return ALL_S.includes(rawStatus as Status) ? (rawStatus as Status) : "All";
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [selected, setSelected] = useState<Request | null>(null);
-  const [calOpen, setCalOpen] = useState(false);
+  const [calOpen, setCalOpen] = useState(() => searchParams.get("view") === "calendar");
   const searchParams = useSearchParams();
   const router = useRouter();
   const rawTab = searchParams.get("tab") ?? "requests";
