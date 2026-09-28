@@ -175,19 +175,23 @@ const ADMIN_SETTABLE_STATUSES: Status[] = [
   "Cancelled by BX",
 ];
 
+// P7: Physical-metaphor badge palette — aligned with lib/status-tokens.ts families
+// Amber=pending, Indigo=in-progress, Orange=action-required,
+// Emerald=approved/forward, Stone=completed(filed), Red=declined/cancel-BX,
+// Gray=neutral cancels
 const STATUS_COLORS: Record<Status, string> = {
-  Requested:             "bg-amber-100 text-amber-800 border-amber-200",
-  "Proposal Sent":       "bg-blue-100 text-blue-800 border-blue-200",
-  "Needs Info":          "bg-orange-100 text-orange-800 border-orange-200",
-  "Pending Documents":   "bg-yellow-100 text-yellow-800 border-yellow-200",
-  "Pending Payment":     "bg-violet-100 text-violet-800 border-violet-200",
-  "Deposit Received":    "bg-purple-100 text-purple-800 border-purple-200",
-  Confirmed:             "bg-emerald-100 text-emerald-800 border-emerald-200",
-  Completed:             "bg-teal-100 text-teal-800 border-teal-200",
-  Declined:              "bg-red-100 text-red-800 border-red-200",
-  "Cancelled by BX":     "bg-red-100 text-red-800 border-red-200",
-  "Cancelled by User":   "bg-gray-100 text-gray-600 border-gray-200",
-  Expired:               "bg-gray-100 text-gray-500 border-gray-200",
+  Requested:             "bg-amber-100 text-amber-800 border-amber-200",      // sticky note
+  "Proposal Sent":       "bg-indigo-100 text-indigo-800 border-indigo-200",   // in-tray stamp
+  "Needs Info":          "bg-orange-100 text-orange-800 border-orange-200",   // warning label
+  "Pending Documents":   "bg-orange-100 text-orange-800 border-orange-200",   // warning label
+  "Pending Payment":     "bg-orange-100 text-orange-800 border-orange-200",   // warning label
+  "Deposit Received":    "bg-emerald-100 text-emerald-800 border-emerald-200",// approval stamp
+  Confirmed:             "bg-emerald-100 text-emerald-800 border-emerald-200",// approval stamp
+  Completed:             "bg-stone-100 text-stone-600 border-stone-200",      // filed document
+  Declined:              "bg-red-100 text-red-800 border-red-200",            // red stamp
+  "Cancelled by BX":     "bg-red-100 text-red-800 border-red-200",            // red stamp
+  "Cancelled by User":   "bg-gray-100 text-gray-600 border-gray-200",         // voided paper
+  Expired:               "bg-gray-100 text-gray-500 border-gray-200",         // voided paper
 };
 
 export default function BxReservationsAdmin() {
@@ -782,7 +786,7 @@ export default function BxReservationsAdmin() {
                     </span>
                     <span className="font-bold text-sm text-parchment">${req.estimate.toLocaleString()}</span>
                     <span
-                      className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${STATUS_COLORS[req.status]}`}
+                      className={`px-2 py-0.5 rounded-full text-xs font-semibold tracking-wide border ${STATUS_COLORS[req.status]}`}
                     >
                       {req.status}
                     </span>

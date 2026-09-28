@@ -60,7 +60,7 @@ const ROLE_COLORS: Record<BxRole, { bg: string; text: string }> = {
 function RoleBadge({ role }: { role: BxRole | null }) {
   if (!role) return <span className="text-xs text-slate/50 italic">No role</span>;
   const c = ROLE_COLORS[role];
-  return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold" style={{ background: c.bg, color: c.text }}>{ROLE_LABELS[role]}</span>;
+  return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold" style={{ background: c.bg, color: c.text, letterSpacing: "0.03em" }}>{ROLE_LABELS[role]}</span>;
 }
 
 const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
@@ -73,7 +73,7 @@ const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
 function StatusBadge({ status }: { status: string | null }) {
   if (!status) return <span className="text-xs text-slate/40 italic">\u2014</span>;
   const s = STATUS_STYLES[status] ?? { bg: "rgba(100,116,139,0.12)", text: "var(--bx-slate)" };
-  return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold capitalize" style={{ background: s.bg, color: s.text }}>{status}</span>;
+  return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold capitalize" style={{ background: s.bg, color: s.text, letterSpacing: "0.03em" }}>{status}</span>;
 }
 
 const TIER_STYLES: Record<string, { bg: string; text: string; label: string }> = {
@@ -84,7 +84,7 @@ const TIER_STYLES: Record<string, { bg: string; text: string; label: string }> =
 
 function TierBadge({ tier }: { tier: string }) {
   const s = TIER_STYLES[tier] ?? TIER_STYLES.external;
-  return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: s.bg, color: s.text }}>{s.label}</span>;
+  return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: s.bg, color: s.text, letterSpacing: "0.03em" }}>{s.label}</span>;
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
