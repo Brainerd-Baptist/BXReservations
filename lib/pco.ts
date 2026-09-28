@@ -162,15 +162,15 @@ export async function pcoCreateEvent(opts: {
 
   // 1️⃣  Create the event.
   //     PCO auto-assigns owner from the OAuth user's Calendar person record.
-  //     Do NOT send owner explicitly — PCO rejects it ("Forbidden Attribute")
-  //     in both attribute and relationship forms.
-  //     Prerequisite: Josiah must be in PCO Calendar > Settings > People
-  //     as an Event Administrator for auto-assignment to succeed.
+  //     Trying owner_id as explicit attribute (20206208 = Josiah) — PAT auth is
+  //     now confirmed working (we get 422 not 401), so this tests the one
+  //     untested combination. Previous "Forbidden Attribute" tests used broken tokens.
   const eventRes = await pcoFetch("/events", "POST", {
     data: {
       type: "Event",
       attributes: {
         name: eventName,
+        owner_id: 20206208,  // Josiah's PCO person ID — explicit since auto-assign fails
       },
       relationships: {
         tags: {
