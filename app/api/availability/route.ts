@@ -54,8 +54,8 @@ const SLOT_HOURS: Record<TimeSlot, [number, number]> = {
 // ─── PCO API helper ────────────────────────────────────────────────────────────
 async function pcoGet(path: string, params?: Record<string, string>): Promise<unknown> {
   const appId = process.env.PCO_APP_ID;
-  const secret = process.env.PCO_SECRET;
-  if (!appId || !secret) throw new Error("PCO_APP_ID / PCO_SECRET not configured");
+  const secret = process.env.PCO_PAT ?? process.env.PCO_SECRET;
+  if (!appId || !secret) throw new Error("PCO credentials not configured");
   const auth = Buffer.from(`${appId}:${secret}`).toString("base64");
   const base = `https://api.planningcenteronline.com/calendar/v2${path}`;
   const queryString = params
