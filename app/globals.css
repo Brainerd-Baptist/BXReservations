@@ -64,7 +64,7 @@
 
 /* ── Classic (Ledger) ───────────────────────────────────────────────────── */
 [data-theme="ledger"] {
-  --bx-grid-opacity: 8%;
+  --bx-grid-opacity: 6%;
   --bx-ink:        #282a2d;
   --bx-ink-soft:   #313438;
   --bx-parchment:  #ededeb;
@@ -81,7 +81,7 @@
 
 /* ── Midnight (glass-dark) ──────────────────────────────────────────────── */
 [data-theme="glass-dark"] {
-  --bx-grid-opacity: 8%;
+  --bx-grid-opacity: 6%;
   --bx-ink:        #0c1018;
   --bx-ink-soft:   #1e293b;
   --bx-parchment:  #f1f5f9;
@@ -110,7 +110,7 @@
 
 /* ── Harbor ─────────────────────────────────────────────────────────────── */
 [data-theme="harbor"] {
-  --bx-grid-opacity: 9%;
+  --bx-grid-opacity: 6%;
   --bx-ink:        #0c1218;
   --bx-ink-soft:   #16202a;
   --bx-parchment:  #e8eef0;
@@ -127,7 +127,7 @@
 
 /* ── Heather ─────────────────────────────────────────────────────────────── */
 [data-theme="heather"] {
-  --bx-grid-opacity: 9%;
+  --bx-grid-opacity: 6%;
   --bx-ink:        #181420;
   --bx-ink-soft:   #241d2e;
   --bx-parchment:  #f0ecf4;
@@ -144,7 +144,7 @@
 
 /* ── Moss ────────────────────────────────────────────────────────────────── */
 [data-theme="moss"] {
-  --bx-grid-opacity: 9%;
+  --bx-grid-opacity: 6%;
   --bx-ink:        #10160f;
   --bx-ink-soft:   #1b2419;
   --bx-parchment:  #f0ece1;
@@ -161,7 +161,7 @@
 
 /* ── Orbit ───────────────────────────────────────────────────────────────── */
 [data-theme="orbit"] {
-  --bx-grid-opacity: 9%;
+  --bx-grid-opacity: 6%;
   --bx-ink:        #0a0c10;
   --bx-ink-soft:   #181b21;
   --bx-parchment:  #e2e6ec;
@@ -353,22 +353,34 @@ body::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
   background-size: 200px 200px;
 }
-/* Fixed dot-grid — sits behind all page content (z-index:-1) and above
-   the raw body colour. Because it's position:fixed it never scrolls and
-   always covers the viewport, regardless of which element has what
-   background. Opacity per-theme via --bx-grid-opacity token. */
+/* Background pattern overlay — same approach as the noise texture (body::before)
+   but for dots and/or grid lines. Uses CSS custom properties toggled per-user
+   via data-grid-dots / data-grid-lines attributes on <html>.
+   Opacity kept very low (~5%) so it reads as texture, not as a painted layer. */
 body::after {
   content: "";
   position: fixed;
   inset: 0;
   z-index: 9997;
-  background-image: radial-gradient(
+  background-image: var(--bx-active-dots, none), var(--bx-active-lines, none);
+  background-size: 28px 28px, 28px 28px;
+  pointer-events: none;
+}
+
+/* Dot pattern — enabled when data-grid-dots="on" */
+html[data-grid-dots="on"] {
+  --bx-active-dots: radial-gradient(
     circle at center,
-    color-mix(in srgb, var(--bx-parchment) var(--bx-grid-opacity, 12%), transparent) 1px,
+    color-mix(in srgb, var(--bx-parchment) var(--bx-grid-opacity, 5%), transparent) 1px,
     transparent 1px
   );
-  background-size: 28px 28px;
-  pointer-events: none;
+}
+
+/* Line pattern — enabled when data-grid-lines="on" */
+html[data-grid-lines="on"] {
+  --bx-active-lines:
+    linear-gradient(color-mix(in srgb, var(--bx-parchment) var(--bx-grid-opacity, 5%), transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--bx-parchment) var(--bx-grid-opacity, 5%), transparent) 1px, transparent 1px);
 }
 
 
@@ -679,9 +691,4 @@ header:not(.bx-scrolled) {
 .bx-fade-in.bx-visible {
   opacity: 1;
   transform: translateY(0);
-}
-
-/* ── Grid toggle ── */
-html[data-grid="off"] body::after {
-  display: none;
 }

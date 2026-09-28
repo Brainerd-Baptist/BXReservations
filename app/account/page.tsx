@@ -45,7 +45,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   // Fetch user prefs (theme + notification toggles)
   const { data: userPrefs } = await supabase
     .from("bx_user_prefs")
-    .select("theme, show_grid, notify_reservation_confirmed, notify_reservation_reminder, notify_admin_message")
+    .select("theme, show_grid, show_grid_lines, notify_reservation_confirmed, notify_reservation_reminder, notify_admin_message")
     .eq("user_id", user.id)
     .single();
 
@@ -267,7 +267,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
               Subtle dot pattern on page backgrounds.
             </p>
           </div>
-          <GridToggle userId={user.id} savedGrid={userPrefs?.show_grid ?? true} />
+          <GridToggle userId={user.id} savedDots={userPrefs?.show_grid ?? true} savedLines={userPrefs?.show_grid_lines ?? false} />
         </div>
       </div>
 
