@@ -353,15 +353,15 @@ body::before {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
   background-size: 200px 200px;
 }
-/* Background pattern overlay — same approach as the noise texture (body::before)
-   but for dots and/or grid lines. Uses CSS custom properties toggled per-user
-   via data-grid-dots / data-grid-lines attributes on <html>.
-   Opacity kept very low (~5%) so it reads as texture, not as a painted layer. */
-body::after {
+/* Background pattern overlay — dots and/or grid lines behind ALL content.
+   Uses html::before so z-index: -1 sits truly beneath the body background,
+   not just behind body children. Custom properties toggled per-user via
+   data-grid-dots / data-grid-lines attributes on <html>. */
+html::before {
   content: "";
   position: fixed;
   inset: 0;
-  z-index: 0;
+  z-index: -1;
   background-image: var(--bx-active-dots, none), var(--bx-active-lines, none);
   background-size: 28px 28px, 28px 28px;
   pointer-events: none;
@@ -371,7 +371,7 @@ body::after {
 html[data-grid-dots="on"] {
   --bx-active-dots: radial-gradient(
     circle at center,
-    color-mix(in srgb, var(--bx-parchment) var(--bx-grid-opacity, 18%), transparent) 1px,
+    color-mix(in srgb, var(--bx-parchment) var(--bx-grid-opacity, 10%), transparent) 1px,
     transparent 1px
   );
 }
@@ -379,8 +379,8 @@ html[data-grid-dots="on"] {
 /* Line pattern — enabled when data-grid-lines="on" */
 html[data-grid-lines="on"] {
   --bx-active-lines:
-    linear-gradient(color-mix(in srgb, var(--bx-parchment) var(--bx-grid-opacity, 18%), transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in srgb, var(--bx-parchment) var(--bx-grid-opacity, 18%), transparent) 1px, transparent 1px);
+    linear-gradient(color-mix(in srgb, var(--bx-parchment) var(--bx-grid-opacity, 7%), transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--bx-parchment) var(--bx-grid-opacity, 7%), transparent) 1px, transparent 1px);
 }
 
 
