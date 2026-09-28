@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getUserAndRole } from "@/lib/get-user-role";
+import { can } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 import OrganizationsClient from "./organizations-client";
 
@@ -23,7 +24,7 @@ export interface OrgSummary {
 export default async function OrganizationsPage() {
   const { user, role } = await getUserAndRole();
   if (!user) redirect("/login");
-  if (role !== "admin") redirect("/");
+  if (!can.viewAdminPanel(role)) redirect("/account");
 
   const supabase = await createClient();
   const { data: rawOrgs, error } = await supabase

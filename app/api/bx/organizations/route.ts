@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 import { getUserAndRole } from "@/lib/get-user-role";
+import { can } from "@/lib/roles";
 
 // ─── Admin service-role client ──────────────────────────────────────────────
 function adminClient() {
@@ -14,7 +15,7 @@ function adminClient() {
 // ─── GET /api/bx/organizations ─────────────────────────────────────────────
 export async function GET(request: NextRequest) {
   const { user, role } = await getUserAndRole();
-  if (!user || role !== "admin") {
+  if (!user || !can.viewAdminPanel(role)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -70,7 +71,7 @@ export async function GET(request: NextRequest) {
 // ─── POST /api/bx/organizations ────────────────────────────────────────────
 export async function POST(request: NextRequest) {
   const { user, role } = await getUserAndRole();
-  if (!user || role !== "admin") {
+  if (!user || !can.viewAdminPanel(role)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
