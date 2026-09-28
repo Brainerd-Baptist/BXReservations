@@ -18,13 +18,12 @@ interface NavSidebarProps {
 // ─── Nav item definitions ──────────────────────────────────────────────────
 
 const navItems = [
-  { label: "Dashboard", href: "/", icon: "grid" },
+  { label: "Home", href: "/", icon: "grid" },
 ];
 
 const reservationItems = [
   { label: "Spaces", href: "/rooms", icon: "map" },
   { label: "BX Map", href: "/bx-map", icon: "map" },
-  { label: "New Request", href: "/reserve", icon: "plus" },
   { label: "My Reservations", href: "/reservations", icon: "list" },
 ];
 
@@ -35,11 +34,11 @@ const adminQueueItems = [
 ];
 
 const adminManageItems = [
-  { label: "Users",       href: "/admin/bx-reservations?tab=users",       icon: "users" },
-  { label: "Ministries",  href: "/admin/bx-reservations?tab=ministries",  icon: "building" },
-  { label: "COI Review",  href: "/admin/bx-reservations/coi",             icon: "shield" },
-  { label: "Reports",     href: "/admin/bx-reservations?tab=reports",         icon: "chart" },
-  { label: "Settings",    href: "/admin/bx-reservations?tab=settings",    icon: "settings" },
+  { label: "Users",          href: "/admin/bx-reservations/users",          icon: "users" },
+  { label: "Organizations",  href: "/admin/bx-reservations/organizations",  icon: "building" },
+  { label: "Ministries",     href: "/admin/bx-reservations?tab=ministries", icon: "church" },
+  { label: "Reports",        href: "/admin/bx-reservations?tab=reports",    icon: "chart" },
+  { label: "Settings",       href: "/admin/bx-reservations?tab=settings",   icon: "settings" },
 ];
 
 // ─── Icon set ─────────────────────────────────────────────────────────────
@@ -122,6 +121,11 @@ function Icon({ name, size = 18 }: { name: string; size?: number }) {
   if (name === "building") return (
     <svg {...props}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
+    </svg>
+  );
+  if (name === "church") return (
+    <svg {...props}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 0l-2 2m2-2l2 2M5 21h14M5 21v-9m14 9v-9M3 12l9-9 9 9M9 21v-6a3 3 0 016 0v6" />
     </svg>
   );
   if (name === "map") return (
@@ -427,7 +431,7 @@ export default function NavSidebar({
                     color: "color-mix(in srgb, var(--bx-slate) 70%, transparent)",
                   }}
                 >
-                  Admin
+                  Queue
                 </p>
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.125rem" }}>
                   {adminQueueItems.map((item) => (
