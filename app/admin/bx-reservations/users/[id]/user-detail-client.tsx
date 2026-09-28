@@ -100,13 +100,15 @@ function RolePicker({ userId, current, callerRole, onSaved }: {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [pending, setPending] = useState<BxRole | null>(null);
+  const callerIsOwner = callerRole === "owner";
+  const callerIsSysAdmin = callerRole === "system_admin";
   const assignable = ROLES_ORDERED.filter((r) => {
-    if (r === "owner") return callerRole === "owner";
-    if (callerRole === "owner") return true;
-    if (callerRole === "system_admin") return r !== "system_admin" && r !== "owner";
+    if (r === "owner") return callerIsOwner;
+    if (callerIsOwner) return true;
+    if (callerIsSysAdmin) return r !== "system_admin" && r !== "owner";
     return false;
   });
-  if (current === "owner" && callerRole !== "owner") return <RoleBadge role="owner" />;
+  if (current === "owner" && !callerIsOwner) return <RoleBadge role="owner" />;
   if (!assignable.length) return <RoleBadge role={current} />;
   async function pick(r: BxRole) {
     setPending(r); setSaving(true); setOpen(false);
