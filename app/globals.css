@@ -45,6 +45,9 @@
   --glass-border:   rgba(0,171,201,0.15);
   --glass-bg:       rgba(0,171,201,0.06);
 
+  /* Grid opacity — dot density vs. background contrast */
+  --bx-grid-opacity: 6%;
+
   /* Elevation shadow tokens */
   --shadow-1: 0 1px 2px rgba(0,0,0,0.05), 0 1px 4px rgba(0,0,0,0.08);
   --shadow-2: 0 2px 6px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.08);
@@ -61,6 +64,7 @@
 
 /* ── Classic (Ledger) ───────────────────────────────────────────────────── */
 [data-theme="ledger"] {
+  --bx-grid-opacity: 8%;
   --bx-ink:        #282a2d;
   --bx-ink-soft:   #313438;
   --bx-parchment:  #ededeb;
@@ -77,6 +81,7 @@
 
 /* ── Midnight (glass-dark) ──────────────────────────────────────────────── */
 [data-theme="glass-dark"] {
+  --bx-grid-opacity: 8%;
   --bx-ink:        #0c1018;
   --bx-ink-soft:   #1e293b;
   --bx-parchment:  #f1f5f9;
@@ -105,6 +110,7 @@
 
 /* ── Harbor ─────────────────────────────────────────────────────────────── */
 [data-theme="harbor"] {
+  --bx-grid-opacity: 9%;
   --bx-ink:        #0c1218;
   --bx-ink-soft:   #16202a;
   --bx-parchment:  #e8eef0;
@@ -121,6 +127,7 @@
 
 /* ── Heather ─────────────────────────────────────────────────────────────── */
 [data-theme="heather"] {
+  --bx-grid-opacity: 9%;
   --bx-ink:        #181420;
   --bx-ink-soft:   #241d2e;
   --bx-parchment:  #f0ecf4;
@@ -137,6 +144,7 @@
 
 /* ── Moss ────────────────────────────────────────────────────────────────── */
 [data-theme="moss"] {
+  --bx-grid-opacity: 9%;
   --bx-ink:        #10160f;
   --bx-ink-soft:   #1b2419;
   --bx-parchment:  #f0ece1;
@@ -153,6 +161,7 @@
 
 /* ── Orbit ───────────────────────────────────────────────────────────────── */
 [data-theme="orbit"] {
+  --bx-grid-opacity: 9%;
   --bx-ink:        #0a0c10;
   --bx-ink-soft:   #181b21;
   --bx-parchment:  #e2e6ec;
@@ -169,10 +178,20 @@
 
 /* ── Glass theme special backgrounds ────────────────────────────────────── */
 [data-theme="glass-dark"] body {
-  background: linear-gradient(135deg, #0c1018 0%, #1a2744 50%, #0c1018 100%);
+  background-color: #0c1018;
+  background-image:
+    radial-gradient(circle at center, rgba(241,245,249,0.08) 1px, transparent 1px),
+    linear-gradient(135deg, #0c1018 0%, #1a2744 50%, #0c1018 100%);
+  background-size: 28px 28px, 100% 100%;
+  background-attachment: fixed, fixed;
 }
 [data-theme="glass-light"] body {
-  background: linear-gradient(135deg, #eef2f7 0%, #dde8f5 50%, #eef2f7 100%);
+  background-color: #eef2f7;
+  background-image:
+    radial-gradient(circle at center, rgba(30,41,59,0.065) 1px, transparent 1px),
+    linear-gradient(135deg, #eef2f7 0%, #dde8f5 50%, #eef2f7 100%);
+  background-size: 28px 28px, 100% 100%;
+  background-attachment: fixed, fixed;
 }
 
 /* ── Dropdown panel utility ─────────────────────────────────────────────── */
@@ -194,11 +213,21 @@ html {
 }
 
 body {
-  background: var(--bx-ink, #ffffff);
+  background-color: var(--bx-ink, #ffffff);
+  /* Dot grid — adapts to every theme because it uses the parchment token.
+     background-attachment: fixed keeps it locked to the viewport (no scroll shift).
+     Adjust --bx-grid-opacity per theme below if needed. */
+  background-image: radial-gradient(
+    circle at center,
+    color-mix(in srgb, var(--bx-parchment) var(--bx-grid-opacity, 7%), transparent) 1px,
+    transparent 1px
+  );
+  background-size: 28px 28px;
+  background-attachment: fixed;
   color: var(--bx-parchment, #111111);
   font-family: var(--font-inter), sans-serif;
   overflow-x: hidden;
-  transition: background 0.25s, color 0.25s;
+  transition: background-color 0.25s, color 0.25s;
   line-height: 1.6;
 }
 
