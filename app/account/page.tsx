@@ -258,15 +258,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         <ThemeGrid userId={user.id} savedTheme={userPrefs?.theme ?? null} />
 
         {/* Grid / dot-pattern toggle */}
-        <div style={{ marginTop: "1.25rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem" }}>
-          <div>
-            <p style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--bx-parchment)", margin: 0 }}>
-              Background grid
-            </p>
-            <p style={{ fontSize: "0.75rem", color: "var(--bx-slate)", margin: "0.125rem 0 0", opacity: 0.8 }}>
-              Subtle dot pattern on page backgrounds.
-            </p>
-          </div>
+        <div style={{ marginTop: "1.25rem" }}>
           <GridToggle userId={user.id} savedDots={userPrefs?.show_grid ?? true} savedLines={userPrefs?.show_grid_lines ?? false} />
         </div>
       </div>
