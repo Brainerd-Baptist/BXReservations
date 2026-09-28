@@ -73,4 +73,4 @@ export function applyTheme(id: ThemeId) {
 }
 
 // Blocking inline script — inlined into <head> before first paint to prevent flash.
-export const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem("bx-reservations-theme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}})();`;
+export const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem("bx-reservations-theme");if(t)document.documentElement.setAttribute("data-theme",t);var g=localStorage.getItem("bx-reservations-grid");if(g==="off")document.documentElement.setAttribute("data-grid","off");}catch(e){}})();`;

@@ -361,7 +361,7 @@ body::after {
   content: "";
   position: fixed;
   inset: 0;
-  z-index: -1;
+  z-index: 9997;
   background-image: radial-gradient(
     circle at center,
     color-mix(in srgb, var(--bx-parchment) var(--bx-grid-opacity, 12%), transparent) 1px,
@@ -679,4 +679,9 @@ header:not(.bx-scrolled) {
 .bx-fade-in.bx-visible {
   opacity: 1;
   transform: translateY(0);
+}
+
+/* ── Grid toggle ── */
+html[data-grid="off"] body::after {
+  display: none;
 }

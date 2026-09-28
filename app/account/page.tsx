@@ -7,6 +7,7 @@ import { cookies } from "next/headers";
 import SignOutButton from "./sign-out-button";
 import ProfileForm from "./profile-form";
 import ThemeGrid from "../components/theme-grid";
+import GridToggle from "../components/grid-toggle";
 import NotificationPreferencesSection, {
   type BxNotificationPrefs,
 } from "../components/notification-preferences-section";
@@ -44,7 +45,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   // Fetch user prefs (theme + notification toggles)
   const { data: userPrefs } = await supabase
     .from("bx_user_prefs")
-    .select("theme, notify_reservation_confirmed, notify_reservation_reminder, notify_admin_message")
+    .select("theme, show_grid, notify_reservation_confirmed, notify_reservation_reminder, notify_admin_message")
     .eq("user_id", user.id)
     .single();
 
@@ -255,6 +256,19 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           Choose a color theme. Your preference is saved and applied on every device.
         </p>
         <ThemeGrid userId={user.id} savedTheme={userPrefs?.theme ?? null} />
+
+        {/* Grid / dot-pattern toggle */}
+        <div style={{ marginTop: "1.25rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem" }}>
+          <div>
+            <p style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--bx-parchment)", margin: 0 }}>
+              Background grid
+            </p>
+            <p style={{ fontSize: "0.75rem", color: "var(--bx-slate)", margin: "0.125rem 0 0", opacity: 0.8 }}>
+              Subtle dot pattern on page backgrounds.
+            </p>
+          </div>
+          <GridToggle userId={user.id} savedGrid={userPrefs?.show_grid ?? true} />
+        </div>
       </div>
 
       {/* ── Notification preferences ── */}
