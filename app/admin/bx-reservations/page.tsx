@@ -2325,232 +2325,266 @@ function MinistriesTab({
     </div>
   );
 }
-// ─── Historical reservation data (Google Form, May 2025 – Sep 2026) ────────────
-const HISTORICAL_DATA = {
-  byMonth: [
-    { month: "2025-05", label: "May '25", count: 1 },
-    { month: "2025-07", label: "Jul '25", count: 2 },
-    { month: "2025-08", label: "Aug '25", count: 1 },
-    { month: "2025-09", label: "Sep '25", count: 1 },
-    { month: "2025-10", label: "Oct '25", count: 1 },
-    { month: "2026-01", label: "Jan '26", count: 2 },
-    { month: "2026-02", label: "Feb '26", count: 2 },
-    { month: "2026-03", label: "Mar '26", count: 8 },
-    { month: "2026-04", label: "Apr '26", count: 7 },
-    { month: "2026-05", label: "May '26", count: 8 },
-    { month: "2026-06", label: "Jun '26", count: 6 },
-    { month: "2026-07", label: "Jul '26", count: 5 },
-    { month: "2026-08", label: "Aug '26", count: 9 },
-    { month: "2026-09", label: "Sep '26", count: 11 },
-  ],
-  byRoom: [
-    { room: "The Crossing",      count: 26 },
-    { room: "Crossview",         count: 13 },
-    { room: "The Loft",          count: 7  },
-    { room: "CrossPointe A",     count: 7  },
-    { room: "Crossties A",       count: 4  },
-    { room: "CrossPointe C",     count: 3  },
-    { room: "Crossties Café",    count: 2  },
-    { room: "Basketball Courts", count: 1  },
-    { room: "CrossPointe B",     count: 1  },
-  ],
-  guestBuckets: [
-    { label: "1–25",    count: 30 },
-    { label: "26–75",   count: 17 },
-    { label: "76–150",  count: 5  },
-    { label: "151–250", count: 10 },
-    { label: "250+",    count: 2  },
-  ],
-  memberStatus: { member: 16, nonMember: 48 },
-  profitStatus: { nonProfit: 53, forProfit: 11 },
-  byYear: [
-    { year: "2025", count: 6  },
-    { year: "2026", count: 48 },
-    { year: "2027", count: 10 },
-  ],
-  totalRecords: 64,
-};
+// ─── Types (Reports) ────────────────────────────────────────────────────────────
+interface ReportKpis {
+  total: number;
+  internal:  { count: number; rack_rate_total: number };
+  bbs:       { count: number; rack_rate_total: number };
+  external:  { count: number; net_amount: number };
+  discounts_given: number;
+  net_revenue: number;
+}
+interface OrgRow {
+  org_name: string;
+  tier: string;
+  bookings: number;
+  rack_rate: number;
+  discount: number;
+  net: number;
+}
+interface ReportData {
+  period: { from: string; to: string };
+  kpis: ReportKpis;
+  by_org: OrgRow[];
+}
+type SortCol = "org_name" | "tier" | "bookings" | "rack_rate" | "discount" | "net";
 
-// ─── ReportsTab ─────────────────────────────────────────────────────────────────
+// ─── ReportsTab (live data) ──────────────────────────────────────────────────────
 function ReportsTab() {
-  const d = HISTORICAL_DATA;
-  const totalGuests = 30 * 13 + 17 * 50 + 5 * 113 + 10 * 200 + 2 * 300;
-  const avgGroup = Math.round(totalGuests / d.totalRecords);
-  const maxMonth = Math.max(...d.byMonth.map(m => m.count));
-  const maxRoom  = Math.max(...d.byRoom.map(r => r.count));
-  const maxGuest = Math.max(...d.guestBuckets.map(g => g.count));
+  const [period, setPeriod]       = useState<"this_year" | "last_year" | "custom">("this_year");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo,   setCustomTo]   = useState("");
+  const [loading, setLoading]     = useState(true);
+  const [data, setData]           = useState<ReportData | null>(null);
+  const [error, setError]         = useState<string | null>(null);
+  const [sortCol, setSortCol]     = useState<SortCol>("bookings");
+  const [sortDir, setSortDir]     = useState<"asc" | "desc">("desc");
+
+  useEffect(() => {
+    if (period === "custom" && (!customFrom || !customTo)) return;
+    const params = new URLSearchParams({ period });
+    if (period === "custom") { params.set("from", customFrom); params.set("to", customTo); }
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    fetch(`/api/admin/reports/bx?${params}`)
+      .then(r => r.ok ? r.json() : Promise.reject(r.statusText))
+      .then(json => { if (!cancelled) { setData(json); setLoading(false); } })
+      .catch(() => { if (!cancelled) { setError("Failed to load report data."); setLoading(false); } });
+    return () => { cancelled = true; };
+  }, [period, customFrom, customTo]);
+
+  function toggleSort(col: SortCol) {
+    if (sortCol === col) setSortDir(d => d === "asc" ? "desc" : "asc");
+    else { setSortCol(col); setSortDir("desc"); }
+  }
+
+  const sortedRows: OrgRow[] = data
+    ? [...data.by_org].sort((a, b) => {
+        const dir = sortDir === "asc" ? 1 : -1;
+        if (sortCol === "org_name") return dir * a.org_name.localeCompare(b.org_name);
+        if (sortCol === "tier")     return dir * a.tier.localeCompare(b.tier);
+        return dir * ((a[sortCol] as number) - (b[sortCol] as number));
+      })
+    : [];
+
+  const fmt = (n: number) =>
+    "$" + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+  const tierLabel: Record<string, string> = {
+    internal: "Internal",
+    bbs:      "BBS School",
+    external: "External",
+  };
+  const tierColor: Record<string, string> = {
+    internal: "var(--bx-brass)",
+    bbs:      "var(--bx-slate)",
+    external: "var(--bx-parchment)",
+  };
+
+  const kpis = data?.kpis;
+
+  const tile = (
+    label: string,
+    value: string | number,
+    sub: string,
+    accent = false
+  ) => (
+    <div
+      className="rounded-xl p-5 flex flex-col gap-1"
+      style={{
+        background: accent
+          ? "color-mix(in srgb, var(--bx-brass) 8%, transparent)"
+          : "color-mix(in srgb, var(--bx-parchment) 4%, transparent)",
+        border: `1px solid ${accent
+          ? "color-mix(in srgb, var(--bx-brass) 25%, transparent)"
+          : "color-mix(in srgb, var(--bx-parchment) 10%, transparent)"}`,
+      }}
+    >
+      <p className="text-xs uppercase tracking-widest"
+        style={{ color: accent ? "var(--bx-brass)" : "var(--bx-slate)" }}>
+        {label}
+      </p>
+      {loading
+        ? <div className="h-8 w-20 rounded animate-pulse"
+            style={{ background: "color-mix(in srgb, var(--bx-parchment) 8%, transparent)" }} />
+        : <p className="text-3xl font-bold"
+            style={{ color: accent ? "var(--bx-brass)" : "var(--bx-parchment)" }}>
+            {value}
+          </p>
+      }
+      {!loading && (
+        <p className="text-xs"
+          style={{ color: accent ? "color-mix(in srgb, var(--bx-brass) 70%, transparent)" : "var(--bx-slate)" }}>
+          {sub}
+        </p>
+      )}
+    </div>
+  );
+
+  const th = (col: SortCol, label: string) => (
+    <th
+      key={col}
+      onClick={() => toggleSort(col)}
+      className="px-4 py-3 text-left cursor-pointer select-none whitespace-nowrap"
+      style={{ color: sortCol === col ? "var(--bx-brass)" : "var(--bx-slate)", fontWeight: 500, fontSize: "0.75rem" }}
+    >
+      {label}{sortCol === col ? (sortDir === "asc" ? " ↑" : " ↓") : ""}
+    </th>
+  );
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <div>
-        <h2 className="text-lg font-bold" style={{ color: "var(--bx-parchment)" }}>Historical Reports</h2>
-        <p className="text-sm mt-0.5" style={{ color: "var(--bx-slate)" }}>
-          64 submissions from the Google Form · May 2025 – Sep 2026
+    <div className="flex flex-col gap-6 p-1">
+
+      {/* ── Period selector ── */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <span className="text-xs uppercase tracking-widest" style={{ color: "var(--bx-slate)" }}>Period</span>
+        {(["this_year", "last_year", "custom"] as const).map(p => (
+          <button
+            key={p}
+            onClick={() => setPeriod(p)}
+            className="text-sm px-3 py-1 rounded-full border transition-colors"
+            style={{
+              background:  period === p ? "var(--bx-brass)" : "transparent",
+              color:       period === p ? "var(--bx-dark)"  : "var(--bx-parchment)",
+              borderColor: period === p
+                ? "var(--bx-brass)"
+                : "color-mix(in srgb, var(--bx-parchment) 20%, transparent)",
+              fontWeight:  period === p ? 700 : 400,
+            }}
+          >
+            {p === "this_year" ? "This Year" : p === "last_year" ? "Last Year" : "Custom Range"}
+          </button>
+        ))}
+        {period === "custom" && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <input
+              type="date"
+              value={customFrom}
+              onChange={e => setCustomFrom(e.target.value)}
+              className="text-sm px-2 py-1 rounded border bg-transparent"
+              style={{ color: "var(--bx-parchment)", borderColor: "color-mix(in srgb, var(--bx-parchment) 20%, transparent)" }}
+            />
+            <span className="text-xs" style={{ color: "var(--bx-slate)" }}>to</span>
+            <input
+              type="date"
+              value={customTo}
+              onChange={e => setCustomTo(e.target.value)}
+              className="text-sm px-2 py-1 rounded border bg-transparent"
+              style={{ color: "var(--bx-parchment)", borderColor: "color-mix(in srgb, var(--bx-parchment) 20%, transparent)" }}
+            />
+          </div>
+        )}
+      </div>
+
+      {error && (
+        <div className="rounded-xl p-4 text-sm" style={{ background: "color-mix(in srgb, red 10%, transparent)", color: "var(--bx-parchment)", border: "1px solid color-mix(in srgb, red 20%, transparent)" }}>
+          {error}
+        </div>
+      )}
+
+      {/* ── KPI tiles ── */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        {tile("Total Bookings", kpis?.total ?? 0, "All tiers")}
+        {tile("Internal",       kpis?.internal.count ?? 0,
+                                kpis ? `${fmt(kpis.internal.rack_rate_total)} rack rate` : "")}
+        {tile("BBS School",     kpis?.bbs.count ?? 0,
+                                kpis ? `${fmt(kpis.bbs.rack_rate_total)} rack rate` : "")}
+        {tile("External",       kpis?.external.count ?? 0,
+                                kpis ? `${fmt(kpis.external.net_amount)} net` : "")}
+        {tile("Discounts Given", kpis ? fmt(kpis.discounts_given) : "—", "All tiers")}
+        {tile("Net Revenue",    kpis ? fmt(kpis.net_revenue) : "—", "External only", true)}
+      </div>
+
+      {/* ── Org breakdown table ── */}
+      {!loading && !error && sortedRows.length > 0 && (
+        <div className="rounded-xl overflow-x-auto" style={{ border: "1px solid color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>
+          <table className="w-full text-sm">
+            <thead>
+              <tr style={{ background: "color-mix(in srgb, var(--bx-parchment) 6%, transparent)" }}>
+                {th("org_name", "Organization")}
+                {th("tier",     "Tier")}
+                {th("bookings", "Bookings")}
+                {th("rack_rate","Rack Rate")}
+                {th("discount", "Discount")}
+                {th("net",      "Net")}
+              </tr>
+            </thead>
+            <tbody>
+              {sortedRows.map((row, i) => (
+                <tr key={i} style={{ borderTop: "1px solid color-mix(in srgb, var(--bx-parchment) 6%, transparent)" }}>
+                  <td className="px-4 py-3 font-medium" style={{ color: "var(--bx-parchment)" }}>{row.org_name}</td>
+                  <td className="px-4 py-3">
+                    <span className="text-xs px-2 py-0.5 rounded-full"
+                      style={{ background: "color-mix(in srgb, var(--bx-parchment) 6%, transparent)", color: tierColor[row.tier] ?? "var(--bx-parchment)" }}>
+                      {tierLabel[row.tier] ?? row.tier}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right font-mono" style={{ color: "var(--bx-parchment)" }}>{row.bookings}</td>
+                  <td className="px-4 py-3 text-right font-mono" style={{ color: "var(--bx-slate)" }}>{row.rack_rate > 0 ? fmt(row.rack_rate) : "—"}</td>
+                  <td className="px-4 py-3 text-right font-mono" style={{ color: row.discount > 0 ? "var(--bx-brass)" : "var(--bx-slate)" }}>{row.discount > 0 ? fmt(row.discount) : "—"}</td>
+                  <td className="px-4 py-3 text-right font-mono" style={{ color: row.net > 0 ? "var(--bx-parchment)" : "var(--bx-slate)" }}>{row.net > 0 ? fmt(row.net) : "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr style={{ borderTop: "2px solid color-mix(in srgb, var(--bx-parchment) 15%, transparent)", background: "color-mix(in srgb, var(--bx-parchment) 4%, transparent)" }}>
+                <td className="px-4 py-3 font-semibold text-xs uppercase tracking-widest" colSpan={2} style={{ color: "var(--bx-slate)" }}>Total</td>
+                <td className="px-4 py-3 text-right font-mono font-semibold" style={{ color: "var(--bx-brass)" }}>{kpis?.total ?? 0}</td>
+                <td className="px-4 py-3 text-right font-mono" style={{ color: "var(--bx-slate)" }}>
+                  {fmt((kpis?.internal.rack_rate_total ?? 0) + (kpis?.bbs.rack_rate_total ?? 0))}
+                </td>
+                <td className="px-4 py-3 text-right font-mono" style={{ color: "var(--bx-brass)" }}>
+                  {fmt(kpis?.discounts_given ?? 0)}
+                </td>
+                <td className="px-4 py-3 text-right font-mono font-semibold" style={{ color: "var(--bx-parchment)" }}>
+                  {fmt(kpis?.net_revenue ?? 0)}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      )}
+
+      {!loading && !error && sortedRows.length === 0 && (
+        <p className="text-sm text-center py-10" style={{ color: "var(--bx-slate)" }}>
+          No bookings found in this period.
         </p>
-      </div>
+      )}
 
-      {/* KPI tiles */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <KPI label="Total Submissions" value={String(d.totalRecords)} color="text-[var(--bx-brass)]" />
-        <KPI label="Avg Group Size" value={`~${avgGroup}`} color="text-emerald-400" />
-        <KPI label="Non-Profit Share" value={`${Math.round(d.profitStatus.nonProfit / d.totalRecords * 100)}%`} color="text-blue-400" />
-        <KPI label="Member Orgs" value={`${Math.round(d.memberStatus.member / d.totalRecords * 100)}%`} color="text-violet-400" />
-      </div>
-
-      {/* Monthly submissions bar chart */}
-      <div className="rounded-xl border p-5 space-y-3" style={{ background: "var(--bx-ink-soft)", borderColor: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>
-        <p className="text-sm font-semibold" style={{ color: "var(--bx-parchment)" }}>Submissions by Month</p>
-        <div className="flex items-end gap-1" style={{ height: 100 }}>
-          {d.byMonth.map((m) => (
-            <div key={m.month} className="flex-1 flex flex-col items-center group relative">
-              <div
-                className="w-full rounded-t transition-all"
-                style={{
-                  height: maxMonth ? `${(m.count / maxMonth) * 80}px` : "4px",
-                  background: m.count === maxMonth
-                    ? "var(--bx-brass)"
-                    : "color-mix(in srgb, var(--bx-brass) 45%, transparent)",
-                  minHeight: m.count > 0 ? "4px" : "0",
-                }}
-              />
-              <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 hidden group-hover:block z-10 px-2 py-1 rounded text-[10px] font-semibold whitespace-nowrap"
-                style={{ background: "var(--bx-ink)", color: "var(--bx-parchment)", border: "1px solid color-mix(in srgb, var(--bx-parchment) 15%, transparent)" }}>
-                {m.label}: {m.count}
-              </div>
-            </div>
-          ))}
+      {loading && (
+        <div className="rounded-xl p-10 flex items-center justify-center"
+          style={{ border: "1px solid color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>
+          <p className="text-sm animate-pulse" style={{ color: "var(--bx-slate)" }}>Loading report data…</p>
         </div>
-        <div className="flex items-end gap-1">
-          {d.byMonth.map((m) => (
-            <div key={m.month} className="flex-1 text-center" style={{ fontSize: 8, color: "var(--bx-slate)" }}>
-              {m.label.split(" ")[0]}
-            </div>
-          ))}
-        </div>
-      </div>
+      )}
 
-      {/* Room usage + Guest size — 2 col on large */}
-      <div className="grid lg:grid-cols-2 gap-4">
-        <div className="rounded-xl border p-5 space-y-3" style={{ background: "var(--bx-ink-soft)", borderColor: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>
-          <p className="text-sm font-semibold" style={{ color: "var(--bx-parchment)" }}>Requests by Room</p>
-          <div className="space-y-2">
-            {d.byRoom.map((r) => (
-              <div key={r.room} className="flex items-center gap-3">
-                <span className="w-32 text-xs shrink-0 truncate" style={{ color: "var(--bx-slate)" }}>{r.room}</span>
-                <div className="flex-1 rounded-full overflow-hidden" style={{ height: 8, background: "color-mix(in srgb, var(--bx-parchment) 6%, transparent)" }}>
-                  <div className="h-full rounded-full" style={{
-                    width: `${(r.count / maxRoom) * 100}%`,
-                    background: r.count === maxRoom ? "var(--bx-brass)" : "color-mix(in srgb, var(--bx-brass) 55%, transparent)",
-                  }} />
-                </div>
-                <span className="text-xs font-semibold w-5 text-right" style={{ color: "var(--bx-parchment)" }}>{r.count}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="rounded-xl border p-5 space-y-3" style={{ background: "var(--bx-ink-soft)", borderColor: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>
-          <p className="text-sm font-semibold" style={{ color: "var(--bx-parchment)" }}>Group Size Distribution</p>
-          <div className="space-y-2">
-            {d.guestBuckets.map((g) => (
-              <div key={g.label} className="flex items-center gap-3">
-                <span className="w-16 text-xs shrink-0" style={{ color: "var(--bx-slate)" }}>{g.label}</span>
-                <div className="flex-1 rounded-full overflow-hidden" style={{ height: 8, background: "color-mix(in srgb, var(--bx-parchment) 6%, transparent)" }}>
-                  <div className="h-full rounded-full" style={{
-                    width: `${(g.count / maxGuest) * 100}%`,
-                    background: "color-mix(in srgb, #22c55e 70%, var(--bx-brass))",
-                  }} />
-                </div>
-                <span className="text-xs font-semibold w-5 text-right" style={{ color: "var(--bx-parchment)" }}>{g.count}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Member + Non-profit donut tiles */}
-      <div className="grid sm:grid-cols-2 gap-4">
-        <div className="rounded-xl border p-5 space-y-3" style={{ background: "var(--bx-ink-soft)", borderColor: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>
-          <p className="text-sm font-semibold" style={{ color: "var(--bx-parchment)" }}>BBC Member Orgs</p>
-          <div className="flex items-center gap-4">
-            <div className="relative w-20 h-20 flex-shrink-0">
-              <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-                <circle cx="18" cy="18" r="15.9" fill="none" stroke="color-mix(in srgb, var(--bx-parchment) 8%, transparent)" strokeWidth="3.2" />
-                <circle cx="18" cy="18" r="15.9" fill="none"
-                  stroke="color-mix(in srgb, #7c3aed 80%, transparent)"
-                  strokeWidth="3.2"
-                  strokeDasharray={`${(d.memberStatus.member / d.totalRecords) * 100} ${100 - (d.memberStatus.member / d.totalRecords) * 100}`}
-                  strokeLinecap="round"
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-sm font-bold" style={{ color: "var(--bx-parchment)" }}>
-                  {Math.round(d.memberStatus.member / d.totalRecords * 100)}%
-                </span>
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: "color-mix(in srgb, #7c3aed 80%, transparent)" }} />
-                <span className="text-xs" style={{ color: "var(--bx-slate)" }}>Member — {d.memberStatus.member}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: "color-mix(in srgb, var(--bx-parchment) 8%, transparent)" }} />
-                <span className="text-xs" style={{ color: "var(--bx-slate)" }}>Non-member — {d.memberStatus.nonMember}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-xl border p-5 space-y-3" style={{ background: "var(--bx-ink-soft)", borderColor: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>
-          <p className="text-sm font-semibold" style={{ color: "var(--bx-parchment)" }}>Non-Profit vs. For-Profit</p>
-          <div className="flex items-center gap-4">
-            <div className="relative w-20 h-20 flex-shrink-0">
-              <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-                <circle cx="18" cy="18" r="15.9" fill="none" stroke="color-mix(in srgb, var(--bx-parchment) 8%, transparent)" strokeWidth="3.2" />
-                <circle cx="18" cy="18" r="15.9" fill="none"
-                  stroke="var(--bx-brass)"
-                  strokeWidth="3.2"
-                  strokeDasharray={`${(d.profitStatus.nonProfit / d.totalRecords) * 100} ${100 - (d.profitStatus.nonProfit / d.totalRecords) * 100}`}
-                  strokeLinecap="round"
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-sm font-bold" style={{ color: "var(--bx-parchment)" }}>
-                  {Math.round(d.profitStatus.nonProfit / d.totalRecords * 100)}%
-                </span>
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: "var(--bx-brass)" }} />
-                <span className="text-xs" style={{ color: "var(--bx-slate)" }}>Non-profit — {d.profitStatus.nonProfit}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: "color-mix(in srgb, var(--bx-parchment) 8%, transparent)" }} />
-                <span className="text-xs" style={{ color: "var(--bx-slate)" }}>For-profit — {d.profitStatus.forProfit}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Event year breakdown */}
-      <div className="rounded-xl border p-5 space-y-3" style={{ background: "var(--bx-ink-soft)", borderColor: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>
-        <p className="text-sm font-semibold" style={{ color: "var(--bx-parchment)" }}>Event Year Breakdown</p>
-        <div className="flex gap-4">
-          {d.byYear.map((y) => (
-            <div key={y.year} className="flex-1 rounded-xl p-4 text-center" style={{ background: "color-mix(in srgb, var(--bx-parchment) 4%, transparent)", border: "1px solid color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>
-              <p className="text-3xl font-bold" style={{ color: y.year === "2026" ? "var(--bx-brass)" : "var(--bx-parchment)" }}>{y.count}</p>
-              <p className="text-xs uppercase tracking-widest mt-1" style={{ color: "var(--bx-slate)" }}>{y.year}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <p className="text-xs pb-4" style={{ color: "color-mix(in srgb, var(--bx-slate) 50%, transparent)" }}>
-        Source: BX Online Reservation Request Responses · Google Form export · 64 records · through Sep 2026
-      </p>
+      {!loading && data && (
+        <p className="text-xs pb-2" style={{ color: "color-mix(in srgb, var(--bx-slate) 50%, transparent)" }}>
+          Live data · BX Reservations · {kpis?.total ?? 0} booking{kpis?.total !== 1 ? "s" : ""} ·{" "}
+          {new Date(data.period.from).toLocaleDateString()} – {new Date(data.period.to).toLocaleDateString()}
+        </p>
+      )}
     </div>
   );
 }
