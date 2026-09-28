@@ -5,6 +5,7 @@ import { useToast } from "@/app/components/Toast";
 import CommentsThread from "@/components/bx/CommentsThread";
 import EventLogoCard from "@/app/components/event-logo-card";
 import VenueSettings from "@/app/components/venue-settings";
+import RoomRates from "@/app/components/room-rates";
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { BlackoutRule, ruleDescription } from "@/lib/blackouts";
@@ -667,6 +668,7 @@ export default function BxReservationsAdmin() {
               }}
             />
             <VenueSettings />
+            <RoomRates />
             <BlackoutSettings
               rules={blackouts}
               loading={blackoutsLoading}
