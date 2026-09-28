@@ -20,8 +20,8 @@
 /* ── Default (Brainerd) theme — applied when no data-theme is set ──────── */
 :root,
 [data-theme="brainerd"] {
-  --bx-ink:        #f4f7fa;
-  --bx-ink-soft:   #ffffff;
+  --bx-ink:        #F5F1EB;
+  --bx-ink-soft:   #FEFCF8;
   --bx-parchment:  #00205b;
   --bx-brass:      #00abc9;
   --bx-brass-soft: #33c1d9;
@@ -41,9 +41,9 @@
   --gray-600:       #6b7280;
   --gray-800:       #1f2937;
   --white:          #ffffff;
-  --text-muted:     rgba(0,32,91,0.55);
-  --glass-border:   rgba(0,171,201,0.15);
-  --glass-bg:       rgba(0,171,201,0.06);
+  --text-muted:     color-mix(in srgb, var(--bx-parchment) 55%, transparent);
+  --glass-border:   color-mix(in srgb, var(--bx-brass) 15%, transparent);
+  --glass-bg:       color-mix(in srgb, var(--bx-brass) 6%, transparent);
 
   /* Grid opacity — dot density vs. background contrast */
   --bx-grid-opacity: 12%;
@@ -52,7 +52,7 @@
   --shadow-1: 0 1px 2px rgba(0,0,0,0.05), 0 1px 4px rgba(0,0,0,0.08);
   --shadow-2: 0 2px 6px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.08);
   --shadow-3: 0 4px 10px rgba(0,0,0,0.09), 0 8px 28px rgba(0,0,0,0.12);
-  --shadow-warm: 0 2px 10px rgba(0,100,120,0.12), 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-warm: 0 2px 10px rgba(120,80,0,0.10), 0 1px 3px rgba(0,0,0,0.07);
 
   /* Motion tokens */
   --ease-out:      cubic-bezier(0.16, 1, 0.3, 1);
@@ -99,7 +99,7 @@
 /* ── Daylight (glass-light) ─────────────────────────────────────────────── */
 [data-theme="glass-light"] {
   --bx-ink:        #eef2f7;
-  --bx-ink-soft:   #ffffff;
+  --bx-ink-soft:   #FEFCF8;
   --bx-parchment:  #1e293b;
   --bx-brass:      #00abc9;
   --bx-brass-soft: #33c1d9;
@@ -198,7 +198,7 @@
 * { box-sizing: border-box; }
 
 html {
-  background: var(--bx-ink, #f4f7fa);
+  background: var(--bx-ink, #F5F1EB);
   scroll-behavior: smooth;
   scroll-padding-top: calc(3.5rem + env(safe-area-inset-top, 0px));
   -webkit-font-smoothing: antialiased;
