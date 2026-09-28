@@ -55,14 +55,17 @@ function statusChip(status: string) {
   const s = RESERVATION_STATUS[status] ?? { ...BADGE_FALLBACK, label: status };
   return (
     <span
+      className="bx-badge"
       style={{
         display: "inline-block",
         padding: "3px 10px",
         borderRadius: "9999px",
         fontSize: "0.8125rem",
         fontWeight: 600,
+        letterSpacing: "0.03em",
         background: s.bg,
         color: s.color,
+        border: s.border ? `1px solid ${s.border}` : undefined,
       }}
     >
       {s.label}
