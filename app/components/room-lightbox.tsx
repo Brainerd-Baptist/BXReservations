@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Room } from "@/lib/rooms";
@@ -21,7 +21,6 @@ const SETUP_LABELS: Record<string, string> = {
 
 export function RoomLightbox({ room, isSelected, isNP, onClose, onToggle, galleryMode = false }: Props) {
   const [photoIdx, setPhotoIdx] = useState(0);
-  const scrollYRef = useRef(0);
 
   // Reset photo index when room changes
   useEffect(() => { setPhotoIdx(0); }, [room?.id]);
@@ -47,25 +46,16 @@ export function RoomLightbox({ room, isSelected, isNP, onClose, onToggle, galler
     return () => window.removeEventListener("keydown", handler);
   }, [room, onClose, prev, next]);
 
-  // iOS-safe body scroll lock: fix the body in place at its current scroll position
-  // so it doesn't jump or bounce behind the modal on iOS Safari.
+  // Prevent the page behind from scrolling while the modal is open.
+  // Using overscrollBehavior on the overlay is the correct cross-platform approach —
+  // the old position:fixed body-lock trick caused the modal itself to clip on iOS.
   useEffect(() => {
     if (room) {
-      scrollYRef.current = window.scrollY;
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollYRef.current}px`;
-      document.body.style.width = "100%";
+      document.documentElement.style.overflow = "hidden";
     } else {
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.width = "";
-      window.scrollTo(0, scrollYRef.current);
+      document.documentElement.style.overflow = "";
     }
-    return () => {
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.width = "";
-    };
+    return () => { document.documentElement.style.overflow = ""; };
   }, [room]);
 
   if (!room) return null;
@@ -77,12 +67,12 @@ export function RoomLightbox({ room, isSelected, isNP, onClose, onToggle, galler
     <div
       className="fixed inset-0 z-50 overflow-y-auto"
       onClick={onClose}
-      style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)" }}
+      style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)", overscrollBehavior: "contain" }}
     >
       {/* Centering wrapper — min-h-full fills the scrollable space so items-center works
           even when content is shorter than the viewport; when content is taller the
           overlay scrolls instead of clipping the top on mobile. */}
-      <div className="flex min-h-full items-center justify-center p-4">
+      <div className="flex min-h-full items-center justify-center" style={{ padding: "max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left))" }}>
       {/* Close button — fixed to viewport so it's always reachable no matter how far the modal scrolls */}
       <button
         onClick={onClose}

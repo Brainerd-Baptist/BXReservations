@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
 
   // Send magic link invite via Supabase Auth
   const { data: inviteData, error: inviteErr } = await svc.auth.admin.inviteUserByEmail(email, {
-    redirectTo: `${appUrl}/account`,
+    redirectTo: `${appUrl}/reservations`,
     data: { bx_role: role }, // stored in user_metadata, picked up by DB trigger or post-confirm hook
   });
 

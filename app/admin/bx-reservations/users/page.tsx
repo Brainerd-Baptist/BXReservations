@@ -25,6 +25,40 @@ const ROLE_COLORS: Record<BxRole, string> = {
   ministry_coordinator: "bg-teal-100 text-teal-800 border-teal-200",
   member:               "bg-parchment/10 text-slate border-parchment/15",
 };
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function relativeTime(iso: string | null): string {
+  if (!iso) return "Never";
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins  = Math.floor(diff / 60_000);
+  const hours = Math.floor(diff / 3_600_000);
+  const days  = Math.floor(diff / 86_400_000);
+  if (mins  <  2) return "Just now";
+  if (mins  < 60) return `${mins}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days  <  7) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function Initials({ name, email }: { name: string | null; email: string }) {
+  const text = name ?? email;
+  const parts = text.trim().split(/\s+/);
+  const letters = parts.length >= 2
+    ? parts[0][0] + parts[parts.length - 1][0]
+    : text.slice(0, 2);
+  // Deterministic color from email
+  const hue = email.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
+  return (
+    <div
+      className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 uppercase"
+      style={{ background: `hsl(${hue} 35% 25%)`, color: `hsl(${hue} 60% 75%)`, border: `1px solid hsl(${hue} 40% 35%)` }}
+    >
+      {letters.toUpperCase()}
+    </div>
+  );
+}
+
+
 
 function RoleBadge({ role }: { role: BxRole | null }) {
   if (!role) return <span className="text-xs text-slate/50 italic">No role</span>;
@@ -315,8 +349,13 @@ export default function UsersPage() {
                 {filtered.map((u) => (
                   <tr key={u.id} className="hover:bg-parchment/3 transition-colors">
                     <td className="px-4 py-3">
-                      <div className="font-semibold text-parchment leading-tight">{u.display_name ?? "—"}</div>
-                      <div className="text-xs text-slate mt-0.5">{u.email}</div>
+                      <div className="flex items-center gap-2.5">
+                        <Initials name={u.display_name} email={u.email} />
+                        <div>
+                          <div className="font-semibold text-parchment leading-tight">{u.display_name ?? "—"}</div>
+                          <div className="text-xs text-slate mt-0.5">{u.email}</div>
+                        </div>
+                      </div>
                     </td>
                     <td className="px-4 py-3 hidden sm:table-cell">
                       <span className="text-slate text-xs">{u.organization ?? <span className="italic text-slate/40">—</span>}</span>
@@ -332,10 +371,16 @@ export default function UsersPage() {
                       />
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell">
-                      <span className="text-slate text-xs">{u.reservation_count ?? 0}</span>
+                      {(u.reservation_count ?? 0) > 0 ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: "color-mix(in srgb, var(--bbc-blue) 12%, transparent)", color: "var(--bbc-blue)" }}>
+                          {u.reservation_count}
+                        </span>
+                      ) : (
+                        <span className="text-slate/40 text-xs italic">None</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 hidden lg:table-cell">
-                      <span className="text-slate text-xs">{u.last_active ? new Date(u.last_active).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—"}</span>
+                      <span className={`text-xs ${u.last_active ? "text-slate" : "text-slate/40 italic"}`}>{relativeTime(u.last_active)}</span>
                     </td>
                   </tr>
                 ))}

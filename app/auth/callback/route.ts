@@ -9,7 +9,7 @@ import { NextResponse } from "next/server";
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
-  const next = requestUrl.searchParams.get("next") ?? "/account";
+  const next = requestUrl.searchParams.get("next") ?? "/reservations";
 
   if (code) {
     const cookieStore = await cookies();
@@ -69,7 +69,7 @@ export async function GET(request: Request) {
 
           // Redirect first-time users with welcome flag so the account page
           // can show a warm onboarding banner.
-          return NextResponse.redirect(new URL("/account?welcome=1", requestUrl.origin));
+          return NextResponse.redirect(new URL("/reserve?welcome=1", requestUrl.origin));
         }
       }
     }
