@@ -18,7 +18,7 @@ export function GET() {
     response_type: "code",
     client_id:     clientId,
     redirect_uri:  redirectUri,
-    scope:         "calendar",
+    scope:         "calendar people",
   });
 
   const authorizeUrl = `https://api.planningcenteronline.com/oauth/authorize?${params}`;
