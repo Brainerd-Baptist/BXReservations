@@ -60,6 +60,7 @@
 
   /* Motion tokens */
   --ease-out:      cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1);   /* spring — slight overshoot */
   --ease-in-out:   cubic-bezier(0.4, 0, 0.2, 1);
   --duration-fast: 120ms;
   --duration-base: 200ms;
@@ -329,7 +330,11 @@ select:focus {
   color: #fff;
   padding: 0.625rem 1.5rem;
   border-radius: 9999px;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition:
+    background  var(--duration-fast, 120ms) var(--ease-out, cubic-bezier(0.16,1,0.3,1)),
+    box-shadow  var(--duration-fast, 120ms) var(--ease-out, cubic-bezier(0.16,1,0.3,1)),
+    transform   var(--duration-fast, 120ms) var(--ease-spring, cubic-bezier(0.34,1.56,0.64,1));
+  will-change: transform;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -338,6 +343,10 @@ select:focus {
 .btn-primary:hover {
   background: var(--bx-brass-soft, #0090a8);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--bx-brass) 25%, transparent);
+  transform: translateY(-1px);
+}
+.btn-primary:active {
+  transform: translateY(0) scale(0.98);
 }
 
 .btn-outline {
@@ -348,11 +357,19 @@ select:focus {
   border: 1.5px solid color-mix(in srgb, var(--bx-parchment) 20%, transparent);
   padding: 0.625rem 1.5rem;
   border-radius: 9999px;
-  transition: border-color 0.2s, color 0.2s;
+  transition:
+    border-color var(--duration-fast, 120ms) var(--ease-out, cubic-bezier(0.16,1,0.3,1)),
+    color        var(--duration-fast, 120ms) var(--ease-out, cubic-bezier(0.16,1,0.3,1)),
+    transform    var(--duration-fast, 120ms) var(--ease-spring, cubic-bezier(0.34,1.56,0.64,1));
+  will-change: transform;
 }
 .btn-outline:hover {
   border-color: var(--bx-brass);
   color: var(--bx-brass);
+  transform: translateY(-1px);
+}
+.btn-outline:active {
+  transform: translateY(0) scale(0.98);
 }
 
 
@@ -453,7 +470,7 @@ html[data-grid-lines="on"] {
 
 /* ── Motion System ───────────────────────────────────────────────────────── */
 @keyframes bx-fade-up {
-  from { opacity: 0; transform: translateY(4px); }
+  from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -468,14 +485,27 @@ html[data-grid-lines="on"] {
 .animate-in-stagger > *:nth-child(3) { animation-delay: 60ms; }
 .animate-in-stagger > *:nth-child(4) { animation-delay: 90ms; }
 .animate-in-stagger > *:nth-child(5) { animation-delay:120ms; }
+.animate-in-stagger > *:nth-child(6) { animation-delay:150ms; }
+.animate-in-stagger > *:nth-child(7) { animation-delay:180ms; }
+.animate-in-stagger > *:nth-child(8) { animation-delay:210ms; }
 
 /* Card hover lift — applies to .bx-card and .bx-card-warm */
 .bx-card,
 .bx-card-warm {
   transition:
-    transform var(--duration-base, 200ms) var(--ease-out, cubic-bezier(0.16,1,0.3,1)),
+    transform var(--duration-base, 200ms) var(--ease-spring, cubic-bezier(0.34,1.56,0.64,1)),
     box-shadow var(--duration-base, 200ms) var(--ease-out, cubic-bezier(0.16,1,0.3,1));
   will-change: transform;
+}
+.bx-card:hover,
+.bx-card-warm:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-3);
+}
+.bx-card:active,
+.bx-card-warm:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-1);
 }
 
 /* Button press physics */

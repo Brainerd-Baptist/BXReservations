@@ -176,7 +176,7 @@ function ContactStep({
 
   return (
     <div className="max-w-lg mx-auto">
-      <div className="bg-ink-soft rounded-2xl border border-parchment/10 shadow-sm p-6 mb-6">
+      <div className="animate-in bg-ink-soft rounded-2xl border border-parchment/10 shadow-sm p-6 mb-6">
       <h2 className="text-2xl font-bold text-parchment mb-1">Let's get started</h2>
       <p className="text-slate mb-4">Tell us a bit about you and your event.</p>
 
@@ -395,7 +395,7 @@ function BuilderStep({
       <p className="text-slate mb-6">Set your dates, configure each day, and choose your spaces.</p>
 
       {/* Date range + default headcount */}
-      <div className="bg-ink-soft border border-parchment/10 rounded-2xl p-5 mb-6 shadow-sm">
+      <div className="animate-in bg-ink-soft border border-parchment/10 rounded-2xl p-5 mb-6 shadow-sm">
         <div className="grid grid-cols-1 gap-3 mb-4 sm:grid-cols-2 sm:gap-4 overflow-hidden">
           <Field label="Start date" required>
             <input type="date" value={startDate}
