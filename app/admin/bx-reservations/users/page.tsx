@@ -24,6 +24,7 @@ const ROLE_COLORS: Record<BxRole, string> = {
   system_admin:         "bg-violet-100 text-violet-800 border-violet-200",
   booking_admin:        "bg-blue-100 text-blue-800 border-blue-200",
   ministry_coordinator: "bg-teal-100 text-teal-800 border-teal-200",
+  brainerd_staff: "bg-green-100 text-green-800 border-green-200",
   member:               "bg-parchment/10 text-slate border-parchment/15",
 };
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -214,7 +215,7 @@ function InviteModal({
           <div>
             <label className="block text-xs font-semibold text-slate mb-1.5">Role</label>
             <div className="space-y-2">
-              {(["booking_admin", "ministry_coordinator", "member"] as BxRole[]).map((r) => (
+              {(["booking_admin", "ministry_coordinator", "brainerd_staff", "member"] as BxRole[]).map((r) => (
                 <label key={r} className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${role === r ? "border-[var(--bbc-blue)] bg-[var(--bbc-blue)]/5" : "border-parchment/10 hover:border-parchment/25"}`}>
                   <input type="radio" name="role" value={r} checked={role === r} onChange={() => setRole(r)} className="mt-0.5 accent-[var(--bbc-blue)]" />
                   <div>

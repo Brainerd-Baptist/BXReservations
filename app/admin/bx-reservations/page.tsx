@@ -1718,7 +1718,7 @@ type MockUser = {
   id: string;
   name: string;
   email: string;
-  role: "owner" | "system_admin" | "booking_admin" | "ministry_coordinator" | "member";
+  role: "owner" | "system_admin" | "booking_admin" | "ministry_coordinator" | "brainerd_staff" | "member";
   lastActive: string;
   reservationCount: number;
   orphaned?: boolean;
@@ -1770,6 +1770,7 @@ const ROLE_LABELS_DISPLAY: Record<MockUser["role"], string> = {
   system_admin: "System Admin",
   booking_admin: "Booking Admin",
   ministry_coordinator: "Ministry Coordinator",
+  brainerd_staff: "Brainerd Staff",
   member: "Member",
 };
 
@@ -1778,6 +1779,7 @@ const ROLE_BADGE_COLORS: Record<MockUser["role"], string> = {
   system_admin:         "bg-purple-100 text-purple-800 border-purple-200",
   booking_admin:        "bg-blue-100 text-blue-800 border-blue-200",
   ministry_coordinator: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  brainerd_staff: "bg-green-100 text-green-800 border-green-200",
   member:               "bg-parchment/15 text-slate border-parchment/20",
 };
 
@@ -1923,6 +1925,7 @@ function UsersTab({
                   >
                     <option value="booking_admin">Booking Admin</option>
                     <option value="ministry_coordinator">Ministry Coordinator</option>
+                    <option value="brainerd_staff">Brainerd Staff</option>
                     <option value="member">Member</option>
                   </select>
                   {pending && pending !== user.role && (

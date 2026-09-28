@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { type BxRole, can, ROLE_RANK } from "@/lib/roles";
 
-const ASSIGNABLE_ROLES: BxRole[] = ["booking_admin", "ministry_coordinator", "member"];
+const ASSIGNABLE_ROLES: BxRole[] = ["booking_admin", "ministry_coordinator", "brainerd_staff", "member"];
 
 function serviceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

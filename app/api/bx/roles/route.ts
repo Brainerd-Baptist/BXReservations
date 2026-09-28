@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 
-const VALID_ROLES = ["member", "ministry_coordinator", "booking_admin", "system_admin", "owner"];
+const VALID_ROLES = ["member", "brainerd_staff", "ministry_coordinator", "booking_admin", "system_admin", "owner"];
 
 function serviceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
