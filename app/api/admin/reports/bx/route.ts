@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  type OrgRef = { id: string; name: string; tier: string } | null;
+  type OrgRef = Array<{ id: string; name: string; tier: string }> | null;
   type Row = {
     id: string;
     status: string | null;
@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
     bx_organizations: OrgRef;
   };
 
-  const safeRows = (rows ?? []) as Row[];
+  const safeRows = (rows ?? []) as unknown as Row[];
 
   // KPI accumulation
   let total = 0;
@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
 
   for (const row of safeRows) {
     total++;
-    const org  = row.bx_organizations as OrgRef;
+    const org  = (row.bx_organizations as OrgRef)?.[0] ?? null;
     const tier = org?.tier ?? "external";
     const orgName = org?.name ?? "Unlinked";
     const rack = Number(row.rack_rate_total ?? 0);
