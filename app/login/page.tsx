@@ -5,39 +5,86 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 
+type Mode = "signin" | "signup" | "confirm_sent";
+
 export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
 
+  const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
+  const [confirmEmail, setConfirmEmail] = useState("");
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSent, setResendSent] = useState(false);
+
+  // Forgot-password state
   const [forgotMode, setForgotMode] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetSent, setResetSent] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  function switchMode(next: "signin" | "signup") {
+    setMode(next);
+    setError("");
+    setPassword("");
+  }
+
+  async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setLoading(true);
-
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-
     if (signInError) {
+      if (signInError.message.toLowerCase().includes("email not confirmed")) {
+        setConfirmEmail(email);
+        setMode("confirm_sent");
+        return;
+      }
       setError(signInError.message);
       return;
     }
-
     router.push("/account");
     router.refresh();
+  }
+
+  async function handleSignUp(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
+    const { error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { full_name: name.trim() },
+        emailRedirectTo: `${siteUrl}/auth/callback`,
+      },
+    });
+    setLoading(false);
+    if (signUpError) {
+      if (signUpError.message.toLowerCase().includes("already registered") || signUpError.message.toLowerCase().includes("user already exists")) {
+        setError("An account with this email already exists. Try signing in, or use \"Forgot password\" if you need to reset it.");
+        return;
+      }
+      setError(signUpError.message);
+      return;
+    }
+    setConfirmEmail(email);
+    setMode("confirm_sent");
+  }
+
+  async function handleResend() {
+    setResendLoading(true);
+    setResendSent(false);
+    await supabase.auth.resend({ type: "signup", email: confirmEmail });
+    setResendLoading(false);
+    setResendSent(true);
   }
 
   async function handleGoogleSignIn() {
@@ -59,10 +106,47 @@ export default function LoginPage() {
     setResetLoading(true);
     const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
     await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
-      redirectTo: `${siteUrl}/auth/reset-password`,
+      redirectTo: `${siteUrl}/auth/callback?next=/auth/reset-password`,
     });
     setResetLoading(false);
     setResetSent(true);
+  }
+
+  // ── Confirm-sent state ────────────────────────────────────────────────────
+  if (mode === "confirm_sent") {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 bg-ink">
+        <div className="w-full max-w-sm text-center space-y-5">
+          <div className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center" style={{ background: "var(--bx-brass)" }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="M2 7l10 7 10-7" /></svg>
+          </div>
+          <h1 className="text-xl font-bold text-parchment">Check your email</h1>
+          <p className="text-sm text-slate leading-relaxed">
+            We sent a confirmation link to <strong className="text-parchment">{confirmEmail}</strong>. Click it to activate your account, then come back here to sign in.
+          </p>
+          <p className="text-xs text-slate leading-relaxed">Didn&apos;t get it? Check your spam folder.</p>
+          {resendSent ? (
+            <p className="text-xs text-[var(--bx-sage)]">Another confirmation email was sent!</p>
+          ) : (
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={resendLoading}
+              className="text-xs text-brass hover:underline disabled:opacity-50"
+            >
+              {resendLoading ? "Sending…" : "Resend confirmation email"}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => { setMode("signin"); setError(""); }}
+            className="block w-full bg-brass hover:bg-brass/90 text-white font-semibold rounded-lg py-2.5 text-sm transition-colors"
+          >
+            Back to sign in
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -84,9 +168,13 @@ export default function LoginPage() {
           <p className="text-xs uppercase tracking-[0.3em] text-slate mb-4">
             BX Reservations
           </p>
-          <h1 className="text-xl font-bold text-parchment">Sign in or create an account</h1>
+          <h1 className="text-xl font-bold text-parchment">
+            {mode === "signup" ? "Create an account" : "Sign in to BX"}
+          </h1>
           <p className="text-sm text-slate mt-1.5 max-w-xs leading-relaxed">
-            New here? Your Google account doubles as your BX Reservations account — no sign-up form needed.
+            {mode === "signup"
+              ? "Use your work or personal email to create an account."
+              : "Sign in with Google or your email and password."}
           </p>
         </div>
 
@@ -100,86 +188,156 @@ export default function LoginPage() {
             className="w-full flex items-center justify-center gap-2.5 bg-ink-soft border border-parchment/20 hover:border-parchment/40 hover:bg-parchment/5 active:scale-[0.98] transition-all text-parchment font-medium rounded-lg py-3 text-sm disabled:opacity-60 shadow-sm"
           >
             <GoogleIcon size={16} />
-            {googleLoading ? "Redirecting…" : "Continue with Google"}
+            {googleLoading ? "Redirecting…" : mode === "signup" ? "Sign up with Google" : "Continue with Google"}
           </button>
 
-          {/* Google hint */}
-          <div className="flex items-start gap-2 bg-brass/5 border border-brass/20 rounded-lg px-3 py-2.5">
-            <span className="text-brass text-base leading-none mt-0.5">ℹ</span>
-            <p className="text-xs text-slate leading-relaxed">
-              Use the Google button to <strong>sign in or create a new account</strong>. First-time users are set up automatically.
-            </p>
-          </div>
+          {/* Google hint — sign-in mode only */}
+          {mode === "signin" && (
+            <div className="flex items-start gap-2 bg-brass/5 border border-brass/20 rounded-lg px-3 py-2.5">
+              <span className="text-brass text-base leading-none mt-0.5">ℹ</span>
+              <p className="text-xs text-slate leading-relaxed">
+                Use the Google button to <strong>sign in or create a new account</strong>. First-time users are set up automatically.
+              </p>
+            </div>
+          )}
 
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-parchment/10" />
-            <span className="text-[10px] uppercase tracking-wide text-slate">or sign in with email</span>
+            <span className="text-[10px] uppercase tracking-wide text-slate">
+              or {mode === "signup" ? "sign up" : "sign in"} with email
+            </span>
             <div className="flex-1 h-px bg-parchment/10" />
           </div>
 
-          {/* Email + password fallback */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate mb-1.5 uppercase tracking-wide">
-                Email
-              </label>
-              <input
-                type="email"
-                required
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full border border-parchment/20 rounded-lg py-2.5 px-3 text-sm text-parchment placeholder:text-slate/50 bg-ink focus:outline-none focus:ring-2 focus:ring-brass/40 focus:border-brass"
-                placeholder="you@example.com"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate mb-1.5 uppercase tracking-wide">
-                Password
-              </label>
-              <input
-                type="password"
-                required
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full border border-parchment/20 rounded-lg py-2.5 px-3 text-sm text-parchment placeholder:text-slate/50 bg-ink focus:outline-none focus:ring-2 focus:ring-brass/40 focus:border-brass"
-                placeholder="••••••••"
-              />
-            </div>
-
-            <div className="flex justify-end -mt-1">
-              <button
-                type="button"
-                onClick={() => { setForgotMode(true); setResetEmail(email); setError(""); }}
-                className="text-xs text-slate hover:text-brass transition-colors"
-              >
-                Forgot password?
-              </button>
-            </div>
-
-            {error && (
-              <div className="space-y-2">
+          {/* Sign-up form */}
+          {mode === "signup" && (
+            <form onSubmit={handleSignUp} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate mb-1.5 uppercase tracking-wide">Full name</label>
+                <input
+                  type="text"
+                  required
+                  autoComplete="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Your name"
+                  className="w-full border border-parchment/20 rounded-lg py-2.5 px-3 text-sm text-parchment placeholder:text-slate/50 bg-ink focus:outline-none focus:ring-2 focus:ring-brass/40 focus:border-brass"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate mb-1.5 uppercase tracking-wide">Email</label>
+                <input
+                  type="email"
+                  required
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className="w-full border border-parchment/20 rounded-lg py-2.5 px-3 text-sm text-parchment placeholder:text-slate/50 bg-ink focus:outline-none focus:ring-2 focus:ring-brass/40 focus:border-brass"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate mb-1.5 uppercase tracking-wide">Password</label>
+                <input
+                  type="password"
+                  required
+                  minLength={8}
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="At least 8 characters"
+                  className="w-full border border-parchment/20 rounded-lg py-2.5 px-3 text-sm text-parchment placeholder:text-slate/50 bg-ink focus:outline-none focus:ring-2 focus:ring-brass/40 focus:border-brass"
+                />
+              </div>
+              {error && (
                 <div className="text-sm text-red-400 bg-red-950/30 border border-red-800/40 rounded-lg px-3 py-2">
                   {error}
                 </div>
-                {error.toLowerCase().includes("invalid login credentials") && (
-                  <p className="text-xs text-slate leading-relaxed px-1">
-                    Previously signed in with Google? Use the <strong>Continue with Google</strong> button above.
-                  </p>
-                )}
-              </div>
-            )}
+              )}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-brass hover:bg-brass/90 active:scale-[0.98] transition-all text-white font-semibold rounded-lg py-2.5 text-sm disabled:opacity-60"
+              >
+                {loading ? "Creating account…" : "Create account"}
+              </button>
+              <p className="text-center text-xs text-slate">
+                Already have an account?{" "}
+                <button type="button" onClick={() => switchMode("signin")} className="text-brass hover:underline font-semibold">
+                  Sign in
+                </button>
+              </p>
+            </form>
+          )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-brass hover:bg-brass/90 active:scale-[0.98] transition-all text-white font-semibold rounded-lg py-2.5 text-sm disabled:opacity-60"
-            >
-              {loading ? "Signing in…" : "Sign in"}
-            </button>
-          </form>
+          {/* Sign-in form */}
+          {mode === "signin" && (
+            <form onSubmit={handleSignIn} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate mb-1.5 uppercase tracking-wide">Email</label>
+                <input
+                  type="email"
+                  required
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full border border-parchment/20 rounded-lg py-2.5 px-3 text-sm text-parchment placeholder:text-slate/50 bg-ink focus:outline-none focus:ring-2 focus:ring-brass/40 focus:border-brass"
+                  placeholder="you@example.com"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate mb-1.5 uppercase tracking-wide">Password</label>
+                <input
+                  type="password"
+                  required
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full border border-parchment/20 rounded-lg py-2.5 px-3 text-sm text-parchment placeholder:text-slate/50 bg-ink focus:outline-none focus:ring-2 focus:ring-brass/40 focus:border-brass"
+                  placeholder="••••••••"
+                />
+              </div>
+
+              <div className="flex justify-end -mt-1">
+                <button
+                  type="button"
+                  onClick={() => { setForgotMode(true); setResetEmail(email); setError(""); }}
+                  className="text-xs text-slate hover:text-brass transition-colors"
+                >
+                  Forgot password?
+                </button>
+              </div>
+
+              {error && (
+                <div className="space-y-2">
+                  <div className="text-sm text-red-400 bg-red-950/30 border border-red-800/40 rounded-lg px-3 py-2">
+                    {error}
+                  </div>
+                  {error.toLowerCase().includes("invalid login credentials") && (
+                    <p className="text-xs text-slate leading-relaxed px-1">
+                      Previously signed in with Google? Use the <strong>Continue with Google</strong> button above.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-brass hover:bg-brass/90 active:scale-[0.98] transition-all text-white font-semibold rounded-lg py-2.5 text-sm disabled:opacity-60"
+              >
+                {loading ? "Signing in…" : "Sign in"}
+              </button>
+
+              <p className="text-center text-xs text-slate">
+                Don&apos;t have an account?{" "}
+                <button type="button" onClick={() => switchMode("signup")} className="text-brass hover:underline font-semibold">
+                  Create one
+                </button>
+              </p>
+            </form>
+          )}
         </div>
 
         <p className="text-xs text-slate text-center mt-5 leading-relaxed px-2">

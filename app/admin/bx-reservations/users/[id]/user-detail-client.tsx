@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  ArrowLeft, User, Calendar, Building2,
+  ArrowLeft, User, Calendar, Building2, Mail,
   Check, X, Pencil, Loader2, ChevronDown,
 } from "lucide-react";
 import {
@@ -100,6 +100,8 @@ function RolePicker({ userId, current, callerRole, onSaved }: {
 }) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [resetSending, setResetSending] = useState(false);
+  const [resetDone, setResetDone] = useState(false);
   const [pending, setPending] = useState<BxRole | null>(null);
   const callerIsOwner = callerRole === "owner";
   const callerIsSysAdmin = callerRole === "system_admin";
@@ -158,12 +160,26 @@ export default function UserDetailClient({ authUser, profile: initialProfile, us
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState<Partial<UserProfile>>({});
   const [saving, setSaving] = useState(false);
+  const [resetSending, setResetSending] = useState(false);
+  const [resetDone, setResetDone] = useState(false);
 
   function startEdit() {
     setEditForm({ display_name: profile?.display_name ?? "", phone: profile?.phone ?? "", organization: profile?.organization ?? "" });
     setEditing(true);
   }
   function cancelEdit() { setEditing(false); setEditForm({}); }
+  async function sendPasswordReset() {
+    if (!window.confirm(`Send a password reset email to ${authUser.email}?`)) return;
+    setResetSending(true);
+    try {
+      const res = await fetch(`/api/admin/users/${authUser.id}/send-reset`, { method: "POST" });
+      if (!res.ok) throw new Error("Failed");
+      setResetDone(true);
+      setTimeout(() => setResetDone(false), 4000);
+    } catch { alert("Failed to send reset email."); }
+    finally { setResetSending(false); }
+  }
+
   async function saveEdit() {
     setSaving(true);
     try {
@@ -225,9 +241,23 @@ export default function UserDetailClient({ authUser, profile: initialProfile, us
                     </button>
                   </>
                 ) : (
-                  <button onClick={startEdit} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate hover:text-parchment rounded-lg border border-parchment/15 transition-colors">
-                    <Pencil size={13} /> Edit
-                  </button>
+                  <>
+                    {resetDone ? (
+                      <span className="text-xs text-[var(--bx-sage)] font-semibold px-3 py-1.5">Reset email sent!</span>
+                    ) : (
+                      <button
+                        onClick={sendPasswordReset}
+                        disabled={resetSending}
+                        title="Send password reset email"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate hover:text-brass rounded-lg border border-parchment/15 transition-colors disabled:opacity-50"
+                      >
+                        <Mail size={13} /> {resetSending ? "Sending…" : "Send reset email"}
+                      </button>
+                    )}
+                    <button onClick={startEdit} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate hover:text-parchment rounded-lg border border-parchment/15 transition-colors">
+                      <Pencil size={13} /> Edit
+                    </button>
+                  </>
                 )}
               </div>
             )}
