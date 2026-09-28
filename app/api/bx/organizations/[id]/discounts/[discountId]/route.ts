@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 import { getUserAndRole } from "@/lib/get-user-role";
+import { can } from "@/lib/roles";
 
 function adminClient() {
   return createServerClient(
@@ -18,7 +19,7 @@ export async function PATCH(
   { params }: Params
 ) {
   const { user, role } = await getUserAndRole();
-  if (!user || role !== "admin") {
+  if (!user || !can.viewAdminPanel(role)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -97,7 +98,7 @@ export async function DELETE(
   { params }: Params
 ) {
   const { user, role } = await getUserAndRole();
-  if (!user || role !== "admin") {
+  if (!user || !can.viewAdminPanel(role)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
