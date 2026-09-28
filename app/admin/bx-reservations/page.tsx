@@ -217,17 +217,6 @@ export default function BxReservationsAdmin() {
     router.replace(`/admin/bx-reservations?${params.toString()}`);
   }
 
-  // ── Users tab state ──────────────────────────────────────────────────────────
-  const [userSearch, setUserSearch] = useState("");
-  const [pendingRoles, setPendingRoles] = useState<Record<string, string>>({});
-  const [savingRole, setSavingRole] = useState<string | null>(null);
-
-  // ── Ministries tab state ─────────────────────────────────────────────────────
-  const [selectedMinistryId, setSelectedMinistryId] = useState<string | null>(null);
-  const [newMinistryName, setNewMinistryName] = useState("");
-  const [newMinistryDesc, setNewMinistryDesc] = useState("");
-  const [savingMinistry, setSavingMinistry] = useState(false);
-
   // ── Calendar events (live from DB) ──────────────────────────────────────────
   type CalEvent = { date: string; room: string; label: string; kind: "rental" | "flex" | "declined" };
   const [calendarEvents, setCalendarEvents] = useState<CalEvent[]>([]);
@@ -1518,30 +1507,36 @@ export default function BxReservationsAdmin() {
           </div>
           </>)}
 
-          {/* ── Users tab ─────────────────────────────────────────────────── */}
+          {/* ── Users tab → moved to /admin/bx-reservations/users ─────── */}
           {tab === "users" && (
-            <UsersTab
-              userSearch={userSearch}
-              setUserSearch={setUserSearch}
-              pendingRoles={pendingRoles}
-              setPendingRoles={setPendingRoles}
-              savingRole={savingRole}
-              setSavingRole={setSavingRole}
-            />
+            <div className="flex flex-col items-center justify-center py-16 gap-4">
+              <p className="text-sm" style={{ color: "var(--bx-slate)" }}>
+                User management has moved to its own page.
+              </p>
+              <a
+                href="/admin/bx-reservations/users"
+                className="px-4 py-2 rounded-lg text-sm font-medium"
+                style={{ background: "var(--bx-pine)", color: "#fff" }}
+              >
+                Go to Users →
+              </a>
+            </div>
           )}
 
-          {/* ── Ministries tab ────────────────────────────────────────────── */}
+          {/* ── Ministries tab → moved to /admin/bx-reservations/organizations */}
           {tab === "ministries" && (
-            <MinistriesTab
-              selectedMinistryId={selectedMinistryId}
-              setSelectedMinistryId={setSelectedMinistryId}
-              newMinistryName={newMinistryName}
-              setNewMinistryName={setNewMinistryName}
-              newMinistryDesc={newMinistryDesc}
-              setNewMinistryDesc={setNewMinistryDesc}
-              savingMinistry={savingMinistry}
-              setSavingMinistry={setSavingMinistry}
-            />
+            <div className="flex flex-col items-center justify-center py-16 gap-4">
+              <p className="text-sm" style={{ color: "var(--bx-slate)" }}>
+                Organizations (formerly Ministries) has moved to its own page.
+              </p>
+              <a
+                href="/admin/bx-reservations/organizations"
+                className="px-4 py-2 rounded-lg text-sm font-medium"
+                style={{ background: "var(--bx-pine)", color: "#fff" }}
+              >
+                Go to Organizations →
+              </a>
+            </div>
           )}
 
           {/* ── Reports tab ────────────────────────────────────────────────── */}
@@ -1900,431 +1895,7 @@ function BlackoutSettings({
   );
 }
 
-// ─── Mock data for Users and Ministries tabs ───────────────────────────────────
-type MockUser = {
-  id: string;
-  name: string;
-  email: string;
-  role: "owner" | "system_admin" | "booking_admin" | "ministry_coordinator" | "brainerd_staff" | "member";
-  lastActive: string;
-  reservationCount: number;
-  orphaned?: boolean;
-};
 
-type MockMinistry = {
-  id: string;
-  name: string;
-  description: string;
-  members: { userId: string; name: string; email: string; isCoordinator: boolean }[];
-  reservationCount: number;
-};
-
-const MOCK_USERS: MockUser[] = [
-  { id: "u1", name: "Josiah King",     email: "jking@brainerdbaptist.org",   role: "owner",               lastActive: "Today",    reservationCount: 12 },
-  { id: "u2", name: "Sarah Mitchell",  email: "smitchell@brainerdbaptist.org", role: "system_admin",      lastActive: "Yesterday", reservationCount: 4  },
-  { id: "u3", name: "Tom Alvarez",     email: "talvarez@brainerdbaptist.org", role: "booking_admin",       lastActive: "2 days ago", reservationCount: 2 },
-  { id: "u4", name: "Rachel Brooks",   email: "rbrooks@example.com",          role: "ministry_coordinator", lastActive: "1 week ago", reservationCount: 7 },
-  { id: "u5", name: "Mark Nguyen",     email: "mnguyen@example.com",          role: "member",              lastActive: "3 days ago", reservationCount: 3 },
-  { id: "u6", name: "Olivia Carter",   email: "ocarter@example.com",          role: "member",              lastActive: "2 weeks ago", reservationCount: 1 },
-  { id: "u7", name: "(Deleted user)",  email: "—",                            role: "member",              lastActive: "—",         reservationCount: 2, orphaned: true },
-];
-
-const MOCK_MINISTRIES: MockMinistry[] = [
-  {
-    id: "m1", name: "Youth Ministry", description: "Student ministry, grades 6–12.",
-    reservationCount: 8,
-    members: [
-      { userId: "u4", name: "Rachel Brooks", email: "rbrooks@example.com", isCoordinator: true },
-      { userId: "u5", name: "Mark Nguyen",   email: "mnguyen@example.com", isCoordinator: false },
-    ],
-  },
-  {
-    id: "m2", name: "Worship Team", description: "Sunday worship and special events.",
-    reservationCount: 5,
-    members: [
-      { userId: "u6", name: "Olivia Carter", email: "ocarter@example.com", isCoordinator: true },
-    ],
-  },
-  {
-    id: "m3", name: "Care & Counseling", description: "Pastoral care programs.",
-    reservationCount: 3,
-    members: [],
-  },
-];
-
-const ROLE_LABELS_DISPLAY: Record<MockUser["role"], string> = {
-  owner: "Owner",
-  system_admin: "System Admin",
-  booking_admin: "Booking Admin",
-  ministry_coordinator: "Ministry Coordinator",
-  brainerd_staff: "Brainerd Staff",
-  member: "Member",
-};
-
-const ROLE_BADGE_COLORS: Record<MockUser["role"], string> = {
-  owner:                "bg-amber-100 text-amber-800 border-amber-200",
-  system_admin:         "bg-purple-100 text-purple-800 border-purple-200",
-  booking_admin:        "bg-blue-100 text-blue-800 border-blue-200",
-  ministry_coordinator: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  brainerd_staff: "bg-green-100 text-green-800 border-green-200",
-  member:               "bg-parchment/15 text-slate border-parchment/20",
-};
-
-// ─── UsersTab component ────────────────────────────────────────────────────────
-function UsersTab({
-  userSearch, setUserSearch,
-  pendingRoles, setPendingRoles,
-  savingRole, setSavingRole,
-}: {
-  userSearch: string; setUserSearch: (v: string) => void;
-  pendingRoles: Record<string, string>; setPendingRoles: (v: Record<string, string>) => void;
-  savingRole: string | null; setSavingRole: (v: string | null) => void;
-}) {
-  const [users, setUsers] = useState<MockUser[]>([]);
-  const [loadingUsers, setLoadingUsers] = useState(true);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    fetch("/api/bx/users")
-      .then(r => r.json())
-      .then((json: { users?: Array<{ id: string; email: string; display_name: string | null; organization: string | null; role: string | null; reservation_count: number; last_active: string | null }> }) => {
-        setUsers((json.users ?? []).map(u => ({
-          id: u.id,
-          name: u.display_name ?? u.email,
-          email: u.email,
-          role: (u.role ?? "member") as MockUser["role"],
-          lastActive: u.last_active ? new Date(u.last_active).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "\u2014",
-          reservationCount: u.reservation_count,
-        })));
-      })
-      .catch(() => {})
-      .finally(() => setLoadingUsers(false));
-  }, []);
-  const search = userSearch.toLowerCase();
-  const filtered = users.filter(
-    u => u.name.toLowerCase().includes(search) || u.email.toLowerCase().includes(search)
-  );
-  const orphaned = users.filter(u => u.orphaned);
-
-  async function saveRole(userId: string) {
-    const newRole = pendingRoles[userId];
-    if (!newRole) return;
-    setSavingRole(userId);
-    try {
-      const res = await fetch("/api/bx/roles", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, role: newRole }),
-      });
-      if (!res.ok) {
-        const err = await res.json() as { error?: string };
-        toast(err.error ?? "Failed to save role. Please try again.", "error");
-        setSavingRole(null);
-        return;
-      }
-      setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole as MockUser["role"] } : u));
-    } catch {
-      toast("Network error saving role. Please try again.", "error");
-    }
-    setSavingRole(null);
-    setPendingRoles({ ...pendingRoles, [userId]: "" });
-  }
-
-  return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h2 className="text-lg font-bold text-parchment">User Management</h2>
-          <p className="text-sm text-slate mt-0.5">Assign roles and manage access for all BX accounts.</p>
-        </div>
-        <input
-          type="search"
-          placeholder="Search by name or email…"
-          value={userSearch}
-          onChange={e => setUserSearch(e.target.value)}
-          className="border border-parchment/20 rounded-lg px-3 py-2 text-sm bg-ink text-parchment w-64"
-        />
-      </div>
-
-      {/* Orphaned reservations alert */}
-      {orphaned.length > 0 && (
-        <div className="rounded-xl px-5 py-4" style={{ background: "color-mix(in srgb, var(--bx-brass) 10%, var(--bx-ink-soft))", border: "1px solid color-mix(in srgb, var(--bx-brass) 30%, transparent)" }}>
-          <p className="text-sm font-semibold mb-1" style={{ color: "var(--bx-brass)" }}>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 inline-block mr-1.5 -mt-0.5 opacity-80"><path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" /></svg>
-            Orphaned reservations
-          </p>
-          <p className="text-xs mb-3" style={{ color: "var(--bx-slate)" }}>
-            {orphaned.length} reservation{orphaned.length !== 1 ? "s have" : " has"} no owner because the account was deleted and no co-owner existed.
-            Reassign to a member below.
-          </p>
-          {orphaned.map(u => (
-            <div key={u.id} className="flex items-center justify-between gap-3 rounded-lg px-4 py-2 mt-2" style={{ background: "color-mix(in srgb, var(--bx-brass) 6%, var(--bx-ink))", border: "1px solid color-mix(in srgb, var(--bx-brass) 20%, transparent)" }}>
-              <span className="text-sm font-medium" style={{ color: "var(--bx-parchment)" }}>
-                {u.reservationCount} orphaned reservation{u.reservationCount !== 1 ? "s" : ""}
-              </span>
-              <button
-                className="text-xs px-3 py-1.5 rounded-lg font-semibold transition-all hover:opacity-90"
-                style={{ background: "color-mix(in srgb, var(--bx-brass) 15%, transparent)", color: "var(--bx-brass)", border: "1px solid color-mix(in srgb, var(--bx-brass) 40%, transparent)" }}
-              >
-                Reassign →
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* User list */}
-      <div className="bg-ink-soft rounded-xl border border-parchment/10 divide-y divide-parchment/5">
-        {filtered.length === 0 && (
-          <p className="px-5 py-5 text-sm text-slate">No users match your search.</p>
-        )}
-        {filtered.filter(u => !u.orphaned).map(user => {
-          const pending = pendingRoles[user.id];
-          const isSaving = savingRole === user.id;
-          return (
-            <div key={user.id} className="px-5 py-4 space-y-2.5">
-              {/* Top row: identity + stats + badge */}
-              <div className="flex items-center gap-3">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-parchment truncate">{user.name}</p>
-                  <p className="text-xs text-slate truncate">{user.email}</p>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  {/* Stats — desktop only */}
-                  <div className="text-right hidden sm:block">
-                    <p className="text-xs text-slate">{user.reservationCount} reservations</p>
-                    <p className="text-xs text-slate/60">Active {user.lastActive}</p>
-                  </div>
-                  {/* Role badge */}
-                  <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold border ${ROLE_BADGE_COLORS[user.role]}`}>
-                    {ROLE_LABELS_DISPLAY[user.role]}
-                  </span>
-                </div>
-              </div>
-
-              {/* Bottom row: role reassignment (system_admin+ only in production) */}
-              {user.role !== "owner" && (
-                <div className="flex items-center gap-2">
-                  <select
-                    value={pending || user.role}
-                    onChange={e => setPendingRoles({ ...pendingRoles, [user.id]: e.target.value })}
-                    className="flex-1 min-w-0 border border-parchment/20 rounded-lg px-2 py-1.5 text-xs bg-ink text-parchment"
-                  >
-                    <option value="booking_admin">Booking Admin</option>
-                    <option value="ministry_coordinator">Ministry Coordinator</option>
-                    <option value="brainerd_staff">Brainerd Staff</option>
-                    <option value="member">Member</option>
-                  </select>
-                  {pending && pending !== user.role && (
-                    <button
-                      onClick={() => saveRole(user.id)}
-                      disabled={isSaving}
-                      className="btn-primary text-xs disabled:opacity-40 flex-shrink-0"
-                    >
-                      {isSaving ? "Saving…" : "Save"}
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      <p className="text-xs text-slate">
-        Role changes take effect immediately. The <strong className="text-parchment">Owner</strong> role can only be transferred through account settings.
-        System Admins cannot promote to System Admin or Owner.
-      </p>
-    </div>
-  );
-}
-
-// ─── MinistriesTab component ───────────────────────────────────────────────────
-function MinistriesTab({
-  selectedMinistryId, setSelectedMinistryId,
-  newMinistryName, setNewMinistryName,
-  newMinistryDesc, setNewMinistryDesc,
-  savingMinistry, setSavingMinistry,
-}: {
-  selectedMinistryId: string | null; setSelectedMinistryId: (v: string | null) => void;
-  newMinistryName: string; setNewMinistryName: (v: string) => void;
-  newMinistryDesc: string; setNewMinistryDesc: (v: string) => void;
-  savingMinistry: boolean; setSavingMinistry: (v: boolean) => void;
-}) {
-  const [hoveredMinistryId, setHoveredMinistryId] = useState<string | null>(null);
-  const { toast } = useToast();
-  type Ministry = { id: string; name: string; description: string | null; created_at: string };
-  const [ministries, setMinistries] = useState<Ministry[]>([]);
-  const [ministriesLoading, setMinistriesLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("/api/bx/ministries")
-      .then(r => r.json())
-      .then((data: { ministries?: Ministry[] }) => {
-        if (data.ministries) setMinistries(data.ministries);
-        setMinistriesLoading(false);
-      })
-      .catch(() => setMinistriesLoading(false));
-  }, []);
-
-  const selected = ministries.find(m => m.id === selectedMinistryId) ?? null;
-
-  async function createMinistry() {
-    if (!newMinistryName.trim()) return;
-    setSavingMinistry(true);
-    try {
-      const res = await fetch("/api/bx/ministries", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newMinistryName.trim(), description: newMinistryDesc.trim() || null }),
-      });
-      const data = await res.json() as { ministry?: Ministry; error?: string };
-      if (!res.ok || !data.ministry) {
-        toast(data.error ?? "Failed to create ministry. Please try again.", "error");
-        setSavingMinistry(false);
-        return;
-      }
-      setMinistries(prev => [...prev, data.ministry!].sort((a, b) => a.name.localeCompare(b.name)));
-      setNewMinistryName("");
-      setNewMinistryDesc("");
-    } catch {
-      toast("Network error creating ministry. Please try again.", "error");
-    }
-    setSavingMinistry(false);
-  }
-
-  return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <div>
-        <h2 className="text-lg font-bold text-parchment">Ministries</h2>
-        <p className="text-sm text-slate mt-0.5">
-          Group members into ministries. Ministry Coordinators can book on behalf of their group.
-        </p>
-      </div>
-
-      <div className="grid md:grid-cols-[1fr_1.4fr] gap-5">
-        {/* Left: ministry list */}
-        <div className="space-y-3">
-          <div className="bg-ink-soft rounded-xl border border-parchment/10 divide-y divide-parchment/5">
-            {ministriesLoading ? (
-              <div className="px-4 py-4"><CardSkeleton lines={2} height="70px" /></div>
-            ) : ministries.length === 0 ? (
-              <div className="px-4 py-8 text-center text-sm text-slate">No ministries yet. Create one below.</div>
-            ) : ministries.map(m => (
-              <button
-                key={m.id}
-                onClick={() => setSelectedMinistryId(selectedMinistryId === m.id ? null : m.id)}
-                onMouseEnter={() => setHoveredMinistryId(m.id)}
-                onMouseLeave={() => setHoveredMinistryId(null)}
-                className="w-full text-left px-4 py-3.5 transition-colors cursor-pointer"
-                style={{
-                  background: selectedMinistryId === m.id
-                    ? "color-mix(in srgb, var(--bx-parchment) 12%, transparent)"
-                    : hoveredMinistryId === m.id
-                    ? "color-mix(in srgb, var(--bx-parchment) 5%, transparent)"
-                    : "transparent",
-                  borderLeft: selectedMinistryId === m.id
-                    ? "2px solid var(--bx-brass)"
-                    : "2px solid transparent",
-                }}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-parchment">{m.name}</p>
-                </div>
-                {m.description && (
-                  <p className="text-xs text-slate mt-0.5 truncate">{m.description}</p>
-                )}
-              </button>
-            ))}
-          </div>
-
-          {/* Create new ministry */}
-          <div className="bg-ink-soft rounded-xl border border-parchment/10 p-4 space-y-3">
-            <p className="text-xs font-semibold text-slate uppercase tracking-widest">New Ministry</p>
-            <input
-              type="text"
-              placeholder="Ministry name"
-              value={newMinistryName}
-              onChange={e => setNewMinistryName(e.target.value)}
-              className="w-full border border-parchment/20 rounded-lg px-3 py-2 text-sm bg-ink text-parchment"
-            />
-            <input
-              type="text"
-              placeholder="Description (optional)"
-              value={newMinistryDesc}
-              onChange={e => setNewMinistryDesc(e.target.value)}
-              className="w-full border border-parchment/20 rounded-lg px-3 py-2 text-sm bg-ink text-parchment"
-            />
-            <button
-              onClick={createMinistry}
-              disabled={savingMinistry || !newMinistryName.trim()}
-              className="btn-primary text-sm w-full disabled:opacity-40"
-            >
-              {savingMinistry ? "Creating…" : "Create Ministry"}
-            </button>
-          </div>
-        </div>
-
-        {/* Right: selected ministry detail */}
-        {selected ? (
-          <div className="bg-ink-soft rounded-xl border border-parchment/10 p-5 space-y-4">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <h3 className="text-base font-bold text-parchment">{selected.name}</h3>
-                {selected.description && (
-                  <p className="text-sm text-slate mt-0.5">{selected.description}</p>
-                )}
-              </div>
-              <button className="text-xs text-slate hover:text-parchment border border-parchment/20 rounded px-2 py-1">
-                Rename
-              </button>
-            </div>
-
-            {/* Members — placeholder until member management API is built */}
-            <div>
-              <p className="text-xs font-semibold text-slate uppercase tracking-widest mb-2">Members</p>
-              <p className="text-sm text-slate">Member management coming soon.</p>
-            </div>
-
-            {/* Add member */}
-            <div className="pt-2 border-t border-parchment/10">
-              <p className="text-xs font-semibold text-slate uppercase tracking-widest mb-2">Add Member</p>
-              <div className="flex gap-2">
-                <input
-                  type="email"
-                  placeholder="Email address"
-                  className="flex-1 border border-parchment/20 rounded-lg px-3 py-2 text-sm bg-ink text-parchment"
-                />
-                <button className="btn-primary text-sm flex-shrink-0">Add</button>
-              </div>
-              <p className="text-xs text-slate mt-1">User must have a BX account. They&apos;ll be notified by email.</p>
-            </div>
-
-            {/* Ministry reservations link */}
-            <div className="pt-2 border-t border-parchment/10">
-              <p className="text-xs text-slate">
-                Reservations under this ministry{" "}
-                <button
-                  onClick={() => setSelectedMinistryId(null)}
-                  className="text-[var(--bbc-blue)] hover:underline text-xs"
-                >
-                  View in Requests →
-                </button>
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-ink-soft rounded-xl border border-parchment/10 p-10 flex items-center justify-center text-center">
-            <div>
-              <div className="mb-3" style={{color:"var(--bx-slate)"}}><svg width="2rem" height="2rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{display:"block",margin:"0 auto"}}><path d="M3 22V9l9-7 9 7v13"/><path d="M12 2v5M9.5 4.5h5"/><path d="M9 22v-5a3 3 0 016 0v5"/></svg></div>
-              <p className="text-sm text-slate">Select a ministry to view and manage its members.</p>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 // ─── Types (Reports) ────────────────────────────────────────────────────────────
 interface ReportKpis {
   total: number;
