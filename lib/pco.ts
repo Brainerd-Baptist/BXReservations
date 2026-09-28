@@ -161,16 +161,19 @@ export async function pcoCreateEvent(opts: {
   const includedDays = days.filter(d => d.included);
 
   // 1️⃣  Create the event.
-  //     PCO auto-assigns owner from the OAuth user's Calendar person record.
-  //     Trying owner_id as explicit attribute (20206208 = Josiah) — PAT auth is
-  //     now confirmed working (we get 422 not 401), so this tests the one
-  //     untested combination. Previous "Forbidden Attribute" tests used broken tokens.
+  //     KNOWN PCO BUG (filed 2026-09-27, support ticket pending):
+  //       - No owner_id        → 422 "owner_id can't be blank"
+  //       - owner_id attribute → 422 "Forbidden Attribute: owner_id cannot be assigned"
+  //       - owner relationship → 422 "owner_id cannot be assigned"
+  //     PAT auth does NOT auto-assign owner. This is a PCO API bug.
+  //     Event creation currently always returns null (non-blocking — reservation still saves).
+  //     Backfill will run once PCO resolves the bug.
   const eventRes = await pcoFetch("/events", "POST", {
     data: {
       type: "Event",
       attributes: {
         name: eventName,
-        owner_id: 20206208,  // Josiah's PCO person ID — explicit since auto-assign fails
+        // owner_id intentionally omitted — see PCO bug note above
       },
       relationships: {
         tags: {
