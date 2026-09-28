@@ -105,7 +105,7 @@ function RolePicker({ userId, current, callerRole, onSaved }: {
   const assignable = ROLES_ORDERED.filter((r) => {
     if (r === "owner") return callerIsOwner;
     if (callerIsOwner) return true;
-    if (callerIsSysAdmin) return r !== "system_admin" && r !== "owner";
+    if (callerIsSysAdmin) return r !== "system_admin";  // r already ≠ "owner" here
     return false;
   });
   if (current === "owner" && !callerIsOwner) return <RoleBadge role="owner" />;
