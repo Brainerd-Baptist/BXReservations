@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { Search, UserPlus, Shield, ChevronDown, Check, X, Loader2, Mail } from "lucide-react";
 import { ROLES_ORDERED, ROLE_LABELS, ROLE_DESCRIPTIONS, type BxRole } from "@/lib/roles";
 
@@ -349,13 +350,13 @@ export default function UsersPage() {
                 {filtered.map((u) => (
                   <tr key={u.id} className="hover:bg-parchment/3 transition-colors">
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2.5">
+                      <Link href={`/admin/bx-reservations/users/${u.id}`} className="flex items-center gap-2.5 group">
                         <Initials name={u.display_name} email={u.email} />
                         <div>
-                          <div className="font-semibold text-parchment leading-tight">{u.display_name ?? "—"}</div>
+                          <div className="font-semibold text-parchment leading-tight group-hover:text-[var(--bbc-blue)] transition-colors">{u.display_name ?? "—"}</div>
                           <div className="text-xs text-slate mt-0.5">{u.email}</div>
                         </div>
-                      </div>
+                      </Link>
                     </td>
                     <td className="px-4 py-3 hidden sm:table-cell">
                       <span className="text-slate text-xs">{u.organization ?? <span className="italic text-slate/40">—</span>}</span>
