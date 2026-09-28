@@ -123,10 +123,10 @@ export default function GridToggle({
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium" style={{ color: "var(--bx-ink)" }}>
+          <p className="text-sm font-medium" style={{ color: "var(--bx-parchment)" }}>
             Background dots
           </p>
-          <p className="text-xs" style={{ color: "color-mix(in srgb, var(--bx-ink) 60%, transparent)" }}>
+          <p className="text-xs" style={{ color: "color-mix(in srgb, var(--bx-parchment) 60%, transparent)" }}>
             Subtle dot pattern on page backgrounds.
           </p>
         </div>
@@ -134,10 +134,10 @@ export default function GridToggle({
       </div>
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium" style={{ color: "var(--bx-ink)" }}>
+          <p className="text-sm font-medium" style={{ color: "var(--bx-parchment)" }}>
             Background grid lines
           </p>
-          <p className="text-xs" style={{ color: "color-mix(in srgb, var(--bx-ink) 60%, transparent)" }}>
+          <p className="text-xs" style={{ color: "color-mix(in srgb, var(--bx-parchment) 60%, transparent)" }}>
             Fine crosshatch pattern on page backgrounds.
           </p>
         </div>

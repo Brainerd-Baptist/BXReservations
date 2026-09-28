@@ -76,8 +76,8 @@ export function RoomLightbox({ room, isSelected, isNP, onClose, onToggle, galler
       {/* Close button — fixed to viewport so it's always reachable no matter how far the modal scrolls */}
       <button
         onClick={onClose}
-        className="fixed top-4 right-4 z-[60] w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-colors"
-        style={{ background: "rgba(0,0,0,0.65)", color: "white", border: "1px solid rgba(255,255,255,0.15)" }}
+        className="fixed z-[60] w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-colors"
+        style={{ top: "max(1rem, env(safe-area-inset-top, 1rem))", right: "max(1rem, env(safe-area-inset-right, 1rem))", background: "rgba(0,0,0,0.65)", color: "white", border: "1px solid rgba(255,255,255,0.15)" }}
         aria-label="Close"
       >
         ✕

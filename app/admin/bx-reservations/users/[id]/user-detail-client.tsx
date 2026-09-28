@@ -129,7 +129,7 @@ function RolePicker({ userId, current, callerRole, onSaved }: {
         {saving ? <><Loader2 size={12} className="animate-spin" />{display ? ROLE_LABELS[display] : "Assigning"}</> : <>{current ? ROLE_LABELS[current] : "Assign role"}<ChevronDown size={12} /></>}
       </button>
       {open && (
-        <div className="absolute z-50 left-0 mt-1 w-56 bg-[var(--bx-ink-soft)] border border-parchment/20 rounded-xl shadow-xl py-1">
+        <div className="absolute z-[500] left-0 mt-1 w-56 bg-[var(--bx-ink-soft)] border border-parchment/20 rounded-xl shadow-xl py-1">
           {assignable.map((r) => (
             <button key={r} onClick={() => pick(r)} className="w-full text-left px-3 py-2 text-xs hover:bg-parchment/5 flex items-start gap-2 group">
               <Check size={12} className={`mt-0.5 flex-shrink-0 ${current === r ? "text-[var(--bbc-blue)]" : "opacity-0 group-hover:opacity-30"}`} />

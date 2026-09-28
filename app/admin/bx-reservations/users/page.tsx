@@ -19,13 +19,13 @@ interface BxUser {
 
 // ─── Role badge ───────────────────────────────────────────────────────────────
 
-const ROLE_COLORS: Record<BxRole, string> = {
-  owner:                "bg-amber-100 text-amber-800 border-amber-200",
-  system_admin:         "bg-violet-100 text-violet-800 border-violet-200",
-  booking_admin:        "bg-blue-100 text-blue-800 border-blue-200",
-  ministry_coordinator: "bg-teal-100 text-teal-800 border-teal-200",
-  brainerd_staff: "bg-green-100 text-green-800 border-green-200",
-  member:               "bg-parchment/10 text-slate border-parchment/15",
+const ROLE_COLORS: Record<BxRole, { bg: string; text: string; border: string }> = {
+  owner:                { bg: "rgba(245,158,11,0.15)",  text: "#fbbf24",              border: "rgba(245,158,11,0.3)"  },
+  system_admin:         { bg: "rgba(139,92,246,0.15)",  text: "#a78bfa",              border: "rgba(139,92,246,0.3)"  },
+  booking_admin:        { bg: "rgba(59,130,246,0.15)",  text: "#93c5fd",              border: "rgba(59,130,246,0.3)"  },
+  ministry_coordinator: { bg: "rgba(20,184,166,0.15)",  text: "#2dd4bf",              border: "rgba(20,184,166,0.3)"  },
+  brainerd_staff:       { bg: "rgba(34,197,94,0.15)",   text: "#4ade80",              border: "rgba(34,197,94,0.3)"   },
+  member:               { bg: "rgba(100,116,139,0.12)", text: "var(--bx-slate)",      border: "rgba(100,116,139,0.25)" },
 };
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -65,7 +65,7 @@ function Initials({ name, email }: { name: string | null; email: string }) {
 function RoleBadge({ role }: { role: BxRole | null }) {
   if (!role) return <span className="text-xs text-slate/50 italic">No role</span>;
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ${ROLE_COLORS[role]}`}>
+    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border" style={{ background: ROLE_COLORS[role].bg, color: ROLE_COLORS[role].text, borderColor: ROLE_COLORS[role].border }}>
       {ROLE_LABELS[role]}
     </span>
   );

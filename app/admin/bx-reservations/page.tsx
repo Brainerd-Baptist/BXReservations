@@ -1462,14 +1462,14 @@ export default function BxReservationsAdmin() {
                     {/* ── Delete reservation (admin only) */}
                     <div className="pt-2 border-t border-red-900/20">
                       {deleteConfirm === req.id ? (
-                        <div className="rounded-xl p-4 space-y-3" style={{ background: "color-mix(in srgb, #dc2626 8%, transparent)", border: "1px solid color-mix(in srgb, #dc2626 30%, transparent)" }}>
+                        <div className="rounded-xl p-4 space-y-3" style={{ background: "color-mix(in srgb, var(--bx-parchment) 4%, transparent)", border: "1px solid color-mix(in srgb, var(--bx-clay) 35%, transparent)" }}>
                           <div className="flex gap-2.5 items-start">
                             <span className="text-base leading-none mt-0.5">⚠️</span>
                             <div>
-                              <p className="text-xs font-bold mb-0.5" style={{ color: "#f87171" }}>
+                              <p className="text-xs font-bold mb-0.5" style={{ color: "var(--bx-parchment)" }}>
                                 Permanently delete {req.id}?
                               </p>
-                              <p className="text-xs" style={{ color: "#fca5a5", opacity: 0.85 }}>
+                              <p className="text-xs" style={{ color: "color-mix(in srgb, var(--bx-parchment) 65%, transparent)" }}>
                                 Removes all comments, history, agreements, and COI files. Cannot be undone.
                               </p>
                             </div>

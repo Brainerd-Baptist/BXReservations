@@ -71,14 +71,16 @@ export default function LoginPage() {
 
         {/* Logo + label */}
         <div className="text-center mb-8 flex flex-col items-center">
-          <Image
-            src="/bx-logo.png"
-            alt="BX Community Center"
-            width={56}
-            height={56}
-            className="object-contain mb-3"
-            priority
-          />
+          <div className="rounded-2xl p-3 mb-3 flex items-center justify-center" style={{ background: "var(--bx-brass)" }}>
+            <Image
+              src="/bx-logo.png"
+              alt="BX Community Center"
+              width={48}
+              height={48}
+              className="object-contain"
+              priority
+            />
+          </div>
           <p className="text-xs uppercase tracking-[0.3em] text-slate mb-4">
             BX Reservations
           </p>
