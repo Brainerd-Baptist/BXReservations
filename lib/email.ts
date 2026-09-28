@@ -181,10 +181,11 @@ export function brandedEmailHtml(opts: {
           <!-- SECURITY FOOTER -->
           <tr>
             <td style="padding:16px 40px 40px 40px; font-family:${FONT}; font-size:12px; line-height:1.6; color:#9ca3af;">
-              <p style="margin:0;">Wasn't expecting this? Call or text
+              <p style="margin:0;">Wasn't expecting this? Call
                 <a href="tel:4236434978" style="color:#9ca3af; text-decoration:underline;">${SUPPORT_PHONE}</a>
-                before clicking anything &mdash; or email
-                <a href="mailto:${SUPPORT_EMAIL}" style="color:#9ca3af; text-decoration:underline;">${SUPPORT_EMAIL}</a>.
+                or email
+                <a href="mailto:${SUPPORT_EMAIL}" style="color:#9ca3af; text-decoration:underline;">${SUPPORT_EMAIL}</a>
+                before clicking anything.
               </p>
             </td>
           </tr>
@@ -525,6 +526,74 @@ export async function sendBookingReminder(opts: {
     from:    FROM,
     to,
     subject: `Reminder: "${eventName}" is in 48 hours — ${bookingNumber}`,
+    html,
+  });
+}
+
+/** Sent once when a new account is created (Google or email) */
+export async function sendWelcomeEmail(opts: {
+  to:   string;
+  name: string;
+}) {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn("[email] RESEND_API_KEY not set — skipping welcome email");
+    return;
+  }
+  const { to, name } = opts;
+  const firstName = name.split(" ")[0];
+
+  const html = brandedEmailHtml({
+    preheader: "Your BX Reservations account is ready — here's how to get started.",
+    headline:  "Welcome to BX Reservations.",
+    body: `
+      <p style="margin:0 0 16px 0;">Hi <strong style="color:${NAVY};">${firstName}</strong>,</p>
+      <p style="margin:0 0 16px 0;">Your account is set up and ready to go. BX is the community center
+         at Brainerd Baptist Church — available to individuals and organizations for meetings,
+         events, and private gatherings.</p>
+      <table border="0" cellpadding="0" cellspacing="0" role="presentation"
+        style="width:100%; border-collapse:collapse; margin:16px 0 0 0;">
+        <tr>
+          <td style="padding:10px 0; border-bottom:1px solid #e5e7eb; font-size:14px; color:#374151; vertical-align:top; width:22px;">
+            <strong style="color:${NAVY};">1.</strong>
+          </td>
+          <td style="padding:10px 0 10px 10px; border-bottom:1px solid #e5e7eb; font-size:14px; color:#374151;">
+            <strong>Browse available spaces</strong> — see floor plans, room capacities, and availability before you request.
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:10px 0; border-bottom:1px solid #e5e7eb; font-size:14px; color:#374151; vertical-align:top;">
+            <strong style="color:${NAVY};">2.</strong>
+          </td>
+          <td style="padding:10px 0 10px 10px; border-bottom:1px solid #e5e7eb; font-size:14px; color:#374151;">
+            <strong>Submit a request</strong> — fill in your event details and submit. Our team reviews every request and will be in touch within 1–2 business days.
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:10px 0; font-size:14px; color:#374151; vertical-align:top;">
+            <strong style="color:${NAVY};">3.</strong>
+          </td>
+          <td style="padding:10px 0 10px 10px; font-size:14px; color:#374151;">
+            <strong>Track your booking</strong> — log in anytime to see the status of your reservation and any updates from the team.
+          </td>
+        </tr>
+      </table>`,
+    ctaText: "Reserve a Space",
+    ctaUrl:  SITE_URL + "/reserve",
+    footnoteHtml: `
+      <p style="margin:0 0 10px 0;">
+        Questions? Call <a href="tel:4236434978" style="color:${TEAL}; text-decoration:underline;">${SUPPORT_PHONE}</a>
+        or email <a href="mailto:${SUPPORT_EMAIL}" style="color:${TEAL}; text-decoration:underline;">${SUPPORT_EMAIL}</a>.
+      </p>
+      <p style="margin:0; color:#9ca3af; font-size:12px; line-height:1.6;">
+        BX is part of Brainerd Baptist Church — we offer programs for kids, students, and adults and would love to have you visit.
+        <a href="https://www.brainerdbaptist.org" style="color:#9ca3af; text-decoration:underline;">brainerdbaptist.org</a>
+      </p>`,
+  });
+
+  await getResend().emails.send({
+    from:    FROM,
+    to,
+    subject: "Welcome to BX Reservations",
     html,
   });
 }

@@ -5,6 +5,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { sendWelcomeEmail } from "@/lib/email";
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
@@ -63,15 +64,18 @@ export async function GET(request: Request) {
         );
 
       // ── First-run profile seeding ────────────────────────────────────────
+      // ── Detect first-time user (no profile yet) ─────────────────────────────
+      const { data: existing } = await adminClient
+        .from("bx_user_profiles")
+        .select("display_name")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      const isNewUser = !existing?.display_name;
+
       if (googleName) {
         // Only set display_name if the profile row has no name yet (never overwrite)
-        const { data: existing } = await adminClient
-          .from("bx_user_profiles")
-          .select("display_name")
-          .eq("user_id", userId)
-          .maybeSingle();
-
-        if (!existing?.display_name) {
+        if (isNewUser) {
           await adminClient
             .from("bx_user_profiles")
             .upsert(
@@ -79,10 +83,34 @@ export async function GET(request: Request) {
               { onConflict: "user_id", ignoreDuplicates: false }
             );
 
+          // Send welcome email for first-time Google sign-ups (fire-and-forget)
+          sendWelcomeEmail({ to: userEmail, name: googleName }).catch((err) =>
+            console.error("[auth/callback] welcome email failed:", err)
+          );
+
           // Redirect first-time users with welcome flag so the account page
           // can show a warm onboarding banner.
           return NextResponse.redirect(new URL("/reserve?welcome=1", requestUrl.origin));
         }
+      } else if (isNewUser) {
+        // Email/password sign-up — no googleName but also no profile yet.
+        // Seed the profile from Supabase auth metadata (set during sign-up form).
+        const authName =
+          sessionData.user.user_metadata?.full_name ||
+          sessionData.user.user_metadata?.name ||
+          "";
+        if (authName) {
+          await adminClient
+            .from("bx_user_profiles")
+            .upsert(
+              { user_id: userId, display_name: authName },
+              { onConflict: "user_id", ignoreDuplicates: true }
+            );
+        }
+        // Send welcome email for first-time email sign-ups (fire-and-forget)
+        sendWelcomeEmail({ to: userEmail, name: authName || userEmail }).catch(
+          (err) => console.error("[auth/callback] welcome email failed:", err)
+        );
       }
     }
   }
