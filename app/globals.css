@@ -361,7 +361,7 @@ body::after {
   content: "";
   position: fixed;
   inset: 0;
-  z-index: -1;
+  z-index: 0;
   background-image: var(--bx-active-dots, none), var(--bx-active-lines, none);
   background-size: 28px 28px, 28px 28px;
   pointer-events: none;
@@ -371,7 +371,7 @@ body::after {
 html[data-grid-dots="on"] {
   --bx-active-dots: radial-gradient(
     circle at center,
-    color-mix(in srgb, var(--bx-parchment) var(--bx-grid-opacity, 5%), transparent) 1px,
+    color-mix(in srgb, var(--bx-parchment) var(--bx-grid-opacity, 18%), transparent) 1px,
     transparent 1px
   );
 }
@@ -379,8 +379,8 @@ html[data-grid-dots="on"] {
 /* Line pattern — enabled when data-grid-lines="on" */
 html[data-grid-lines="on"] {
   --bx-active-lines:
-    linear-gradient(color-mix(in srgb, var(--bx-parchment) var(--bx-grid-opacity, 5%), transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in srgb, var(--bx-parchment) var(--bx-grid-opacity, 5%), transparent) 1px, transparent 1px);
+    linear-gradient(color-mix(in srgb, var(--bx-parchment) var(--bx-grid-opacity, 18%), transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--bx-parchment) var(--bx-grid-opacity, 18%), transparent) 1px, transparent 1px);
 }
 
 
