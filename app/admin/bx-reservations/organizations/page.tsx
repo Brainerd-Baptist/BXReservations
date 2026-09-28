@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getUserAndRole } from "@/lib/get-user-role";
 import { can } from "@/lib/roles";
-import { createClient } from "@/lib/supabase/server";
+import { createServerClient } from "@supabase/ssr";
 import OrganizationsClient from "./organizations-client";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -26,7 +26,11 @@ export default async function OrganizationsPage() {
   if (!user) redirect("/login");
   if (!can.viewAdminPanel(role)) redirect("/account");
 
-  const supabase = await createClient();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { cookies: { getAll: () => [], setAll: () => {} } }
+  );
   const { data: rawOrgs, error } = await supabase
     .from("bx_organizations")
     .select(

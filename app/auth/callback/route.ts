@@ -39,19 +39,31 @@ export async function GET(request: Request) {
     // profile-completion step.
     if (sessionData?.user) {
       const userId = sessionData.user.id;
+      const userEmail = sessionData.user.email ?? "";
       const googleName =
         sessionData.user.user_metadata?.full_name ||
         sessionData.user.user_metadata?.name ||
         null;
 
-      if (googleName) {
-        // Use service-role client so we can upsert even before RLS is warmed up
-        const adminClient = createServerClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.SUPABASE_SERVICE_ROLE_KEY!,
-          { cookies: { getAll: () => [], setAll: () => {} } }
+      // Use service-role client so we can upsert even before RLS is warmed up
+      const adminClient = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        { cookies: { getAll: () => [], setAll: () => {} } }
+      );
+
+      // ── Default role seeding ─────────────────────────────────────────────
+      // Every new Google user gets the "member" role. ignoreDuplicates ensures
+      // we never overwrite a role that an admin has already assigned.
+      await adminClient
+        .from("bx_user_roles")
+        .upsert(
+          { user_id: userId, email: userEmail, role: "member" },
+          { onConflict: "user_id", ignoreDuplicates: true }
         );
 
+      // ── First-run profile seeding ────────────────────────────────────────
+      if (googleName) {
         // Only set display_name if the profile row has no name yet (never overwrite)
         const { data: existing } = await adminClient
           .from("bx_user_profiles")
