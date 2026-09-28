@@ -53,6 +53,7 @@ const ROLE_COLORS: Record<BxRole, { bg: string; text: string }> = {
   system_admin:         { bg: "rgba(124,58,237,0.15)",  text: "#a78bfa" },
   booking_admin:        { bg: "rgba(59,130,246,0.15)",  text: "#60a5fa" },
   ministry_coordinator: { bg: "rgba(20,184,166,0.15)",  text: "#2dd4bf" },
+  brainerd_staff:       { bg: "rgba(34,197,94,0.15)",   text: "#4ade80" },
   member:               { bg: "rgba(100,116,139,0.12)", text: "var(--bx-slate)" },
 };
 
