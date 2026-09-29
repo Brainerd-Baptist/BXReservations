@@ -909,7 +909,7 @@ export default function BxReservationsAdmin() {
                             <div className="space-y-1.5 max-h-48 overflow-y-auto">
                               {entries.map(h => (
                                 <div key={h.id} className="flex gap-3 text-xs">
-                                  <span className="text-slate/60 flex-shrink-0 pt-0.5">{new Date(h.created_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span>
+                                  <span className="text-slate/60 flex-shrink-0 pt-0.5">{new Date(h.created_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "America/New_York" })}</span>
                                   <div className="flex-1">
                                     <span className="text-parchment font-medium">{h.actor_name || h.actor_role}</span>
                                     {h.to_status && <span className="text-slate"> → <span className="font-semibold text-parchment/80">{h.to_status.replace(/_/g, " ")}</span></span>}

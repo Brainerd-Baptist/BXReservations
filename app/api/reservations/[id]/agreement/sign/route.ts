@@ -90,7 +90,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     y -= lineH * 2;
     drawLine("─────────────────────────────────────────────────────", false);
     drawLine(`Signed by: ${typedName}`, true);
-    drawLine(`Date/Time: ${new Date(signedAt).toLocaleString("en-US", { timeZone: "America/Chicago", dateStyle: "full", timeStyle: "long" })} (Central)`, false);
+    drawLine(`Date/Time: ${new Date(signedAt).toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "full", timeStyle: "long" })} (Eastern)`, false);
     drawLine(`IP Address: ${ip}`, false);
     drawLine("Reservation: " + (res.booking_number ?? res.id.slice(0, 8)), false);
 
@@ -150,7 +150,7 @@ export async function POST(req: NextRequest, { params }: Params) {
                 reservation <strong style="color:#00205b;">${res.booking_number ?? res.id.slice(0, 8)}</strong> — ${res.event_name}.
               </p>
               <p style="margin:0 0 20px 0; padding:12px 16px; background-color:#f3f4f6; border-radius:8px; color:#374151; font-size:13px;">
-                Signed ${new Date(signedAt).toLocaleString("en-US", { timeZone: "America/Chicago", dateStyle: "full", timeStyle: "long" })} CT
+                Signed ${new Date(signedAt).toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "full", timeStyle: "long" })} ET
               </p>
             `,
             ctaText: "View in Admin Dashboard",

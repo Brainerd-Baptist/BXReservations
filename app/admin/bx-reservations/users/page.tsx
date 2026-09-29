@@ -20,12 +20,12 @@ interface BxUser {
 // ─── Role badge ───────────────────────────────────────────────────────────────
 
 const ROLE_COLORS: Record<BxRole, { bg: string; text: string; border: string }> = {
-  owner:                { bg: "rgba(245,158,11,0.15)",  text: "#fbbf24",              border: "rgba(245,158,11,0.3)"  },
-  system_admin:         { bg: "rgba(139,92,246,0.15)",  text: "#a78bfa",              border: "rgba(139,92,246,0.3)"  },
-  booking_admin:        { bg: "rgba(59,130,246,0.15)",  text: "#93c5fd",              border: "rgba(59,130,246,0.3)"  },
-  ministry_coordinator: { bg: "rgba(20,184,166,0.15)",  text: "#2dd4bf",              border: "rgba(20,184,166,0.3)"  },
-  brainerd_staff:       { bg: "rgba(34,197,94,0.15)",   text: "#4ade80",              border: "rgba(34,197,94,0.3)"   },
-  member:               { bg: "rgba(100,116,139,0.12)", text: "var(--bx-slate)",      border: "rgba(100,116,139,0.25)" },
+  owner:                { bg: "#FEF3C7", text: "#92400E", border: "#FCD34D" },
+  system_admin:         { bg: "#EDE9FE", text: "#5B21B6", border: "#C4B5FD" },
+  booking_admin:        { bg: "#DBEAFE", text: "#1E40AF", border: "#93C5FD" },
+  ministry_coordinator: { bg: "#CCFBF1", text: "#0F766E", border: "#5EEAD4" },
+  brainerd_staff:       { bg: "#DCFCE7", text: "#15803D", border: "#86EFAC" },
+  member:               { bg: "#F1F5F9", text: "#475569", border: "#CBD5E1" },
 };
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

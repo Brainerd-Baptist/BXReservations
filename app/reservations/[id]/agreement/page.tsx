@@ -55,7 +55,7 @@ export default async function AgreementPage({ params, searchParams }: Props) {
         {/* Header */}
         <div style={{ marginBottom: "2rem", paddingBottom: "1.25rem", borderBottom: "1px solid color-mix(in srgb, var(--bx-parchment) 12%, transparent)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.5rem" }}>
-            <span style={{ fontSize: "1.25rem" }}>✦</span>
+            
             <span style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--bx-brass)" }}>Brainerd Baptist · BX Reservations</span>
           </div>
           <h1 style={{ margin: 0, fontSize: "1.5rem", fontWeight: 700 }}>Facility Use Agreement</h1>
@@ -69,7 +69,7 @@ export default async function AgreementPage({ params, searchParams }: Props) {
             <p style={{ margin: 0, fontWeight: 700, fontSize: "1rem" }}>✓ Agreement already signed</p>
             <p style={{ margin: "0.35rem 0 0", fontSize: "0.875rem" }}>
               Signed by <strong>{agreement.customer_name}</strong> on{" "}
-              {new Date(agreement.customer_signed_at!).toLocaleString("en-US", { dateStyle: "long", timeStyle: "short" })}.
+              {new Date(agreement.customer_signed_at!).toLocaleString("en-US", { dateStyle: "long", timeStyle: "short", timeZone: "America/New_York" })}.
               No further action needed.
             </p>
           </div>
