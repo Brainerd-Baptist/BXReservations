@@ -2,8 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { type BxRole, can, ROLE_RANK } from "@/lib/roles";
+import { brandedEmailHtml, sendEmail } from "@/lib/email";
 
 const ASSIGNABLE_ROLES: BxRole[] = ["booking_admin", "ministry_coordinator", "brainerd_staff", "member"];
+
+const ROLE_LABELS: Record<BxRole, string> = {
+  owner:                "Owner",
+  system_admin:         "System Admin",
+  booking_admin:        "Booking Admin",
+  ministry_coordinator: "Ministry Coordinator",
+  brainerd_staff:       "Brainerd Staff",
+  member:               "Member",
+};
 
 function serviceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -53,27 +63,37 @@ export async function POST(req: NextRequest) {
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://bx.brainerdhq.app";
 
-  // Send magic link invite via Supabase Auth
-  const { data: inviteData, error: inviteErr } = await svc.auth.admin.inviteUserByEmail(email, {
-    redirectTo: `${appUrl}/reservations`,
-    data: { bx_role: role }, // stored in user_metadata, picked up by DB trigger or post-confirm hook
+  // Generate an invite link via Supabase Admin — this creates the user and returns
+  // an action link WITHOUT sending Supabase's generic "You've been invited" email,
+  // so we can send our own fully branded invitation email via Resend.
+  const { data: linkData, error: linkErr } = await svc.auth.admin.generateLink({
+    type: "invite",
+    email,
+    options: {
+      redirectTo: `${appUrl}/reservations`,
+      data: { bx_role: role },
+    },
   });
 
-  if (inviteErr) {
-    console.error("[bx/invite]", inviteErr);
-    return NextResponse.json({ error: inviteErr.message }, { status: 500 });
+  if (linkErr) {
+    console.error("[bx/invite] generateLink error:", linkErr);
+    return NextResponse.json({ error: linkErr.message }, { status: 500 });
+  }
+
+  const inviteUrl = linkData?.properties?.action_link;
+  if (!inviteUrl) {
+    console.error("[bx/invite] No action_link returned from generateLink");
+    return NextResponse.json({ error: "Failed to generate invite link" }, { status: 500 });
   }
 
   // Pre-assign the role and profile so everything is ready when they confirm
-  if (inviteData?.user?.id) {
-    const invitedUserId = inviteData.user.id;
-
+  const invitedUserId = linkData?.user?.id;
+  if (invitedUserId) {
     await svc.from("bx_user_roles").upsert(
       { user_id: invitedUserId, role, assigned_by: user.id, assigned_at: new Date().toISOString() },
       { onConflict: "user_id" }
     );
 
-    // Seed the profile if name or org were provided so the admin sees them immediately
     if (name || organization) {
       await svc.from("bx_user_profiles").upsert(
         {
@@ -84,6 +104,50 @@ export async function POST(req: NextRequest) {
         { onConflict: "user_id" }
       );
     }
+  }
+
+  // Send branded invitation email via Resend
+  const firstName = name ? name.split(" ")[0] : null;
+  const roleLabel = ROLE_LABELS[role as BxRole] ?? role;
+  const NAVY = "#00205b";
+  const TEAL = "#00abc9";
+
+  const html = brandedEmailHtml({
+    preheader: `You've been invited to BX Reservations at Brainerd Baptist Church.`,
+    headline:  "You're invited to BX Reservations.",
+    body: `
+      <p style="margin:0 0 16px 0;">Hi${firstName ? ` <strong style="color:${NAVY};">${firstName}</strong>` : ""},</p>
+      <p style="margin:0 0 16px 0;">
+        You've been invited to <strong>BX Reservations</strong> — the facility booking system
+        for Brainerd Baptist Church. Your account has been set up with the role of
+        <strong style="color:${NAVY};">${roleLabel}</strong>.
+      </p>
+      <p style="margin:0 0 16px 0;">
+        BX is the community center at Brainerd Baptist — available for meetings, events,
+        and private gatherings. Once you accept this invitation, you can log in and get started.
+      </p>
+      <p style="margin:0; color:#6b7280; font-size:13px;">
+        This invitation link expires in 24 hours. If you didn't expect this email, you can safely ignore it.
+      </p>`,
+    ctaText:     "Accept Invitation",
+    ctaUrl:      inviteUrl,
+    footnoteHtml: `
+      <p style="margin:0 0 10px 0;">
+        Questions? Email
+        <a href="mailto:BXreservations@brainerdbaptist.org" style="color:${TEAL}; text-decoration:underline;">BXreservations@brainerdbaptist.org</a>
+        or call <a href="tel:4236434978" style="color:${TEAL}; text-decoration:underline;">(423) 643-4978</a>.
+      </p>`,
+  });
+
+  try {
+    await sendEmail({
+      to:      email,
+      subject: "You've been invited to BX Reservations",
+      html,
+    });
+  } catch (emailErr) {
+    // Don't fail the whole invite if email sending fails — the link was generated.
+    console.error("[bx/invite] Resend error:", emailErr);
   }
 
   return NextResponse.json({ ok: true, email });

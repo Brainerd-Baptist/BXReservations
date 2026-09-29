@@ -73,4 +73,4 @@ export function applyTheme(id: ThemeId) {
 }
 
 // Blocking inline script — inlined into <head> before first paint to prevent flash.
-export const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem("bx-reservations-theme");if(t)document.documentElement.setAttribute("data-theme",t);var d=localStorage.getItem("bx-reservations-grid-dots");if(d==="on")document.documentElement.setAttribute("data-grid-dots","on");var l=localStorage.getItem("bx-reservations-grid-lines");if(l==="on")document.documentElement.setAttribute("data-grid-lines","on");}catch(e){}})();`;
+export const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem("bx-reservations-theme");if(t)document.documentElement.setAttribute("data-theme",t);var d=localStorage.getItem("bx-reservations-grid-dots");if(d===null||d==="on")document.documentElement.setAttribute("data-grid-dots","on");var l=localStorage.getItem("bx-reservations-grid-lines");if(l==="on")document.documentElement.setAttribute("data-grid-lines","on");}catch(e){}})();`;
