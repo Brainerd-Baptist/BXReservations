@@ -105,6 +105,7 @@ export const can = {
   approveReservations: (role: BxRole | null) => hasRole(role, "booking_admin"),
   configureSystem: (role: BxRole | null) => hasRole(role, "system_admin"),
   manageUsers: (role: BxRole | null) => hasRole(role, "system_admin"),
+  deleteUser:   (role: BxRole | null) => hasRole(role, "system_admin"),
   manageMinistries: (role: BxRole | null) => hasRole(role, "system_admin"),
   impersonate: (role: BxRole | null) => role === "owner",
   assignRole: (

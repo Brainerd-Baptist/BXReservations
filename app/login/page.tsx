@@ -15,6 +15,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
@@ -61,7 +62,7 @@ export default function LoginPage() {
     const res = await fetch("/api/auth/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, name: name.trim(), redirectTo: `${siteUrl}/auth/callback` }),
+      body: JSON.stringify({ email, password, name: [name.trim(), lastName.trim()].filter(Boolean).join(" "), redirectTo: `${siteUrl}/auth/callback` }),
     });
     const data = await res.json();
     setLoading(false);
@@ -217,17 +218,31 @@ export default function LoginPage() {
           {/* Sign-up form */}
           {mode === "signup" && (
             <form onSubmit={handleSignUp} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate mb-1.5 uppercase tracking-wide">Full name</label>
-                <input
-                  type="text"
-                  required
-                  autoComplete="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Your name"
-                  className="w-full border border-parchment/20 rounded-lg py-2.5 px-3 text-sm text-parchment placeholder:text-slate/50 bg-ink focus:outline-none focus:ring-2 focus:ring-brass/40 focus:border-brass"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate mb-1.5 uppercase tracking-wide">First name</label>
+                  <input
+                    type="text"
+                    required
+                    autoComplete="given-name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="First"
+                    className="w-full border border-parchment/20 rounded-lg py-2.5 px-3 text-sm text-parchment placeholder:text-slate/50 bg-ink focus:outline-none focus:ring-2 focus:ring-brass/40 focus:border-brass"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate mb-1.5 uppercase tracking-wide">Last name</label>
+                  <input
+                    type="text"
+                    required
+                    autoComplete="family-name"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Last"
+                    className="w-full border border-parchment/20 rounded-lg py-2.5 px-3 text-sm text-parchment placeholder:text-slate/50 bg-ink focus:outline-none focus:ring-2 focus:ring-brass/40 focus:border-brass"
+                  />
+                </div>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate mb-1.5 uppercase tracking-wide">Email</label>

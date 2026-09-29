@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { Search, UserPlus, Shield, ChevronDown, Check, X, Loader2, Mail } from "lucide-react";
-import { ROLES_ORDERED, ROLE_LABELS, ROLE_DESCRIPTIONS, type BxRole } from "@/lib/roles";
+import { Search, UserPlus, Shield, ChevronDown, Check, X, Loader2, Mail, Trash2 } from "lucide-react";
+import { can, ROLES_ORDERED, ROLE_LABELS, ROLE_DESCRIPTIONS, type BxRole } from "@/lib/roles";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -158,7 +158,8 @@ function InviteModal({
   onClose: () => void;
   onInvited: () => void;
 }) {
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [org, setOrg] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<BxRole>("member");
@@ -166,13 +167,14 @@ function InviteModal({
   const [sent, setSent] = useState(false);
 
   async function send() {
-    if (!email.trim()) return;
+    if (!email.trim() || !firstName.trim() || !lastName.trim()) return;
+    const fullName = `${firstName.trim()} ${lastName.trim()}`;
     setSending(true);
     try {
       const res = await fetch("/api/bx/invite", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), role, name: name.trim() || undefined, organization: org.trim() || undefined }),
+        body: JSON.stringify({ email: email.trim(), role, name: fullName, organization: org.trim() || undefined }),
       });
       if (!res.ok) throw new Error("Failed");
       setSent(true);
@@ -200,15 +202,29 @@ function InviteModal({
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate mb-1.5">Name <span className="font-normal text-slate/60">(optional)</span></label>
+              <label className="block text-xs font-semibold text-slate mb-1.5">First name <span className="text-red-400">*</span></label>
               <input
                 type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Jane Smith"
+                required
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="Jane"
                 className="w-full bg-ink border border-parchment/15 text-parchment text-sm rounded-lg px-3 py-2.5 placeholder-slate/50 focus:outline-none focus:ring-2 focus:ring-[var(--bbc-blue)]"
               />
             </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate mb-1.5">Last name <span className="text-red-400">*</span></label>
+              <input
+                type="text"
+                required
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder="Smith"
+                className="w-full bg-ink border border-parchment/15 text-parchment text-sm rounded-lg px-3 py-2.5 placeholder-slate/50 focus:outline-none focus:ring-2 focus:ring-[var(--bbc-blue)]"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate mb-1.5">Organization <span className="font-normal text-slate/60">(optional)</span></label>
               <input
@@ -221,7 +237,7 @@ function InviteModal({
             </div>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate mb-1.5">Email address</label>
+            <label className="block text-xs font-semibold text-slate mb-1.5">Email address <span className="text-red-400">*</span></label>
             <input
               type="email"
               value={email}
@@ -252,7 +268,7 @@ function InviteModal({
           <button onClick={onClose} className="px-4 py-2 text-sm text-slate hover:text-parchment rounded-lg transition-colors">Cancel</button>
           <button
             onClick={send}
-            disabled={!email.trim() || sending || sent}
+            disabled={!email.trim() || !firstName.trim() || !lastName.trim() || sending || sent}
             className="px-4 py-2 text-sm font-semibold bg-[var(--bbc-blue)] text-white rounded-lg disabled:opacity-50 flex items-center gap-2 hover:opacity-90 transition-opacity"
           >
             {sent ? <><Check size={14} /> Sent!</> : sending ? <><Loader2 size={14} className="animate-spin" /> Sending…</> : <><Mail size={14} /> Send invite</>}
@@ -271,6 +287,9 @@ export default function UsersPage() {
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState<BxRole | "all">("all");
   const [callerRole, setCallerRole] = useState<BxRole>("system_admin");
+  const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
 
   const load = useCallback(async () => {
@@ -365,6 +384,7 @@ export default function UsersPage() {
                   <th className="px-4 py-3 text-xs font-semibold text-slate">Role</th>
                   <th className="px-4 py-3 text-xs font-semibold text-slate hidden md:table-cell">Reservations</th>
                   <th className="px-4 py-3 text-xs font-semibold text-slate hidden lg:table-cell">Last active</th>
+                  {can.deleteUser(callerRole) && <th className="px-4 py-3 w-16" />}
                 </tr>
               </thead>
               <tbody className="divide-y divide-parchment/5">
@@ -404,6 +424,52 @@ export default function UsersPage() {
                     <td className="px-4 py-3 hidden lg:table-cell">
                       <span className={`text-xs ${u.last_active ? "text-slate" : "text-slate/40 italic"}`}>{relativeTime(u.last_active)}</span>
                     </td>
+                    {can.deleteUser(callerRole) && u.role !== "owner" && (
+                      <td className="px-4 py-3">
+                        {deleteConfirmId === u.id ? (
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={async () => {
+                                setDeleting(true);
+                                try {
+                                  const res = await fetch(`/api/admin/users/${u.id}/delete`, { method: "DELETE" });
+                                  if (res.ok) {
+                                    setUsers((prev) => prev.filter((x) => x.id !== u.id));
+                                  } else {
+                                    const j = await res.json();
+                                    alert(j.error ?? "Delete failed");
+                                  }
+                                } finally {
+                                  setDeleting(false);
+                                  setDeleteConfirmId(null);
+                                }
+                              }}
+                              disabled={deleting}
+                              className="px-2 py-1 text-xs font-semibold bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 transition-colors"
+                            >
+                              {deleting ? "…" : "Confirm"}
+                            </button>
+                            <button
+                              onClick={() => setDeleteConfirmId(null)}
+                              className="px-2 py-1 text-xs text-slate hover:text-parchment rounded transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setDeleteConfirmId(u.id)}
+                            title="Delete user"
+                            className="p-1.5 text-slate/40 hover:text-red-500 rounded transition-colors"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </td>
+                    )}
+                    {can.deleteUser(callerRole) && u.role === "owner" && (
+                      <td className="px-4 py-3" />
+                    )}
                   </tr>
                 ))}
               </tbody>
