@@ -19,14 +19,7 @@ interface BxUser {
 
 // ─── Role badge ───────────────────────────────────────────────────────────────
 
-const ROLE_COLORS: Record<BxRole, { bg: string; text: string; border: string }> = {
-  owner:                { bg: "#FEF3C7", text: "#92400E", border: "#FCD34D" },
-  system_admin:         { bg: "#EDE9FE", text: "#5B21B6", border: "#C4B5FD" },
-  booking_admin:        { bg: "#DBEAFE", text: "#1E40AF", border: "#93C5FD" },
-  ministry_coordinator: { bg: "#CCFBF1", text: "#0F766E", border: "#5EEAD4" },
-  brainerd_staff:       { bg: "#DCFCE7", text: "#15803D", border: "#86EFAC" },
-  member:               { bg: "#F1F5F9", text: "#475569", border: "#CBD5E1" },
-};
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function relativeTime(iso: string | null): string {
@@ -65,7 +58,10 @@ function Initials({ name, email }: { name: string | null; email: string }) {
 function RoleBadge({ role }: { role: BxRole | null }) {
   if (!role) return <span className="text-xs text-slate/50 italic">No role</span>;
   return (
-    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border" style={{ background: ROLE_COLORS[role].bg, color: ROLE_COLORS[role].text, borderColor: ROLE_COLORS[role].border }}>
+    <span
+      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+      style={{ background: "rgba(0,32,91,0.06)", color: "#374151", border: "1px solid rgba(0,32,91,0.12)" }}
+    >
       {ROLE_LABELS[role]}
     </span>
   );

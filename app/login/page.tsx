@@ -58,21 +58,19 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
-    const { error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: name.trim() },
-        emailRedirectTo: `${siteUrl}/auth/callback`,
-      },
+    const res = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, name: name.trim(), redirectTo: `${siteUrl}/auth/callback` }),
     });
+    const data = await res.json();
     setLoading(false);
-    if (signUpError) {
-      if (signUpError.message.toLowerCase().includes("already registered") || signUpError.message.toLowerCase().includes("user already exists")) {
+    if (!res.ok) {
+      if (data.error === "already_exists" || res.status === 409) {
         setError("An account with this email already exists. Try signing in, or use \"Forgot password\" if you need to reset it.");
         return;
       }
-      setError(signUpError.message);
+      setError(data.error ?? "Sign up failed. Please try again.");
       return;
     }
     setConfirmEmail(email);
@@ -82,7 +80,12 @@ export default function LoginPage() {
   async function handleResend() {
     setResendLoading(true);
     setResendSent(false);
-    await supabase.auth.resend({ type: "signup", email: confirmEmail });
+    const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
+    await fetch("/api/auth/resend-confirmation", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: confirmEmail, redirectTo: `${siteUrl}/auth/callback` }),
+    });
     setResendLoading(false);
     setResendSent(true);
   }
@@ -105,8 +108,10 @@ export default function LoginPage() {
     if (!resetEmail.trim()) return;
     setResetLoading(true);
     const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
-    await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
-      redirectTo: `${siteUrl}/auth/callback?next=/auth/reset-password`,
+    await fetch("/api/auth/reset-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: resetEmail.trim(), redirectTo: `${siteUrl}/auth/callback?next=/auth/reset-password` }),
     });
     setResetLoading(false);
     setResetSent(true);

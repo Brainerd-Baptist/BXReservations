@@ -1,45 +1,77 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@supabase/ssr";
+import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { getUserAndRole } from "@/lib/get-user-role";
 import { can } from "@/lib/roles";
+import { brandedEmailHtml, sendEmail } from "@/lib/email";
+
+function adminClient() {
+  return createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { cookies: { getAll: () => [], setAll: () => {} } }
+  );
+}
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  // 1. Verify caller has admin access
   const { user: caller, role: callerRole } = await getUserAndRole();
   if (!caller || !can.manageUsers(callerRole)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
   const { id: targetUserId } = await params;
+  const client = adminClient();
 
-  // 2. Look up the target user's email via service-role client
-  const adminClient = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { cookies: { getAll: () => [], setAll: () => {} } }
-  );
-
-  const { data: userData, error: userError } = await adminClient.auth.admin.getUserById(targetUserId);
+  const { data: userData, error: userError } = await client.auth.admin.getUserById(targetUserId);
   if (userError || !userData?.user?.email) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
   const targetEmail = userData.user.email;
-
-  // 3. Send the reset email — route through /auth/callback so PKCE code exchange happens
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? "https://bx.brainerdhq.app";
   const redirectTo = `${siteUrl}/auth/callback?next=/auth/reset-password`;
 
-  const { error: resetError } = await adminClient.auth.resetPasswordForEmail(targetEmail, {
-    redirectTo,
+  // Generate recovery link without sending Supabase's generic email
+  const { data: linkData, error: linkErr } = await client.auth.admin.generateLink({
+    type: "recovery",
+    email: targetEmail,
+    options: { redirectTo },
   });
 
-  if (resetError) {
-    console.error("[send-reset] resetPasswordForEmail error:", resetError.message);
-    return NextResponse.json({ error: resetError.message }, { status: 500 });
+  if (linkErr || !linkData?.properties?.action_link) {
+    console.error("[send-reset] generateLink error:", linkErr?.message);
+    return NextResponse.json({ error: linkErr?.message ?? "Failed to generate link" }, { status: 500 });
+  }
+
+  const NAVY = "#00205b";
+  const TEAL = "#00abc9";
+
+  const html = brandedEmailHtml({
+    preheader: "Your BX Reservations password reset link is ready.",
+    headline:  "Reset your password.",
+    body: `
+      <p style="margin:0 0 16px 0;">An administrator has sent you a link to reset your <strong>BX Reservations</strong> password.</p>
+      <p style="margin:0 0 16px 0;">Click the button below to choose a new password. This link expires in <strong>1 hour</strong>.</p>
+      <p style="margin:0; color:#6b7280; font-size:13px;">
+        If you weren't expecting this, contact the church office — your account has not been changed.
+      </p>`,
+    ctaText:     "Reset Password",
+    ctaUrl:      linkData.properties.action_link,
+    footnoteHtml: `
+      <p style="margin:0;">
+        Questions? Email
+        <a href="mailto:BXreservations@brainerdbaptist.org" style="color:${TEAL}; text-decoration:underline;">BXreservations@brainerdbaptist.org</a>
+        or call <a href="tel:4236434978" style="color:${TEAL}; text-decoration:underline;">(423) 643-4978</a>.
+      </p>`,
+  });
+
+  try {
+    await sendEmail({ to: targetEmail, subject: "Reset your BX Reservations password", html });
+  } catch (err) {
+    console.error("[send-reset] Resend error:", err);
+    return NextResponse.json({ error: "Email delivery failed" }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true });
