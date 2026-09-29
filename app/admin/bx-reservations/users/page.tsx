@@ -58,10 +58,7 @@ function Initials({ name, email }: { name: string | null; email: string }) {
 function RoleBadge({ role }: { role: BxRole | null }) {
   if (!role) return <span className="text-xs text-slate/50 italic">No role</span>;
   return (
-    <span
-      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-      style={{ background: "rgba(0,32,91,0.06)", color: "#374151", border: "1px solid rgba(0,32,91,0.12)" }}
-    >
+    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold tracking-wide border border-parchment/20 bg-parchment/8 text-parchment/70">
       {ROLE_LABELS[role]}
     </span>
   );
@@ -158,6 +155,10 @@ function InviteModal({
   onClose: () => void;
   onInvited: () => void;
 }) {
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [org, setOrg] = useState("");
@@ -188,7 +189,7 @@ function InviteModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-ink-soft border border-parchment/20 rounded-2xl w-full max-w-md p-6 shadow-2xl">
+      <div className="bg-ink-soft border border-parchment/20 rounded-2xl w-full max-w-md p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
         <div className="flex items-center justify-between mb-5">
           <div>
             <h2 className="text-parchment font-bold text-lg">Invite a user</h2>
@@ -480,8 +481,8 @@ export default function UsersPage() {
         {/* Role legend */}
         <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {ROLES_ORDERED.map((r) => (
-            <div key={r} className="bg-ink-soft border border-parchment/10 rounded-xl p-3 flex gap-3">
-              <RoleBadge role={r} />
+            <div key={r} className="bg-ink-soft border border-parchment/10 rounded-xl p-3 flex flex-col gap-1">
+              <span className="text-xs font-bold text-parchment/80 tracking-wide uppercase">{ROLE_LABELS[r]}</span>
               <p className="text-xs text-slate leading-tight">{ROLE_DESCRIPTIONS[r]}</p>
             </div>
           ))}
