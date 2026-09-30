@@ -158,7 +158,7 @@ export default function EventLogoCard({
         </span>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: compact ? "160px 1fr" : "minmax(0, 220px) 1fr", gap: "1rem", alignItems: "start" }}>
+      <div className={compact ? "bx-logo-grid bx-logo-grid--compact" : "bx-logo-grid"}>
         {/* the logo always sits on a white field, the same way it will on the map and the signs */}
         <div
           style={{

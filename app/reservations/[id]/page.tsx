@@ -16,6 +16,7 @@ import SignOptions from "@/app/components/sign-options";
 import SelfCancelButton from "./SelfCancelButton";
 import CommentsThread from "@/components/bx/CommentsThread";
 import BillingCard from "@/app/components/billing-card";
+import PeopleCard from "@/app/components/people-card";
 import EditBooking from "@/app/components/edit-booking";
 import COIUploadCard from "./COIUploadCard";
 
@@ -642,6 +643,14 @@ function renderPage(
           Charges &amp; payments
         </h2>
         <BillingCard reservationId={reservation.id} />
+      </section>
+
+      {/* People on this booking */}
+      <section aria-labelledby="people-title" className="bx-glass rounded-xl" style={{ padding: "1.25rem 1.5rem", marginBottom: "1rem" }}>
+        <h2 id="people-title" style={{ margin: "0 0 1rem", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--bx-slate)" }}>
+          People
+        </h2>
+        <PeopleCard reservationId={reservation.id} />
       </section>
 
       {/* Messages thread */}

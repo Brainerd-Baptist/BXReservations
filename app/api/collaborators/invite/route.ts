@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse, after } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { adminClient, getEventMapContext } from "@/lib/event-map";
+import { deliverInvite } from "@/lib/collab-invite";
 
 interface InviteBody {
   reservationId: string;
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest) {
   // ── Insert the invite ─────────────────────────────────────────────────────
   const token = crypto.randomUUID();
 
-  const { error: insertErr } = await db
+  const { data: inserted, error: insertErr } = await db
     .from("reservation_collaborators")
     .insert({
       reservation_id: reservationId,
@@ -79,16 +80,15 @@ export async function POST(req: NextRequest) {
       collab_role:    role,
       invite_token:   token,
       invited_by:     user.id,
-    });
+    })
+    .select("id")
+    .single();
 
   if (insertErr) {
     console.error("[collaborators/invite] insert error:", insertErr);
     return NextResponse.json({ error: "Failed to create invite" }, { status: 500 });
   }
 
-  // ── Send invite email (non-blocking) ─────────────────────────────────────
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://bx.brainerdhq.app").replace(/\/$/, "");
-  const acceptUrl = `${siteUrl}/account/invites?token=${token}`;
 
   // Fetch inviter display name
   const { data: inviterProfile } = await db
@@ -98,13 +98,9 @@ export async function POST(req: NextRequest) {
     .maybeSingle();
 
   const inviterName = (inviterProfile?.display_name ?? user.email ?? "A team member") as string;
-  const eventName   = (reservation.event_name ?? "a reservation") as string;
 
-  after(() =>
-    import("@/lib/email").then(({ sendCollaboratorInvite }) =>
-      sendCollaboratorInvite({ to: normalizedEmail, inviterName, eventName, role, acceptUrl })
-    ).catch(err => console.error("[collaborators/invite] email send failed:", err))
-  );
+  // Send now (not after the response) so we can record whether it went out
+  const sent = inserted ? await deliverInvite(db, inserted.id, inviterName) : { ok: false };
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, emailed: sent.ok });
 }

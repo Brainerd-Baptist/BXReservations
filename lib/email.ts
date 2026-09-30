@@ -88,10 +88,10 @@ export function brandedEmailHtml(opts: {
           <td style="padding:0 40px;">
             <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:6px auto 10px auto;">
               <tr>
-                <td style="background-color:${TEAL}; border-radius:8px;">
-                  <a href="${ctaUrl}" target="_blank" rel="noopener noreferrer"
+                <td class="bx-cta-cell" style="background-color:${TEAL}; border-radius:8px;">
+                  <a class="bx-cta" href="${ctaUrl}" target="_blank" rel="noopener noreferrer"
                     style="display:inline-block; color:${WHITE}; font-family:${FONT}; font-size:15px; font-weight:700; text-decoration:none; padding:13px 28px;">
-                    <span style="color:${WHITE}; text-decoration:none;">${ctaText}</span>
+                    <span class="bx-cta" style="color:${WHITE}; text-decoration:none;">${ctaText}</span>
                   </a>
                 </td>
               </tr>
@@ -121,8 +121,19 @@ export function brandedEmailHtml(opts: {
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="x-apple-disable-message-reformatting">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="color-scheme" content="light">
-  <meta name="supported-color-schemes" content="light">
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
+  <style>
+    /* Dark mode: mail apps recolor our text; keep the button label a soft
+       white on the brand teal so it stays readable (Apple Mail, iOS Mail,
+       Outlook.com [data-ogsc]) */
+    @media (prefers-color-scheme: dark) {
+      .bx-cta, .bx-cta span { color: #F4F7FB !important; }
+      .bx-cta-cell { background-color: #0a8aa3 !important; }
+    }
+    [data-ogsc] .bx-cta, [data-ogsc] .bx-cta span { color: #F4F7FB !important; }
+    [data-ogsb] .bx-cta-cell { background-color: #0a8aa3 !important; }
+  </style>
   <title>${headline}</title>
   <!--[if mso]><noscript><xml><o:OfficeDocumentSettings>
   <o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->

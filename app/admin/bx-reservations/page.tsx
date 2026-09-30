@@ -24,6 +24,7 @@ import EventLogoCard from "@/app/components/event-logo-card";
 import VenueSettings from "@/app/components/venue-settings";
 import BillingCard from "@/app/components/billing-card";
 import EditBooking from "@/app/components/edit-booking";
+import PeopleCard from "@/app/components/people-card";
 import RoomRates from "@/app/components/room-rates";
 import AddonCatalog from "@/app/components/addon-catalog";
 import GridToggle from "@/app/components/grid-toggle";
@@ -790,6 +791,12 @@ export default function BxReservationsAdmin() {
                         <EditBooking reservationId={req.dbId} onSaved={fetchReservations} compact />
                       </div>
                     )}
+                    {req.dbId && (
+                      <details className="bx-well rounded-xl p-4" onClick={e => e.stopPropagation()}>
+                        <summary className="text-xs font-semibold text-slate uppercase tracking-widest cursor-pointer">People on this booking</summary>
+                        <div className="mt-3"><PeopleCard reservationId={req.dbId} /></div>
+                      </details>
+                    )}
 
                     {/* ── Status control panel */}
                     {req.status !== "Cancelled by User" && req.status !== "Expired" && req.status !== "Completed" && req.status !== "Cancelled by BX" && (() => {
@@ -1483,39 +1490,34 @@ export default function BxReservationsAdmin() {
               Staff view — shows real event names and flex-block flags. Never visible to the public.
             </p>
 
-            <div className="space-y-2">
-              {calendarEvents.sort((a, b) => a.date.localeCompare(b.date)).map((ev, i) => (
-                <div key={i} className="flex gap-3 items-start">
-                  <div className="flex-shrink-0 w-14">
-                    <p className="text-xs font-bold text-parchment">{ev.date.slice(5)}</p>
-                    <p className="text-xs text-slate">{ev.room}</p>
-                  </div>
-                  <div
-                    className="flex-1 rounded-lg px-2 py-1 text-xs font-medium leading-snug border"
-                    style={
-                      ev.kind === "rental"
-                        ? {
-                            background: "color-mix(in srgb, var(--bx-brass) 12%, transparent)",
-                            borderColor: "color-mix(in srgb, var(--bx-brass) 30%, transparent)",
-                            color: "var(--bx-parchment)",
-                          }
-                        : ev.kind === "flex"
-                        ? {
-                            background: "color-mix(in srgb, #f59e0b 12%, transparent)",
-                            borderColor: "color-mix(in srgb, #f59e0b 30%, transparent)",
-                            color: "color-mix(in srgb, #f59e0b 90%, var(--bx-parchment))",
-                          }
-                        : {
-                            background: "color-mix(in srgb, var(--bx-slate) 8%, transparent)",
-                            borderColor: "color-mix(in srgb, var(--bx-parchment) 12%, transparent)",
-                            color: "var(--bx-slate)",
-                            textDecoration: "line-through",
-                          }
-                    }
-                  >
-                    {ev.kind === "flex" && <span className="mr-1">⟳</span>}
-                    {ev.label}
-                  </div>
+            {/* Grouped by day: a date heading, then each room's event on its own line */}
+            <div className="space-y-4">
+              {calendarEvents.length === 0 && <p className="text-xs text-slate">Nothing on the calendar in this range.</p>}
+              {Object.entries(
+                [...calendarEvents].sort((a, b) => a.date.localeCompare(b.date)).reduce<Record<string, typeof calendarEvents>>((acc, ev) => {
+                  (acc[ev.date] ??= []).push(ev); return acc;
+                }, {})
+              ).map(([date, evs]) => (
+                <div key={date}>
+                  <p className="text-xs font-bold text-parchment mb-1.5">{formatYmd(date, { weekday: "short", month: "short", day: "numeric" })}</p>
+                  <ul className="space-y-1.5">
+                    {evs.map((ev, i) => (
+                      <li
+                        key={i}
+                        className="rounded-lg px-2.5 py-1.5 text-xs font-medium leading-snug border"
+                        style={
+                          ev.kind === "rental"
+                            ? { background: "color-mix(in srgb, var(--bx-brass) 12%, transparent)", borderColor: "color-mix(in srgb, var(--bx-brass) 30%, transparent)", color: "var(--bx-parchment)" }
+                            : ev.kind === "flex"
+                            ? { background: "var(--tone-amber-bg)", borderColor: "var(--tone-amber-bd)", color: "var(--tone-amber-fg)" }
+                            : { background: "color-mix(in srgb, var(--bx-slate) 8%, transparent)", borderColor: "color-mix(in srgb, var(--bx-parchment) 12%, transparent)", color: "var(--bx-slate)", textDecoration: "line-through" }
+                        }
+                      >
+                        <span className="block">{ev.kind === "flex" && <span className="mr-1" aria-label="Standing use">⟳</span>}{ev.label}</span>
+                        {ev.room && <span className="block text-[11px] opacity-75 font-normal">{ev.room}</span>}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               ))}
             </div>

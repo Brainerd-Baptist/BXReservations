@@ -285,7 +285,8 @@ export default function UsersPage() {
               <button
                 key={r}
                 onClick={() => setFilterRole(r)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${filterRole === r ? "bg-[var(--bbc-navy)] text-white border-[var(--bbc-navy)]" : "bg-ink-soft text-slate border-parchment/15 hover:border-parchment/30"}`}
+                aria-pressed={filterRole === r}
+                className={`bx-btn bx-btn--sm !rounded-full ${filterRole === r ? "bx-btn--primary" : "bx-btn--secondary"}`}
               >
                 {r === "all" ? "All roles" : ROLE_LABELS[r]}
               </button>
@@ -294,7 +295,7 @@ export default function UsersPage() {
         </div>
 
         {/* Table */}
-        <div className="bx-glass rounded-2xl overflow-hidden">
+        <div className="bx-glass rounded-2xl overflow-x-auto">
           {loading ? (
             <div className="flex items-center justify-center py-16 text-slate gap-2">
               <Loader2 size={18} className="animate-spin" />
@@ -328,7 +329,7 @@ export default function UsersPage() {
                         <Initials name={u.display_name} email={u.email} />
                         <div>
                           <div className="font-semibold text-parchment leading-tight group-hover:text-[var(--bx-accent-text)] transition-colors">{u.display_name ?? "—"}</div>
-                          <div className="text-xs text-slate mt-0.5">{u.email}</div>
+                          <div className="text-xs text-slate mt-0.5 break-all">{u.email}</div>
                         </div>
                       </Link>
                     </td>
