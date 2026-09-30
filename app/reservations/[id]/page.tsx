@@ -19,6 +19,7 @@ import BillingCard from "@/app/components/billing-card";
 import PeopleCard from "@/app/components/people-card";
 import EditBooking from "@/app/components/edit-booking";
 import COIUploadCard from "./COIUploadCard";
+import { ButtonLink } from "@/app/components/ui/button";
 
 const STATUS_META: Record<string, { dot: string }> = {
   pending:            { dot: "#FBBF24" },
@@ -370,6 +371,14 @@ function renderPage(
           <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
         </svg>
       </Link>
+
+      {/* Book again — same spaces, setup, time and headcount; new dates */}
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", marginBottom: "1rem", padding: "0.75rem 1.25rem" }} className="bx-well rounded-xl">
+        <p style={{ margin: 0, fontSize: "0.8125rem", color: "var(--bx-slate)", lineHeight: 1.45, minWidth: 0, flex: "1 1 14rem" }}>
+          Planning this again? Start a new request with the same spaces, setup and time — just pick new dates.
+        </p>
+        <ButtonLink href={`/reserve?from=${reservation.id}`} size="sm" variant="secondary">Book again</ButtonLink>
+      </div>
 
       {/* Event logo — goes on the event map header and the door signs, after staff approve it */}
       {view.logo && (

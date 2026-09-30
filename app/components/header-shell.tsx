@@ -70,7 +70,7 @@ export default function HeaderShell({
               aria-label="Open menu"
               aria-expanded={sidebarOpen}
               aria-haspopup="dialog"
-              className="p-1.5 rounded-lg transition-colors -ml-1"
+              className="p-2.5 rounded-lg transition-colors -ml-2.5 inline-flex items-center justify-center min-w-11 min-h-11"
               style={{ color: "var(--bx-slate)" }}
               onMouseEnter={(e) =>
                 ((e.currentTarget as HTMLButtonElement).style.background =
@@ -116,7 +116,7 @@ export default function HeaderShell({
             ) : (
               <Link
                 href={loginHref(pathname)}
-                className="inline-flex items-center text-sm font-medium rounded-lg px-3 py-1.5 transition-colors border"
+                className="inline-flex items-center whitespace-nowrap min-h-10 text-sm font-medium rounded-lg px-3 py-1.5 transition-colors border"
                 style={{
                   color: "var(--bx-parchment)",
                   borderColor: "color-mix(in srgb, var(--bx-parchment) 30%, transparent)",
@@ -129,7 +129,7 @@ export default function HeaderShell({
                   ((e.currentTarget as HTMLAnchorElement).style.background = "transparent")
                 }
               >
-                Sign in / Sign up
+                Sign in<span className="max-[359px]:hidden"> / Sign up</span>
               </Link>
             )}
           </div>

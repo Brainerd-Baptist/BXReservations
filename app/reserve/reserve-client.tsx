@@ -11,6 +11,8 @@ import { RoomCard } from "@/app/components/room-card";
 import { RoomLightbox } from "@/app/components/room-lightbox";
 import { trackFunnel } from "@/lib/funnel";
 import { SUPPORT_EMAIL } from "@/lib/site";
+import type { StartingPoint, TemplateOption } from "./page";
+import type { BookingPattern } from "@/lib/booking-pattern";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -300,7 +302,7 @@ function ContactStep({
 function BuilderStep({
   days, setDays, startDate, setStartDate, endDate, setEndDate,
   defaultHeadcount, setDefaultHeadcount, rawDefaultHeadcount, setRawDefaultHeadcount, spaceMode, breakoutGroupSize, setBreakoutGroupSize,
-  isNP, blackoutRules, onBack, onNext,
+  isNP, blackoutRules, pattern, onBack, onNext,
 }: {
   days: DayConfig[];
   setDays: React.Dispatch<React.SetStateAction<DayConfig[]>>;
@@ -312,6 +314,7 @@ function BuilderStep({
   breakoutGroupSize: number; setBreakoutGroupSize: (v: number) => void;
   isNP: boolean;
   blackoutRules: BlackoutRule[];
+  pattern?: BookingPattern | null;
   onBack: () => void; onNext: () => void;
 }) {
   // Fetch availability whenever included days change
@@ -321,8 +324,13 @@ function BuilderStep({
     try {
       const res = await fetch(`/api/availability?date=${day.date}&rooms=${roomIds}&timeSlot=${day.timeSlot}`);
       const data: Record<string, Signal> = await res.json();
+      // Rooms filled in before availability arrived (templates, Book again)
+      // are flagged "requested" when taken, as if picked by hand.
       setDays(prev => prev.map(d =>
-        d.date === day.date ? { ...d, availability: data, availabilityFetched: true } : d
+        d.date === day.date ? {
+          ...d, availability: data, availabilityFetched: true,
+          rooms: d.rooms.map(r => ({ ...r, requested: r.requested || data[r.roomId] === "unavailable" })),
+        } : d
       ));
     } catch {
       // silently degrade
@@ -341,12 +349,14 @@ function BuilderStep({
       const byDate = Object.fromEntries(prev.map(d => [d.date, d]));
       return dates.map(date => {
         const isBlocked = isDateBlackedOut(date, blackoutRules);
+        // A template or "Book again" fills each new day with its spaces,
+        // setup and time; people can still change any day.
         return byDate[date] ?? {
         date, included: !isBlocked,
         headcount: defaultHeadcount,
-        timeSlot: "any" as const,
-        customStart: "", customEnd: "",
-        rooms: [],
+        timeSlot: pattern?.timeSlot ?? ("any" as const),
+        customStart: pattern?.customStart ?? "", customEnd: pattern?.customEnd ?? "",
+        rooms: (pattern?.rooms ?? []).map((pr) => ({ roomId: pr.roomId, setup: pr.setup as SetupId, customSetup: pr.customSetup, requested: false, role: pr.role })),
         availability: Object.fromEntries(ROOMS.map(r => [r.id, "loading" as Signal])),
         availabilityFetched: false,
       };});
@@ -1393,9 +1403,12 @@ const input = "bx-input"; // shared field style (globals.css)
 interface ReserveClientProps {
   initialContact?: { name: string; email: string; phone: string; org: string };
   userId?: string | null;
+  start?: StartingPoint | null;
+  templates?: TemplateOption[];
 }
 
-export default function ReserveClient({ initialContact, userId }: ReserveClientProps) {
+export default function ReserveClient({ initialContact, userId, start = null, templates = [] }: ReserveClientProps) {
+  const pattern = start?.pattern ?? null;
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [bookingNumber, setBookingNumber] = useState("");
@@ -1407,20 +1420,20 @@ export default function ReserveClient({ initialContact, userId }: ReserveClientP
     name: initialContact?.name ?? "",
     email: initialContact?.email ?? "",
     phone: initialContact?.phone ?? "",
-    org: initialContact?.org ?? "",
-    eventName: "",
-    isNonProfit: false,
+    org: initialContact?.org || pattern?.org || "",
+    eventName: start?.kind === "rebook" ? pattern?.eventName ?? "" : "",
+    isNonProfit: pattern?.isNonProfit ?? false,
   });
 
-  const [spaceMode, setSpaceMode] = useState<SpaceMode>("single");
+  const [spaceMode, setSpaceMode] = useState<SpaceMode>(pattern?.spaceMode ?? "single");
   const [breakoutGroupSize, setBreakoutGroupSize] = useState(30);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [defaultHeadcount, setDefaultHeadcount] = useState(50);
-  const [rawDefaultHeadcount, setRawDefaultHeadcount] = useState("50");
+  const [defaultHeadcount, setDefaultHeadcount] = useState(pattern?.headcount ?? 50);
+  const [rawDefaultHeadcount, setRawDefaultHeadcount] = useState(String(pattern?.headcount ?? 50));
   const [days, setDays] = useState<DayConfig[]>([]);
-  const [notes, setNotes] = useState("");
-  const [addons, setAddons] = useState<AddonSelection>({});
+  const [notes, setNotes] = useState(pattern?.notes ?? "");
+  const [addons, setAddons] = useState<AddonSelection>(pattern?.addons ?? {});
   const [blackoutRules, setBlackoutRules] = useState<BlackoutRule[]>([]);
 
   useEffect(() => {
@@ -1501,6 +1514,7 @@ export default function ReserveClient({ initialContact, userId }: ReserveClientP
 
         {step === 0 && (
           <div className="bx-fade-in">
+          <StartingPointCard start={start} templates={templates} />
           <ContactStep
             contact={contact}
             onChange={p => setContact(c => ({ ...c, ...p }))}
@@ -1523,6 +1537,7 @@ export default function ReserveClient({ initialContact, userId }: ReserveClientP
             breakoutGroupSize={breakoutGroupSize} setBreakoutGroupSize={setBreakoutGroupSize}
             isNP={contact.isNonProfit}
             blackoutRules={blackoutRules}
+            pattern={pattern}
             onBack={() => goToStep(0)}
             onNext={() => goToStep(2)}
           />
@@ -1549,5 +1564,40 @@ export default function ReserveClient({ initialContact, userId }: ReserveClientP
         )}
       </div>
     </div>
+  );
+}
+
+// ─── Templates / Book again ───────────────────────────────────────────────────
+
+/** Top of step 1: what the form was filled from, or templates to start from. */
+function StartingPointCard({ start, templates }: { start: StartingPoint | null; templates: TemplateOption[] }) {
+  if (start) {
+    return (
+      <div className="w-full max-w-2xl mx-auto mb-6 bx-well rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-2" role="status">
+        <p className="text-sm text-parchment min-w-0">
+          <span className="font-semibold">{start.label}</span>
+          <span className="block text-xs text-slate">Spaces, setup, time and headcount are filled in. You&apos;ll pick new dates on the next step, and you can change anything.</span>
+        </p>
+        <a href="/reserve" className="text-xs font-semibold underline underline-offset-2 whitespace-nowrap" style={{ color: "var(--bx-accent-text)" }}>Start blank</a>
+      </div>
+    );
+  }
+  if (!templates.length) return null;
+  return (
+    <section className="w-full max-w-2xl mx-auto mb-6 bx-well rounded-xl p-4" aria-labelledby="tmpl-h">
+      <h2 id="tmpl-h" className="text-sm font-semibold text-parchment">Start from a template</h2>
+      <p className="text-xs text-slate mb-3">Fills in the spaces, setup and time. You pick the dates.</p>
+      <ul className="grid gap-2 sm:grid-cols-2">
+        {templates.slice(0, 8).map((t) => (
+          <li key={t.id}>
+            <a href={`/reserve?template=${t.id}`} className="block rounded-lg border px-3 py-2.5 min-h-11 hover:border-[var(--bx-brass)] transition-colors"
+              style={{ borderColor: "color-mix(in srgb, var(--bx-parchment) 14%, transparent)" }}>
+              <span className="block text-sm font-medium text-parchment">{t.name}{t.orgName && <span className="text-xs text-slate font-normal"> · {t.orgName}</span>}</span>
+              <span className="block text-xs text-slate">{t.description || t.summary}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

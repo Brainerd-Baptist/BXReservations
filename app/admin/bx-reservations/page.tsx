@@ -29,6 +29,7 @@ import RoomRates from "@/app/components/room-rates";
 import { ROOMS } from "@/lib/rooms";
 import BookingInsights from "./booking-insights";
 import { useAdminRole } from "./admin-role";
+import TemplatesManager, { SaveTemplateButton } from "./booking-templates";
 import { can } from "@/lib/roles";
 import AddonCatalog from "@/app/components/addon-catalog";
 import GridToggle from "@/app/components/grid-toggle";
@@ -624,6 +625,7 @@ export default function BxReservationsAdmin() {
               }}
             />
             <VenueSettings />
+            <TemplatesManager />
             {/* Rates, add-ons and blackout rules are System Admin settings; the
                 background grid is the Owner's. Booking Admins don't see controls
                 they can't save (C2). */}
@@ -795,6 +797,7 @@ export default function BxReservationsAdmin() {
                           <a href={`/api/event-map/${req.dbId}/packet?inline=1`} target="_blank" rel="noopener" className="bx-btn bx-btn--secondary bx-btn--sm">
                             Attendee packet
                           </a>
+                          <SaveTemplateButton reservationId={req.dbId} eventName={req.event} organizationId={req.organizationId ?? null} />
                         </div>
                       </div>
                     )}
