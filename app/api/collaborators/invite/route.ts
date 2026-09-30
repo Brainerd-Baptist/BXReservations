@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { adminClient, getEventMapContext } from "@/lib/event-map";
 
 interface InviteBody {
   reservationId: string;
@@ -37,36 +38,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  // ── Ownership check — caller must own (or co_own) the reservation ─────────
-  const { data: reservation, error: resErr } = await supabase
-    .from("reservations")
-    .select("id, user_id, contact_email, event_name")
-    .eq("id", reservationId)
-    .single();
-
-  if (resErr || !reservation) {
+  // ── Who may invite: the requester, an accepted co-owner, or staff ────────
+  // Checked with the server key (the same rule the event map uses), so a
+  // database hiccup can't masquerade as "Reservation not found".
+  const db = adminClient();
+  const ctx = await getEventMapContext(db, user, reservationId);
+  if (!ctx) {
     return NextResponse.json({ error: "Reservation not found" }, { status: 404 });
   }
-
-  // Owner: matched by user_id, OR the reservation was submitted without auth
-  // and the logged-in user's email matches contact_email (mirrors /reservations query).
-  const isOwner =
-    (reservation.user_id !== null && reservation.user_id === user.id) ||
-    (reservation.contact_email?.toLowerCase() === user.email?.toLowerCase());
-
-  if (!isOwner) {
-    const { data: collab } = await supabase
-      .from("reservation_collaborators")
-      .select("collab_role")
-      .eq("reservation_id", reservationId)
-      .eq("user_id", user.id)
-      .not("accepted_at", "is", null)
-      .single();
-
-    if (!collab || collab.collab_role !== "co_owner") {
-      return NextResponse.json({ error: "Not authorized to invite" }, { status: 403 });
-    }
+  if (ctx.access !== "edit") {
+    return NextResponse.json({ error: "Only the organizer or a co-organizer can invite people." }, { status: 403 });
   }
+  const reservation = ctx.reservation;
 
   // ── Guard: don't invite yourself ─────────────────────────────────────────
   if (normalizedEmail === user.email?.toLowerCase()) {
@@ -74,12 +57,12 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Guard: no duplicate pending invites ───────────────────────────────────
-  const { data: existing } = await supabase
+  const { data: existing } = await db
     .from("reservation_collaborators")
     .select("id")
     .eq("reservation_id", reservationId)
     .eq("invited_email", normalizedEmail)
-    .single();
+    .maybeSingle();
 
   if (existing) {
     return NextResponse.json({ error: "This person has already been invited." }, { status: 409 });
@@ -88,7 +71,7 @@ export async function POST(req: NextRequest) {
   // ── Insert the invite ─────────────────────────────────────────────────────
   const token = crypto.randomUUID();
 
-  const { error: insertErr } = await supabase
+  const { error: insertErr } = await db
     .from("reservation_collaborators")
     .insert({
       reservation_id: reservationId,
@@ -108,19 +91,20 @@ export async function POST(req: NextRequest) {
   const acceptUrl = `${siteUrl}/account/invites?token=${token}`;
 
   // Fetch inviter display name
-  const { data: inviterProfile } = await supabase
+  const { data: inviterProfile } = await db
     .from("bx_user_profiles")
     .select("display_name")
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
 
   const inviterName = (inviterProfile?.display_name ?? user.email ?? "A team member") as string;
   const eventName   = (reservation.event_name ?? "a reservation") as string;
 
-  import("@/lib/email").then(({ sendCollaboratorInvite }) => {
-    sendCollaboratorInvite({ to: normalizedEmail, inviterName, eventName, role, acceptUrl })
-      .catch(err => console.error("[collaborators/invite] email send failed:", err));
-  });
+  after(() =>
+    import("@/lib/email").then(({ sendCollaboratorInvite }) =>
+      sendCollaboratorInvite({ to: normalizedEmail, inviterName, eventName, role, acceptUrl })
+    ).catch(err => console.error("[collaborators/invite] email send failed:", err))
+  );
 
   return NextResponse.json({ ok: true });
 }

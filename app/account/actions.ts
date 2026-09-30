@@ -26,6 +26,8 @@ export async function saveProfile(formData: FormData) {
   if (!user) return { error: "Not authenticated" };
 
   const display_name = (formData.get("display_name") as string)?.trim() || null;
+  // A name is required on every account (it goes on bookings and agreements).
+  if (!display_name || display_name.length < 2) return { error: "Please enter your full name." };
   const phone = (formData.get("phone") as string)?.trim() || null;
   const organization = (formData.get("organization") as string)?.trim() || null;
 

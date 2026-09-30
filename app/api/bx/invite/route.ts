@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { authEmailLink } from "@/lib/auth-links";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { type BxRole, can, ROLE_RANK } from "@/lib/roles";
@@ -80,7 +81,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: linkErr.message }, { status: 500 });
   }
 
-  const inviteUrl = linkData?.properties?.action_link;
+  const inviteUrl = authEmailLink(linkData?.properties, "/reservations", "invite");
   if (!inviteUrl) {
     console.error("[bx/invite] No action_link returned from generateLink");
     return NextResponse.json({ error: "Failed to generate invite link" }, { status: 500 });
@@ -90,7 +91,7 @@ export async function POST(req: NextRequest) {
   const invitedUserId = linkData?.user?.id;
   if (invitedUserId) {
     await svc.from("bx_user_roles").upsert(
-      { user_id: invitedUserId, role, assigned_by: user.id, assigned_at: new Date().toISOString() },
+      { user_id: invitedUserId, email, role, assigned_by: user.id, assigned_at: new Date().toISOString() },
       { onConflict: "user_id" }
     );
 

@@ -68,6 +68,9 @@ export default function ProfileForm({ displayName, phone, organization, email }:
           <input id="profile-fo-full-name-2"
             type="text"
             name="display_name"
+            required
+            minLength={2}
+            autoComplete="name"
             defaultValue={displayName ?? ""}
             placeholder="Your full name"
             className="bx-input"

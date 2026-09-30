@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { adminClient, getEventMapContext } from "@/lib/event-map";
 import {
@@ -93,7 +93,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
   try {
     const state = await finalizeLogoUpload(r.db, r.row, body.path, mime, r.user.id, body.name);
     // staff uploading on a planner's behalf still goes through review — one path, no surprises
-    void notifyLogoUploaded(r.db, { ...r.row, logo_status: "pending" }).catch((e) => console.error("[logo] notify", e));
+    after(() => notifyLogoUploaded(r.db, { ...r.row, logo_status: "pending" }).catch((e) => console.error("[logo] notify", e)));
     return NextResponse.json(state);
   } catch (e) {
     return fail(e);
@@ -126,7 +126,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
   const note = typeof body.note === "string" ? body.note.replace(/\s+/g, " ").trim().slice(0, 300) || null : null;
   try {
     const state = await reviewLogo(r.db, r.row, decision, note, r.user.id);
-    void notifyLogoReviewed(r.db, r.row, decision, note).catch((e) => console.error("[logo] notify", e));
+    after(() => notifyLogoReviewed(r.db, r.row, decision, note).catch((e) => console.error("[logo] notify", e)));
     return NextResponse.json(state);
   } catch (e) {
     return fail(e);

@@ -203,7 +203,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
       {/* ── Editable contact info ── */}
       <div
-        style={{
+        id="profile"
+        style={{ scrollMarginTop: "calc(var(--bx-header-h) + 1rem)",
           border: "1px solid color-mix(in srgb, var(--bx-parchment) 12%, transparent)",
           borderRadius: "12px",
           padding: "1.25rem 1.5rem",

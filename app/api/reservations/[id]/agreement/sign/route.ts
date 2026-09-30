@@ -133,7 +133,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   // Notify admins
   try {
-    const { data: adminRoles } = await adminClient().from("bx_user_roles").select("user_id").in("role", ["admin", "staff"]);
+    const { data: adminRoles } = await adminClient().from("bx_user_roles").select("user_id").in("role", ["owner", "system_admin", "booking_admin"]);
     if (adminRoles?.length) {
       const adminIds = adminRoles.map((a: { user_id: string }) => a.user_id);
       const { data: authUsers } = await adminClient().auth.admin.listUsers();

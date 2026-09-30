@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getEventMapContext } from "@/lib/event-map";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
@@ -26,29 +27,9 @@ export async function GET(
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   );
 
-  // Verify access: owner or admin
-  const { data: resRow } = await supabase
-    .from("reservations")
-    .select("user_id, contact_email")
-    .eq("id", id)
-    .single();
-
-  if (!resRow) return NextResponse.json({ error: "Not found" }, { status: 404 });
-
-  const { data: roleRow } = await supabase
-    .from("bx_user_roles")
-    .select("role")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  const isAdmin = ["admin", "superadmin", "staff"].includes(roleRow?.role ?? "");
-  const isOwner =
-    resRow.user_id === user.id ||
-    (resRow.contact_email ?? "").toLowerCase() === (user.email ?? "").toLowerCase();
-
-  if (!isAdmin && !isOwner) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  // Staff, the requester (account or booking email) or an accepted collaborator
+  const ctx = await getEventMapContext(supabase, user, id);
+  if (!ctx) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const { data: history, error } = await supabase
     .from("reservation_history")

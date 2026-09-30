@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { authEmailLink } from "@/lib/auth-links";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { brandedEmailHtml, sendEmail } from "@/lib/email";
 
@@ -31,7 +32,8 @@ export async function POST(req: NextRequest) {
   });
 
   // Always return 200 to prevent email enumeration
-  if (linkErr || !linkData?.properties?.action_link) {
+  const resetUrl = authEmailLink(linkData?.properties, "/auth/reset-password", "recovery");
+  if (linkErr || !resetUrl) {
     console.warn("[auth/reset-password] generateLink issue:", linkErr?.message);
     return NextResponse.json({ ok: true });
   }
@@ -49,7 +51,7 @@ export async function POST(req: NextRequest) {
         If you didn't request a password reset, you can safely ignore this email — your account hasn't been changed.
       </p>`,
     ctaText:     "Reset Password",
-    ctaUrl:      linkData.properties.action_link,
+    ctaUrl:      resetUrl,
     footnoteHtml: `
       <p style="margin:0;">
         Questions? Email

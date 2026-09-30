@@ -7,6 +7,13 @@ function getResend(): Resend {
   return _resend;
 }
 
+/** Send through Resend and throw on failure — Resend reports errors in the
+ *  result instead of throwing, so failures used to be logged as "sent OK". */
+async function deliver(payload: Parameters<ReturnType<typeof getResend>["emails"]["send"]>[0]) {
+  const { error } = await getResend().emails.send(payload);
+  if (error) throw new Error(`Resend: ${error.name ?? "error"} — ${error.message}`);
+}
+
 const FROM        = process.env.EMAIL_FROM ?? "BX Reservations <noreply@brainerdhq.app>";
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "jking@brainerdbaptist.org";
 const SITE_URL    = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://bx.brainerdhq.app").replace(/\/$/, "");
@@ -250,7 +257,7 @@ export async function sendReservationConfirmation(opts: {
     footnoteHtml: `<p style="margin:0;">Reference: <strong>${bookingNumber}</strong></p>`,
   });
 
-  await getResend().emails.send({
+  await deliver({
     from:    FROM,
     to,
     subject: `Reservation Received — ${bookingNumber}`,
@@ -311,7 +318,7 @@ export async function sendAdminNewReservationAlert(opts: {
     footnoteHtml: null,
   });
 
-  await getResend().emails.send({
+  await deliver({
     from:    FROM,
     to:      ADMIN_EMAIL,
     subject: `[BX] New Request — ${bookingNumber} · ${submitterName}`,
@@ -353,7 +360,7 @@ export async function sendCollaboratorInvite(opts: {
     // No secondary footnote needed for invite — the tip default is fine
   });
 
-  await getResend().emails.send({
+  await deliver({
     from:    FROM,
     to,
     subject: `${inviterName} invited you to a reservation — ${eventName}`,
@@ -454,7 +461,7 @@ export async function sendStatusUpdateEmail(opts: {
     footnoteHtml: `<p style="margin:0;">Reference: <strong>${bookingNumber}</strong></p>`,
   });
 
-  await getResend().emails.send({
+  await deliver({
     from:    FROM,
     to,
     subject: cfg.subject,
@@ -522,7 +529,7 @@ export async function sendBookingReminder(opts: {
     footnoteHtml: `<p style="margin:0;">Reference: <strong>${bookingNumber}</strong></p>`,
   });
 
-  await getResend().emails.send({
+  await deliver({
     from:    FROM,
     to,
     subject: `Reminder: "${eventName}" is in 48 hours — ${bookingNumber}`,
@@ -590,7 +597,7 @@ export async function sendWelcomeEmail(opts: {
       </p>`,
   });
 
-  await getResend().emails.send({
+  await deliver({
     from:    FROM,
     to,
     subject: "Welcome to BX Reservations",
@@ -612,7 +619,7 @@ export async function sendEmail(opts: {
     console.warn("[email] RESEND_API_KEY not set — skipping sendEmail");
     return;
   }
-  await getResend().emails.send({
+  await deliver({
     from:     opts.from ?? FROM,
     to:       opts.to,
     subject:  opts.subject,

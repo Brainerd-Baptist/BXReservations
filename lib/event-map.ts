@@ -286,8 +286,11 @@ export function adminClient(): SupabaseClient {
 }
 
 /** Staff = any admin-class role, in either role vocabulary the app has used. */
+/** Owner, System Admin, Booking Admin — see lib/roles.ts. */
+export const STAFF_ROLES = ["owner", "system_admin", "booking_admin"] as const;
+
 export function isStaffRole(role: string | null | undefined): boolean {
-  return !!role && ["admin", "owner", "system_admin", "booking_admin"].includes(role);
+  return !!role && (STAFF_ROLES as readonly string[]).includes(role);
 }
 
 /**

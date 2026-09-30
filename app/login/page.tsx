@@ -407,7 +407,7 @@ export default function LoginPage() {
             <div className="w-full max-w-sm bx-glass-strong rounded-2xl p-7" onClick={(e) => e.stopPropagation()}>
               {resetSent ? (
                 <div className="text-center space-y-4">
-                  <div style={{color:"var(--bx-brass)"}}><svg width="1.75rem" height="1.75rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" style={{display:"block"}}><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg></div>
+                  <div className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center" style={{ background: "var(--bx-action-bg)", color: "var(--bx-action-fg)" }} aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg></div>
                   <h2 className="text-lg font-bold text-parchment">Check your email</h2>
                   <p className="text-sm text-slate leading-relaxed">
                     If <strong>{resetEmail}</strong> has an account, we sent a password reset link. Check your inbox (and spam folder).
@@ -415,7 +415,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => { setForgotMode(false); setResetSent(false); }}
-                    className="w-full bg-brass hover:bg-brass/90 text-white font-semibold rounded-lg py-2.5 text-sm transition-colors"
+                    className="bx-btn bx-btn--primary bx-btn--md bx-btn--block"
                   >
                     Back to sign in
                   </button>

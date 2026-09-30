@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import {
@@ -171,7 +171,9 @@ export async function POST(req: NextRequest) {
       const dates = extractDates(days);
       const rooms = extractRooms(days);
 
-      Promise.allSettled([
+      // after(): on Vercel, work left running after the response is sent can be
+      // frozen mid-way — that's how the confirmation email went missing.
+      after(() => Promise.allSettled([
         sendReservationConfirmation({
           to:            contact.email,
           name:          contact.name,
@@ -199,10 +201,10 @@ export async function POST(req: NextRequest) {
             console.error(`[email] ${labels[i]} FAILED for ${bookingNumber}:`, r.reason);
           }
         });
-      });
+      }));
 
       // ── In-app bell notification: alert all admins about new reservation ──
-      (async () => {
+      after(async () => {
         try {
           const { createClient: createServiceClient } = await import("@supabase/supabase-js");
           const adminSupa = createServiceClient(
@@ -229,7 +231,7 @@ export async function POST(req: NextRequest) {
         } catch (err) {
           console.error("[notif] admin notification error:", err);
         }
-      })();
+      });
 
       return NextResponse.json({ bookingNumber, reservationId }, { status: 201 });
     } catch (err) {
@@ -256,10 +258,10 @@ export async function POST(req: NextRequest) {
   // Still attempt emails in dev/fallback mode
   const dates = extractDates(days);
   const rooms = extractRooms(days);
-  Promise.allSettled([
+  after(() => Promise.allSettled([
     sendReservationConfirmation({ to: contact.email, name: contact.name, bookingNumber, reservationId: "", eventName: contact.eventName, dates, rooms }),
     sendAdminNewReservationAlert({ bookingNumber, submitterName: contact.name, submitterEmail: contact.email, eventName: contact.eventName, dates, rooms, notes: notes || undefined }),
-  ]).catch(() => {});
+  ]).then(() => {}));
 
   return NextResponse.json({ bookingNumber }, { status: 201 });
 }

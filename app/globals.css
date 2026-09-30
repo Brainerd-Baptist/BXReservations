@@ -1232,3 +1232,7 @@ html[data-reveal] .bx-fade-in.bx-visible {
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
 }
+
+/* "Add your name" banner sits in the page flow just under the fixed header */
+.bx-name-banner { margin-top: var(--bx-header-h); position: relative; z-index: 1; }
+.bx-name-banner + main { padding-top: 0 !important; }

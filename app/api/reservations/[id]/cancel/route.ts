@@ -99,7 +99,7 @@ export async function POST(
   const { data: adminRoles } = await supabase
     .from("bx_user_roles")
     .select("user_id")
-    .in("role", ["admin", "superadmin", "staff"]);
+    .in("role", ["owner", "system_admin", "booking_admin"]);
 
   if (adminRoles && adminRoles.length > 0) {
     const notifs = adminRoles.map((r: { user_id: string }) => ({

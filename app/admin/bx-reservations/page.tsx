@@ -208,6 +208,7 @@ export default function BxReservationsAdmin() {
   const [changingStatus, setChangingStatus] = useState<string | null>(null);
   const [history, setHistory] = useState<Record<string, HistoryEntry[]>>({});
   const [historyLoading, setHistoryLoading] = useState<Record<string, boolean>>({});
+  const [historyError, setHistoryError] = useState<Record<string, string | null>>({});
 
   // ── Blackout rules ────────────────────────────────────────────────────────
   const [blackouts, setBlackouts] = useState<BlackoutRule[]>([]);
@@ -415,15 +416,21 @@ export default function BxReservationsAdmin() {
 
   async function fetchHistory(localId: string, dbId: string) {
     setHistoryLoading(prev => ({ ...prev, [localId]: true }));
+    setHistoryError(prev => ({ ...prev, [localId]: null }));
+    let err: string | null = null;
+    let data: HistoryEntry[] = [];
     try {
       const res = await fetch(`/api/reservations/${dbId}/history`);
-      if (res.ok) {
-        const data = await res.json();
-        setHistory(prev => ({ ...prev, [localId]: data }));
-      }
+      if (res.ok) data = await res.json();
+      else err = ((await res.json().catch(() => ({}))) as { error?: string }).error ?? `Error ${res.status}`;
     } catch (e) {
       console.error("[admin] fetchHistory failed:", e);
+      err = "Network error";
     }
+    // Always store a result, so a failed load shows an error instead of
+    // re-requesting on every render (that was the endless loading bar).
+    setHistory(prev => ({ ...prev, [localId]: data }));
+    setHistoryError(prev => ({ ...prev, [localId]: err }));
     setHistoryLoading(prev => ({ ...prev, [localId]: false }));
   }
 
@@ -861,7 +868,13 @@ export default function BxReservationsAdmin() {
                         <div className="space-y-2" onClick={e => e.stopPropagation()}>
                           <p className="text-xs font-semibold text-slate uppercase tracking-widest">History</p>
                           {loading && <InlineSkeleton width="60px" />}
-                          {!loading && entries && entries.length === 0 && <p className="text-xs text-slate">No history yet.</p>}
+                          {!loading && historyError[req.id] && (
+                            <p className="text-xs" style={{ color: "var(--bx-clay)" }}>
+                              Couldn&apos;t load history ({historyError[req.id]}).{" "}
+                              <button type="button" className="underline font-semibold" onClick={() => fetchHistory(req.id, req.dbId!)}>Retry</button>
+                            </p>
+                          )}
+                          {!loading && !historyError[req.id] && entries && entries.length === 0 && <p className="text-xs text-slate">No history yet.</p>}
                           {!loading && entries && entries.length > 0 && (
                             <div className="space-y-1.5 max-h-48 overflow-y-auto">
                               {entries.map(h => (

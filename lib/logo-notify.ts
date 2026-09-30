@@ -9,7 +9,7 @@ import type { ReservationLogoRow } from "@/lib/event-logo";
 const FROM = process.env.EMAIL_FROM ?? "BX Reservations <noreply@brainerdhq.app>";
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "jking@brainerdbaptist.org";
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://bx-reservations.vercel.app").replace(/\/$/, "");
-const STAFF_ROLES = ["admin", "owner", "system_admin", "booking_admin"];
+const STAFF_ROLES = ["owner", "system_admin", "booking_admin"];
 
 function resend(): Resend | null {
   return process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;

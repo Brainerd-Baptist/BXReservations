@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { BxRole } from "@/lib/roles";
+import { ensureAccountSetup, nameFromAuth } from "@/lib/account-setup";
 
 export type { BxRole };
 
@@ -58,6 +59,21 @@ export async function getUserAndRole(): Promise<{
       .eq("user_id", user.id)
       .maybeSingle(),
   ]);
+
+  // Safety net: an account that somehow skipped first sign-in setup (older
+  // accounts, a link opened in another browser) is set up now.
+  if (!roleResult.data?.role || !profileResult.data || (!profileResult.data.display_name && nameFromAuth(user))) {
+    await ensureAccountSetup(user).catch((e) => console.error("[get-user-role] setup failed:", e));
+    return {
+      user: { id: user.id, email: user.email ?? "" },
+      role: (roleResult.data?.role as BxRole) ?? "member",
+      profile: {
+        display_name: profileResult.data?.display_name || nameFromAuth(user),
+        phone: profileResult.data?.phone ?? null,
+        organization: profileResult.data?.organization ?? null,
+      },
+    };
+  }
 
   return {
     user: { id: user.id, email: user.email ?? "" },

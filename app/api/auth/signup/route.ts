@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { authEmailLink } from "@/lib/auth-links";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { brandedEmailHtml, sendEmail } from "@/lib/email";
 
@@ -45,7 +46,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 
-  if (!linkData?.properties?.action_link) {
+  const confirmUrl = authEmailLink(linkData?.properties, "/reservations", "signup");
+  if (!confirmUrl) {
     return NextResponse.json({ error: "Failed to generate confirmation link" }, { status: 500 });
   }
 
@@ -66,7 +68,7 @@ export async function POST(req: NextRequest) {
         If you didn't create an account, you can safely ignore this email.
       </p>`,
     ctaText:     "Confirm Email",
-    ctaUrl:      linkData.properties.action_link,
+    ctaUrl:      confirmUrl,
     footnoteHtml: `
       <p style="margin:0;">
         Questions? Email

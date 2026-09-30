@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { pcoConfirmEvent, pcoCancelEvent } from "@/lib/pco";
 import { createClient } from "@supabase/supabase-js";
 import { sendStatusUpdateEmail } from "@/lib/email";
@@ -299,7 +299,7 @@ export async function PATCH(req: NextRequest) {
   }
 
   if (emailType && row.contact_email) {
-    sendStatusUpdateEmail({
+    after(() => sendStatusUpdateEmail({
       to:            row.contact_email as string,
       name:          (row.contact_name as string) || (row.contact_email as string),
       bookingNumber: row.booking_number as string,
@@ -312,7 +312,7 @@ export async function PATCH(req: NextRequest) {
       console.log(`[email] status-update(${emailType}) sent OK for ${row.booking_number as string}`);
     }).catch(err => {
       console.error(`[email] status-update(${emailType}) FAILED for ${row.booking_number as string}:`, err);
-    });
+    }));
   }
 
   // ── In-app bell notification for the reservation owner ───────────────────
@@ -328,7 +328,7 @@ export async function PATCH(req: NextRequest) {
   };
   const notifCopy = NOTIF_LABEL[status];
   if (notifCopy && row.user_id) {
-    (async () => {
+    after(async () => {
       try {
         const { error: nErr } = await supabase.from("bx_notifications").insert({
           user_id:        row.user_id as string,
@@ -342,7 +342,7 @@ export async function PATCH(req: NextRequest) {
       } catch (err) {
         console.error("[notif] unexpected error:", err);
       }
-    })();
+    });
   }
 
   return NextResponse.json({ ok: true, dbStatus });

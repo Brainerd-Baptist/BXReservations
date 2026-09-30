@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getUserAndRole } from "@/lib/get-user-role";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
@@ -52,7 +53,12 @@ export default async function SiteHeader() {
     savedTheme = data?.theme ?? null;
   }
 
+  // Every account needs a name (bookings and agreements use it). Google
+  // usually provides one; if not, nudge until they add it.
+  const needsName = !!user && !profile?.display_name;
+
   return (
+    <>
     <HeaderShell
       initials={initials}
       role={role}
@@ -62,5 +68,14 @@ export default async function SiteHeader() {
       displayName={profile?.display_name ?? null}
       savedTheme={savedTheme}
     />
+    {needsName && (
+      <div role="status" className="bx-name-banner bx-tone-amber border-b text-sm">
+        <div className="max-w-5xl mx-auto px-4 py-2 flex flex-wrap items-center justify-between gap-2">
+          <span>Add your full name to finish setting up your account.</span>
+          <Link href="/account#profile" className="bx-btn bx-btn--primary bx-btn--sm">Add name</Link>
+        </div>
+      </div>
+    )}
+    </>
   );
 }

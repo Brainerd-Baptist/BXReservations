@@ -72,7 +72,7 @@ export default function ResetPasswordPage() {
               <button
                 type="button"
                 onClick={() => router.push("/login")}
-                className="w-full bg-brass hover:bg-brass/90 text-white font-semibold rounded-lg py-2.5 text-sm transition-colors"
+                className="bx-btn bx-btn--primary bx-btn--md bx-btn--block"
               >
                 Back to sign in
               </button>
@@ -92,7 +92,7 @@ export default function ResetPasswordPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="At least 8 characters"
-                  className="w-full border border-parchment/20 rounded-lg py-2.5 px-3 text-sm text-parchment placeholder:text-slate/50 bg-ink focus:outline-none focus:ring-2 focus:ring-brass/40 focus:border-brass"
+                  className="bx-input"
                 />
               </div>
               <div>
@@ -104,7 +104,7 @@ export default function ResetPasswordPage() {
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
                   placeholder="Repeat your new password"
-                  className="w-full border border-parchment/20 rounded-lg py-2.5 px-3 text-sm text-parchment placeholder:text-slate/50 bg-ink focus:outline-none focus:ring-2 focus:ring-brass/40 focus:border-brass"
+                  className="bx-input"
                 />
               </div>
               {error && (
@@ -115,7 +115,7 @@ export default function ResetPasswordPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-brass hover:bg-brass/90 active:scale-[0.98] transition-all text-white font-semibold rounded-lg py-2.5 text-sm disabled:opacity-60"
+                className="bx-btn bx-btn--primary bx-btn--md bx-btn--block"
               >
                 {loading ? "Saving…" : "Set new password"}
               </button>

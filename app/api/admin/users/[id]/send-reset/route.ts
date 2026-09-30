@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { authEmailLink } from "@/lib/auth-links";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { getUserAndRole } from "@/lib/get-user-role";
 import { can } from "@/lib/roles";
@@ -39,7 +40,8 @@ export async function POST(
     options: { redirectTo },
   });
 
-  if (linkErr || !linkData?.properties?.action_link) {
+  const resetUrl = authEmailLink(linkData?.properties, "/auth/reset-password", "recovery");
+  if (linkErr || !resetUrl) {
     console.error("[send-reset] generateLink error:", linkErr?.message);
     return NextResponse.json({ error: linkErr?.message ?? "Failed to generate link" }, { status: 500 });
   }
@@ -57,7 +59,7 @@ export async function POST(
         If you weren't expecting this, contact the church office — your account has not been changed.
       </p>`,
     ctaText:     "Reset Password",
-    ctaUrl:      linkData.properties.action_link,
+    ctaUrl:      resetUrl,
     footnoteHtml: `
       <p style="margin:0;">
         Questions? Email
