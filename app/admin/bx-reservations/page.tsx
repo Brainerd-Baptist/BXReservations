@@ -26,6 +26,7 @@ import BillingCard from "@/app/components/billing-card";
 import EditBooking from "@/app/components/edit-booking";
 import PeopleCard from "@/app/components/people-card";
 import RoomRates from "@/app/components/room-rates";
+import { ROOMS } from "@/lib/rooms";
 import AddonCatalog from "@/app/components/addon-catalog";
 import GridToggle from "@/app/components/grid-toggle";
 import { useState, useEffect, useCallback } from "react";
@@ -1517,7 +1518,7 @@ export default function BxReservationsAdmin() {
                         }
                       >
                         <span className="block">{ev.kind === "flex" && <span className="mr-1" aria-label="Standing use">⟳</span>}{ev.label}</span>
-                        {ev.room && <span className="block text-[11px] opacity-75 font-normal">{ev.room}</span>}
+                        {ev.room && <span className="block text-[11px] opacity-75 font-normal">{ev.room.split(/,\s*/).map((id) => ROOMS.find((r) => r.id === id)?.name ?? id).join(" · ")}</span>}
                       </li>
                     ))}
                   </ul>
