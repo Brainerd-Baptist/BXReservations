@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireStaff } from "@/lib/api-auth";
 import { createClient } from "@supabase/supabase-js";
 
 function adminSb() {
@@ -10,6 +11,8 @@ function adminSb() {
 
 // ─── GET — list all organizations ──────────────────────────────────────────────
 export async function GET(req: NextRequest) {
+  const denied = await requireStaff();
+  if (denied) return denied;
   const sb = adminSb();
   const { searchParams } = new URL(req.url);
   const q = searchParams.get("q")?.trim() || "";
@@ -73,6 +76,8 @@ export async function GET(req: NextRequest) {
 
 // ─── POST — create a new organization ──────────────────────────────────────────
 export async function POST(req: NextRequest) {
+  const denied = await requireStaff();
+  if (denied) return denied;
   const sb = adminSb();
   const body = await req.json();
 

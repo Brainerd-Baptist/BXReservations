@@ -345,16 +345,24 @@ export default function BxReservationsAdmin() {
       const rule = await res.json() as BlackoutRule;
       setBlackouts(prev => [...prev, rule]);
       setNewLabel(""); setNewDate("");
+    } else {
+      const err = await res.json().catch(() => ({})) as { error?: string };
+      toast(err.error ?? "Couldn't add that blackout.", "error");
     }
     setSaving(false);
   }
 
   async function removeBlackout(id: string) {
-    await fetch("/api/blackouts", {
+    const res = await fetch("/api/blackouts", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id }),
     });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({})) as { error?: string };
+      toast(err.error ?? "Couldn't remove that blackout.", "error");
+      return;
+    }
     setBlackouts(prev => prev.filter(r => r.id !== id));
   }
 

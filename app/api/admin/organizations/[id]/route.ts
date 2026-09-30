@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireStaff } from "@/lib/api-auth";
 import { createClient } from "@supabase/supabase-js";
 
 function adminSb() {
@@ -13,6 +14,8 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const denied = await requireStaff();
+  if (denied) return denied;
   const { id } = await params;
   const sb = adminSb();
 
@@ -44,6 +47,8 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const denied = await requireStaff();
+  if (denied) return denied;
   const { id } = await params;
   const sb = adminSb();
   const body = await req.json();
@@ -74,6 +79,8 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const denied = await requireStaff();
+  if (denied) return denied;
   const { id } = await params;
   const sb = adminSb();
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireStaff } from "@/lib/api-auth";
 import { createClient } from "@supabase/supabase-js";
 
 function adminSb() {
@@ -13,6 +14,8 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const denied = await requireStaff();
+  if (denied) return denied;
   const { id: orgId } = await params;
   const sb = adminSb();
   const { reservation_id, unlink } = await req.json();

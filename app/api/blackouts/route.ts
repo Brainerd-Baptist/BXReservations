@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireSysadmin } from "@/lib/api-auth";
 import { createClient } from "@supabase/supabase-js";
 
 export interface BlackoutRule {
@@ -47,6 +48,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const denied = await requireSysadmin();
+  if (denied) return denied;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return NextResponse.json({ error: "DB not configured" }, { status: 503 });
@@ -68,6 +71,8 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+  const denied = await requireSysadmin();
+  if (denied) return denied;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return NextResponse.json({ error: "DB not configured" }, { status: 503 });

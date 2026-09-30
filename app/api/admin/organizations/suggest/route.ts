@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireStaff } from "@/lib/api-auth";
 import { createClient } from "@supabase/supabase-js";
 
 function adminSb() {
@@ -22,6 +23,8 @@ function similarityScore(a: string, b: string): number {
 
 // GET ?contact_org=First+Presbyterian
 export async function GET(req: NextRequest) {
+  const denied = await requireStaff();
+  if (denied) return denied;
   const { searchParams } = new URL(req.url);
   const contactOrg = searchParams.get("contact_org") ?? "";
   if (!contactOrg.trim()) {

@@ -36,10 +36,12 @@ export default async function ReservationsPage() {
     }
   );
 
-  const { data: reservations } = await supabase
+  // Yours by account or by the email on the booking (any letter case).
+  // Access is also enforced by the database's row-level rules.
+  const { data: reservations, error: reservationsError } = await supabase
     .from("reservations")
     .select("id, booking_number, created_at, status, event_name, payload")
-    .or(`user_id.eq.${user.id},contact_email.eq.${user.email}`)
+    .or(`user_id.eq.${user.id},contact_email.ilike.${user.email}`)
     .order("created_at", { ascending: false })
     .limit(50);
 
@@ -60,6 +62,7 @@ export default async function ReservationsPage() {
 
   // Upcoming until the LAST included day is over, in venue time; every
   // cancellation variant counts as closed (audit F09).
+  if (reservationsError) console.error("[reservations] list failed:", reservationsError.message);
   const all = (reservations ?? []) as Reservation[];
   const upcoming: Reservation[] = all
     .filter((r) => isUpcoming(r.status, r.payload))
@@ -88,18 +91,7 @@ export default async function ReservationsPage() {
         >
           My Reservations
         </h1>
-        <Link
-          href="/reserve"
-          style={{
-            padding: "0.4375rem 0.875rem",
-            borderRadius: "0.5rem",
-            fontSize: "0.875rem",
-            fontWeight: 600,
-            background: "var(--bx-brass)",
-            color: "#fff",
-            textDecoration: "none",
-          }}
-        >
+        <Link href="/reserve" className="bx-btn bx-btn--primary bx-btn--sm">
           + New request
         </Link>
       </div>
@@ -197,6 +189,15 @@ export default async function ReservationsPage() {
       )}
 
       {/* ── Upcoming / Shared / Past (client component handles hover) ── */}
+      {reservationsError && (
+        <div role="alert" className="bx-tone-red rounded-xl border p-4 mb-6 text-sm">
+          <p className="font-semibold">We couldn&apos;t load your reservations.</p>
+          <p className="mt-1 opacity-90">
+            Your bookings are safe. <Link href="/reservations" className="underline font-semibold">Try again</Link>, or use the link in your confirmation email.
+          </p>
+        </div>
+      )}
+
       <ReservationList
         upcoming={upcoming}
         sharedCollabs={(sharedCollabs ?? []) as unknown as Collab[]}
@@ -204,7 +205,7 @@ export default async function ReservationsPage() {
       />
 
       {/* ── Empty state when nothing at all ── */}
-      {(!reservations || reservations.length === 0) &&
+      {!reservationsError && (!reservations || reservations.length === 0) &&
         (!pendingInvites || pendingInvites.length === 0) &&
         (!sharedCollabs || sharedCollabs.length === 0) && (
         <div style={{ textAlign: "center", padding: "4rem 1.5rem", color: "var(--bx-slate)" }}>
@@ -217,7 +218,7 @@ export default async function ReservationsPage() {
           </div>
           <p style={{ margin: "0 0 0.5rem", fontWeight: 600, color: "var(--bx-parchment)" }}>No reservations yet</p>
           <p style={{ margin: "0 0 1.25rem", fontSize: "0.875rem" }}>
-            When you submit a space request, it'll show up here.
+            When you submit a space request, it&apos;ll show up here.
           </p>
           <Link
             href="/reserve"

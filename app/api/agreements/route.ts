@@ -2,13 +2,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateToken, buildAgreementText, AgreementRecord } from "@/lib/agreements";
 import { createClient } from "@supabase/supabase-js";
+import { requireStaff } from "@/lib/api-auth";
 
-function anonClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return null;
-  return createClient(url, key);
-}
 function serviceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -20,6 +15,8 @@ const memStore: Map<string, AgreementRecord> = new Map();
 
 // POST — staff creates agreement
 export async function POST(req: NextRequest) {
+  const denied = await requireStaff();
+  if (denied) return denied;
   const body = await req.json() as {
     reservation_id: string;
     reservation_summary: string;
@@ -48,9 +45,10 @@ export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get("token");
   const reservationId = req.nextUrl.searchParams.get("reservation_id");
   if (token) {
-    const anon = anonClient();
-    if (anon) {
-      const { data, error } = await anon.from("reservation_agreements").select("*").eq("token", token).single();
+    // The token is the secret: look up exactly that one agreement, server-side.
+    const svc = serviceClient();
+    if (svc) {
+      const { data, error } = await svc.from("reservation_agreements").select("*").eq("token", token).single();
       if (error) return NextResponse.json({ error: "Not found" }, { status: 404 });
       return NextResponse.json(data);
     }
@@ -59,6 +57,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(rec);
   }
   if (reservationId) {
+    const denied = await requireStaff();
+    if (denied) return denied;
     const svc = serviceClient();
     if (svc) {
       const { data, error } = await svc.from("reservation_agreements").select("*").eq("reservation_id", reservationId).order("created_at", { ascending: false });
@@ -77,9 +77,9 @@ export async function PATCH(req: NextRequest) {
   const { token, customer_name } = body;
   if (!token || !customer_name?.trim()) return NextResponse.json({ error: "token and customer_name required" }, { status: 400 });
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? req.headers.get("x-real-ip") ?? "unknown";
-  const anon = anonClient();
-  if (anon) {
-    const { data, error } = await anon.from("reservation_agreements").update({ customer_name: customer_name.trim(), customer_signed_at: new Date().toISOString(), customer_ip: ip }).eq("token", token).is("customer_signed_at", null).select().single();
+  const svc = serviceClient();
+  if (svc) {
+    const { data, error } = await svc.from("reservation_agreements").update({ customer_name: customer_name.trim(), customer_signed_at: new Date().toISOString(), customer_ip: ip }).eq("token", token).is("customer_signed_at", null).select().single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json(data);
   }
@@ -94,6 +94,8 @@ export async function PATCH(req: NextRequest) {
 
 // PUT — staff countersigns
 export async function PUT(req: NextRequest) {
+  const denied = await requireStaff();
+  if (denied) return denied;
   const body = await req.json() as { token: string; staff_name: string };
   const { token, staff_name } = body;
   if (!token || !staff_name?.trim()) return NextResponse.json({ error: "token and staff_name required" }, { status: 400 });
