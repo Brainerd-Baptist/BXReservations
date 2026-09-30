@@ -1,6 +1,7 @@
 
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import Link from "next/link";
 import { BlackoutRule, isDateBlackedOut, isSlotBlackedOut, blackoutReason } from "@/lib/blackouts";
 import { COLLAB_ROLE_LABELS, COLLAB_ROLE_DESCRIPTIONS, type CollabRole } from "@/lib/roles";
 import { ROOMS, type Room } from "@/lib/rooms";
@@ -879,6 +880,8 @@ function DayCard({
 
 // ─── Step 2: Review ───────────────────────────────────────────────────────────
 
+const SUBMIT_TIMEOUT_MSG = "timeout";
+
 function ReviewStep({
   contact, days, isNP, notes, setNotes, onBack, onSubmit, submitted, submitting, bookingNumber, submitError, reservationId, userId,
 }: {
@@ -897,6 +900,14 @@ function ReviewStep({
 }) {
   const activeDays = days.filter(d => d.included);
   const total = totalEstimate(days, isNP);
+
+  // When a send fails, move focus to the message so it's seen and announced.
+  const errorRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!submitError || submitting) return;
+    errorRef.current?.focus({ preventScroll: true });
+    errorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [submitError, submitting]);
 
   if (submitted) {
     return (
@@ -1055,11 +1066,48 @@ function ReviewStep({
           className={`${input} resize-none`} />
       </Field>
 
+      {submitError && !submitting && (
+        <div
+          ref={errorRef}
+          tabIndex={-1}
+          role="alert"
+          aria-live="assertive"
+          id="bx-submit-error"
+          className="bx-tone-red mt-6 rounded-2xl border p-4 flex items-start gap-3 outline-none animate-in"
+        >
+          <svg className="w-5 h-5 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+            <circle cx="12" cy="12" r="10" /><path d="M12 7v6M12 16.5v.5" strokeLinecap="round" />
+          </svg>
+          <div className="text-sm leading-relaxed">
+            {submitError === SUBMIT_TIMEOUT_MSG ? (
+              <>
+                <p className="font-semibold">We&apos;re not sure your request went through.</p>
+                <p className="mt-0.5">
+                  The reservation system took too long to answer. It may have saved your request anyway —
+                  check <Link href="/reservations" className="underline font-semibold">My Reservations</Link> or
+                  your email for a confirmation before sending it again.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="font-semibold">Your request was not sent.</p>
+                <p className="mt-0.5">{submitError}</p>
+              </>
+            )}
+            <p className="mt-1.5 opacity-90">
+              Everything you entered is still here. Try again, or email{" "}
+              <a href="mailto:barb@brainerdbaptist.org" className="underline font-semibold">barb@brainerdbaptist.org</a>{" "}
+              and we&apos;ll help you finish it.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="mt-6 flex justify-between">
         <button onClick={onBack} className="px-6 py-3 rounded-xl text-slate font-medium text-sm hover:bg-parchment/10 transition-colors">
           ← Back
         </button>
-        <button onClick={() => { void onSubmit(); }} disabled={submitting}
+        <button onClick={() => { void onSubmit(); }} disabled={submitting} aria-describedby={submitError ? "bx-submit-error" : undefined}
           className="px-8 py-3 rounded-xl bg-parchment text-ink font-semibold text-sm hover:bg-parchment/90 disabled:opacity-60 transition-colors flex items-center gap-2">
           {submitting ? (
             <>
@@ -1069,7 +1117,7 @@ function ReviewStep({
               </svg>
               Sending…
             </>
-          ) : "Send Request →"}
+          ) : submitError ? "Try Again →" : "Send Request →"}
         </button>
       </div>
     </div>
@@ -1343,8 +1391,9 @@ export default function ReserveClient({ initialContact, userId }: ReserveClientP
 
   useEffect(() => {
     fetch("/api/blackouts")
-      .then(r => r.json())
-      .then((data: BlackoutRule[]) => setBlackoutRules(data))
+      .then(r => (r.ok ? r.json() : []))
+      // Only ever store an array: an error object here would crash every step.
+      .then((data: unknown) => setBlackoutRules(Array.isArray(data) ? (data as BlackoutRule[]) : []))
       .catch(() => {}); // fail silently — no rules = no blocking
   }, []);
 
@@ -1357,15 +1406,28 @@ export default function ReserveClient({ initialContact, userId }: ReserveClientP
     if (submitting) return;
     setSubmitting(true);
     setSubmitError("");
+    // A request that hangs is a failure too — stop waiting after 60s. The
+    // server saves the reservation before its slower follow-up work (calendar,
+    // emails), so a timeout may mean it DID save: say so, to avoid duplicates.
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 60_000);
     try {
       const res = await fetch("/api/submit-reservation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contact, days, spaceMode, notes }),
+        signal: controller.signal,
       });
-      const data = await res.json();
-      if (!res.ok) {
-        setSubmitError(data.error ?? "Something went wrong. Please try again or contact us directly.");
+      // The server can answer with a non-JSON error page (500, 502, 413…);
+      // read it safely so that shows as a server problem, not a network one.
+      let data: { error?: string; bookingNumber?: string; reservationId?: string } = {};
+      try { data = await res.json(); } catch { /* non-JSON body */ }
+      if (!res.ok || data.error) {
+        setSubmitError(
+          res.status >= 500 || !data.error
+            ? "Our reservation system had a problem saving your request."
+            : `We couldn't send your request: ${data.error.replace(/\.$/, "")}.`
+        );
         return;
       }
       if (data.bookingNumber) setBookingNumber(data.bookingNumber);
@@ -1374,8 +1436,13 @@ export default function ReserveClient({ initialContact, userId }: ReserveClientP
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       console.error("Submission error:", err);
-      setSubmitError("Network error. Please check your connection and try again.");
+      setSubmitError(
+        (err as Error)?.name === "AbortError"
+          ? SUBMIT_TIMEOUT_MSG
+          : "We couldn't reach the reservation system. Please check your connection."
+      );
     } finally {
+      clearTimeout(timer);
       setSubmitting(false);
     }
   }
