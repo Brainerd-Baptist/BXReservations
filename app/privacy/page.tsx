@@ -18,6 +18,7 @@ export default function PrivacyPage() {
         <li><strong>Booking details:</strong> event name, dates, times, spaces, setup, headcount, add-ons, notes, and messages with the BX team.</li>
         <li><strong>Documents you give us:</strong> certificates of insurance, your event logo, and your event map plan.</li>
         <li><strong>Agreements:</strong> when you sign the Facility Use Agreement we record the name you type, the date and time, and your internet (IP) address as proof of signing.</li>
+        <li><strong>Your feedback:</strong> if you answer the survey we send after your event, we keep your answers with your booking. We only quote your comments (with your first name) if you tick the box that says we may.</li>
         <li><strong>Payments:</strong> amounts, dates and method (for example, check) that the BX team records. We don&rsquo;t collect card or bank numbers on this site.</li>
         <li><strong>Site use:</strong> page views and page speed, collected without cookies and without identifying you; and how far a visit gets through the booking form, using a random code that isn&rsquo;t linked to your name or email.</li>
         <li><strong>Security:</strong> to stop abuse we keep a scrambled (hashed) form of your IP address, email or account ID for a short time when you use the site&rsquo;s forms (sign-up, sign-in emails, requests, invites). These counters are cleared after about two days.</li>

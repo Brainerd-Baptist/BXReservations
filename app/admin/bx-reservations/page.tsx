@@ -31,6 +31,8 @@ import BookingInsights from "./booking-insights";
 import { useAdminRole } from "./admin-role";
 import TemplatesManager, { SaveTemplateButton } from "./booking-templates";
 import WaiverEditor from "./waiver-editor";
+import GuestFeedback from "./guest-feedback";
+import SurveySettings from "./survey-settings";
 import { can } from "@/lib/roles";
 import AddonCatalog from "@/app/components/addon-catalog";
 import GridToggle from "@/app/components/grid-toggle";
@@ -646,6 +648,7 @@ export default function BxReservationsAdmin() {
               }}
             />
             <VenueSettings />
+            {can.configureSystem(myRole) && <SurveySettings />}
             <TemplatesManager />
             {/* Rates, add-ons and blackout rules are System Admin settings; the
                 background grid is the Owner's. Booking Admins don't see controls
@@ -2021,6 +2024,7 @@ function ReportsTab() {
   return (
     <div className="flex flex-col gap-6 p-1">
       <BookingInsights />
+      <GuestFeedback />
 
       {/* ── Period selector ── */}
       <div className="flex items-center gap-3 flex-wrap">

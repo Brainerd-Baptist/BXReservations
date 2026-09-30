@@ -23,6 +23,7 @@ import { ButtonLink } from "@/app/components/ui/button";
 import { readWaived, WAIVER_LABEL } from "@/lib/waivers";
 import BookingChecklist, { type ChecklistStep } from "./booking-checklist";
 import { getBilling } from "@/lib/billing";
+import { ensureSurvey } from "@/lib/survey";
 
 const STATUS_META: Record<string, { dot: string }> = {
   pending:            { dot: "#FBBF24" },
@@ -202,6 +203,10 @@ export default async function ReservationDetailPage({
   ]);
   const logo = logoRow ? await logoState(db, logoRow) : null;
   const totals = (await getBilling(db, id).catch(() => null))?.totals ?? null;
+  // After the event: the organizer's survey link (created on first view)
+  const survey = reservation.status === "completed" && (isOwner || isCoOwner)
+    ? await ensureSurvey(db, id, reservation.contact_email ?? null).catch(() => null)
+    : null;
   const share = shareState(shareRow);
 
   return renderPage(reservation, {
@@ -211,6 +216,7 @@ export default async function ReservationDetailPage({
     canEdit: isOwner || staff, // accepted co-owners edit through the event map API; viewers only look
     canCancel: isOwner || isCoOwner, // co-organizers may cancel too (C4); staff use Admin
     totals,
+    survey: survey ? { token: survey.token, done: !!survey.submitted_at } : null,
     labelCount: labelCount ?? 0,
     logo,
     share,
@@ -241,7 +247,7 @@ function renderPage(
     church_use?: boolean | null;
     waived?: unknown;
   },
-  view: { isCollab: boolean; staffView: boolean; staff: boolean; canEdit: boolean; canCancel?: boolean; totals?: { charges: number; paid: number; balance: number } | null; labelCount: number; logo: LogoState | null; share: { enabled: boolean; token: string | null; path: string | null }; agreement?: { customer_signed_at: string | null; token: string } | null }
+  view: { isCollab: boolean; staffView: boolean; staff: boolean; canEdit: boolean; canCancel?: boolean; survey?: { token: string; done: boolean } | null; totals?: { charges: number; paid: number; balance: number } | null; labelCount: number; logo: LogoState | null; share: { enabled: boolean; token: string | null; path: string | null }; agreement?: { customer_signed_at: string | null; token: string } | null }
 ) {
   const submittedDate = new Date(reservation.created_at).toLocaleDateString("en-US", {
     month: "long",
@@ -386,6 +392,16 @@ function renderPage(
           </div>
         );
       })()}
+
+      {/* After the event: survey (v1.58) */}
+      {view.survey && (
+        <div className="bx-well rounded-xl" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", padding: "0.875rem 1.25rem", marginBottom: "1rem" }}>
+          <p style={{ margin: 0, fontSize: "0.875rem", color: "var(--bx-parchment)", flex: "1 1 14rem" }}>
+            {view.survey.done ? "Thank you for your feedback — we read every answer." : "How did it go? Tell us in about a minute."}
+          </p>
+          {!view.survey.done && <ButtonLink href={`/survey/${view.survey.token}`} size="sm">Take the survey</ButtonLink>}
+        </div>
+      )}
 
       {/* Next steps checklist (C3) */}
       {!CLOSED_FOR_CHECKLIST.has(reservation.status) && (

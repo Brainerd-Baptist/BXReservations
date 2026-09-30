@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { adminClient, getEventMapContext } from "@/lib/event-map";
 import { pcoCancelEvent } from "@/lib/pco";
 import { notifyCancellation } from "@/lib/cancellation";
+import { releaseReward } from "@/lib/survey";
 
 // POST /api/reservations/[id]/cancel  { reason }
 // The organizer or an accepted co-organizer cancels (C4). A reason is required,
@@ -63,6 +64,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }).eq("id", id);
   if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 });
 
+  await releaseReward(db, id).catch(() => {}); // an unused survey thank-you goes back to them
   await db.from("reservation_history").insert({
     reservation_id: id, actor_id: user.id, actor_name: who, actor_role: isOrganizer ? "user" : "collaborator",
     action: "user_cancelled", from_status: row.status, to_status: "cancelled_by_user", note: reason,

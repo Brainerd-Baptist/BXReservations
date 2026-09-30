@@ -3,6 +3,7 @@ import { requireStaff } from "@/lib/api-auth";
 import { adminClient } from "@/lib/event-map";
 import { getUserAndRole } from "@/lib/get-user-role";
 import { readWaived, WAIVER_LABEL } from "@/lib/waivers";
+import { releaseReward, syncRewardDiscount } from "@/lib/survey";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -23,6 +24,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   if (!before) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const { error } = await db.from("reservations").update(patch).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  // No payment needed → the survey thank-you goes back for a later booking; otherwise keep its line current
+  if (w?.payment) await releaseReward(db, id).catch(() => {});
+  else await syncRewardDiscount(db, id).catch(() => {});
 
   const { user, profile } = await getUserAndRole();
   const skipped = w ? (Object.keys(w) as (keyof typeof w)[]).filter((k) => w[k]).map((k) => WAIVER_LABEL[k]) : [];

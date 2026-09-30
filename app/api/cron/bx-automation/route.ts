@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { brandedEmailHtml, sendEmail, escHtml } from "@/lib/email";
+import { brandedEmailHtml, sendEmail, escHtml, pillButtonHtml } from "@/lib/email";
+import { ensureSurvey, readSurveySettings, releaseReward } from "@/lib/survey";
 import { runAutoReminders } from "@/lib/payment-reminders";
 import { SITE_URL, ADMIN_EMAIL as SITE_ADMIN_EMAIL } from "@/lib/site";
 
@@ -183,30 +184,34 @@ function autoCancelHtml(opts: {
 function postEventFeedbackHtml(opts: {
   name: string;
   eventName: string;
-  bookingNumber: string;
+  surveyUrl: string;
+  rebookUrl: string;
+  googleUrl: string;
+  rewardPercent: number;
+  reminder?: boolean;
 }): string {
-  const { bookingNumber } = opts;
-  const name = escHtml(opts.name), eventName = escHtml(opts.eventName);
+  const first = escHtml(String(opts.name ?? "").trim().split(/\s+/)[0] || "there");
+  const eventName = escHtml(opts.eventName);
+  const reward = opts.rewardPercent > 0
+    ? `<p style="margin:0 0 16px">As a thank-you for your answers, you'll get <strong>${opts.rewardPercent}% off your next booking</strong> — it comes off automatically.</p>`
+    : "";
+  const google = opts.googleUrl
+    ? `<p style="margin:16px 0 0;text-align:center;">Have another minute? <a href="${escHtml(opts.googleUrl)}" style="color:#00abc9;">Share your experience on Google</a> — it helps other families and groups find the BX.</p>`
+    : "";
   return brandedEmailHtml({
-    preheader: `Thank you for hosting at Brainerd Baptist — ${opts.eventName}`,
-    headline: "Thank You for Hosting at Brainerd Baptist!",
+    preheader: opts.reminder ? `One minute: how was ${opts.eventName}?` : `Thank you for gathering at the BX — how did ${opts.eventName} go?`,
+    headline: opts.reminder ? "One minute to tell us how it went?" : "Thank you for gathering at the BX!",
     body: `
-      <p style="margin:0 0 16px">Hi ${name},</p>
-      <p style="margin:0 0 16px">
-        Thank you for hosting <strong>${eventName}</strong> at Brainerd Baptist Church!
-        We hope your event went well.
-      </p>
-      <p style="margin:0 0 24px">
-        If you have any feedback about your experience — the space, the process, or anything
-        we could do better — we'd love to hear from you. Simply reply to this email.
-      </p>
-      <p style="margin:0 0 16px">
-        We look forward to serving you again in the future. Booking reference: <strong>${bookingNumber}</strong>.
-      </p>
-      <p style="margin:0;color:#6b7280;font-size:13px;">
-        — The BX Team, Brainerd Baptist Church
-      </p>
-    `,
+      <p style="margin:0 0 16px">Hi ${first},</p>
+      <p style="margin:0 0 16px">${opts.reminder
+        ? `We'd still love to hear how <strong>${eventName}</strong> went. It takes about a minute, and we read every answer.`
+        : `Thank you for hosting <strong>${eventName}</strong> at the BX Community Center. We hope it was everything you planned.`}</p>
+      <p style="margin:0 0 16px">Would you tell us how we did? It takes about a minute.</p>
+      ${reward}`,
+    ctaText: "Take the 1-minute survey",
+    ctaUrl: opts.surveyUrl,
+    // Book again + the Google ask (to everyone, no reward attached)
+    footnoteHtml: `${pillButtonHtml("Book again", opts.rebookUrl)}${google}`,
   });
 }
 
@@ -218,6 +223,7 @@ export async function GET(req: NextRequest) {
 
   const sb = adminSb();
   const settings = await getSettings(sb);
+  const surveySettings = await readSurveySettings(sb);
 
   const log: string[] = [];
   let errors = 0;
@@ -390,6 +396,7 @@ export async function GET(req: NextRequest) {
         cancellation_reason: `Automatically cancelled after ${settings.auto_cancel_days} days of inactivity`,
         cancelled_by: "Automation",
       }).eq("id", res.id);
+      await releaseReward(sb, res.id).catch(() => {});
 
       await writeHistory(res.id, "status_change",
         { from_status: res.status, to_status: "auto_cancelled", reminder_type: "auto_cancelled" },
@@ -480,18 +487,58 @@ export async function GET(req: NextRequest) {
         { from_status: res.status, to_status: "completed", reminder_type: "auto_completed" },
         "Auto-completed: event date has passed"
       );
+      // Thank-you + survey (Net Promoter + ratings), with a Book again link (v1.58)
+      const survey = await ensureSurvey(sb, res.id, res.contact_email, { emailed: true });
+      const { data: wv } = await sb.from("reservations").select("waived").eq("id", res.id).maybeSingle();
+      const noPayment = !!(wv?.waived as { payment?: boolean } | null)?.payment;
       await sendEmail({
         to: res.contact_email,
-        subject: `Thank you for hosting at Brainerd Baptist — ${res.event_name}`,
+        subject: `How was ${res.event_name}? — BX Community Center`,
         html: postEventFeedbackHtml({
           name: res.contact_name,
           eventName: res.event_name,
-          bookingNumber: res.booking_number,
+          surveyUrl: `${SITE}/survey/${survey.token}`,
+          rebookUrl: `${SITE}/reserve?from=${res.id}`,
+          googleUrl: surveySettings.googleReviewUrl,
+          // Church use pays nothing, so there's no discount to offer
+          rewardPercent: noPayment ? 0 : surveySettings.rewardPercent,
         }),
       });
       log.push(`auto_completed → ${res.booking_number}`);
     } catch (e) { errors++; console.error(e); }
   }
+
+  // ── Survey reminder: once, 4 days after the thank-you, if not answered ────
+  try {
+    const now = Date.now();
+    const { data: pendingSurveys } = await sb.from("bx_surveys")
+      .select("id, token, email, sent_at, reservation_id")
+      .is("submitted_at", null).is("reminded_at", null)
+      .lt("sent_at", new Date(now - 4 * 86_400_000).toISOString())
+      .gt("sent_at", new Date(now - 21 * 86_400_000).toISOString())
+      .limit(100);
+    for (const sv of pendingSurveys ?? []) {
+      try {
+        // Mark first, so a failed send never turns into a daily repeat
+        const { data: claimed } = await sb.from("bx_surveys").update({ reminded_at: new Date().toISOString() }).eq("id", sv.id).is("reminded_at", null).select("id");
+        if (!claimed?.length) continue;
+        const { data: r } = await sb.from("reservations").select("id, event_name, contact_name, contact_email, status, waived").eq("id", sv.reservation_id).maybeSingle();
+        const to = (r?.contact_email as string | undefined) ?? (sv.email as string | undefined);
+        if (!r || !to || r.status !== "completed") continue;
+        const noPayment = !!(r.waived as { payment?: boolean } | null)?.payment;
+        await sendEmail({
+          to,
+          subject: `One minute: how was ${r.event_name}?`,
+          html: postEventFeedbackHtml({
+            name: r.contact_name as string, eventName: r.event_name as string,
+            surveyUrl: `${SITE}/survey/${sv.token}`, rebookUrl: `${SITE}/reserve?from=${r.id}`,
+            googleUrl: surveySettings.googleReviewUrl, rewardPercent: noPayment ? 0 : surveySettings.rewardPercent, reminder: true,
+          }),
+        });
+        log.push(`survey_reminder → ${r.id}`);
+      } catch (e) { errors++; console.error("[bx-automation] survey reminder:", e); }
+    }
+  } catch (e) { errors++; console.error("[bx-automation] survey reminders:", e); }
 
   // ── Payment reminders (balance due, N days before the event) ─────────────
   try {

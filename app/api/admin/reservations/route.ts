@@ -8,6 +8,7 @@ import { SITE_URL } from "@/lib/site";
 import { createAgreement } from "@/lib/agreement-token";
 import { readWaived } from "@/lib/waivers";
 import { notifyCancellation } from "@/lib/cancellation";
+import { releaseReward } from "@/lib/survey";
 
 /** 401/403 unless the signed-in user holds a staff role — this route lists every reservation and changes statuses. */
 async function requireStaff(): Promise<NextResponse | null> {
@@ -252,6 +253,11 @@ export async function PATCH(req: NextRequest) {
     if (histErr) {
       console.warn("[history] insert error (non-fatal):", histErr);
     }
+  }
+
+  // A cancelled or declined booking gives back its survey thank-you
+  if (["cancelled_by_admin", "cancelled", "cancelled_by_user", "auto_cancelled"].includes(dbStatus)) {
+    await releaseReward(supabase, dbId).catch(() => {});
   }
 
   // ── Staff cancel: everyone else on the booking hears who, when and why (C4)

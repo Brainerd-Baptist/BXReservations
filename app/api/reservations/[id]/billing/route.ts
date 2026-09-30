@@ -4,6 +4,7 @@ import { adminClient, getEventMapContext } from "@/lib/event-map";
 import { getBilling, money, requesterCanEditAddons, type ChargeKind } from "@/lib/billing";
 import { readVenue } from "@/lib/venue";
 import { readWaived } from "@/lib/waivers";
+import { releaseReward, syncRewardDiscount } from "@/lib/survey";
 
 type Params = { params: Promise<{ id: string }> };
 const KINDS: ChargeKind[] = ["rental", "addon", "fee", "discount"];
@@ -91,6 +92,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     reservation_id: ctx.reservation.id, actor_id: user.id, actor_name: c.actorName, actor_role: ctx.staff ? "admin" : "user",
     action: "charge_added", note: `${row.label} × ${quantity} added.`,
   });
+  await syncRewardDiscount(db, ctx.reservation.id); // keep the survey thank-you at X% of the new total
   return NextResponse.json(await getBilling(db, ctx.reservation.id, ctx.staff), { status: 201 });
 }
 
@@ -108,8 +110,14 @@ export async function DELETE(req: NextRequest, { params }: Params) {
   if (!ctx.staff && !(own && ctx.access === "edit" && requesterCanEditAddons(ctx.reservation.status))) {
     return NextResponse.json({ error: "Only the BX team can remove that." }, { status: 403 });
   }
-  const { error } = await db.from("reservation_charges").delete().eq("id", chargeId);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  // Removing the survey thank-you line gives the reward back to the person for a later booking
+  if (charge.auto_key === "reward") {
+    await releaseReward(db, ctx.reservation.id);
+  } else {
+    const { error } = await db.from("reservation_charges").delete().eq("id", chargeId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    await syncRewardDiscount(db, ctx.reservation.id);
+  }
   await db.from("reservation_history").insert({
     reservation_id: ctx.reservation.id, actor_id: user.id, actor_name: c.actorName, actor_role: ctx.staff ? "admin" : "user",
     action: "charge_removed", note: `${charge.label} removed.`,

@@ -11,6 +11,7 @@ import { rateLimit, clientIp, HOUR } from "@/lib/rate-limit";
 import { type BlackoutRule } from "@/lib/blackouts";
 import { checkDays } from "@/lib/booking-checks";
 import { can, reservationFlagsForRole, type BxRole } from "@/lib/roles";
+import { attachRewardAtSubmit } from "@/lib/survey";
 
 // ─── Types mirrored from reserve/page.tsx ─────────────────────────────────────
 interface ContactInfo {
@@ -184,6 +185,12 @@ export async function POST(req: NextRequest) {
           const { error: aErr } = await supabase.from("reservation_charges").insert(rows);
           if (aErr) console.error("[submit] add-ons insert failed:", aErr);
         }
+      }
+
+      // ── Survey thank-you: an earned discount comes off this booking automatically
+      if (!flags.waived.payment) {
+        await attachRewardAtSubmit(supabase, reservationId, authUser ? { id: authUser.id, email: authUser.email } : null)
+          .catch((e) => console.error("[submit] reward attach failed:", (e as Error).message));
       }
 
       // ── PCO Calendar event creation (awaited — serverless functions terminate on response) ──
