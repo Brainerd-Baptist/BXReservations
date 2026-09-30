@@ -105,10 +105,10 @@ export default function LoginPage() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: confirmEmail, redirectTo: callbackUrl() }),
-    }).then((r) => r.ok, () => false);
+    }).then(async (r) => (r.ok ? "" : r.status === 429 ? ((await r.json().catch(() => ({}))) as { error?: string }).error ?? "Too many attempts. Please wait and try again." : "fail"), () => "fail");
     setResendLoading(false);
-    if (ok) setResendSent(true);
-    else setResendError("We couldn't send another email just now. Please try again in a minute.");
+    if (!ok) setResendSent(true);
+    else setResendError(ok === "fail" ? "We couldn't send another email just now. Please try again in a minute." : ok);
   }
 
   async function handleGoogleSignIn() {
@@ -134,10 +134,10 @@ export default function LoginPage() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: resetEmail.trim(), redirectTo: `${siteUrl}/auth/callback?next=/auth/reset-password` }),
-    }).then((r) => r.ok, () => false);
+    }).then(async (r) => (r.ok ? "" : r.status === 429 ? ((await r.json().catch(() => ({}))) as { error?: string }).error ?? "Too many attempts. Please wait and try again." : "fail"), () => "fail");
     setResetLoading(false);
-    if (ok) setResetSent(true);
-    else setResetError("We couldn't send the reset email just now. Please try again in a minute.");
+    if (!ok) setResetSent(true);
+    else setResetError(ok === "fail" ? "We couldn't send the reset email just now. Please try again in a minute." : ok);
   }
 
   // ── Confirm-sent state ────────────────────────────────────────────────────

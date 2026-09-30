@@ -8,8 +8,12 @@
  * After saving the env var and redeploying, delete this file and /start.
  */
 import { NextRequest, NextResponse } from "next/server";
+import { requireSysadmin } from "@/lib/api-auth";
 
 export async function GET(req: NextRequest) {
+  // C1: the token page is for an Owner or System Admin only.
+  const denied = await requireSysadmin();
+  if (denied) return denied;
   const code        = req.nextUrl.searchParams.get("code");
   const error       = req.nextUrl.searchParams.get("error");
   const siteUrl     = process.env.NEXT_PUBLIC_SITE_URL ?? "https://bx.brainerdhq.app";

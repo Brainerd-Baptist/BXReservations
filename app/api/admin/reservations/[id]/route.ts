@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { adminClient, isStaffRole } from "@/lib/event-map";
+import { isUuid } from "@/lib/reservation-id";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -38,7 +39,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
       payment_received_at, payment_amount, payment_method, payment_receipt_url, payment_recorded_by,
       rack_rate_total, discount_applied, net_amount
     `)
-    .or(`id.eq.${id},booking_number.eq.${id}`)
+    .eq(isUuid(id) ? "id" : "booking_number", id)
     .single();
   if (!res) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -67,7 +68,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   const { data: res } = await adminClient()
     .from("reservations")
     .select("id, booking_number, coi_file_url")
-    .or(`id.eq.${id},booking_number.eq.${id}`)
+    .eq(isUuid(id) ? "id" : "booking_number", id)
     .single();
   if (!res) return NextResponse.json({ error: "Not found" }, { status: 404 });
 

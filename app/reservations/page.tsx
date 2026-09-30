@@ -7,6 +7,7 @@ import { cookies } from "next/headers";
 import ReservationList from "./ReservationList";
 import { includedDates, isUpcoming, formatYmd } from "@/lib/dates";
 import type { Reservation, Collab } from "./ReservationList";
+import { likeLiteral } from "@/lib/reservation-id";
 
 export const metadata = { title: "My Reservations · BX Reservations" };
 
@@ -38,12 +39,19 @@ export default async function ReservationsPage() {
 
   // Yours by account or by the email on the booking (any letter case).
   // Access is also enforced by the database's row-level rules.
-  const { data: reservations, error: reservationsError } = await supabase
-    .from("reservations")
-    .select("id, booking_number, created_at, status, event_name, payload")
-    .or(`user_id.eq.${user.id},contact_email.ilike.${user.email}`)
-    .order("created_at", { ascending: false })
-    .limit(50);
+  const cols = "id, booking_number, created_at, status, event_name, payload";
+  const [byId, byEmail] = await Promise.all([
+    supabase.from("reservations").select(cols).eq("user_id", user.id).order("created_at", { ascending: false }).limit(50),
+    user.email
+      ? supabase.from("reservations").select(cols).ilike("contact_email", likeLiteral(user.email)).order("created_at", { ascending: false }).limit(50)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+  const reservationsError = byId.error ?? byEmail.error;
+  const seenIds = new Set<string>();
+  const reservations = [...(byId.data ?? []), ...(byEmail.data ?? [])]
+    .filter((r) => (seenIds.has(r.id as string) ? false : (seenIds.add(r.id as string), true)))
+    .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
+    .slice(0, 50);
 
   const { data: pendingInvites } = await supabase
     .from("reservation_collaborators")

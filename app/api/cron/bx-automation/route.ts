@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { brandedEmailHtml, sendEmail } from "@/lib/email";
+import { brandedEmailHtml, sendEmail, escHtml } from "@/lib/email";
 import { runAutoReminders } from "@/lib/payment-reminders";
 
 // ─── Auth ──────────────────────────────────────────────────────────────────────
@@ -10,7 +10,8 @@ function authorized(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET;
   // Without a secret, only allow local dev. In production set CRON_SECRET in
   // Vercel (Vercel then sends it to this job automatically).
-  if (!secret) return process.env.NODE_ENV !== "production" || (req.headers.get("user-agent") ?? "").startsWith("vercel-cron/");
+  // A user-agent can be faked, so production refuses every call without the secret (C1).
+  if (!secret) return process.env.NODE_ENV !== "production";
   const header = req.headers.get("authorization") ?? "";
   return header === `Bearer ${secret}`;
 }
@@ -63,7 +64,8 @@ function userReminderHtml(opts: {
   status: string;
   reminderNum: 1 | 2;
 }): string {
-  const { name, bookingNumber, reservationId, status, reminderNum } = opts;
+  const { bookingNumber, reservationId, status, reminderNum } = opts;
+  const name = escHtml(opts.name);
   const link = `${SITE}/reservations/${reservationId}`;
   const urgency = reminderNum === 2 ? "This is a second reminder." : "";
   return brandedEmailHtml({
@@ -97,7 +99,8 @@ function adminReminderHtml(opts: {
   submittedAt: string;
   daysSinceSubmit: number;
 }): string {
-  const { bookingNumber, dbId, contactName, contactOrg, submittedAt, daysSinceSubmit } = opts;
+  const { bookingNumber, dbId, submittedAt, daysSinceSubmit } = opts;
+  const contactName = escHtml(opts.contactName), contactOrg = opts.contactOrg ? escHtml(opts.contactOrg) : "";
   const link = `${SITE}/admin/bx-reservations?selected=${dbId}`;
   return brandedEmailHtml({
     preheader: `Unreviewed reservation ${bookingNumber} (${Math.round(daysSinceSubmit)} days old)`,
@@ -123,9 +126,10 @@ function coiExpiryReminderHtml(opts: {
   expiryDate: string;
   daysUntilExpiry: number;
 }): string {
-  const { orgName, expiryDate, daysUntilExpiry } = opts;
+  const { expiryDate, daysUntilExpiry } = opts;
+  const orgName = escHtml(opts.orgName);
   return brandedEmailHtml({
-    preheader: `COI for ${orgName} expires in ${Math.round(daysUntilExpiry)} days`,
+    preheader: `COI for ${opts.orgName} expires in ${Math.round(daysUntilExpiry)} days`,
     headline: "Certificate of Insurance Expiring Soon",
     body: `
       <p style="margin:0 0 16px">Hi,</p>
@@ -151,7 +155,8 @@ function autoCancelHtml(opts: {
   bookingNumber: string;
   inactiveDays: number;
 }): string {
-  const { name, bookingNumber, inactiveDays } = opts;
+  const { bookingNumber, inactiveDays } = opts;
+  const name = escHtml(opts.name);
   return brandedEmailHtml({
     preheader: `Your reservation ${bookingNumber} has been cancelled due to inactivity.`,
     headline: "Your Reservation Has Been Cancelled",
@@ -179,9 +184,10 @@ function postEventFeedbackHtml(opts: {
   eventName: string;
   bookingNumber: string;
 }): string {
-  const { name, eventName, bookingNumber } = opts;
+  const { bookingNumber } = opts;
+  const name = escHtml(opts.name), eventName = escHtml(opts.eventName);
   return brandedEmailHtml({
-    preheader: `Thank you for hosting at Brainerd Baptist — ${eventName}`,
+    preheader: `Thank you for hosting at Brainerd Baptist — ${opts.eventName}`,
     headline: "Thank You for Hosting at Brainerd Baptist!",
     body: `
       <p style="margin:0 0 16px">Hi ${name},</p>

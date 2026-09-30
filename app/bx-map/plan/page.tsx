@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 import { getUserAndRole } from "@/lib/get-user-role";
 import { adminClient, isStaffRole, reservationDates, reservedMapRoomIds, catalogueRoomName } from "@/lib/event-map";
 import { RESERVATION_ROOM_TO_MAP } from "@/lib/event-map";
+import { likeLiteral } from "@/lib/reservation-id";
 
 export const metadata = { title: "Plan an event · BX Building Map" };
 
@@ -62,13 +63,18 @@ export default async function PlanPage() {
     rows = (data ?? []) as Row[];
     truncated = rows.length === LIMIT;
   } else {
-    const [{ data: own, error: ownErr }, { data: shared, error: sharedErr }] = await Promise.all([
+    // Yours by account, or by the booking's email matched exactly (any case).
+    // Two plain queries: no user text inside a filter string (C1).
+    const [{ data: ownById, error: ownErr }, { data: ownByEmail, error: emailErr }, { data: shared, error: sharedErr }] = await Promise.all([
       db
         .from("reservations")
         .select(select)
-        .or(`user_id.eq.${user.id},contact_email.ilike.${user.email ?? "__none__"}`)
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(LIMIT),
+      user.email
+        ? db.from("reservations").select(select).ilike("contact_email", likeLiteral(user.email)).order("created_at", { ascending: false }).limit(LIMIT)
+        : Promise.resolve({ data: [] as unknown[], error: null }),
       db
         .from("reservation_collaborators")
         .select(`reservations(${select})`)
@@ -76,10 +82,11 @@ export default async function PlanPage() {
         .not("accepted_at", "is", null)
         .limit(LIMIT),
     ]);
-    loadFailed = !!(ownErr || sharedErr);
-    truncated = (own?.length ?? 0) === LIMIT;
+    loadFailed = !!(ownErr || emailErr || sharedErr);
+    const own = [...((ownById ?? []) as Row[]), ...((ownByEmail ?? []) as Row[])];
+    truncated = (ownById?.length ?? 0) === LIMIT || (ownByEmail?.length ?? 0) === LIMIT;
     const seen = new Set<string>();
-    for (const r of (own ?? []) as Row[]) if (!seen.has(r.id)) { seen.add(r.id); rows.push(r); }
+    for (const r of own) if (!seen.has(r.id)) { seen.add(r.id); rows.push(r); }
     for (const c of (shared ?? []) as unknown as { reservations: Row | Row[] | null }[]) {
       const r = Array.isArray(c.reservations) ? c.reservations[0] : c.reservations;
       if (r && !seen.has(r.id)) { seen.add(r.id); rows.push(r); }

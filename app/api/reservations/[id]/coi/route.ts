@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
-import { adminClient } from "@/lib/event-map";
-import { sendEmail, brandedEmailHtml } from "@/lib/email";
+import { adminClient, getEventMapContext } from "@/lib/event-map";
+import { resolveReservationId } from "@/lib/reservation-id";
+import { sendEmail, brandedEmailHtml, escHtml } from "@/lib/email";
+
+/** Magic-byte check for the three accepted formats. */
+function looksLike(b: Buffer, type: string): boolean {
+  if (type === "application/pdf") return b.subarray(0, 5).toString("latin1") === "%PDF-";
+  if (type === "image/png") return b.length > 8 && b[0] === 0x89 && b.subarray(1, 4).toString("latin1") === "PNG";
+  if (type === "image/jpeg") return b.length > 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff;
+  return false;
+}
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -27,24 +36,19 @@ export async function POST(req: NextRequest, { params }: Params) {
   const { data: { user } } = await sb.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Verify ownership
-  const { data: res } = await adminClient()
+  // Organizer (by account or contact email), accepted co-organizer, or staff —
+  // the same rule as the rest of the booking (C1). Viewers can't upload.
+  const db = adminClient();
+  const ctx = await getEventMapContext(db, user, await resolveReservationId(db, id));
+  if (!ctx || ctx.access !== "edit") {
+    return NextResponse.json({ error: ctx ? "Only the organizer or a co-organizer can upload insurance." : "Not found" }, { status: ctx ? 403 : 404 });
+  }
+  const { data: res } = await db
     .from("reservations")
     .select("id, booking_number, event_name, contact_name, contact_email, user_id, status")
-    .or(`id.eq.${id},booking_number.eq.${id}`)
+    .eq("id", ctx.reservation.id)
     .single();
   if (!res) return NextResponse.json({ error: "Not found" }, { status: 404 });
-
-  const { data: collab } = await adminClient()
-    .from("reservation_collaborators")
-    .select("id")
-    .eq("reservation_id", res.id)
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (res.user_id !== user.id && !collab) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
 
   // Parse multipart form — file field named "file"
   let fileBytes: Buffer;
@@ -66,6 +70,10 @@ export async function POST(req: NextRequest, { params }: Params) {
 
     const arrayBuf = await file.arrayBuffer();
     fileBytes = Buffer.from(arrayBuf);
+    // Check the file itself, not just the type the browser claims (C1).
+    if (!looksLike(fileBytes, file.type)) {
+      return NextResponse.json({ error: "That file doesn't look like a real PDF, JPG or PNG." }, { status: 415 });
+    }
     fileName  = file.name;
     mimeType  = file.type;
   } catch {
@@ -121,8 +129,8 @@ export async function POST(req: NextRequest, { params }: Params) {
             headline: "Certificate of Insurance Uploaded",
             body: `
               <p style="margin:0 0 16px 0;">
-                <strong style="color:#00205b;">${res.contact_name}</strong> uploaded a Certificate of Insurance
-                for reservation <strong style="color:#00205b;">${res.booking_number ?? res.id.slice(0, 8)}</strong> — ${res.event_name}.
+                <strong style="color:#00205b;">${escHtml(res.contact_name)}</strong> uploaded a Certificate of Insurance
+                for reservation <strong style="color:#00205b;">${res.booking_number ?? res.id.slice(0, 8)}</strong> — ${escHtml(res.event_name)}.
               </p>
             `,
             ctaText: "Review in Admin Dashboard",

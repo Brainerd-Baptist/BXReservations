@@ -75,7 +75,7 @@ export async function normalizeLogo(
   const probe = await sharp(input, { limitInputPixels: 80_000_000 }).metadata();
   if (!probe.width || !probe.height) throw new Error("That file doesn't look like an image");
 
-  let img: sharp.Sharp;
+  let img: ReturnType<typeof sharp>;
   if (mime === "image/svg+xml") {
     // render the vector at (about) the output size instead of 72 dpi then upscaling
     const scale = LOGO_MAX_PX / Math.max(probe.width, probe.height);

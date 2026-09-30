@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { adminClient } from "@/lib/event-map";
 import AgreementSignForm from "./AgreementSignForm";
+import { isUuid } from "@/lib/reservation-id";
 
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ token?: string }> };
 
@@ -23,7 +24,7 @@ export default async function AgreementPage({ params, searchParams }: Props) {
   const { data: res } = await adminClient()
     .from("reservations")
     .select("id, booking_number, event_name, contact_name, contact_org, contact_email, payload")
-    .or(`id.eq.${id},booking_number.eq.${id}`)
+    .eq(isUuid(id) ? "id" : "booking_number", id)
     .single();
 
   if (!res) notFound();

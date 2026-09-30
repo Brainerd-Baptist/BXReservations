@@ -42,7 +42,7 @@ export default function COIUploadCard({ reservationId }: Props) {
 
   if (done) {
     return (
-      <div style={{ background: "#D1FAE5", border: "1px solid var(--tone-green-bd)", borderRadius: 10, padding: "1rem 1.25rem", color: "var(--tone-green-fg)" }}>
+      <div style={{ background: "var(--tone-green-bg)", border: "1px solid var(--tone-green-bd)", borderRadius: 10, padding: "1rem 1.25rem", color: "var(--tone-green-fg)" }}>
         <p style={{ margin: 0, fontWeight: 700 }}>✓ COI uploaded successfully</p>
         <p style={{ margin: "0.3rem 0 0", fontSize: "0.875rem" }}>The BX team has been notified and will review your certificate.</p>
       </div>

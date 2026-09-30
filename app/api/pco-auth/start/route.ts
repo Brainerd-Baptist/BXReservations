@@ -9,7 +9,11 @@
  * This route is intentionally simple and has no CSRF protection — only
  * authorized staff should be visiting it, and it only needs to run once.
  */
-export function GET() {
+import { requireSysadmin } from "@/lib/api-auth";
+export async function GET() {
+  // C1: only an Owner or System Admin may start the Planning Center link.
+  const denied = await requireSysadmin();
+  if (denied) return denied;
   const clientId   = process.env.PCO_APP_ID ?? "";
   const siteUrl    = process.env.NEXT_PUBLIC_SITE_URL ?? "https://bx.brainerdhq.app";
   const redirectUri = `${siteUrl}/api/pco-auth/callback`;

@@ -21,7 +21,7 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "resend": "^6.30.0",
-    "sharp": "^0.34.5"
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

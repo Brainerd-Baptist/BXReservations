@@ -65,6 +65,9 @@ export async function middleware(request: NextRequest) {
   return supabaseResponse;
 }
 
+// Runs on every page (not API routes or static files) so the sign-in session is
+// refreshed wherever people are — booking pages used to sign people out after
+// about an hour because only Account and Admin refreshed it (C1).
 export const config = {
-  matcher: ["/account/:path*", "/admin/bx-reservations", "/admin/bx-reservations/:path*"],
+  matcher: ["/((?!api/|_next/static|_next/image|_vercel|favicon\\.ico|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|pdf|woff2?|txt|xml|webmanifest)$).*)"],
 };

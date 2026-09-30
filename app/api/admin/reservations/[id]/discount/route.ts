@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { adminClient, isStaffRole } from "@/lib/event-map";
+import { isUuid } from "@/lib/reservation-id";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   const { data: res } = await adminClient()
     .from("reservations")
     .select("id, organization_id")
-    .or(`id.eq.${id},booking_number.eq.${id}`)
+    .eq(isUuid(id) ? "id" : "booking_number", id)
     .single();
   if (!res) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -87,7 +88,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
   const { data: res } = await adminClient()
     .from("reservations")
     .select("id")
-    .or(`id.eq.${id},booking_number.eq.${id}`)
+    .eq(isUuid(id) ? "id" : "booking_number", id)
     .single();
   if (!res) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -117,7 +118,7 @@ export async function DELETE(req: NextRequest, { params }: Params) {
   const { data: res } = await adminClient()
     .from("reservations")
     .select("id")
-    .or(`id.eq.${id},booking_number.eq.${id}`)
+    .eq(isUuid(id) ? "id" : "booking_number", id)
     .single();
   if (!res) return NextResponse.json({ error: "Not found" }, { status: 404 });
 

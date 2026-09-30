@@ -7,6 +7,7 @@ import {
 } from "@/lib/email";
 import { ROOMS } from "@/lib/rooms";
 import { pcoCreateEvent } from "@/lib/pco";
+import { rateLimit, clientIp, HOUR } from "@/lib/rate-limit";
 
 // ─── Types mirrored from reserve/page.tsx ─────────────────────────────────────
 interface ContactInfo {
@@ -97,6 +98,17 @@ export async function POST(req: NextRequest) {
   if (!contact?.name || !contact?.email || !contact?.eventName) {
     return NextResponse.json({ error: "Missing required contact fields" }, { status: 400 });
   }
+
+  // Bot trap: a hidden field people never see or fill in.
+  const trap = (body as unknown as { website?: unknown }).website;
+  if (typeof trap === "string" && trap.trim()) {
+    return NextResponse.json({ error: "Your request couldn't be sent." }, { status: 400 });
+  }
+  const limited = await rateLimit("submit", [
+    { key: clientIp(req), max: 12, windowSec: HOUR },
+    { key: contact.email, max: 6, windowSec: HOUR },
+  ]);
+  if (limited) return limited;
 
   const supabaseUrl = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

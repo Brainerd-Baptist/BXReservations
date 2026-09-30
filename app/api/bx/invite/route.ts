@@ -3,7 +3,7 @@ import { authEmailLink } from "@/lib/auth-links";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { type BxRole, can, ROLE_RANK } from "@/lib/roles";
-import { brandedEmailHtml, sendEmail } from "@/lib/email";
+import { brandedEmailHtml, sendEmail, escHtml } from "@/lib/email";
 
 const ASSIGNABLE_ROLES: BxRole[] = ["booking_admin", "ministry_coordinator", "brainerd_staff", "member"];
 
@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
     preheader: `You've been invited to BX Reservations at Brainerd Baptist Church.`,
     headline:  "You're invited to BX Reservations.",
     body: `
-      <p style="margin:0 0 16px 0;">Hi${firstName ? ` <strong style="color:${NAVY};">${firstName}</strong>` : ""},</p>
+      <p style="margin:0 0 16px 0;">Hi${firstName ? ` <strong style="color:${NAVY};">${escHtml(firstName)}</strong>` : ""},</p>
       <p style="margin:0 0 16px 0;">
         You've been invited to <strong>BX Reservations</strong> — the facility booking system
         for Brainerd Baptist Church. Your account has been set up with the role of

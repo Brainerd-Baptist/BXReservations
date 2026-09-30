@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { authEmailLink } from "@/lib/auth-links";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { brandedEmailHtml, sendEmail } from "@/lib/email";
+import { rateLimit, clientIp, HOUR } from "@/lib/rate-limit";
 
 function svc() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -17,6 +18,11 @@ export async function POST(req: NextRequest) {
   }
   const { email, redirectTo } = body;
   if (!email) return NextResponse.json({ error: "email required" }, { status: 400 });
+  const limited = await rateLimit("resend", [
+    { key: clientIp(req), max: 10, windowSec: HOUR },
+    { key: email, max: 3, windowSec: HOUR },
+  ]);
+  if (limited) return limited;
 
   const client = svc();
   if (!client) return NextResponse.json({ error: "Service unavailable" }, { status: 503 });

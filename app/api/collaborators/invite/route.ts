@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { adminClient, getEventMapContext } from "@/lib/event-map";
 import { deliverInvite } from "@/lib/collab-invite";
+import { rateLimit, HOUR } from "@/lib/rate-limit";
 
 interface InviteBody {
   reservationId: string;
@@ -38,6 +39,8 @@ export async function POST(req: NextRequest) {
   if (authErr || !user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
+  const limited = await rateLimit("invite", [{ key: user.id, max: 40, windowSec: HOUR }]);
+  if (limited) return limited;
 
   // ── Who may invite: the requester, an accepted co-owner, or staff ────────
   // Checked with the server key (the same rule the event map uses), so a

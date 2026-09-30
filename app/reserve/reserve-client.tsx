@@ -1431,6 +1431,7 @@ export default function ReserveClient({ initialContact, userId }: ReserveClientP
 
   // Phase 6 measurement: one view per visit, then the furthest step reached.
   const furthest = useRef(0);
+  const trapRef = useRef<HTMLInputElement>(null); // bot trap — people never see it
   useEffect(() => { trackFunnel("reserve_view", { step: 0 }); }, []);
 
   function goToStep(n: number) {
@@ -1453,7 +1454,7 @@ export default function ReserveClient({ initialContact, userId }: ReserveClientP
       const res = await fetch("/api/submit-reservation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contact, days, spaceMode, notes, addons: Object.entries(addons).map(([addon_id, quantity]) => ({ addon_id, quantity })) }),
+        body: JSON.stringify({ website: trapRef.current?.value ?? "", contact, days, spaceMode, notes, addons: Object.entries(addons).map(([addon_id, quantity]) => ({ addon_id, quantity })) }),
         signal: controller.signal,
       });
       // The server can answer with a non-JSON error page (500, 502, 413…);
@@ -1493,6 +1494,8 @@ export default function ReserveClient({ initialContact, userId }: ReserveClientP
       <div className="bx-bloom" aria-hidden="true" />
       <div className="relative px-4 pt-6 pb-16">
         <StepBar step={step} />
+        <input ref={trapRef} type="text" name="bx_extra_note" tabIndex={-1} autoComplete="off" aria-hidden="true"
+          style={{ position: "absolute", left: "-10000px", width: 1, height: 1, opacity: 0 }} defaultValue="" />
 
         {step === 0 && (
           <div className="bx-fade-in">

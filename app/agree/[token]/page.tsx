@@ -114,8 +114,8 @@ export default function AgreePage() {
                 <p className="text-slate text-sm mb-3">
                   The BX team will countersign shortly. Both parties will receive a copy once the agreement is complete.
                 </p>
-                <div style={{ background: "rgba(0,0,0,0.06)", borderRadius: 8, padding: "0.75rem 1rem", fontSize: "0.8125rem", color: "#374151", lineHeight: 1.6 }}>
-                  <p style={{ fontWeight: 600, marginBottom: "0.35rem", color: "#111827" }}>What happens next</p>
+                <div className="bx-well" style={{ borderRadius: 8, padding: "0.75rem 1rem", fontSize: "0.8125rem", color: "var(--bx-slate)", lineHeight: 1.6 }}>
+                  <p style={{ fontWeight: 600, marginBottom: "0.35rem", color: "var(--bx-parchment)" }}>What happens next</p>
                   <ol style={{ margin: 0, paddingLeft: "1.2rem" }}>
                     <li>A BX staff member will countersign the agreement (usually within 1 business day).</li>
                     <li>Both parties will receive a fully-executed copy by email.</li>

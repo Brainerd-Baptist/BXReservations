@@ -38,6 +38,10 @@ export async function DELETE(
   if (roleRow?.role === "owner") {
     return NextResponse.json({ error: "Cannot delete the owner account" }, { status: 403 });
   }
+  // Only the Owner may remove a System Admin (matches who may change their role).
+  if (roleRow?.role === "system_admin" && callerRole !== "owner") {
+    return NextResponse.json({ error: "Only the Owner can remove a System Admin" }, { status: 403 });
+  }
 
   // Delete from Supabase Auth — cascades to bx_user_roles + bx_user_profiles via trigger
   const { error: deleteErr } = await client.auth.admin.deleteUser(targetUserId);

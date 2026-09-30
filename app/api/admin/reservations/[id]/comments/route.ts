@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { adminClient, isStaffRole } from "@/lib/event-map";
-import { sendEmail, brandedEmailHtml } from "@/lib/email";
+import { sendEmail, brandedEmailHtml, escHtml, escMultiline } from "@/lib/email";
+import { isUuid } from "@/lib/reservation-id";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -42,7 +43,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
   const { data: res } = await adminClient()
     .from("reservations")
     .select("id")
-    .or(`id.eq.${id},booking_number.eq.${id}`)
+    .eq(isUuid(id) ? "id" : "booking_number", id)
     .single();
   if (!res) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -72,7 +73,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   const { data: res } = await adminClient()
     .from("reservations")
     .select("id, booking_number, event_name, contact_name, contact_email, user_id")
-    .or(`id.eq.${id},booking_number.eq.${id}`)
+    .eq(isUuid(id) ? "id" : "booking_number", id)
     .single();
   if (!res) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -120,11 +121,11 @@ export async function POST(req: NextRequest, { params }: Params) {
           headline: "A message from the BX team",
           body: `
             <p style="margin:0 0 16px 0;">
-              Hi <strong style="color:#00205b;">${res.contact_name ?? "there"}</strong> —
-              the BX team left a message on your reservation${res.event_name ? ` for <strong style="color:#00205b;">${res.event_name}</strong>` : ""}:
+              Hi <strong style="color:#00205b;">${escHtml(res.contact_name ?? "there")}</strong> —
+              the BX team left a message on your reservation${res.event_name ? ` for <strong style="color:#00205b;">${escHtml(res.event_name)}</strong>` : ""}:
             </p>
             <p style="margin:0 0 20px 0; padding:12px 16px; background-color:#f3f4f6; border-radius:8px; color:#374151;">
-              ${text.replace(/\n/g, "<br>")}
+              ${escMultiline(text)}
             </p>
           `,
           ctaText: "View Your Reservation",

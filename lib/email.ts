@@ -14,6 +14,13 @@ async function deliver(payload: Parameters<ReturnType<typeof getResend>["emails"
   if (error) throw new Error(`Resend: ${error.name ?? "error"} — ${error.message}`);
 }
 
+/** Escape text people typed (names, event names, notes) before it goes into
+ *  email HTML — otherwise anyone could put links or markup into a church email. */
+export const escHtml = (t: unknown) =>
+  String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+/** Escaped, with line breaks kept. */
+export const escMultiline = (t: unknown) => escHtml(t).replace(/\r?\n/g, "<br>");
+
 const FROM        = process.env.EMAIL_FROM ?? "BX Reservations <noreply@brainerdhq.app>";
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "jking@brainerdbaptist.org";
 const SITE_URL    = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://bx.brainerdhq.app").replace(/\/$/, "");
@@ -134,13 +141,13 @@ export function brandedEmailHtml(opts: {
     [data-ogsc] .bx-cta, [data-ogsc] .bx-cta span { color: #F4F7FB !important; }
     [data-ogsb] .bx-cta-cell { background-color: #0a8aa3 !important; }
   </style>
-  <title>${headline}</title>
+  <title>${escHtml(headline.replace(/<[^>]*>/g, ""))}</title>
   <!--[if mso]><noscript><xml><o:OfficeDocumentSettings>
   <o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
 </head>
 <body style="margin:0; padding:0; word-spacing:normal; background-color:#f4f7fa;">
 
-  ${preheader ? `<div style="display:none; max-height:0; overflow:hidden; mso-hide:all;">${preheader}&nbsp;&zwnj;&zwnj;&zwnj;&zwnj;&zwnj;&zwnj;&zwnj;&zwnj;&zwnj;&zwnj;</div>` : ""}
+  ${preheader ? `<div style="display:none; max-height:0; overflow:hidden; mso-hide:all;">${escHtml(preheader)}&nbsp;&zwnj;&zwnj;&zwnj;&zwnj;&zwnj;&zwnj;&zwnj;&zwnj;&zwnj;&zwnj;</div>` : ""}
 
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
     style="background-color:#f4f7fa; padding:40px 0; font-family:${FONT};">
@@ -233,10 +240,12 @@ export async function sendReservationConfirmation(opts: {
     console.warn("[email] RESEND_API_KEY not set — skipping confirmation");
     return;
   }
-  const { to, name, bookingNumber, reservationId, eventName, dates, rooms } = opts;
+  const { to, reservationId } = opts;
+  const name = escHtml(opts.name), bookingNumber = escHtml(opts.bookingNumber), eventName = escHtml(opts.eventName);
+  const dates = opts.dates.map(escHtml), rooms = opts.rooms.map(escHtml);
 
   const html = brandedEmailHtml({
-    preheader: `Your booking reference is ${bookingNumber} — we'll be in touch shortly.`,
+    preheader: `Your booking reference is ${opts.bookingNumber} — we'll be in touch shortly.`,
     headline:  "We received your reservation request.",
     body: `
       <p style="margin:0 0 16px 0;">Hi <strong style="color:${NAVY};">${name}</strong>,</p>
@@ -271,7 +280,7 @@ export async function sendReservationConfirmation(opts: {
   await deliver({
     from:    FROM,
     to,
-    subject: `Reservation Received — ${bookingNumber}`,
+    subject: `Reservation Received — ${opts.bookingNumber}`,
     html,
   });
 }
@@ -290,10 +299,13 @@ export async function sendAdminNewReservationAlert(opts: {
     console.warn("[email] RESEND_API_KEY not set — skipping admin alert");
     return;
   }
-  const { bookingNumber, submitterName, submitterEmail, eventName, dates, rooms, notes } = opts;
+  const bookingNumber = escHtml(opts.bookingNumber), submitterName = escHtml(opts.submitterName);
+  const submitterEmail = escHtml(opts.submitterEmail), eventName = escHtml(opts.eventName);
+  const dates = opts.dates.map(escHtml), rooms = opts.rooms.map(escHtml);
+  const notes = opts.notes ? escMultiline(opts.notes) : "";
 
   const html = brandedEmailHtml({
-    preheader: `New space request from ${submitterName} — ${bookingNumber}`,
+    preheader: `New space request from ${opts.submitterName} — ${opts.bookingNumber}`,
     headline:  "New Reservation Request",
     body: `
       <p style="margin:0 0 16px 0;">A new space reservation request has been submitted and is waiting for review.</p>
@@ -332,7 +344,7 @@ export async function sendAdminNewReservationAlert(opts: {
   await deliver({
     from:    FROM,
     to:      ADMIN_EMAIL,
-    subject: `[BX] New Request — ${bookingNumber} · ${submitterName}`,
+    subject: `[BX] New Request — ${opts.bookingNumber} · ${opts.submitterName}`,
     html,
   });
 }
@@ -349,14 +361,15 @@ export async function sendCollaboratorInvite(opts: {
     console.warn("[email] RESEND_API_KEY not set — skipping collaborator invite");
     return;
   }
-  const { to, inviterName, eventName, role, acceptUrl } = opts;
+  const { to, role, acceptUrl } = opts;
+  const inviterName = escHtml(opts.inviterName), eventName = escHtml(opts.eventName);
   const roleLabel = role === "co_owner" ? "Co-owner" : "Viewer";
   const roleDesc  = role === "co_owner"
     ? "you'll be able to view and help manage the reservation"
     : "you'll be able to view reservation details";
 
   const html = brandedEmailHtml({
-    preheader: `${inviterName} invited you to collaborate on a reservation for ${eventName}.`,
+    preheader: `${opts.inviterName} invited you to collaborate on a reservation for ${opts.eventName}.`,
     headline:  "You've been invited to collaborate.",
     body: `
       <p style="margin:0 0 16px 0;"><strong style="color:${NAVY};">${inviterName}</strong> has invited you to
@@ -374,7 +387,7 @@ export async function sendCollaboratorInvite(opts: {
   await deliver({
     from:    FROM,
     to,
-    subject: `${inviterName} invited you to a reservation — ${eventName}`,
+    subject: `${opts.inviterName} invited you to a reservation — ${opts.eventName}`,
     html,
   });
 }
@@ -394,7 +407,9 @@ export async function sendStatusUpdateEmail(opts: {
     console.warn("[email] RESEND_API_KEY not set — skipping status update");
     return;
   }
-  const { to, name, bookingNumber, reservationId, eventName, newStatus, adminNote, agreementUrl } = opts;
+  const { to, reservationId, newStatus, agreementUrl } = opts;
+  const name = escHtml(opts.name), bookingNumber = escHtml(opts.bookingNumber), eventName = escHtml(opts.eventName);
+  const adminNote = opts.adminNote ? escMultiline(opts.adminNote) : "";
 
   const noteBlock = adminNote
     ? `<p style="background:#f8fafc; border-left:3px solid ${TEAL}; padding:12px 16px; margin:16px 0; border-radius:0 6px 6px 0; color:#374151; font-size:14px;">
@@ -497,10 +512,13 @@ export async function sendBookingReminder(opts: {
     console.warn("[email] RESEND_API_KEY not set — skipping reminder");
     return;
   }
-  const { to, name, bookingNumber, reservationId, eventName, firstDate, startTime, endTime, rooms, headcount } = opts;
+  const { to, reservationId, headcount } = opts;
+  const name = escHtml(opts.name), bookingNumber = escHtml(opts.bookingNumber), eventName = escHtml(opts.eventName);
+  const firstDate = escHtml(opts.firstDate), startTime = escHtml(opts.startTime), endTime = escHtml(opts.endTime);
+  const rooms = opts.rooms.map(escHtml);
 
   const html = brandedEmailHtml({
-    preheader: `Your event "${eventName}" is coming up in 48 hours — here's everything you need.`,
+    preheader: `Your event "${opts.eventName}" is coming up in 48 hours — here's everything you need.`,
     headline:  "Your booking is coming up.",
     body: `
       <p style="margin:0 0 16px 0;">Hi <strong style="color:${NAVY};">${name}</strong>,</p>
@@ -530,7 +548,7 @@ export async function sendBookingReminder(opts: {
         </tr>
         <tr>
           <td style="padding:10px 0; font-weight:600; color:#374151; font-size:14px;">Headcount</td>
-          <td style="padding:10px 0; color:#374151; font-size:14px;">${headcount} attendees</td>
+          <td style="padding:10px 0; color:#374151; font-size:14px;">${Number(headcount) || 0} attendees</td>
         </tr>
       </table>
       <p style="margin:16px 0 0 0;">If you have any questions or need to make last-minute changes,
@@ -543,7 +561,7 @@ export async function sendBookingReminder(opts: {
   await deliver({
     from:    FROM,
     to,
-    subject: `Reminder: "${eventName}" is in 48 hours — ${bookingNumber}`,
+    subject: `Reminder: "${opts.eventName}" is in 48 hours — ${opts.bookingNumber}`,
     html,
   });
 }
@@ -558,7 +576,7 @@ export async function sendWelcomeEmail(opts: {
     return;
   }
   const { to, name } = opts;
-  const firstName = name.split(" ")[0];
+  const firstName = escHtml(name.split(" ")[0]);
 
   const html = brandedEmailHtml({
     preheader: "Your BX Reservations account is ready — here's how to get started.",
@@ -640,8 +658,6 @@ export async function sendEmail(opts: {
 }
 
 // ─── Payment reminder ─────────────────────────────────────────────────────────
-const escHtml = (t: string) =>
-  t.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 
 export async function sendPaymentReminder(opts: {
   to: string;

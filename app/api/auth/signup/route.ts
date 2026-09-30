@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authEmailLink } from "@/lib/auth-links";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
-import { brandedEmailHtml, sendEmail } from "@/lib/email";
+import { brandedEmailHtml, sendEmail, escHtml } from "@/lib/email";
+import { rateLimit, clientIp, HOUR } from "@/lib/rate-limit";
 
 function svc() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -19,6 +20,11 @@ export async function POST(req: NextRequest) {
   if (!email || !password) {
     return NextResponse.json({ error: "email and password required" }, { status: 400 });
   }
+  const limited = await rateLimit("signup", [
+    { key: clientIp(req), max: 20, windowSec: HOUR },
+    { key: email, max: 3, windowSec: HOUR },
+  ]);
+  if (limited) return limited;
 
   const client = svc();
   if (!client) return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
@@ -59,7 +65,7 @@ export async function POST(req: NextRequest) {
     preheader: "Confirm your email to activate your BX Reservations account.",
     headline:  "Confirm your email.",
     body: `
-      <p style="margin:0 0 16px 0;">Hi${firstName ? ` <strong style="color:${NAVY};">${firstName}</strong>` : ""},</p>
+      <p style="margin:0 0 16px 0;">Hi${firstName ? ` <strong style="color:${NAVY};">${escHtml(firstName)}</strong>` : ""},</p>
       <p style="margin:0 0 16px 0;">
         Thanks for creating a <strong>BX Reservations</strong> account. Click the button below
         to confirm your email address and activate your account.

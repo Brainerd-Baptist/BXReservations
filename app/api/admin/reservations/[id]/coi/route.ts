@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { adminClient, isStaffRole } from "@/lib/event-map";
-import { sendEmail, brandedEmailHtml } from "@/lib/email";
+import { sendEmail, brandedEmailHtml, escHtml, escMultiline } from "@/lib/email";
+import { isUuid } from "@/lib/reservation-id";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -40,7 +41,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const { data: res } = await adminClient()
     .from("reservations")
     .select("id, booking_number, event_name, contact_name, contact_email, coi_file_url, coi_uploaded_at")
-    .or(`id.eq.${id},booking_number.eq.${id}`)
+    .eq(isUuid(id) ? "id" : "booking_number", id)
     .single();
   if (!res) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (!res.coi_uploaded_at) return NextResponse.json({ error: "No COI uploaded yet." }, { status: 409 });
@@ -75,7 +76,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
           headline: "Certificate of Insurance Accepted",
           body: `
             <p style="margin:0 0 20px 0;">
-              Hi <strong style="color:#00205b;">${res.contact_name ?? "there"}</strong> —
+              Hi <strong style="color:#00205b;">${escHtml(res.contact_name ?? "there")}</strong> —
               your Certificate of Insurance has been reviewed and accepted.
               We'll be in touch with next steps for your reservation.
             </p>
@@ -116,11 +117,11 @@ export async function PATCH(req: NextRequest, { params }: Params) {
           headline: "Action Needed on Your COI",
           body: `
             <p style="margin:0 0 16px 0;">
-              Hi <strong style="color:#00205b;">${res.contact_name ?? "there"}</strong> —
+              Hi <strong style="color:#00205b;">${escHtml(res.contact_name ?? "there")}</strong> —
               the BX team reviewed your Certificate of Insurance and has a note:
             </p>
             <p style="margin:0 0 20px 0; padding:12px 16px; background-color:#f3f4f6; border-radius:8px; color:#374151;">
-              ${note}
+              ${escMultiline(note)}
             </p>
           `,
           ctaText: "View Reservation & Re-upload",

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminClient } from "@/lib/event-map";
-import { sendEmail, brandedEmailHtml } from "@/lib/email";
+import { sendEmail, brandedEmailHtml, escHtml } from "@/lib/email";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { isUuid } from "@/lib/reservation-id";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -24,7 +25,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   const { data: res } = await adminClient()
     .from("reservations")
     .select("id, booking_number, event_name, contact_name, contact_email, contact_org, user_id")
-    .or(`id.eq.${id},booking_number.eq.${id}`)
+    .eq(isUuid(id) ? "id" : "booking_number", id)
     .single();
   if (!res) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -146,8 +147,8 @@ export async function POST(req: NextRequest, { params }: Params) {
             headline: "Facility Use Agreement Signed",
             body: `
               <p style="margin:0 0 12px 0;">
-                <strong style="color:#00205b;">${typedName}</strong> signed the Facility Use Agreement for
-                reservation <strong style="color:#00205b;">${res.booking_number ?? res.id.slice(0, 8)}</strong> — ${res.event_name}.
+                <strong style="color:#00205b;">${escHtml(typedName)}</strong> signed the Facility Use Agreement for
+                reservation <strong style="color:#00205b;">${res.booking_number ?? res.id.slice(0, 8)}</strong> — ${escHtml(res.event_name)}.
               </p>
               <p style="margin:0 0 20px 0; padding:12px 16px; background-color:#f3f4f6; border-radius:8px; color:#374151; font-size:13px;">
                 Signed ${new Date(signedAt).toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "full", timeStyle: "long" })} ET
