@@ -1266,3 +1266,8 @@ html, body { overflow-x: clip; }
   .bx-logo-grid--compact { grid-template-columns: 160px minmax(0, 1fr); }
 }
 .bx-logo-grid > :first-child { max-width: 260px; }
+
+/* Show one of a light/dark pair (e.g. the black and white BX logos) */
+.bx-only-dark { display: none !important; }
+[data-theme="glass-dark"] .bx-only-dark { display: inline-block !important; }
+[data-theme="glass-dark"] .bx-only-light { display: none !important; }

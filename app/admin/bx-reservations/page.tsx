@@ -778,6 +778,9 @@ export default function BxReservationsAdmin() {
                           <a href={`/api/event-map/${req.dbId}/setup-sheet?inline=1`} target="_blank" rel="noopener" className="bx-btn bx-btn--secondary bx-btn--sm">
                             Setup sheet
                           </a>
+                          <a href={`/api/event-map/${req.dbId}/arrows?inline=1`} target="_blank" rel="noopener" className="bx-btn bx-btn--secondary bx-btn--sm">
+                            Arrow signs
+                          </a>
                           <a href={`/api/event-map/${req.dbId}/packet?inline=1`} target="_blank" rel="noopener" className="bx-btn bx-btn--secondary bx-btn--sm">
                             Attendee packet
                           </a>

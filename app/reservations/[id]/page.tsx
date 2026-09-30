@@ -424,6 +424,7 @@ function renderPage(
                 <>
                   <a href={`${api}?variant=staff&inline=1`} target="_blank" rel="noopener" style={btn(false)}>Staff copy</a>
                   <a href={`/api/event-map/${reservation.id}/setup-sheet?inline=1`} target="_blank" rel="noopener" style={btn(false)}>Setup sheet</a>
+                  <a href={`/api/event-map/${reservation.id}/arrows?inline=1`} target="_blank" rel="noopener" style={btn(false)}>Arrow signs</a>
                 </>
               )}
             </div>

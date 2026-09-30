@@ -3,7 +3,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export const VENUE_KEYS = ["venue_name", "venue_address", "venue_maps_url", "venue_parking", "venue_arrival", "venue_contact"] as const;
+export const VENUE_KEYS = ["venue_name", "venue_address", "venue_maps_url", "venue_parking", "venue_arrival", "venue_contact", "venue_payment"] as const;
 export type VenueKey = (typeof VENUE_KEYS)[number];
 export type VenueInfo = Record<VenueKey, string>;
 
@@ -14,6 +14,7 @@ export const VENUE_FIELDS: { key: VenueKey; label: string; hint: string; multili
   { key: "venue_parking", label: "Parking", hint: "Where attendees should park and which doors to use, in plain words", multiline: true },
   { key: "venue_arrival", label: "When you arrive", hint: "Check-in, accessibility (elevator at the Green Lot entrance), anything else worth knowing", multiline: true },
   { key: "venue_contact", label: "Day-of contact", hint: "Optional: a phone or email attendees may use on the day (leave blank to omit)" },
+  { key: "venue_payment", label: "How to pay (on invoices)", hint: "Printed on invoices and payment reminders: who checks are payable to, where to drop off, card or online options", multiline: true },
 ];
 
 export const VENUE_DEFAULTS: VenueInfo = {
@@ -23,6 +24,7 @@ export const VENUE_DEFAULTS: VenueInfo = {
   venue_parking: "",
   venue_arrival: "",
   venue_contact: "",
+  venue_payment: "Make checks payable to Brainerd Baptist Church and bring or mail them to the church office. Please write your booking number on the check.",
 };
 
 export async function readVenue(db: SupabaseClient): Promise<VenueInfo> {
@@ -33,5 +35,6 @@ export async function readVenue(db: SupabaseClient): Promise<VenueInfo> {
     if (VENUE_KEYS.includes(k)) out[k] = String(row.value ?? "").trim();
   }
   if (!out.venue_name) out.venue_name = VENUE_DEFAULTS.venue_name;
+  if (!out.venue_payment) out.venue_payment = VENUE_DEFAULTS.venue_payment;
   return out;
 }

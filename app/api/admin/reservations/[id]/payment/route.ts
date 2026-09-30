@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { adminClient, isStaffRole } from "@/lib/event-map";
 import { getBilling, money, syncLegacyPayment } from "@/lib/billing";
+import { buildInvoice } from "@/lib/invoice";
+import { sendInvoiceEmail } from "@/lib/email";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -61,7 +63,24 @@ export async function POST(req: NextRequest, { params }: Params) {
     note: `Payment of $${amount.toFixed(2)} recorded via ${method}.`,
     metadata: { payment_amount: amount, payment_method: method, payment_receipt_url: receiptUrl || null },
   });
-  return NextResponse.json({ ok: true, billing: await getBilling(db, res.id, true) });
+  // Optional: email a receipt (itemized PDF attached)
+  let emailed: boolean | null = null;
+  if (body.send_receipt) {
+    emailed = false;
+    try {
+      const inv = await buildInvoice(db, res.id);
+      const r = inv?.reservation;
+      if (inv && r?.contact_email) {
+        await sendInvoiceEmail({
+          to: r.contact_email, name: r.contact_name || r.contact_email, bookingNumber: r.booking_number ?? r.id.slice(0, 8),
+          reservationId: r.id, eventName: r.event_name || "your event", kind: inv.paid ? "receipt" : "invoice",
+          totals: inv.billing.totals, justPaid: { amount, method }, pdf: inv.bytes, filename: inv.filename,
+        });
+        emailed = true;
+      }
+    } catch (e) { console.error("[payment] receipt email failed:", e); }
+  }
+  return NextResponse.json({ ok: true, emailed, billing: await getBilling(db, res.id, true) });
 }
 
 // DELETE ?paymentId= — remove a payment recorded by mistake

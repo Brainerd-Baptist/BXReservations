@@ -18,15 +18,11 @@ export default async function Home() {
       <section className="bx-band border-b relative overflow-hidden">
         <div className="bx-bloom" aria-hidden="true" />
         <div className="relative max-w-2xl mx-auto px-5 pt-12 pb-14 sm:pt-20 sm:pb-20 text-center animate-in">
-          <div className="flex justify-center mb-5">
-            <Image
-              src="/bx-logo-black.png"
-              alt="BX Community Center"
-              width={68}
-              height={68}
-              className="rounded-2xl shadow-lg ring-1 ring-parchment/10"
-              priority
-            />
+          {/* The BX mark is the page title's visual — no tile, no second wordmark.
+              Black on light, white on dark. */}
+          <div className="flex justify-center mb-6">
+            <Image src="/bx-logo-black-trim.png" alt="" width={120} height={52} className="bx-only-light h-12 sm:h-14 w-auto" priority />
+            <Image src="/bx-logo-white.png" alt="" width={120} height={52} className="bx-only-dark h-12 sm:h-14 w-auto" priority />
           </div>
 
           {user ? (
@@ -35,21 +31,21 @@ export default async function Home() {
                 Welcome back{firstName ? `, ${firstName}` : ""}
               </p>
               <h1 className="text-4xl sm:text-5xl font-bold text-parchment leading-[1.05] mb-4">
-                BX Reservations
+                <span className="sr-only">BX Community Center — </span>Where would you like to gather?
               </h1>
               <p className="text-base sm:text-[1.1rem] text-slate mb-8 max-w-md mx-auto leading-relaxed">
-                Reserve a space at the BX Community Center for your event, meeting, class, or gathering.
+                Book rooms, the gym or the café for your next event, meeting, class or group.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Link
                   href="/reserve"
-                  className="bx-cta inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl bg-brass text-white font-bold text-base active:scale-[0.98]"
+                  className="bx-btn bx-btn--primary bx-btn--lg"
                 >
                   Reserve a Space →
                 </Link>
                 <Link
                   href="/reservations"
-                  className="bx-glass-flat inline-flex items-center justify-center px-7 py-4 rounded-xl text-parchment font-semibold text-base hover:border-brass/40 transition-colors"
+                  className="bx-btn bx-btn--secondary bx-btn--lg"
                 >
                   My Reservations
                 </Link>
@@ -57,23 +53,23 @@ export default async function Home() {
             </>
           ) : (
             <>
-              <p className="bx-eyebrow mb-4">BX Community Center</p>
+              <p className="bx-eyebrow mb-4">Brainerd Baptist Church</p>
               <h1 className="text-4xl sm:text-5xl font-bold text-parchment leading-[1.05] mb-4">
-                Welcome to BX Reservations
+                <span className="sr-only">BX Community Center — </span>Where would you like to gather?
               </h1>
               <p className="text-base sm:text-[1.1rem] text-slate mb-8 max-w-md mx-auto leading-relaxed">
-                Reserve a space at the BX Community Center for your event, meeting, class, or gathering.
+                Book rooms, the gym or the café at the BX Community Center for your next event, meeting, class or group.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Link
                   href="/reserve"
-                  className="bx-cta inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl bg-brass text-white font-bold text-base active:scale-[0.98]"
+                  className="bx-btn bx-btn--primary bx-btn--lg"
                 >
                   Reserve a Space →
                 </Link>
                 <Link
                   href="/login"
-                  className="bx-glass-flat inline-flex items-center justify-center px-7 py-4 rounded-xl text-parchment font-semibold text-base hover:border-brass/40 transition-colors"
+                  className="bx-btn bx-btn--secondary bx-btn--lg"
                 >
                   Sign in / Sign up
                 </Link>

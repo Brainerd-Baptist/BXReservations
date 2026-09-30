@@ -680,3 +680,52 @@ export async function sendPaymentReminder(opts: {
   });
   await deliver({ from: FROM, to: opts.to, subject: `Payment reminder — ${opts.bookingNumber}`, html, replyTo: "BXreservations@brainerdbaptist.org" });
 }
+
+// ─── Invoice / payment receipt (PDF attached) ─────────────────────────────────
+export async function sendInvoiceEmail(opts: {
+  to: string;
+  name: string;
+  bookingNumber: string;
+  reservationId: string;
+  eventName: string;
+  kind: "invoice" | "receipt";
+  totals: { charges: number; paid: number; balance: number };
+  justPaid?: { amount: number; method: string } | null;
+  pdf: Uint8Array;
+  filename: string;
+}): Promise<void> {
+  const fmt = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+  const row = (label: string, value: string, bold = false) =>
+    `<tr><td style="padding:6px 0;color:#4b5563;">${label}</td><td style="padding:6px 0;text-align:right;${bold ? "font-weight:700;color:#00205b;" : "color:#111827;"}">${value}</td></tr>`;
+  const first = escHtml(opts.name.split(" ")[0] || opts.name);
+  const intro = opts.justPaid
+    ? `Thank you — we received your payment of <strong>${fmt(opts.justPaid.amount)}</strong> (${escHtml(opts.justPaid.method)}) for <strong>${escHtml(opts.eventName)}</strong>.`
+    : opts.kind === "receipt"
+      ? `Here is your receipt for <strong>${escHtml(opts.eventName)}</strong> — you're paid in full. Thank you!`
+      : `Here is your invoice for <strong>${escHtml(opts.eventName)}</strong>. The itemized PDF is attached.`;
+  const html = brandedEmailHtml({
+    preheader: opts.totals.balance > 0 ? `Balance due ${fmt(opts.totals.balance)} — ${opts.bookingNumber}` : `Paid in full — ${opts.bookingNumber}`,
+    headline: opts.justPaid ? "Payment received" : opts.kind === "receipt" ? "Your receipt" : "Your invoice",
+    body: `
+      <p style="margin:0 0 16px 0;">Hi <strong style="color:#00205b;">${first}</strong>,</p>
+      <p style="margin:0 0 16px 0;">${intro}</p>
+      <table role="presentation" style="width:100%;border-collapse:collapse;margin:0 0 20px 0;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb;">
+        ${row("Booking", escHtml(opts.bookingNumber))}
+        ${row("Total", fmt(opts.totals.charges))}
+        ${row("Paid", fmt(opts.totals.paid))}
+        ${row(opts.totals.balance > 0 ? "Balance due" : "Balance", fmt(Math.max(0, opts.totals.balance)), true)}
+      </table>
+      <p style="margin:0; color:#6b7280; font-size:13px;">The ${opts.kind === "receipt" ? "receipt" : "invoice"} is attached as a PDF for your records.</p>`,
+    ctaText: "View your reservation",
+    ctaUrl: `${SITE_URL}/reservations/${opts.reservationId}`,
+    footnoteHtml: `<p style="margin:0;">Questions? Email <a href="mailto:BXreservations@brainerdbaptist.org" style="color:#00abc9;">BXreservations@brainerdbaptist.org</a>.</p>`,
+  });
+  await deliver({
+    from: FROM,
+    to: opts.to,
+    subject: opts.justPaid ? `Payment received — ${opts.bookingNumber}` : `${opts.kind === "receipt" ? "Receipt" : "Invoice"} — ${opts.bookingNumber} · ${opts.eventName}`,
+    html,
+    replyTo: "BXreservations@brainerdbaptist.org",
+    attachments: [{ filename: opts.filename, content: Buffer.from(opts.pdf) }],
+  });
+}

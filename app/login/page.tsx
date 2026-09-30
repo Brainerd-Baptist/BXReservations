@@ -6,7 +6,7 @@ import BodyPortal from "@/app/components/body-portal";
 import { useModalDialog } from "@/app/components/use-modal-dialog";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import Image from "next/image";
+import BxMark from "@/app/components/bx-mark";
 
 type Mode = "signin" | "signup" | "confirm_sent";
 
@@ -184,21 +184,9 @@ export default function LoginPage() {
 
         {/* Logo + label */}
         <div className="text-center mb-8 flex flex-col items-center">
-          <div className="bx-cta rounded-2xl p-3 mb-4 flex items-center justify-center" style={{ background: "var(--bx-brass)" }}>
-            <Image
-              src="/bx-logo.png"
-              alt="BX Community Center"
-              width={48}
-              height={48}
-              className="object-contain"
-              priority
-            />
-          </div>
-          <p className="bx-eyebrow mb-4">
-            BX Reservations
-          </p>
+          <BxMark height={40} className="mb-6" />
           <h1 className="text-3xl font-bold text-parchment">
-            {mode === "signup" ? "Create an account" : "Sign in to BX"}
+            {mode === "signup" ? "Create your account" : "Sign in"}
           </h1>
           <p className="text-sm text-slate mt-1.5 max-w-xs leading-relaxed">
             {mode === "signup"

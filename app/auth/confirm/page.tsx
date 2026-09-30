@@ -1,4 +1,4 @@
-import Image from "next/image";
+import BxMark from "@/app/components/bx-mark";
 import Link from "next/link";
 
 export const metadata = { title: "Continue · BX Reservations" };
@@ -35,10 +35,7 @@ export default async function ConfirmPage({
     <div className="min-h-[70vh] flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8 flex flex-col items-center">
-          <div className="rounded-2xl p-3 mb-3 flex items-center justify-center" style={{ background: "var(--bx-brass)" }}>
-            <Image src="/bx-logo.png" alt="BX Community Center" width={48} height={48} className="object-contain" priority />
-          </div>
-          <p className="text-xs uppercase tracking-[0.3em] text-slate mb-4">BX Reservations</p>
+          <BxMark height={36} className="mb-5" />
           <h1 className="text-xl font-bold text-parchment">{copy.title}</h1>
         </div>
         <div className="bx-glass rounded-2xl p-7 animate-in">

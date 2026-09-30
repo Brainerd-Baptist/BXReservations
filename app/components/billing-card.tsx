@@ -189,6 +189,20 @@ export default function BillingCard({ reservationId, compact = false }: { reserv
             Send reminder
           </Button>
         )}
+        {charges.length > 0 && (
+          <a className="bx-btn bx-btn--secondary bx-btn--sm" href={`/api/reservations/${reservationId}/invoice`} target="_blank" rel="noopener">
+            {totals.balance <= 0 ? "Receipt (PDF)" : "Invoice (PDF)"}
+          </a>
+        )}
+        {staff && charges.length > 0 && (
+          <Button size="sm" variant="secondary" loading={busy === "invoice"}
+            onClick={() => act("invoice", async () => {
+              const d = await jsonOrThrow(await fetch(`/api/admin/reservations/${reservationId}/send-invoice`, { method: "POST" }));
+              toast(d.kind === "receipt" ? "Receipt emailed." : "Invoice emailed.", "success");
+            })}>
+            Email {totals.balance <= 0 ? "receipt" : "invoice"}
+          </Button>
+        )}
       </div>
       {staff && data.lastReminderAt && !compact && (
         <p className="text-xs text-slate">Last reminder sent {fmtDate(data.lastReminderAt)}.</p>
@@ -292,9 +306,10 @@ function PaymentForm({ balance, busy, onSave, onCancel }: {
   const [date, setDate] = useState(today());
   const [receipt, setReceipt] = useState("");
   const [note, setNote] = useState("");
+  const [sendReceipt, setSendReceipt] = useState(true);
   return (
     <form className="bx-well rounded-xl p-4 grid gap-3 sm:grid-cols-2"
-      onSubmit={(e) => { e.preventDefault(); onSave({ amount: Number(amount), method, received_at: date, receipt_url: receipt, note }); }}>
+      onSubmit={(e) => { e.preventDefault(); onSave({ amount: Number(amount), method, received_at: date, receipt_url: receipt, note, send_receipt: sendReceipt }); }}>
       <Field label="Amount ($)" hint={balance > 0 ? `Balance due is ${usd(balance)}` : undefined}>
         <Input type="number" min="0.01" step="0.01" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} required />
       </Field>
@@ -312,6 +327,10 @@ function PaymentForm({ balance, busy, onSave, onCancel }: {
       <Field label="Note (optional)" hint="e.g. Check #1042, deposit" className="sm:col-span-2">
         <Input value={note} onChange={(e) => setNote(e.target.value)} maxLength={300} />
       </Field>
+      <label className="flex items-center gap-2 text-sm text-parchment sm:col-span-2">
+        <input type="checkbox" className="w-4 h-4" checked={sendReceipt} onChange={(e) => setSendReceipt(e.target.checked)} />
+        Email the organizer a receipt (PDF attached)
+      </label>
       <div className="flex gap-2 sm:col-span-2">
         <Button type="submit" size="sm" loading={busy}>Save payment</Button>
         <Button type="button" size="sm" variant="ghost" onClick={onCancel}>Cancel</Button>
