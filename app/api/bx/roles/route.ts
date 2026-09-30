@@ -90,9 +90,15 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // The roles table stores the email too (required), so look it up — a user
+  // who has never had a role has no row yet.
+  const { data: target, error: targetErr } = await svc.auth.admin.getUserById(userId);
+  if (targetErr || !target?.user?.email) {
+    return NextResponse.json({ error: "That user wasn't found." }, { status: 404 });
+  }
   const { error } = await svc
     .from("bx_user_roles")
-    .upsert({ user_id: userId, role: newRole }, { onConflict: "user_id" });
+    .upsert({ user_id: userId, email: target.user.email, role: newRole }, { onConflict: "user_id" });
 
   if (error) {
     console.error("[bx/roles] upsert error:", error);

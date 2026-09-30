@@ -164,3 +164,15 @@ create policy settings_staff_read on public.bx_settings for select to authentica
 drop policy if exists anon_read_blackouts on public.blackout_rules;
 create policy blackouts_read on public.blackout_rules for select to anon, authenticated
   using (active = true);
+
+-- ── Function hardening (applied as a follow-up the same day) ──
+revoke execute on function public.bx_current_role() from public, anon;
+grant execute on function public.bx_current_role() to authenticated;
+revoke execute on function public.next_booking_number() from public, anon, authenticated;  -- server only
+revoke execute on function public.bx_guard_map_label() from public, anon, authenticated;   -- trigger only
+alter function public.next_booking_number() set search_path = public;
+alter function public.set_updated_at() set search_path = public;
+alter function public.update_updated_at_column() set search_path = public;
+alter function public.log_reservation_status_change() set search_path = public;
+alter function public.log_reservation_insert() set search_path = public;
+alter function public.bx_enforce_owner_exists() set search_path = public;
