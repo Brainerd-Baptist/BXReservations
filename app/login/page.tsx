@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
+import BodyPortal from "@/app/components/body-portal";
+import { useModalDialog } from "@/app/components/use-modal-dialog";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
@@ -25,6 +27,9 @@ export default function LoginPage() {
 
   // Forgot-password state
   const [forgotMode, setForgotMode] = useState(false);
+  const forgotRef = useRef<HTMLDivElement>(null);
+  const closeForgot = useCallback(() => setForgotMode(false), []);
+  useModalDialog(forgotMode, closeForgot, forgotRef);
   const [resetEmail, setResetEmail] = useState("");
   const [resetSent, setResetSent] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
@@ -366,7 +371,15 @@ export default function LoginPage() {
 
         {/* Forgot-password overlay */}
         {forgotMode && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-ink/80 backdrop-blur-sm" onClick={() => setForgotMode(false)}>
+          <BodyPortal>
+          <div
+            ref={forgotRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Reset your password"
+            className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-ink/80 backdrop-blur-sm"
+            onClick={() => setForgotMode(false)}
+          >
             <div className="w-full max-w-sm bx-glass-strong rounded-2xl p-7" onClick={(e) => e.stopPropagation()}>
               {resetSent ? (
                 <div className="text-center space-y-4">
@@ -418,6 +431,7 @@ export default function LoginPage() {
               )}
             </div>
           </div>
+          </BodyPortal>
         )}
       </div>
     </div>

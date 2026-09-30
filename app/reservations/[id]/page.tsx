@@ -102,7 +102,7 @@ interface PayloadDay { date?: string; included?: boolean; customStart?: string; 
 interface Payload { days?: PayloadDay[]; spaceMode?: string }
 
 const COLS =
-  "id, booking_number, created_at, status, event_name, space_mode, notes, contact_name, contact_email, contact_phone, contact_org, user_id, payload, sign_options";
+  "id, booking_number, created_at, status, event_name, space_mode, notes, contact_name, contact_email, contact_phone, contact_org, user_id, payload, sign_options, coi_accepted_at";
 
 const SETUP_NAMES: Record<string, string> = {
   theater: "Theater", banquet: "Banquet", reception: "Reception", cocktail: "Cocktail",
@@ -157,10 +157,18 @@ export default async function ReservationDetailPage({
   }
 
   // Rooms named or set up on the event map (the card below shows progress), and the logo
-  const [{ count: labelCount }, logoRow, shareRow] = await Promise.all([
+  const [{ count: labelCount }, logoRow, shareRow, { data: agreementRow }] = await Promise.all([
     db.from("reservation_map_labels").select("id", { count: "exact", head: true }).eq("reservation_id", id),
     readLogoRow(db, id),
     getShare(db, id),
+    // The agreement card needs this row; without it "Sign the agreement" and
+    // "Agreement signed" could never appear (audit F05). Newest one wins.
+    db.from("reservation_agreements")
+      .select("token, customer_signed_at")
+      .eq("reservation_id", id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
   const logo = logoRow ? await logoState(db, logoRow) : null;
   const share = shareState(shareRow);
@@ -173,6 +181,10 @@ export default async function ReservationDetailPage({
     labelCount: labelCount ?? 0,
     logo,
     share,
+    // The signing link is personal to the requester — collaborators don't get it.
+    agreement: isOwner && agreementRow
+      ? { token: agreementRow.token as string, customer_signed_at: (agreementRow.customer_signed_at as string | null) ?? null }
+      : null,
   });
 }
 
@@ -191,6 +203,7 @@ function renderPage(
     contact_org?: string | null;
     payload?: unknown;
     sign_options?: { qr?: boolean } | null;
+    coi_accepted_at?: string | null;
   },
   view: { isCollab: boolean; staffView: boolean; staff: boolean; canEdit: boolean; labelCount: number; logo: LogoState | null; share: { enabled: boolean; token: string | null; path: string | null }; agreement?: { customer_signed_at: string | null; token: string } | null }
 ) {
@@ -621,14 +634,14 @@ function renderPage(
       )}
 
       {/* COI upload card — show when pending_documents and not yet accepted */}
-      {!view.staffView && reservation.status === "pending_documents" && !(reservation as Record<string, unknown>).coi_accepted_at && (
+      {!view.staffView && reservation.status === "pending_documents" && !reservation.coi_accepted_at && (
         <div style={{ marginBottom: "1rem" }}>
           <COIUploadCard reservationId={reservation.id} />
         </div>
       )}
 
       {/* COI accepted confirmation */}
-      {!view.staffView && !!(reservation as Record<string, unknown>).coi_accepted_at && (
+      {!view.staffView && !!reservation.coi_accepted_at && (
         <div style={{ border: "1px solid var(--tone-green-bd)", borderRadius: "12px", padding: "0.875rem 1.25rem", marginBottom: "1rem", background: "var(--tone-green-bg)" }}>
           <span style={{ fontSize: "0.875rem", color: "var(--tone-green-fg)", fontWeight: 600 }}>✓ Certificate of Insurance verified</span>
         </div>

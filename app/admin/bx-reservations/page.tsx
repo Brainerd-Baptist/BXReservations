@@ -1,12 +1,16 @@
 "use client";
+
+import Link from "next/link";
 import { FileText, Shield, DollarSign, AlertTriangle, FolderOpen } from "lucide-react";
 import { ReservationListSkeleton, CardSkeleton, InlineSkeleton } from "@/app/components/Skeleton";
 import { useToast } from "@/app/components/Toast";
+import LoadError from "@/app/components/load-error";
+import { fetchArray } from "@/lib/fetch-list";
 import CommentsThread from "@/components/bx/CommentsThread";
 import EventLogoCard from "@/app/components/event-logo-card";
 import VenueSettings from "@/app/components/venue-settings";
 import RoomRates from "@/app/components/room-rates";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { BlackoutRule, ruleDescription } from "@/lib/blackouts";
 
@@ -199,6 +203,7 @@ export default function BxReservationsAdmin() {
   const searchParams = useSearchParams();
   const [requests, setRequests] = useState<Request[]>([]);
   const [reservationsLoading, setReservationsLoading] = useState(true);
+  const [reservationsError, setReservationsError] = useState<string | null>(null);
   const rawStatus = searchParams.get("status") ?? "";
   const [filter, setFilter] = useState<Status | "All">(() => {
     const ALL_S: (Status | "All")[] = ["All","Requested","Proposal Sent","Needs Info","Pending Documents","Pending Payment","Deposit Received","Confirmed","Completed","Declined","Cancelled by BX","Cancelled by User","Expired"];
@@ -367,17 +372,22 @@ export default function BxReservationsAdmin() {
   }
 
   // ── Load real reservations from DB ─────────────────────────────────────────
-  useEffect(() => {
-    fetch("/api/admin/reservations")
-      .then(r => r.json())
-      .then((data: Request[]) => { setRequests(data); setReservationsLoading(false); })
-      .catch(err => { console.error("Failed to load reservations:", err); setReservationsLoading(false); });
+  // A failed load shows an error with Retry — not "No requests here", and the
+  // error object is never stored as the list (audit F06).
+  const loadReservations = useCallback(() => {
+    setReservationsLoading(true);
+    setReservationsError(null);
+    fetchArray<Request>("/api/admin/reservations")
+      .then(data => setRequests(data))
+      .catch(err => setReservationsError(err instanceof Error ? err.message : "Something went wrong."))
+      .finally(() => setReservationsLoading(false));
   }, []);
+  useEffect(() => { loadReservations(); }, [loadReservations]);
 
   useEffect(() => {
     fetch("/api/blackouts")
-      .then(r => r.json())
-      .then((data: BlackoutRule[]) => { setBlackouts(data); setBlackoutsLoading(false); })
+      .then(r => (r.ok ? r.json() : []))
+      .then((data: unknown) => { setBlackouts(Array.isArray(data) ? (data as BlackoutRule[]) : []); setBlackoutsLoading(false); })
       .catch(() => setBlackoutsLoading(false));
   }, []);
 
@@ -740,7 +750,10 @@ export default function BxReservationsAdmin() {
             {reservationsLoading && (
               <ReservationListSkeleton rows={8} />
             )}
-            {!reservationsLoading && filtered.length === 0 && (
+            {!reservationsLoading && reservationsError && (
+              <LoadError what="reservation requests" message={reservationsError} onRetry={loadReservations} />
+            )}
+            {!reservationsLoading && !reservationsError && filtered.length === 0 && (
               <div className="bx-glass rounded-xl">
                 <div className="bx-empty">
                   <svg className="bx-empty-icon" width={40} height={40} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
@@ -1519,13 +1532,12 @@ export default function BxReservationsAdmin() {
               <p className="text-sm" style={{ color: "var(--bx-slate)" }}>
                 User management has moved to its own page.
               </p>
-              <a
+              <Link
                 href="/admin/bx-reservations/users"
-                className="px-4 py-2 rounded-lg text-sm font-medium"
-                style={{ background: "var(--bx-pine)", color: "#fff" }}
+                className="bx-cta px-4 py-2 rounded-lg text-sm font-semibold bg-brass text-white"
               >
                 Go to Users →
-              </a>
+              </Link>
             </div>
           )}
 
@@ -1535,13 +1547,12 @@ export default function BxReservationsAdmin() {
               <p className="text-sm" style={{ color: "var(--bx-slate)" }}>
                 Organizations (formerly Ministries) has moved to its own page.
               </p>
-              <a
+              <Link
                 href="/admin/bx-reservations/organizations"
-                className="px-4 py-2 rounded-lg text-sm font-medium"
-                style={{ background: "var(--bx-pine)", color: "#fff" }}
+                className="bx-cta px-4 py-2 rounded-lg text-sm font-semibold bg-brass text-white"
               >
                 Go to Organizations →
-              </a>
+              </Link>
             </div>
           )}
 
@@ -2040,10 +2051,11 @@ function ReportsTab() {
           <button
             key={p}
             onClick={() => setPeriod(p)}
+            aria-pressed={period === p}
             className="text-sm px-3 py-1 rounded-full border transition-colors"
             style={{
               background:  period === p ? "var(--bx-brass)" : "transparent",
-              color:       period === p ? "var(--bx-dark)"  : "var(--bx-parchment)",
+              color:       period === p ? "#fff"  : "var(--bx-parchment)",
               borderColor: period === p
                 ? "var(--bx-brass)"
                 : "color-mix(in srgb, var(--bx-parchment) 20%, transparent)",

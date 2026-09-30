@@ -1,7 +1,9 @@
 "use client";
 
 import BodyPortal from "@/app/components/body-portal";
-import { useState, useEffect, useCallback } from "react";
+import LoadError from "@/app/components/load-error";
+import { useModalDialog } from "@/app/components/use-modal-dialog";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { Search, UserPlus, Shield, ChevronDown, Check, X, Loader2, Mail, Trash2 } from "lucide-react";
 import { can, ROLES_ORDERED, ROLE_LABELS, ROLE_DESCRIPTIONS, type BxRole } from "@/lib/roles";
@@ -156,10 +158,9 @@ function InviteModal({
   onClose: () => void;
   onInvited: () => void;
 }) {
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = ""; };
-  }, []);
+  // Focus trap, Escape, inert background, scroll lock, focus return (audit F02)
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalDialog(true, onClose, panelRef);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [org, setOrg] = useState("");
@@ -191,10 +192,10 @@ function InviteModal({
   return (
     <BodyPortal>
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bx-glass-strong rounded-2xl w-full max-w-md p-6 overflow-y-auto max-h-[90vh]">
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-labelledby="invite-user-title" className="bx-glass-strong rounded-2xl w-full max-w-md p-6 overflow-y-auto max-h-[90vh]">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h2 className="text-parchment font-bold text-lg">Invite a user</h2>
+            <h2 id="invite-user-title" className="text-parchment font-bold text-lg">Invite a user</h2>
             <p className="text-slate text-sm mt-0.5">They'll receive a sign-in link with this role pre-assigned.</p>
           </div>
           <button onClick={onClose} className="text-slate hover:text-parchment p-1 rounded-lg">
@@ -296,15 +297,22 @@ export default function UsersPage() {
   const [deleting, setDeleting] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
 
+  // A failed load shows an error with Retry instead of "No users found" (audit F06).
+  const [loadError, setLoadError] = useState<string | null>(null);
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const res = await fetch("/api/bx/users");
-      const json = await res.json();
-      setUsers(json.users ?? []);
-      setCallerRole(json.callerRole ?? "system_admin");
-    } catch {
-      // silently handle
+      let json: { users?: unknown; callerRole?: string; error?: string } = {};
+      try { json = await res.json(); } catch { /* non-JSON error page */ }
+      if (!res.ok || !Array.isArray(json.users)) {
+        throw new Error(json.error ? `The server said: ${json.error}` : `The server returned an error (${res.status}).`);
+      }
+      setUsers(json.users as BxUser[]);
+      setCallerRole((json.callerRole ?? "system_admin") as typeof callerRole);
+    } catch (e) {
+      setLoadError(e instanceof Error && !/fetch/i.test(e.message) ? e.message : "Couldn't reach the server. Check your connection.");
     } finally {
       setLoading(false);
     }
@@ -373,6 +381,8 @@ export default function UsersPage() {
               <Loader2 size={18} className="animate-spin" />
               <span className="text-sm">Loading users…</span>
             </div>
+          ) : loadError ? (
+            <div className="p-4"><LoadError what="users" message={loadError} onRetry={load} /></div>
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center px-4">
               <Shield size={32} className="text-slate/30 mb-3" />

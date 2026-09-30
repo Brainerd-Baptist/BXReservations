@@ -1,7 +1,8 @@
 "use client";
 
 import BodyPortal from "@/app/components/body-portal";
-import { useState, useTransition } from "react";
+import { useModalDialog } from "@/app/components/use-modal-dialog";
+import { useState, useTransition, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { OrgDetail, LinkedUser, ReservationRow, DiscountRule } from "./page";
@@ -77,6 +78,9 @@ function DiscountFormModal({
   onClose: () => void;
   onSaved: (d: DiscountRule, isEdit: boolean) => void;
 }) {
+  // Focus trap, Escape, inert background, scroll lock, focus return (audit F02)
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalDialog(true, onClose, panelRef);
   const [form, setForm] = useState<DiscountFormState>(
     editingDiscount
       ? {
@@ -147,6 +151,10 @@ function DiscountFormModal({
       onClick={onClose}
     >
       <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={editingDiscount ? "Edit discount" : "Add discount"}
         className="bx-glass-strong"
         style={{ borderRadius: 16, padding: 28, width: "100%", maxWidth: 480, maxHeight: "90vh", overflowY: "auto" }}
         onClick={(e) => e.stopPropagation()}

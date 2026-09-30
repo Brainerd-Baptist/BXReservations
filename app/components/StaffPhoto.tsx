@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import Image from "next/image";
 import BodyPortal from "./body-portal";
+import { useModalDialog } from "./use-modal-dialog";
 
 interface StaffPhotoProps {
   thumbSrc: string;
@@ -14,13 +15,10 @@ interface StaffPhotoProps {
 export default function StaffPhoto({ thumbSrc, fullSrc, name, size = 80 }: StaffPhotoProps) {
   const [open, setOpen] = useState(false);
 
-  // Close on Escape
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
+  // Escape, focus trap, inert background, focus return (audit F02)
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const close = useCallback(() => setOpen(false), []);
+  useModalDialog(open, close, overlayRef);
 
   return (
     <>
@@ -57,6 +55,10 @@ export default function StaffPhoto({ thumbSrc, fullSrc, name, size = 80 }: Staff
       {open && (
         <BodyPortal>
         <div
+          ref={overlayRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${name}'s photo`}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
           onClick={() => setOpen(false)}
         >

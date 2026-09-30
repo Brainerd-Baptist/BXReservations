@@ -1,7 +1,8 @@
 "use client";
 
 import BodyPortal from "@/app/components/body-portal";
-import { useState, useMemo, useTransition } from "react";
+import { useState, useMemo, useTransition, useRef, useCallback } from "react";
+import { useModalDialog } from "@/app/components/use-modal-dialog";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { OrgSummary } from "./page";
@@ -69,6 +70,10 @@ export default function OrganizationsClient({
   const [slideOpen, setSlideOpen] = useState(false);
   const [form, setForm] = useState<NewOrgForm>(EMPTY_FORM);
   const [formError, setFormError] = useState<string | null>(null);
+  // Slide-over behaves as a modal dialog: focus trap, Escape, focus return (audit F02)
+  const slideRef = useRef<HTMLDivElement>(null);
+  const closeSlide = useCallback(() => { setSlideOpen(false); setForm(EMPTY_FORM); setFormError(null); }, []);
+  useModalDialog(slideOpen, closeSlide, slideRef);
   const [isPending, startTransition] = useTransition();
 
   const filtered = useMemo(() => {
@@ -195,10 +200,10 @@ export default function OrganizationsClient({
 
       {slideOpen && (
         <BodyPortal>
-          <div onClick={() => { setSlideOpen(false); setForm(EMPTY_FORM); setFormError(null); }} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 40 }} />
-          <div className="bx-glass-strong" style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "min(480px, 100vw)", zIndex: 50, display: "flex", flexDirection: "column", borderRadius: 0, borderWidth: "0 0 0 1px", boxShadow: "-12px 0 48px rgba(0,0,0,0.25)" }}>
+          <div data-modal-part="" aria-hidden="true" onClick={closeSlide} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 40 }} />
+          <div ref={slideRef} role="dialog" aria-modal="true" aria-labelledby="new-org-title" className="bx-glass-strong" style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "min(480px, 100vw)", zIndex: 50, display: "flex", flexDirection: "column", borderRadius: 0, borderWidth: "0 0 0 1px", boxShadow: "-12px 0 48px rgba(0,0,0,0.25)" }}>
             <div style={{ padding: "24px 28px 20px", borderBottom: "1px solid color-mix(in srgb, var(--bx-parchment) 10%, transparent)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: "var(--bx-parchment)" }}>New Organization</h2>
+              <h2 id="new-org-title" style={{ fontSize: 18, fontWeight: 700, margin: 0, color: "var(--bx-parchment)" }}>New Organization</h2>
               <button onClick={() => { setSlideOpen(false); setForm(EMPTY_FORM); setFormError(null); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--bx-slate)", fontSize: 22, lineHeight: 1, padding: 4 }} aria-label="Close">×</button>
             </div>
             <form onSubmit={handleCreate} style={{ flex: 1, overflowY: "auto", padding: "24px 28px", display: "flex", flexDirection: "column", gap: 18 }}>

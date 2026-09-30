@@ -1,0 +1,53 @@
+name: CI
+
+# Runs on every push and pull request. Build, type check and the smoke test
+# must pass. Lint is reported but doesn't block yet: ~19 older lint errors
+# are scheduled for cleanup in Phase 5 of the improvement plan, after which
+# `continue-on-error` below should be removed.
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # Placeholder values: the build and public pages don't need real secrets.
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder
+      SUPABASE_SERVICE_ROLE_KEY: ci-placeholder
+      RESEND_API_KEY: re_ci_placeholder
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Lint (not blocking yet)
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Build
+        run: npx next build
+
+      - name: Smoke test (Light + Dark, phone size)
+        run: |
+          npm i --no-save playwright@1
+          npx playwright install --with-deps chromium
+          npx next start -p 3000 &
+          npx --yes wait-on@8 -t 60000 http://localhost:3000
+          BASE_URL=http://localhost:3000 node scripts/smoke.mjs

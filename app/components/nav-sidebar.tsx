@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { can, type BxRole } from "@/lib/roles";
 import { createPortal } from "react-dom";
+import { useModalDialog } from "./use-modal-dialog";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 
@@ -223,8 +224,9 @@ function NavLink({
 //   • window.visualViewport.height re-measured on resize — the two in-app WebKit
 //     browsers we target both have real bugs with plain 100dvh/inset-0 for full-
 //     screen drawers; visualViewport is the one source that stays live in both.
-//   • Opacity/pointer-events toggle (not mount/unmount) — smooth fade transition.
-//   • Body scroll lock while open; Escape to close.
+//   • Stays mounted for a smooth fade, but is inert + hidden while closed so it
+//     is unreachable by keyboard/screen readers; useModalDialog handles focus
+//     trap, Escape, inert background, scroll lock and focus return.
 
 export default function NavSidebar({
   open,
@@ -237,7 +239,6 @@ export default function NavSidebar({
   const [mounted, setMounted] = useState(false);
   const [vpHeight, setVpHeight] = useState<number | null>(null);
   const isAdmin = can.viewAdminPanel(role);
-  const prevOpen = useRef(false);
 
   // Only render portal after hydration
   useEffect(() => {
@@ -262,25 +263,9 @@ export default function NavSidebar({
     };
   }, []);
 
-  // Body scroll lock + Escape
-  useEffect(() => {
-    if (open === prevOpen.current) return;
-    prevOpen.current = open;
-
-    if (open) {
-      document.body.style.overflow = "hidden";
-      const handler = (e: KeyboardEvent) => {
-        if (e.key === "Escape") onClose();
-      };
-      document.addEventListener("keydown", handler);
-      return () => {
-        document.body.style.overflow = "";
-        document.removeEventListener("keydown", handler);
-      };
-    } else {
-      document.body.style.overflow = "";
-    }
-  }, [open, onClose]);
+  // Focus trap, Escape, inert background, scroll lock, focus return (audit F02)
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalDialog(open, onClose, panelRef);
 
   if (!mounted) return null;
 
@@ -291,6 +276,7 @@ export default function NavSidebar({
       {/* Backdrop — full-screen, click to close */}
       <div
         aria-hidden="true"
+        data-modal-part=""
         onClick={onClose}
         style={{
           position: "fixed",
@@ -299,15 +285,20 @@ export default function NavSidebar({
           background: "rgba(0,0,0,0.40)",
           opacity: open ? 1 : 0,
           pointerEvents: open ? "auto" : "none",
-          transition: "opacity 0.2s",
+          visibility: open ? "visible" : "hidden",
+          transition: `opacity 0.2s, visibility 0s linear ${open ? "0s" : "0.2s"}`,
         }}
       />
 
       {/* Drawer panel — full-width on phone, max-sm drawer from left on larger */}
       <div
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-label="Navigation menu"
+        // Closed = gone for keyboard and screen readers, not just transparent
+        inert={!open}
+        aria-hidden={!open}
         style={{
           position: "fixed",
           top: 0,
@@ -324,7 +315,8 @@ export default function NavSidebar({
           boxShadow: "inset -1px 0 0 var(--bx-highlight), 0 25px 60px -12px rgba(0,0,0,0.45)",
           opacity: open ? 1 : 0,
           pointerEvents: open ? "auto" : "none",
-          transition: "opacity 0.2s",
+          visibility: open ? "visible" : "hidden",
+          transition: `opacity 0.2s, visibility 0s linear ${open ? "0s" : "0.2s"}`,
           ...heightStyle,
         }}
       >

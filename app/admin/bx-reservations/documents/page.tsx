@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { FileText, Shield, DollarSign } from "lucide-react";
 import { ReservationListSkeleton } from "@/app/components/Skeleton";
+import LoadError from "@/app/components/load-error";
+import { fetchArray } from "@/lib/fetch-list";
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 interface AgreementRow {
@@ -83,34 +85,44 @@ export default function DocumentsHub() {
   const [paymentsLoading, setPaymentsLoading] = useState(false);
   const [paymentsLoaded, setPaymentsLoaded] = useState(false);
 
+  // A failed load is shown as an error with Retry — never as an empty list,
+  // and never stored as if the error object were the list (audit F06).
+  const [loadErr, setLoadErr] = useState<Record<Tab, string | null>>({ agreements: null, cois: null, payments: null } as Record<Tab, string | null>);
+  const [reloadKey, setReloadKey] = useState(0);
+  const errMsg = (e: unknown) => (e instanceof Error ? e.message : "Something went wrong.");
+  function retry(tab: Tab) {
+    setLoadErr(prev => ({ ...prev, [tab]: null }));
+    if (tab === "agreements") setAgreementsLoaded(false);
+    if (tab === "cois") setCoisLoaded(false);
+    if (tab === "payments") setPaymentsLoaded(false);
+    setReloadKey(k => k + 1);
+  }
+
   // ── Fetch on tab open (lazy) ──────────────────────────────────────────────────
   useEffect(() => {
-    if (activeTab === "agreements" && !agreementsLoaded && !agreementsLoading) {
+    if (activeTab === "agreements" && !agreementsLoaded && !agreementsLoading && !loadErr.agreements) {
       setAgreementsLoading(true);
-      fetch("/api/admin/documents?type=agreements")
-        .then(r => r.json())
-        .then((d: AgreementRow[]) => { setAgreements(d); setAgreementsLoaded(true); })
-        .catch(console.error)
+      fetchArray<AgreementRow>("/api/admin/documents?type=agreements")
+        .then(d => { setAgreements(d); setAgreementsLoaded(true); })
+        .catch(e => setLoadErr(prev => ({ ...prev, agreements: errMsg(e) })))
         .finally(() => setAgreementsLoading(false));
     }
-    if (activeTab === "cois" && !coisLoaded && !coisLoading) {
+    if (activeTab === "cois" && !coisLoaded && !coisLoading && !loadErr.cois) {
       setCoisLoading(true);
-      fetch("/api/admin/documents?type=cois")
-        .then(r => r.json())
-        .then((d: COIRow[]) => { setCois(d); setCoisLoaded(true); })
-        .catch(console.error)
+      fetchArray<COIRow>("/api/admin/documents?type=cois")
+        .then(d => { setCois(d); setCoisLoaded(true); })
+        .catch(e => setLoadErr(prev => ({ ...prev, cois: errMsg(e) })))
         .finally(() => setCoisLoading(false));
     }
-    if (activeTab === "payments" && !paymentsLoaded && !paymentsLoading) {
+    if (activeTab === "payments" && !paymentsLoaded && !paymentsLoading && !loadErr.payments) {
       setPaymentsLoading(true);
-      fetch("/api/admin/documents?type=payments")
-        .then(r => r.json())
-        .then((d: PaymentRow[]) => { setPayments(d); setPaymentsLoaded(true); })
-        .catch(console.error)
+      fetchArray<PaymentRow>("/api/admin/documents?type=payments")
+        .then(d => { setPayments(d); setPaymentsLoaded(true); })
+        .catch(e => setLoadErr(prev => ({ ...prev, payments: errMsg(e) })))
         .finally(() => setPaymentsLoading(false));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
+  }, [activeTab, reloadKey]);
 
   const filteredCois = cois.filter(c => {
     if (coiFilter === "pending"  && c.coi_accepted_at)   return false;
@@ -170,6 +182,7 @@ export default function DocumentsHub() {
         {activeTab === "agreements" && (
           <div className="bx-glass rounded-xl overflow-hidden">
             {agreementsLoading && <p className="p-8 text-center text-slate text-sm animate-pulse">Loading…</p>}
+            {loadErr.agreements && <div className="p-4"><LoadError what="agreements" message={loadErr.agreements} onRetry={() => retry("agreements")} /></div>}
             {!agreementsLoading && agreements.length === 0 && agreementsLoaded && (
               <p className="p-8 text-center text-slate text-sm">No signed agreements yet.</p>
             )}
@@ -247,6 +260,7 @@ export default function DocumentsHub() {
 
             <div className="bx-glass rounded-xl overflow-hidden">
               {coisLoading && <ReservationListSkeleton rows={5} />}
+              {loadErr.cois && <div className="p-4"><LoadError what="insurance certificates" message={loadErr.cois} onRetry={() => retry("cois")} /></div>}
               {!coisLoading && filteredCois.length === 0 && coisLoaded && (
                 <p className="p-8 text-center text-slate text-sm">No COIs match this filter.</p>
               )}
@@ -308,6 +322,7 @@ export default function DocumentsHub() {
           <div className="space-y-3">
             <div className="bx-glass rounded-xl overflow-hidden">
               {paymentsLoading && <p className="p-8 text-center text-slate text-sm animate-pulse">Loading…</p>}
+              {loadErr.payments && <div className="p-4"><LoadError what="payments" message={loadErr.payments} onRetry={() => retry("payments")} /></div>}
               {!paymentsLoading && payments.length === 0 && paymentsLoaded && (
                 <p className="p-8 text-center text-slate text-sm">No payments recorded yet.</p>
               )}

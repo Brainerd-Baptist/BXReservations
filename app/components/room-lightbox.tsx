@@ -1,9 +1,10 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Room } from "@/lib/rooms";
 import BodyPortal from "./body-portal";
+import { useModalDialog } from "./use-modal-dialog";
 
 interface Props {
   room: Room | null;
@@ -59,6 +60,10 @@ export function RoomLightbox({ room, isSelected, isNP, onClose, onToggle, galler
     return () => { document.documentElement.style.overflow = ""; };
   }, [room]);
 
+  // Focus trap, inert background, focus return (audit F02)
+  const overlayRef = useRef<HTMLDivElement>(null);
+  useModalDialog(!!room, onClose, overlayRef);
+
   if (!room) return null;
 
   const photo = room.photos[photoIdx];
@@ -67,6 +72,10 @@ export function RoomLightbox({ room, isSelected, isNP, onClose, onToggle, galler
   return (
     <BodyPortal>
     <div
+      ref={overlayRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${room.name} photos and details`}
       className="fixed inset-0 z-50 overflow-y-auto"
       onClick={onClose}
       style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)", overscrollBehavior: "contain" }}

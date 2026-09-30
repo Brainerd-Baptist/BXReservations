@@ -451,8 +451,10 @@ select {
 input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="submit"]):not([type="button"]):focus,
 textarea:focus,
 select:focus {
-  box-shadow: inset 0 1px 3px rgba(0,0,0,0.09), 0 0 0 2px color-mix(in srgb, var(--bx-brass) 35%, transparent);
-  outline: none;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.09), 0 0 0 4px color-mix(in srgb, var(--bx-brass) 22%, transparent);
+  /* A solid ring, not just a tint: must be visible to keyboard users (WCAG 2.4.7) */
+  outline: 2px solid var(--bx-brass);
+  outline-offset: 1px;
 }
 
 /* Brainerd theme: warm amber inset shadows — replaces cold rgba(0,0,0) */
@@ -464,8 +466,9 @@ select:focus {
 [data-theme="brainerd"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="submit"]):not([type="button"]):focus,
 [data-theme="brainerd"] textarea:focus,
 [data-theme="brainerd"] select:focus {
-  box-shadow: inset 0 1px 4px rgba(120,80,0,0.10), 0 0 0 2px color-mix(in srgb, var(--bx-brass) 40%, transparent);
-  outline: none;
+  box-shadow: inset 0 1px 4px rgba(120,80,0,0.10), 0 0 0 4px color-mix(in srgb, var(--bx-brass) 22%, transparent);
+  outline: 2px solid var(--bx-brass);
+  outline-offset: 1px;
 }
 
 /* ── Legacy button classes (backward compat) ─────────────────────────────── */

@@ -58,6 +58,8 @@ export default function HeaderShell({
             <button
               onClick={() => setSidebarOpen(true)}
               aria-label="Open menu"
+              aria-expanded={sidebarOpen}
+              aria-haspopup="dialog"
               className="p-1.5 rounded-lg transition-colors -ml-1"
               style={{ color: "var(--bx-slate)" }}
               onMouseEnter={(e) =>
