@@ -167,7 +167,7 @@ export default function ReservationList({ upcoming, sharedCollabs, past }: Props
             border: "1px solid color-mix(in srgb, var(--bx-parchment) 12%, transparent)",
             borderRadius: "12px",
             overflow: "hidden",
-            background: "var(--bx-ink-soft)",
+            background: "var(--bx-surface)", backdropFilter: "blur(var(--bx-blur)) saturate(150%)", WebkitBackdropFilter: "blur(var(--bx-blur)) saturate(150%)", boxShadow: "inset 0 1px 0 var(--bx-highlight), var(--shadow-2)",
           }}
         >
           {upcoming.length === 0 ? (
@@ -224,7 +224,7 @@ export default function ReservationList({ upcoming, sharedCollabs, past }: Props
               border: "1px solid color-mix(in srgb, var(--bx-parchment) 12%, transparent)",
               borderRadius: "12px",
               overflow: "hidden",
-              background: "var(--bx-ink-soft)",
+              background: "var(--bx-surface)", backdropFilter: "blur(var(--bx-blur)) saturate(150%)", WebkitBackdropFilter: "blur(var(--bx-blur)) saturate(150%)", boxShadow: "inset 0 1px 0 var(--bx-highlight), var(--shadow-2)",
             }}
           >
             {sharedCollabs.map((collab, i) => {
@@ -277,7 +277,7 @@ export default function ReservationList({ upcoming, sharedCollabs, past }: Props
               border: "1px solid color-mix(in srgb, var(--bx-parchment) 8%, transparent)",
               borderRadius: "12px",
               overflow: "hidden",
-              background: "var(--bx-ink-soft)",
+              background: "var(--bx-surface)", backdropFilter: "blur(var(--bx-blur)) saturate(150%)", WebkitBackdropFilter: "blur(var(--bx-blur)) saturate(150%)", boxShadow: "inset 0 1px 0 var(--bx-highlight), var(--shadow-2)",
               opacity: 0.75,
             }}
           >

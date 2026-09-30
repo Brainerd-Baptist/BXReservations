@@ -61,8 +61,8 @@ export function RoomCard({ room, signal, isSelected, isDisabled, isNP, tag, onTo
           : "hover:scale-[1.02] hover:shadow-xl"
       }`}
       style={isSelected
-        ? { boxShadow: "0 0 0 2px var(--bx-brass), 0 8px 32px rgba(0,0,0,0.3)" }
-        : { boxShadow: "0 2px 12px rgba(0,0,0,0.2)" }
+        ? { boxShadow: "0 0 0 2px var(--bx-brass), 0 0 32px -4px color-mix(in srgb, var(--bx-brass) 45%, transparent), var(--shadow-3)" }
+        : { boxShadow: "0 0 0 1px var(--bx-hairline), var(--shadow-2)" }
       }
       onClick={onPreview}
     >
@@ -127,8 +127,8 @@ export function RoomCard({ room, signal, isSelected, isDisabled, isNP, tag, onTo
       {/* ── Card footer ── */}
       <div className="p-3 flex items-center justify-between gap-3"
         style={{ background: isSelected
-          ? "color-mix(in srgb, var(--bx-brass) 8%, var(--bx-ink-soft))"
-          : "var(--bx-ink-soft)",
+          ? "color-mix(in srgb, var(--bx-brass) 10%, var(--bx-surface-strong))"
+          : "var(--bx-surface-strong)",
         }}
       >
         <div className="flex items-center gap-3 min-w-0">

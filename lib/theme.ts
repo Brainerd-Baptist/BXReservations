@@ -6,7 +6,7 @@ export const THEMES = [
     id: "brainerd",
     label: "Brainerd",
     description: "Light, built from the church's own brand colors. The default.",
-    swatch: ["#f4f7fa", "#ffffff", "#00abc9", "#00205b"],
+    swatch: ["#F5F1EB", "#FEFCF8", "#00abc9", "#00205b"],
     quick: true,
   },
   {

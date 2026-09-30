@@ -50,12 +50,12 @@ export function RoomsClient() {
   }), [floor, cap, setup]);
 
   return (
-    <main className="min-h-screen relative overflow-x-hidden" style={{ background: "var(--bx-ink)" }}>
+    <main className="min-h-screen relative overflow-x-hidden">
       {/* Bloom glow */}
       <div className="bx-bloom" aria-hidden="true" />
 
       {/* ── Filters ── */}
-      <section className="sticky z-10 border-b" style={{ top: "calc(3.5rem + env(safe-area-inset-top))", background: "color-mix(in srgb, var(--bx-ink) 92%, transparent)", backdropFilter: "blur(12px)", borderColor: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>
+      <section className="bx-glass-strong sticky z-10 border-x-0 border-t-0" style={{ top: "calc(3.5rem + env(safe-area-inset-top))", boxShadow: "none" }}>
         <div className="max-w-5xl mx-auto px-4 py-3 flex flex-wrap gap-2 items-center">
 
           {/* Floor */}
@@ -195,7 +195,7 @@ export function RoomsClient() {
       </section>
 
       {/* ── CTA strip ── */}
-      <section className="border-t" style={{ background: "var(--bx-ink-soft)", borderColor: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>
+      <section className="bx-band border-t">
         <div className="max-w-2xl mx-auto px-5 py-12 text-center">
           <h2 className="text-xl font-bold mb-2" style={{ color: "var(--bx-parchment)" }}>Ready to book?</h2>
           <p className="text-sm mb-6" style={{ color: "var(--bx-slate)" }}>
@@ -203,7 +203,7 @@ export function RoomsClient() {
           </p>
           <Link
             href="/reserve"
-            className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl font-bold text-sm text-white transition-all hover:opacity-90 active:scale-[0.98]"
+            className="bx-cta inline-flex items-center gap-2 px-8 py-3.5 rounded-xl font-bold text-sm text-white active:scale-[0.98]"
             style={{ background: "var(--bx-brass)" }}
           >
             Start your reservation →

@@ -14,9 +14,9 @@ export default async function InvitesPage({ searchParams }: PageProps) {
   // No token
   if (!token) {
     return (
-      <main style={{ maxWidth: "480px", margin: "0 auto", padding: "4rem 1rem", textAlign: "center" }}>
+      <main className="bx-glass animate-in" style={{ maxWidth: "440px", margin: "4rem auto", padding: "2.5rem 1.75rem", borderRadius: 18, textAlign: "center", width: "calc(100% - 2rem)" }}>
         <div style={{ marginBottom: "1rem", color: "var(--bx-slate)" }}><svg width="2.5rem" height="2.5rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{display:"block",margin:"0 auto"}}><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></div>
-        <h1 style={{ fontSize: "1.125rem", fontWeight: 700, color: "var(--bx-parchment)", marginBottom: "0.5rem" }}>
+        <h1 style={{ fontSize: "1.625rem", fontWeight: 600, color: "var(--bx-parchment)", marginBottom: "0.5rem" }}>
           Invalid invite link
         </h1>
         <p style={{ fontSize: "0.875rem", color: "var(--bx-slate)", marginBottom: "1.5rem" }}>
@@ -65,9 +65,9 @@ export default async function InvitesPage({ searchParams }: PageProps) {
 
   if (lookupErr || !invite) {
     return (
-      <main style={{ maxWidth: "480px", margin: "0 auto", padding: "4rem 1rem", textAlign: "center" }}>
+      <main className="bx-glass animate-in" style={{ maxWidth: "440px", margin: "4rem auto", padding: "2.5rem 1.75rem", borderRadius: 18, textAlign: "center", width: "calc(100% - 2rem)" }}>
         <div style={{ marginBottom: "1rem", color: "var(--bx-clay)" }}><svg width="2.5rem" height="2.5rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{display:"block",margin:"0 auto"}}><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg></div>
-        <h1 style={{ fontSize: "1.125rem", fontWeight: 700, color: "var(--bx-parchment)", marginBottom: "0.5rem" }}>
+        <h1 style={{ fontSize: "1.625rem", fontWeight: 600, color: "var(--bx-parchment)", marginBottom: "0.5rem" }}>
           Invite not found
         </h1>
         <p style={{ fontSize: "0.875rem", color: "var(--bx-slate)", marginBottom: "1.5rem" }}>
@@ -88,9 +88,9 @@ export default async function InvitesPage({ searchParams }: PageProps) {
   // Verify email matches
   if (invite.invited_email && invite.invited_email !== user.email?.toLowerCase()) {
     return (
-      <main style={{ maxWidth: "480px", margin: "0 auto", padding: "4rem 1rem", textAlign: "center" }}>
+      <main className="bx-glass animate-in" style={{ maxWidth: "440px", margin: "4rem auto", padding: "2.5rem 1.75rem", borderRadius: 18, textAlign: "center", width: "calc(100% - 2rem)" }}>
         <div style={{ marginBottom: "1rem", color: "var(--bx-brass)" }}><svg width="2.5rem" height="2.5rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{display:"block",margin:"0 auto"}}><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg></div>
-        <h1 style={{ fontSize: "1.125rem", fontWeight: 700, color: "var(--bx-parchment)", marginBottom: "0.5rem" }}>
+        <h1 style={{ fontSize: "1.625rem", fontWeight: 600, color: "var(--bx-parchment)", marginBottom: "0.5rem" }}>
           Wrong account
         </h1>
         <p style={{ fontSize: "0.875rem", color: "var(--bx-slate)", marginBottom: "1.5rem" }}>
@@ -113,9 +113,9 @@ export default async function InvitesPage({ searchParams }: PageProps) {
 
   if (updateErr) {
     return (
-      <main style={{ maxWidth: "480px", margin: "0 auto", padding: "4rem 1rem", textAlign: "center" }}>
+      <main className="bx-glass animate-in" style={{ maxWidth: "440px", margin: "4rem auto", padding: "2.5rem 1.75rem", borderRadius: 18, textAlign: "center", width: "calc(100% - 2rem)" }}>
         <div style={{ marginBottom: "1rem", color: "var(--bx-brass)" }}><svg width="2.5rem" height="2.5rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{display:"block",margin:"0 auto"}}><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg></div>
-        <h1 style={{ fontSize: "1.125rem", fontWeight: 700, color: "var(--bx-parchment)", marginBottom: "0.5rem" }}>
+        <h1 style={{ fontSize: "1.625rem", fontWeight: 600, color: "var(--bx-parchment)", marginBottom: "0.5rem" }}>
           Something went wrong
         </h1>
         <p style={{ fontSize: "0.875rem", color: "var(--bx-slate)", marginBottom: "1.5rem" }}>

@@ -1,5 +1,6 @@
 "use client";
 
+import BodyPortal from "@/app/components/body-portal";
 import { useState, useMemo, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -123,7 +124,6 @@ export default function OrganizationsClient({
     <div
       style={{
         minHeight: "100vh",
-        background: "var(--bx-ink)",
         color: "var(--bx-parchment)",
         fontFamily: "inherit",
       }}
@@ -194,9 +194,9 @@ export default function OrganizationsClient({
       </div>
 
       {slideOpen && (
-        <>
+        <BodyPortal>
           <div onClick={() => { setSlideOpen(false); setForm(EMPTY_FORM); setFormError(null); }} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 40 }} />
-          <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "min(480px, 100vw)", background: "var(--bx-ink-soft)", zIndex: 50, display: "flex", flexDirection: "column", boxShadow: "-8px 0 40px rgba(0,0,0,0.2)" }}>
+          <div className="bx-glass-strong" style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "min(480px, 100vw)", zIndex: 50, display: "flex", flexDirection: "column", borderRadius: 0, borderWidth: "0 0 0 1px", boxShadow: "-12px 0 48px rgba(0,0,0,0.25)" }}>
             <div style={{ padding: "24px 28px 20px", borderBottom: "1px solid color-mix(in srgb, var(--bx-parchment) 10%, transparent)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: "var(--bx-parchment)" }}>New Organization</h2>
               <button onClick={() => { setSlideOpen(false); setForm(EMPTY_FORM); setFormError(null); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--bx-slate)", fontSize: 22, lineHeight: 1, padding: 4 }} aria-label="Close">×</button>
@@ -240,7 +240,7 @@ export default function OrganizationsClient({
               </div>
             </form>
           </div>
-        </>
+        </BodyPortal>
       )}
     </div>
   );
@@ -251,9 +251,10 @@ function OrgCard({ org }: { org: OrgSummary }) {
   return (
     <Link href={`/admin/bx-reservations/organizations/${org.id}`} style={{ textDecoration: "none", color: "inherit" }}>
       <div
-        style={{ background: "var(--bx-ink-soft)", border: "1px solid color-mix(in srgb, var(--bx-parchment) 10%, transparent)", borderRadius: 12, padding: "20px 22px", cursor: "pointer", transition: "box-shadow 0.15s, border-color 0.15s", display: "flex", flexDirection: "column", gap: 10 }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 4px 20px rgba(0,0,0,0.1)"; (e.currentTarget as HTMLDivElement).style.borderColor = "var(--bx-brass)"; }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = "none"; (e.currentTarget as HTMLDivElement).style.borderColor = "color-mix(in srgb, var(--bx-parchment) 10%, transparent)"; }}
+        className="bx-glass-flat"
+        style={{ borderRadius: 12, padding: "20px 22px", cursor: "pointer", transition: "box-shadow 0.15s, border-color 0.15s", display: "flex", flexDirection: "column", gap: 10 }}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = "inset 0 1px 0 var(--bx-highlight), var(--shadow-3)"; (e.currentTarget as HTMLDivElement).style.borderColor = "var(--bx-brass)"; }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = ""; (e.currentTarget as HTMLDivElement).style.borderColor = ""; }}
       >
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
           <span style={{ fontSize: 16, fontWeight: 700, color: "var(--bx-parchment)", lineHeight: 1.3 }}>{org.name}</span>

@@ -16,9 +16,14 @@
   --color-clay:       var(--bx-clay);
   --color-sage:       var(--bx-sage);
 
-  /* Font family tokens */
+  /* Font family tokens — ONE type system.
+     font-sans / font-serif / font-mono all resolve to the brand stack, so a
+     stray Tailwind `font-sans` can never fall back to the OS system font. */
   --font-display: var(--font-cormorant), 'Georgia', serif;
   --font-ui:      var(--font-inter), system-ui, sans-serif;
+  --font-sans:    var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif:   var(--font-cormorant), 'Georgia', serif;
+  --font-mono:    ui-monospace, "SF Mono", "SFMono-Regular", "JetBrains Mono", Menlo, Consolas, monospace;
 }
 
 /* ── Default (Brainerd) theme — applied when no data-theme is set ──────── */
@@ -69,6 +74,151 @@
   /* Typography identity — Brainerd light mode */
   --bx-font-display: var(--font-cormorant), 'Georgia', serif;
   --bx-font-ui:      var(--font-inter), system-ui, sans-serif;
+
+  /* ── Surfaces: translucent glass over the ambient layer ───────────────
+     Every raised thing in the app is one of four surfaces. Alpha is tuned
+     per mode so text contrast stays AA while the background shows through. */
+  --bx-surface-alpha:  76%;
+  --bx-surface:        color-mix(in srgb, var(--bx-ink-soft) var(--bx-surface-alpha), transparent);
+  --bx-surface-strong: color-mix(in srgb, var(--bx-ink-soft) 90%, transparent);
+  --bx-surface-menu:   color-mix(in srgb, var(--bx-ink-soft) 97%, transparent);  /* menus nested in the glass header can't blur the page */
+  --bx-surface-hover:  color-mix(in srgb, var(--bx-ink-soft) 94%, var(--bx-brass));
+  --bx-well:           color-mix(in srgb, var(--bx-ink) 62%, transparent);
+  --bx-hairline:       color-mix(in srgb, var(--bx-parchment) 10%, transparent);
+  --bx-hairline-soft:  color-mix(in srgb, var(--bx-parchment) 6%, transparent);
+  --bx-highlight:      rgba(255, 255, 255, 0.75);   /* 1px top edge "catching light" */
+  --bx-blur:           10px;
+
+  /* ── Ambient layer ─────────────────────────────────────────────────── */
+  --bx-grid-size:   28px;
+  --bx-glow-a:      color-mix(in srgb, #00abc9 17%, transparent);  /* BBC teal   */
+  --bx-glow-b:      color-mix(in srgb, #e9c46a 16%, transparent);  /* warm brass */
+  --bx-glow-c:      color-mix(in srgb, #00205b 8%, transparent);   /* BBC navy   */
+  --bx-lamp:        var(--bx-brass);
+  --bx-lamp-glow:   color-mix(in srgb, var(--bx-brass) 10%, transparent);
+  --bx-lamp-dot:    color-mix(in srgb, var(--bx-brass) 55%, transparent);
+  --bx-lamp-line:   color-mix(in srgb, var(--bx-brass) 22%, transparent);
+  --bx-grain-opacity: 0.035;
+
+  /* ── Tones: theme-aware status colors (light mode values) ──────────── */
+  --tone-amber-bg:  #FEF3C7; --tone-amber-fg:  #92400E; --tone-amber-bd:  #FDE68A;
+  --tone-indigo-bg: #EDE9FE; --tone-indigo-fg: #5B21B6; --tone-indigo-bd: #DDD6FE;
+  --tone-orange-bg: #FFEDD5; --tone-orange-fg: #C2410C; --tone-orange-bd: #FED7AA;
+  --tone-green-bg:  #D1FAE5; --tone-green-fg:  #065F46; --tone-green-bd:  #A7F3D0;
+  --tone-red-bg:    #FEE2E2; --tone-red-fg:    #991B1B; --tone-red-bd:    #FECACA;
+  --tone-stone-bg:  #F5F1EB; --tone-stone-fg:  #5C6470; --tone-stone-bd:  #E2DDD6;
+  --tone-gray-bg:   #F3F4F6; --tone-gray-fg:   #6B7280; --tone-gray-bd:   #E5E7EB;
+}
+
+/* ── Dark-mode tokens — shared by every dark theme ─────────────────────── */
+[data-theme="ledger"], [data-theme="glass-dark"], [data-theme="harbor"],
+[data-theme="heather"], [data-theme="moss"], [data-theme="orbit"] {
+  color-scheme: dark;                               /* native controls, scrollbars, date pickers */
+  --bx-surface-alpha: 70%;
+  --bx-surface-strong: color-mix(in srgb, var(--bx-ink-soft) 86%, transparent);
+  --bx-well:          color-mix(in srgb, var(--bx-ink) 55%, transparent);
+  --bx-hairline:      color-mix(in srgb, var(--bx-parchment) 11%, transparent);
+  --bx-highlight:     rgba(255, 255, 255, 0.07);
+  --bx-blur:          14px;
+  --bx-glow-a:        color-mix(in srgb, var(--bx-brass) 22%, transparent);
+  --bx-glow-b:        color-mix(in srgb, var(--bx-brass-soft) 12%, transparent);
+  --bx-glow-c:        color-mix(in srgb, var(--bx-parchment) 5%, transparent);
+  --bx-lamp-glow:     color-mix(in srgb, var(--bx-brass) 14%, transparent);
+  --bx-lamp-dot:      color-mix(in srgb, var(--bx-brass-soft) 60%, transparent);
+  --bx-lamp-line:     color-mix(in srgb, var(--bx-brass-soft) 24%, transparent);
+  --bx-grain-opacity: 0.05;
+
+  --tone-amber-bg:  color-mix(in srgb, #F59E0B 16%, transparent); --tone-amber-fg:  #FCD34D; --tone-amber-bd:  color-mix(in srgb, #F59E0B 34%, transparent);
+  --tone-indigo-bg: color-mix(in srgb, #8B5CF6 18%, transparent); --tone-indigo-fg: #C4B5FD; --tone-indigo-bd: color-mix(in srgb, #8B5CF6 36%, transparent);
+  --tone-orange-bg: color-mix(in srgb, #F97316 16%, transparent); --tone-orange-fg: #FDBA74; --tone-orange-bd: color-mix(in srgb, #F97316 34%, transparent);
+  --tone-green-bg:  color-mix(in srgb, #10B981 16%, transparent); --tone-green-fg:  #6EE7B7; --tone-green-bd:  color-mix(in srgb, #10B981 34%, transparent);
+  --tone-red-bg:    color-mix(in srgb, #EF4444 16%, transparent); --tone-red-fg:    #FCA5A5; --tone-red-bd:    color-mix(in srgb, #EF4444 34%, transparent);
+  --tone-stone-bg:  color-mix(in srgb, var(--bx-parchment) 8%, transparent); --tone-stone-fg: var(--bx-slate); --tone-stone-bd: color-mix(in srgb, var(--bx-parchment) 16%, transparent);
+  --tone-gray-bg:   color-mix(in srgb, var(--bx-parchment) 7%, transparent);  --tone-gray-fg:  var(--bx-slate); --tone-gray-bd:  color-mix(in srgb, var(--bx-parchment) 14%, transparent);
+}
+
+/* ── Dark themes: remap Tailwind's light-mode palette shades ─────────────────
+   ~230 utilities across the app use light tints like bg-red-50 / text-red-700.
+   On dark themes those rendered as pasted-on pastel boxes. Remapping the
+   palette variables makes every one of them adapt without touching markup:
+   50–300 become translucent tints, 600–900 become light, legible text. */
+[data-theme="ledger"], [data-theme="glass-dark"], [data-theme="harbor"],
+[data-theme="heather"], [data-theme="moss"], [data-theme="orbit"] {
+  --color-red-50: color-mix(in srgb, #ef4444 12%, transparent); --color-red-100: color-mix(in srgb, #ef4444 18%, transparent);
+  --color-red-200: color-mix(in srgb, #ef4444 32%, transparent); --color-red-300: color-mix(in srgb, #ef4444 45%, transparent);
+  --color-red-600: #fca5a5; --color-red-700: #fca5a5; --color-red-800: #fecaca; --color-red-900: #fecaca;
+  --color-rose-50: color-mix(in srgb, #f43f5e 12%, transparent); --color-rose-100: color-mix(in srgb, #f43f5e 18%, transparent);
+  --color-rose-200: color-mix(in srgb, #f43f5e 32%, transparent); --color-rose-300: color-mix(in srgb, #f43f5e 45%, transparent);
+  --color-rose-600: #fda4af; --color-rose-700: #fda4af; --color-rose-800: #fecdd3; --color-rose-900: #fecdd3;
+  --color-orange-50: color-mix(in srgb, #f97316 12%, transparent); --color-orange-100: color-mix(in srgb, #f97316 18%, transparent);
+  --color-orange-200: color-mix(in srgb, #f97316 32%, transparent); --color-orange-300: color-mix(in srgb, #f97316 45%, transparent);
+  --color-orange-600: #fdba74; --color-orange-700: #fdba74; --color-orange-800: #fed7aa; --color-orange-900: #fed7aa;
+  --color-amber-50: color-mix(in srgb, #f59e0b 12%, transparent); --color-amber-100: color-mix(in srgb, #f59e0b 18%, transparent);
+  --color-amber-200: color-mix(in srgb, #f59e0b 32%, transparent); --color-amber-300: color-mix(in srgb, #f59e0b 45%, transparent);
+  --color-amber-600: #fcd34d; --color-amber-700: #fcd34d; --color-amber-800: #fde68a; --color-amber-900: #fde68a;
+  --color-yellow-50: color-mix(in srgb, #eab308 12%, transparent); --color-yellow-100: color-mix(in srgb, #eab308 18%, transparent);
+  --color-yellow-200: color-mix(in srgb, #eab308 32%, transparent); --color-yellow-300: color-mix(in srgb, #eab308 45%, transparent);
+  --color-yellow-600: #fde047; --color-yellow-700: #fde047; --color-yellow-800: #fef08a; --color-yellow-900: #fef08a;
+  --color-green-50: color-mix(in srgb, #22c55e 12%, transparent); --color-green-100: color-mix(in srgb, #22c55e 18%, transparent);
+  --color-green-200: color-mix(in srgb, #22c55e 32%, transparent); --color-green-300: color-mix(in srgb, #22c55e 45%, transparent);
+  --color-green-600: #86efac; --color-green-700: #86efac; --color-green-800: #bbf7d0; --color-green-900: #bbf7d0;
+  --color-emerald-50: color-mix(in srgb, #10b981 12%, transparent); --color-emerald-100: color-mix(in srgb, #10b981 18%, transparent);
+  --color-emerald-200: color-mix(in srgb, #10b981 32%, transparent); --color-emerald-300: color-mix(in srgb, #10b981 45%, transparent);
+  --color-emerald-600: #6ee7b7; --color-emerald-700: #6ee7b7; --color-emerald-800: #a7f3d0; --color-emerald-900: #a7f3d0;
+  --color-teal-50: color-mix(in srgb, #14b8a6 12%, transparent); --color-teal-100: color-mix(in srgb, #14b8a6 18%, transparent);
+  --color-teal-200: color-mix(in srgb, #14b8a6 32%, transparent); --color-teal-300: color-mix(in srgb, #14b8a6 45%, transparent);
+  --color-teal-600: #5eead4; --color-teal-700: #5eead4; --color-teal-800: #99f6e4; --color-teal-900: #99f6e4;
+  --color-sky-50: color-mix(in srgb, #0ea5e9 12%, transparent); --color-sky-100: color-mix(in srgb, #0ea5e9 18%, transparent);
+  --color-sky-200: color-mix(in srgb, #0ea5e9 32%, transparent); --color-sky-300: color-mix(in srgb, #0ea5e9 45%, transparent);
+  --color-sky-600: #7dd3fc; --color-sky-700: #7dd3fc; --color-sky-800: #bae6fd; --color-sky-900: #bae6fd;
+  --color-blue-50: color-mix(in srgb, #3b82f6 12%, transparent); --color-blue-100: color-mix(in srgb, #3b82f6 18%, transparent);
+  --color-blue-200: color-mix(in srgb, #3b82f6 32%, transparent); --color-blue-300: color-mix(in srgb, #3b82f6 45%, transparent);
+  --color-blue-600: #93c5fd; --color-blue-700: #93c5fd; --color-blue-800: #bfdbfe; --color-blue-900: #bfdbfe;
+  --color-indigo-50: color-mix(in srgb, #6366f1 12%, transparent); --color-indigo-100: color-mix(in srgb, #6366f1 18%, transparent);
+  --color-indigo-200: color-mix(in srgb, #6366f1 32%, transparent); --color-indigo-300: color-mix(in srgb, #6366f1 45%, transparent);
+  --color-indigo-600: #a5b4fc; --color-indigo-700: #a5b4fc; --color-indigo-800: #c7d2fe; --color-indigo-900: #c7d2fe;
+  --color-violet-50: color-mix(in srgb, #8b5cf6 12%, transparent); --color-violet-100: color-mix(in srgb, #8b5cf6 18%, transparent);
+  --color-violet-200: color-mix(in srgb, #8b5cf6 32%, transparent); --color-violet-300: color-mix(in srgb, #8b5cf6 45%, transparent);
+  --color-violet-600: #c4b5fd; --color-violet-700: #c4b5fd; --color-violet-800: #ddd6fe; --color-violet-900: #ddd6fe;
+  --color-purple-50: color-mix(in srgb, #a855f7 12%, transparent); --color-purple-100: color-mix(in srgb, #a855f7 18%, transparent);
+  --color-purple-200: color-mix(in srgb, #a855f7 32%, transparent); --color-purple-300: color-mix(in srgb, #a855f7 45%, transparent);
+  --color-purple-600: #d8b4fe; --color-purple-700: #d8b4fe; --color-purple-800: #e9d5ff; --color-purple-900: #e9d5ff;
+  --color-gray-50: color-mix(in srgb, var(--bx-parchment) 5%, transparent); --color-gray-100: color-mix(in srgb, var(--bx-parchment) 8%, transparent);
+  --color-gray-200: color-mix(in srgb, var(--bx-parchment) 14%, transparent); --color-gray-300: color-mix(in srgb, var(--bx-parchment) 22%, transparent);
+  --color-gray-400: var(--bx-slate); --color-gray-500: var(--bx-slate); --color-gray-600: color-mix(in srgb, var(--bx-parchment) 70%, transparent);
+  --color-gray-700: color-mix(in srgb, var(--bx-parchment) 80%, transparent); --color-gray-800: color-mix(in srgb, var(--bx-parchment) 90%, transparent); --color-gray-900: var(--bx-parchment);
+  --color-slate-50: color-mix(in srgb, var(--bx-parchment) 5%, transparent); --color-slate-100: color-mix(in srgb, var(--bx-parchment) 8%, transparent);
+  --color-slate-200: color-mix(in srgb, var(--bx-parchment) 14%, transparent); --color-slate-300: color-mix(in srgb, var(--bx-parchment) 22%, transparent);
+  --color-slate-400: var(--bx-slate); --color-slate-500: var(--bx-slate); --color-slate-600: color-mix(in srgb, var(--bx-parchment) 70%, transparent);
+  --color-slate-700: color-mix(in srgb, var(--bx-parchment) 80%, transparent); --color-slate-800: color-mix(in srgb, var(--bx-parchment) 90%, transparent); --color-slate-900: var(--bx-parchment);
+  --color-stone-50: color-mix(in srgb, var(--bx-parchment) 5%, transparent); --color-stone-100: color-mix(in srgb, var(--bx-parchment) 8%, transparent);
+  --color-stone-200: color-mix(in srgb, var(--bx-parchment) 14%, transparent); --color-stone-300: color-mix(in srgb, var(--bx-parchment) 22%, transparent);
+  --color-stone-400: var(--bx-slate); --color-stone-500: var(--bx-slate); --color-stone-600: color-mix(in srgb, var(--bx-parchment) 70%, transparent);
+  --color-stone-700: color-mix(in srgb, var(--bx-parchment) 80%, transparent); --color-stone-800: color-mix(in srgb, var(--bx-parchment) 90%, transparent); --color-stone-900: var(--bx-parchment);
+  --color-zinc-50: color-mix(in srgb, var(--bx-parchment) 5%, transparent); --color-zinc-100: color-mix(in srgb, var(--bx-parchment) 8%, transparent);
+  --color-zinc-200: color-mix(in srgb, var(--bx-parchment) 14%, transparent); --color-zinc-300: color-mix(in srgb, var(--bx-parchment) 22%, transparent);
+  --color-zinc-400: var(--bx-slate); --color-zinc-500: var(--bx-slate); --color-zinc-600: color-mix(in srgb, var(--bx-parchment) 70%, transparent);
+  --color-zinc-700: color-mix(in srgb, var(--bx-parchment) 80%, transparent); --color-zinc-800: color-mix(in srgb, var(--bx-parchment) 90%, transparent); --color-zinc-900: var(--bx-parchment);
+  --color-neutral-50: color-mix(in srgb, var(--bx-parchment) 5%, transparent); --color-neutral-100: color-mix(in srgb, var(--bx-parchment) 8%, transparent);
+  --color-neutral-200: color-mix(in srgb, var(--bx-parchment) 14%, transparent); --color-neutral-300: color-mix(in srgb, var(--bx-parchment) 22%, transparent);
+  --color-neutral-400: var(--bx-slate); --color-neutral-500: var(--bx-slate); --color-neutral-600: color-mix(in srgb, var(--bx-parchment) 70%, transparent);
+  --color-neutral-700: color-mix(in srgb, var(--bx-parchment) 80%, transparent); --color-neutral-800: color-mix(in srgb, var(--bx-parchment) 90%, transparent); --color-neutral-900: var(--bx-parchment);
+}
+
+/* Tone surfaces — use these instead of hardcoded status tints */
+@layer components {
+  .bx-tone-amber  { background-color: var(--tone-amber-bg);  color: var(--tone-amber-fg);  border-color: var(--tone-amber-bd); }
+  .bx-tone-indigo { background-color: var(--tone-indigo-bg); color: var(--tone-indigo-fg); border-color: var(--tone-indigo-bd); }
+  .bx-tone-orange { background-color: var(--tone-orange-bg); color: var(--tone-orange-fg); border-color: var(--tone-orange-bd); }
+  .bx-tone-green  { background-color: var(--tone-green-bg);  color: var(--tone-green-fg);  border-color: var(--tone-green-bd); }
+  .bx-tone-red    { background-color: var(--tone-red-bg);    color: var(--tone-red-fg);    border-color: var(--tone-red-bd); }
+  .bx-tone-stone  { background-color: var(--tone-stone-bg);  color: var(--tone-stone-fg);  border-color: var(--tone-stone-bd); }
+}
+
+/* Daylight: slightly cooler glows to match its blue-tinted gradient */
+[data-theme="glass-light"] {
+  --bx-surface-alpha: 68%;
+  --bx-glow-b: color-mix(in srgb, #7aa7e0 16%, transparent);
 }
 
 /* ── Classic (Ledger) ───────────────────────────────────────────────────── */
@@ -186,21 +336,23 @@
 }
 
 /* ── Glass theme special backgrounds ────────────────────────────────────── */
-[data-theme="glass-dark"] body {
-  background: linear-gradient(135deg, #0c1018 0%, #1a2744 50%, #0c1018 100%);
-  background-attachment: fixed;
+/* These live on <html> (the bottom of the stack). They used to sit on <body>,
+   which painted OVER the dot/line pattern and grain — hiding both on every page. */
+html[data-theme="glass-dark"] {
+  background: linear-gradient(135deg, #0c1018 0%, #1a2744 50%, #0c1018 100%) fixed;
+  background-color: #0c1018;
 }
-[data-theme="glass-light"] body {
-  background: linear-gradient(135deg, #eef2f7 0%, #dde8f5 50%, #eef2f7 100%);
-  background-attachment: fixed;
+html[data-theme="glass-light"] {
+  background: linear-gradient(135deg, #eef2f7 0%, #dde8f5 50%, #eef2f7 100%) fixed;
+  background-color: #eef2f7;
 }
 
 /* ── Dropdown panel utility ─────────────────────────────────────────────── */
 .dropdown-panel {
-  background: var(--bx-ink-soft);
+  background: var(--bx-surface-menu);
   border: 1px solid color-mix(in srgb, var(--bx-brass) 20%, transparent);
   border-radius: 0.75rem;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  box-shadow: inset 0 1px 0 var(--bx-highlight), 0 12px 32px rgba(0,0,0,0.18);
 }
 
 /* ── Base resets ─────────────────────────────────────────────────────────── */
@@ -214,7 +366,7 @@ html {
 }
 
 body {
-  background-color: transparent; /* background lives on html so html::before is visible above it */
+  background-color: transparent; /* the page background lives on <html>; the ambient layer sits between them */
   color: var(--bx-parchment, #111111);
   font-family: var(--font-inter), sans-serif;
   overflow-x: hidden;
@@ -244,6 +396,41 @@ h3 {
   line-height: 1.35;
   text-wrap: balance;
 }
+/* Cormorant is a display face: it only earns its place at display sizes.
+   Small headings (labels, eyebrows, card titles) set in Inter instead, so a
+   10px uppercase label never renders as a spindly serif. */
+:is(h1, h2, h3, h4):is(.text-\[10px\], .text-\[11px\], .text-xs, .text-sm, .text-base, .uppercase) {
+  font-family: var(--bx-font-ui, system-ui, sans-serif);
+  letter-spacing: normal;
+}
+:is(h1, h2, h3, h4).uppercase { letter-spacing: 0.14em; }
+/* Display headings: Cormorant reads best a touch heavier and tighter */
+:is(h1, h2):is(.font-bold, .font-extrabold):is(.text-xl, .text-2xl, .text-3xl, .text-4xl, .text-5xl) { font-weight: 600; }
+
+/* Eyebrow label — small caps with a brass hairline on each side */
+.bx-eyebrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  font-family: var(--bx-font-ui);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--bx-slate);
+}
+.bx-eyebrow::before,
+.bx-eyebrow::after {
+  content: "";
+  height: 1px;
+  width: 2.25rem;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--bx-brass) 70%, transparent));
+}
+.bx-eyebrow::after { transform: scaleX(-1); }
+
+code, kbd, samp, pre, .font-mono { font-family: var(--font-mono); font-feature-settings: "zero" 1; }
+.tabular { font-variant-numeric: tabular-nums; }
 
 /* Label / caption utility */
 .bx-label {
@@ -276,24 +463,86 @@ h3 {
   box-shadow: var(--shadow-2);
 }
 
-/* ── Elevation utilities ─────────────────────────────────────────────────── */
-.bx-card {
-  background: var(--bx-ink-soft);
-  border: 1px solid color-mix(in srgb, var(--bx-parchment) 10%, transparent);
-  border-radius: 12px;
-  box-shadow: var(--shadow-2);
-}
-.bx-card-warm {
-  background: var(--bx-ink-soft);
-  border: 1px solid color-mix(in srgb, var(--bx-brass) 25%, transparent);
-  border-radius: 12px;
-  box-shadow: var(--shadow-warm);
-}
-.bx-card-raised {
-  background: var(--bx-ink-soft);
-  border: 1px solid color-mix(in srgb, var(--bx-parchment) 8%, transparent);
-  border-radius: 16px;
-  box-shadow: var(--shadow-3);
+/* ── Surface system ──────────────────────────────────────────────────────────
+   Four surfaces, used everywhere. They live in @layer components so Tailwind
+   utilities (border-brass/30, rounded-2xl, p-6 …) still win when a component
+   needs to say something specific.
+
+   .bx-glass         Panels & cards. Translucent + light frost. The ambient
+                     glow tints it; the grid reads as soft texture through it.
+   .bx-glass-flat    Same look, no backdrop blur. For repeated rows / list
+                     items — blur on 50 rows is expensive on phones.
+   .bx-glass-strong  Chrome: header, sticky bars, menus, modals, drawers.
+   .bx-well          Recessed area inside a surface (tabs track, info blocks).
+   ─────────────────────────────────────────────────────────────────────────── */
+@layer components {
+  .bx-glass,
+  .bx-glass-flat,
+  .bx-glass-strong,
+  .bx-card,
+  .bx-card-warm,
+  .bx-card-raised {
+    background-color: var(--bx-surface);
+    border: 1px solid var(--bx-hairline);
+    box-shadow: inset 0 1px 0 var(--bx-highlight), var(--shadow-2);
+  }
+  .bx-glass,
+  .bx-card,
+  .bx-card-warm,
+  .bx-card-raised {
+    -webkit-backdrop-filter: blur(var(--bx-blur)) saturate(150%);
+    backdrop-filter: blur(var(--bx-blur)) saturate(150%);
+  }
+  .bx-glass-strong {
+    background-color: var(--bx-surface-strong);
+    -webkit-backdrop-filter: blur(22px) saturate(170%);
+    backdrop-filter: blur(22px) saturate(170%);
+    box-shadow: inset 0 1px 0 var(--bx-highlight), var(--shadow-3);
+  }
+  .bx-card       { border-radius: 12px; }
+  .bx-card-warm  { border-radius: 12px; border-color: color-mix(in srgb, var(--bx-brass) 25%, transparent); box-shadow: inset 0 1px 0 var(--bx-highlight), var(--shadow-warm); }
+  .bx-card-raised{ border-radius: 16px; box-shadow: inset 0 1px 0 var(--bx-highlight), var(--shadow-3); }
+
+  .bx-well {
+    background-color: var(--bx-well);
+    border: 1px solid var(--bx-hairline-soft);
+    box-shadow: inset 0 1px 2px color-mix(in srgb, var(--bx-parchment) 6%, transparent);
+  }
+
+  /* Full-bleed band (hero, "how it works") — a surface without card edges */
+  .bx-band {
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--bx-ink-soft) 58%, transparent),
+      color-mix(in srgb, var(--bx-ink-soft) 30%, transparent));
+    border-color: var(--bx-hairline-soft);
+  }
+
+  /* Every brass primary button gets the same lit edge + soft glow */
+  :is(button, a).bg-brass {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.25),
+      0 1px 2px rgba(0,0,0,0.10),
+      0 6px 18px -8px color-mix(in srgb, var(--bx-brass) 70%, transparent);
+  }
+
+  /* Primary action with a soft brand glow */
+  .bx-cta {
+    position: relative;
+    isolation: isolate;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.28),
+      0 1px 2px rgba(0,0,0,0.12),
+      0 8px 24px -6px color-mix(in srgb, var(--bx-brass) 60%, transparent);
+    transition: box-shadow var(--duration-base) var(--ease-out), transform var(--duration-fast) var(--ease-spring), filter var(--duration-fast) var(--ease-out);
+  }
+  .bx-cta:hover {
+    filter: brightness(1.05);
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.32),
+      0 2px 4px rgba(0,0,0,0.12),
+      0 14px 32px -8px color-mix(in srgb, var(--bx-brass) 75%, transparent);
+  }
 }
 
 /* ── Recessed inputs ─────────────────────────────────────────────────────── */
@@ -384,55 +633,164 @@ select:focus {
   filter: brightness(0) invert(1);
 }
 
-/* ── Phase 5: Background life ────────────────────────────────────────────── */
+/* ── Ambient background ──────────────────────────────────────────────────────
+   Rendered by app/components/ambient-background.tsx. One fixed stack behind
+   every page:  glow → grid (parallax, vignette) → lamp (lit grid) → grain.
+   Pages must NOT paint an opaque full-page background, or they hide this.
 
-/* Noise texture overlay — ultra-subtle grain on every theme */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: -1;
-  opacity: 0.018;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
-  background-size: 200px 200px;
-}
+   Design intent: depth and allusion, not decoration. The grid is the BX floor
+   plan / calendar grid — it fades toward the edges like a surface receding,
+   scrolls slower than content (so cards float above it), and a slow light
+   passes over it. Nothing blinks, nothing moves faster than a slow breath.
+   ─────────────────────────────────────────────────────────────────────────── */
 
-/* Brainerd theme: enhanced paper grain — coarser frequency, slightly more visible */
-[data-theme="brainerd"] body::before {
-  opacity: 0.04;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
-  background-size: 300px 300px;
-}
-
-/* Background pattern overlay — dots and/or grid lines behind ALL content.
-   Uses html::before so z-index: -1 sits truly beneath the body background,
-   not just behind body children. Custom properties toggled per-user via
-   data-grid-dots / data-grid-lines attributes on <html>. */
-html::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  background-image: var(--bx-active-dots, none), var(--bx-active-lines, none);
-  background-size: 28px 28px, 28px 28px;
-  pointer-events: none;
-}
-
-/* Dot pattern — enabled when data-grid-dots="on" */
+/* Pattern definitions — toggled per user via data-grid-dots / data-grid-lines.
+   Dots are offset half a cell so they sit ON the line intersections. */
 html[data-grid-dots="on"] {
   --bx-active-dots: radial-gradient(
     circle at center,
     color-mix(in srgb, var(--bx-parchment) var(--bx-grid-opacity, 10%), transparent) 1px,
-    transparent 1px
+    transparent 1.5px
   );
+  --bx-lamp-dots: radial-gradient(circle at center, var(--bx-lamp-dot) 1.25px, transparent 2px);
 }
-
-/* Line pattern — enabled when data-grid-lines="on" */
 html[data-grid-lines="on"] {
   --bx-active-lines:
     linear-gradient(color-mix(in srgb, var(--bx-parchment) var(--bx-grid-opacity, 7%), transparent) 1px, transparent 1px),
     linear-gradient(90deg, color-mix(in srgb, var(--bx-parchment) var(--bx-grid-opacity, 7%), transparent) 1px, transparent 1px);
+  --bx-lamp-lines:
+    linear-gradient(var(--bx-lamp-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--bx-lamp-line) 1px, transparent 1px);
+}
+/* Lines alone can take a little more presence than dots-with-lines */
+html[data-grid-lines="on"]:not([data-grid-dots="on"]) { --bx-grid-opacity: 9%; }
+html[data-grid-lines="on"][data-grid-dots="on"] .bx-amb-grid { opacity: 0.85; }
+
+.bx-ambient {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  contain: strict;
+}
+
+/* Aurora glows — huge, soft, slow. Transform-only animation (GPU composited). */
+.bx-amb-glow {
+  position: absolute;
+  width: 78vmax;
+  height: 78vmax;
+  border-radius: 50%;
+  will-change: transform;
+}
+.bx-amb-glow--a {
+  top: -34vmax; left: -22vmax;
+  background: radial-gradient(closest-side, var(--bx-glow-a), transparent 72%);
+  animation: bx-drift-a 46s ease-in-out infinite alternate;
+}
+.bx-amb-glow--b {
+  top: -18vmax; right: -30vmax;
+  background: radial-gradient(closest-side, var(--bx-glow-b), transparent 70%);
+  animation: bx-drift-b 58s ease-in-out infinite alternate;
+}
+.bx-amb-glow--c {
+  bottom: -40vmax; left: 8vw;
+  background: radial-gradient(closest-side, var(--bx-glow-c), transparent 70%);
+  animation: bx-drift-c 67s ease-in-out infinite alternate;
+}
+@keyframes bx-drift-a { from { transform: translate3d(0,0,0) scale(1); }   to { transform: translate3d(14vw, 10vh, 0) scale(1.12); } }
+@keyframes bx-drift-b { from { transform: translate3d(0,0,0) scale(1.08); } to { transform: translate3d(-16vw, 14vh, 0) scale(0.94); } }
+@keyframes bx-drift-c { from { transform: translate3d(0,0,0) scale(0.95); } to { transform: translate3d(18vw, -12vh, 0) scale(1.1); } }
+
+/* Base grid — vignette-masked so it recedes toward the edges and bottom */
+.bx-amb-grid {
+  position: absolute;
+  top: calc(var(--bx-grid-size) * -1);
+  left: 0;
+  width: 100%;
+  height: calc(100% + var(--bx-grid-size) * 2);
+  background-image: var(--bx-active-dots, none), var(--bx-active-lines, none);
+  background-size: var(--bx-grid-size) var(--bx-grid-size);
+  background-position: calc(var(--bx-grid-size) / -2) calc(var(--bx-grid-size) / -2), 0 0, 0 0;
+  -webkit-mask-image: radial-gradient(135% 95% at 50% 0%, #000 22%, rgba(0,0,0,0.55) 58%, rgba(0,0,0,0.18) 100%);
+  mask-image: radial-gradient(135% 95% at 50% 0%, #000 22%, rgba(0,0,0,0.55) 58%, rgba(0,0,0,0.18) 100%);
+  will-change: transform;
+}
+
+/* Lamp — a soft light that lifts the grid it passes over */
+.bx-amb-lamp {
+  --lamp: 46vmax;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--lamp);
+  height: var(--lamp);
+  margin: calc(var(--lamp) / -2) 0 0 calc(var(--lamp) / -2);
+  transform: translate3d(50vw, 28vh, 0);
+  -webkit-mask-image: radial-gradient(closest-side, #000 0%, rgba(0,0,0,0.6) 45%, transparent 100%);
+  mask-image: radial-gradient(closest-side, #000 0%, rgba(0,0,0,0.6) 45%, transparent 100%);
+  background: radial-gradient(closest-side, var(--bx-lamp-glow), transparent);
+  will-change: transform;
+  animation: bx-breathe 9s ease-in-out infinite alternate;
+}
+.bx-amb-lamp-grid {
+  position: absolute;
+  left: calc(var(--lamp) / 2);
+  top: calc(var(--lamp) / 2 - var(--bx-grid-size));
+  width: 100vw;
+  height: calc(100vh + var(--bx-grid-size) * 2);
+  background-image: var(--bx-lamp-dots, none), var(--bx-lamp-lines, none);
+  background-size: var(--bx-grid-size) var(--bx-grid-size);
+  background-position: calc(var(--bx-grid-size) / -2) calc(var(--bx-grid-size) / -2), 0 0, 0 0;
+  transform: translate3d(-50vw, -28vh, 0);
+  will-change: transform;
+}
+@keyframes bx-breathe { from { opacity: 0.7; } to { opacity: 1; } }
+
+/* Grain — static paper texture (the old 8fps jitter read as flicker) */
+.bx-amb-grain {
+  position: absolute;
+  inset: 0;
+  opacity: var(--bx-grain-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.62' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.32 0 0 0 0 0.1 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 240px 240px;
+}
+
+/* Small screens: smaller glows, gentler lamp — calmer and cheaper */
+@media (max-width: 640px) {
+  .bx-amb-glow { width: 110vmax; height: 110vmax; }
+  .bx-amb-lamp { --lamp: 70vmax; }
+  :root { --bx-blur: 8px; }
+}
+
+/* Accessibility & output modes */
+@media (prefers-reduced-motion: reduce) {
+  .bx-amb-glow, .bx-amb-lamp { animation: none !important; }
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  :root, [data-theme] {
+    --bx-surface: var(--bx-ink-soft);
+    --bx-surface-strong: var(--bx-ink-soft);
+    --bx-well: var(--bx-ink);
+  }
+  .bx-glass, .bx-glass-strong, .bx-card, .bx-card-warm, .bx-card-raised, .dropdown-panel {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  .bx-amb-lamp, .bx-amb-glow { display: none; }
+}
+@media (forced-colors: active) {
+  .bx-ambient { display: none; }
+}
+@media print {
+  .bx-ambient { display: none !important; }
+  html, html[data-theme] { background: #fff !important; }
+  .bx-glass, .bx-glass-flat, .bx-glass-strong, .bx-card, .bx-card-warm, .bx-card-raised, .bx-band, .bx-well {
+    background: #fff !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+  }
 }
 
 
@@ -471,7 +829,7 @@ html[data-grid-lines="on"] {
 /* ── Motion System ───────────────────────────────────────────────────────── */
 @keyframes bx-fade-up {
   from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: none; }
 }
 
 /* Page-level content mount animation */
@@ -591,13 +949,34 @@ select:disabled,
 }
 
 /* Scroll-linked header shadow */
-header.bx-scrolled {
-  box-shadow: var(--shadow-2);
-  transition: box-shadow var(--duration-fast, 120ms) var(--ease-out, cubic-bezier(0.16,1,0.3,1));
+/* Glass header: airy at the top of the page, firmer once content scrolls under it */
+.bx-header {
+  background-color: color-mix(in srgb, var(--bx-ink-soft) 62%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(170%);
+  backdrop-filter: blur(18px) saturate(170%);
+  border-color: var(--bx-hairline-soft);
+  transition:
+    background-color var(--duration-slow) var(--ease-out),
+    box-shadow var(--duration-slow) var(--ease-out),
+    border-color var(--duration-slow) var(--ease-out);
 }
-header:not(.bx-scrolled) {
-  box-shadow: none;
-  transition: box-shadow var(--duration-fast, 120ms) var(--ease-out, cubic-bezier(0.16,1,0.3,1));
+.bx-header::after {            /* light catching the bottom edge */
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--bx-brass) 35%, transparent), transparent);
+  opacity: 0;
+  transition: opacity var(--duration-slow) var(--ease-out);
+}
+.bx-header.bx-scrolled {
+  background-color: var(--bx-surface-strong);
+  border-color: var(--bx-hairline);
+  box-shadow: 0 1px 0 var(--bx-highlight) inset, 0 8px 24px -12px rgba(0,0,0,0.25);
+}
+.bx-header.bx-scrolled::after { opacity: 1; }
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .bx-header { background-color: var(--bx-ink-soft); -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 
 /* Toast notification system */
@@ -684,66 +1063,43 @@ header:not(.bx-scrolled) {
   max-width: 28ch;
 }
 
-/* Hero ambient treatment: slow diagonal gradient wash + animated film grain */
+/* Hero bloom — a soft spotlight behind hero content. The page-wide ambient
+   layer does the moving; the bloom just focuses light where the eye starts. */
 .bx-bloom {
   position: absolute;
   inset: 0;
+  bottom: auto;
+  height: min(100%, 38rem);   /* a spotlight, not a full-page wash */
   pointer-events: none;
   overflow: hidden;
-  /* Primary diagonal color wash — teal top-left, navy hint bottom-right */
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--bx-brass) 8%, transparent) 0%,
-    transparent 45%,
-    color-mix(in srgb, var(--bx-parchment) 4%, transparent) 100%
-  );
-  animation: bxWashDrift 20s ease-in-out infinite alternate;
+  background:
+    radial-gradient(60% 70% at 50% 0%, color-mix(in srgb, var(--bx-brass) 12%, transparent), transparent 70%),
+    radial-gradient(40% 50% at 85% 100%, color-mix(in srgb, var(--bx-parchment) 4%, transparent), transparent 70%);
+  animation: bxWashDrift 14s ease-in-out infinite alternate;
 }
-
-/* Animated film grain overlay — oversized so translation never shows edges */
+/* A finer "blueprint" grid, visible only behind the hero and fading out */
 .bx-bloom::before {
   content: "";
   position: absolute;
-  inset: -25%;
-  width: 150%;
-  height: 150%;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 200px 200px;
-  opacity: 0.038;
-  animation: bxGrain 0.12s steps(1) infinite;
+  inset: 0;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--bx-brass) 10%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--bx-brass) 10%, transparent) 1px, transparent 1px);
+  background-size: calc(var(--bx-grid-size) / 2) calc(var(--bx-grid-size) / 2);
+  background-position: center top;
+  -webkit-mask-image: radial-gradient(50% 65% at 50% 20%, rgba(0,0,0,0.55), transparent 75%);
+  mask-image: radial-gradient(50% 65% at 50% 20%, rgba(0,0,0,0.55), transparent 75%);
 }
-
-/* Counter-diagonal secondary wash for depth */
+/* Hairline of light along the hero's bottom edge */
 .bx-bloom::after {
   content: "";
   position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    225deg,
-    color-mix(in srgb, var(--bx-brass) 5%, transparent) 0%,
-    transparent 55%
-  );
-  opacity: 0.7;
-  animation: bxWashDrift 28s ease-in-out infinite alternate-reverse;
+  left: 10%; right: 10%; bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--bx-brass) 55%, transparent), transparent);
 }
-
-/* Grain: rapid random translation to simulate film grain movement */
-@keyframes bxGrain {
-  0%  { transform: translate(0,    0); }
-  10% { transform: translate(-5%,  -10%); }
-  20% { transform: translate(10%,  5%); }
-  30% { transform: translate(-7%,  12%); }
-  40% { transform: translate(5%,   -8%); }
-  50% { transform: translate(-10%, 6%); }
-  60% { transform: translate(7%,   -5%); }
-  70% { transform: translate(-4%,  10%); }
-  80% { transform: translate(10%,  -7%); }
-  90% { transform: translate(-8%,  4%); }
-}
-
-/* Gradient wash: slow breathing opacity shift */
 @keyframes bxWashDrift {
-  from { opacity: 0.72; }
+  from { opacity: 0.75; }
   to   { opacity: 1; }
 }
 
@@ -755,5 +1111,5 @@ header:not(.bx-scrolled) {
 }
 .bx-fade-in.bx-visible {
   opacity: 1;
-  transform: translateY(0);
+  transform: none; /* not translateY(0): any transform traps position:fixed children */
 }

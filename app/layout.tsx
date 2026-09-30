@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Cormorant_Garamond } from "next/font/google";
 import SiteHeader from "./site-header";
 import ScrollReveal from "./components/scroll-reveal";
+import AmbientBackground from "./components/ambient-background";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 import { ToastProvider } from "./components/Toast";
@@ -34,7 +35,7 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-const APP_VERSION = "1.37.1";
+const APP_VERSION = "1.38.0";
 
 export default function RootLayout({
   children,
@@ -49,6 +50,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body className="flex flex-col min-h-screen">
+        <AmbientBackground />
         <ToastProvider>
           <SiteHeader />
           <main className="flex-1 isolate" style={{ paddingTop: "calc(3.5rem + env(safe-area-inset-top))" }}>{children}</main>

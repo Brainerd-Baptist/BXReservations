@@ -10,7 +10,7 @@ export default async function AgreementPage({ params, searchParams }: Props) {
 
   if (!token) {
     return (
-      <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bx-ink)", color: "var(--bx-parchment)", fontFamily: "sans-serif" }}>
+      <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--bx-parchment)" }}>
         <div style={{ textAlign: "center", padding: "2rem" }}>
           <h1 style={{ fontSize: "1.5rem", marginBottom: "0.75rem" }}>Invalid Link</h1>
           <p style={{ color: "var(--bx-slate)" }}>This agreement link is invalid or has expired. Please contact the BX team.</p>
@@ -38,7 +38,7 @@ export default async function AgreementPage({ params, searchParams }: Props) {
 
   if (!agreement) {
     return (
-      <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bx-ink)", color: "var(--bx-parchment)", fontFamily: "sans-serif" }}>
+      <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--bx-parchment)" }}>
         <div style={{ textAlign: "center", padding: "2rem" }}>
           <h1 style={{ fontSize: "1.5rem", marginBottom: "0.75rem" }}>Link Not Found</h1>
           <p style={{ color: "var(--bx-slate)" }}>This agreement link is invalid or has expired. Please contact the BX team for a new link.</p>
@@ -50,7 +50,7 @@ export default async function AgreementPage({ params, searchParams }: Props) {
   const alreadySigned = !!agreement.customer_signed_at;
 
   return (
-    <main style={{ minHeight: "100vh", background: "var(--bx-ink)", color: "var(--bx-parchment)", fontFamily: "system-ui, sans-serif" }}>
+    <main style={{ minHeight: "100vh", color: "var(--bx-parchment)" }}>
       <div style={{ maxWidth: 760, margin: "0 auto", padding: "2rem 1.25rem 4rem" }}>
         {/* Header */}
         <div style={{ marginBottom: "2rem", paddingBottom: "1.25rem", borderBottom: "1px solid color-mix(in srgb, var(--bx-parchment) 12%, transparent)" }}>
@@ -65,7 +65,7 @@ export default async function AgreementPage({ params, searchParams }: Props) {
         </div>
 
         {alreadySigned ? (
-          <div style={{ background: "#D1FAE5", border: "1px solid #6EE7B7", borderRadius: 10, padding: "1.25rem 1.5rem", color: "#065F46" }}>
+          <div className="bx-tone-green" style={{ borderWidth: 1, borderStyle: "solid", borderRadius: 12, padding: "1.25rem 1.5rem" }}>
             <p style={{ margin: 0, fontWeight: 700, fontSize: "1rem" }}>✓ Agreement already signed</p>
             <p style={{ margin: "0.35rem 0 0", fontSize: "0.875rem" }}>
               Signed by <strong>{agreement.customer_name}</strong> on{" "}
@@ -76,12 +76,10 @@ export default async function AgreementPage({ params, searchParams }: Props) {
         ) : (
           <>
             {/* Agreement text */}
-            <div style={{
-              background: "color-mix(in srgb, var(--bx-parchment) 4%, transparent)",
-              border: "1px solid color-mix(in srgb, var(--bx-parchment) 15%, transparent)",
-              borderRadius: 10, padding: "1.5rem", marginBottom: "2rem",
-              maxHeight: 480, overflowY: "auto", fontSize: "0.875rem", lineHeight: 1.7,
-              color: "var(--bx-slate)", whiteSpace: "pre-wrap", fontFamily: "monospace",
+            <div className="bx-glass" style={{
+              borderRadius: 14, padding: "1.5rem 1.75rem", marginBottom: "2rem",
+              maxHeight: 480, overflowY: "auto", fontSize: "0.9rem", lineHeight: 1.75,
+              color: "color-mix(in srgb, var(--bx-parchment) 82%, transparent)", whiteSpace: "pre-wrap",
             }}>
               {agreement.agreement_text}
             </div>

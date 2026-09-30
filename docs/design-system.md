@@ -1,0 +1,61 @@
+# BX Reservations — Surface & Ambient System (v1.38.0)
+
+## The layer stack (every page)
+
+```
+<html>            theme base color / gradient (Midnight, Daylight)
+  .bx-ambient     fixed, z-index -1, pointer-events none   ← app/components/ambient-background.tsx
+    glows ×3      huge soft radial "aurora", 46–67s drift, transform-only
+    .bx-amb-grid  dots/lines, vignette-masked, scrolls at 12% (parallax)
+    .bx-amb-lamp  a soft light that lifts the grid it passes over; wanders,
+                  and on mouse devices drifts lazily toward the cursor
+    grain         static paper texture
+  header          .bx-header — glass, firms up on scroll
+  main            page content on glass surfaces
+```
+
+**Rule:** pages never paint an opaque full-page background (`bg-ink`, `background: var(--bx-ink)` on a
+`min-h-screen` wrapper). That was the cause of dots showing on some pages and not others.
+
+## Surfaces (use these, nothing else)
+
+| Class | Use | Notes |
+|---|---|---|
+| `.bx-glass` | panels, cards | translucent + light frost |
+| `.bx-glass-flat` | repeated rows, list items | same look, no blur (cheap on phones) |
+| `.bx-glass-strong` | modals, drawers, sticky bars | ~90% + heavy frost |
+| `.bx-well` | recessed area inside a surface | tabs track, info rows |
+| `.bx-band` | full-bleed hero / section band | no card edges |
+| `.bx-cta` | primary action | lit edge + brand glow |
+| `.bx-eyebrow` | small caps section label | brass hairlines each side |
+| `.bx-tone-{amber,indigo,orange,green,red,stone}` | status blocks | theme-aware |
+
+Inline-style equivalents: `var(--bx-surface)`, `var(--bx-surface-strong)`, `var(--bx-surface-menu)`,
+`var(--bx-well)`, `var(--bx-hairline)`, `var(--bx-highlight)`, `var(--tone-*-bg|fg|bd)`.
+
+Menus nested inside the glass header use `--bx-surface-menu` (97%): a backdrop-filter inside another
+backdrop-filter can't blur the page, so those menus must be near-opaque to stay legible.
+
+## Overlays
+
+Any fixed overlay (lightbox, modal, slide-over) renders through `<BodyPortal>`. Ancestors with
+`backdrop-filter` or `transform` become the containing block for `position: fixed` and would trap the
+overlay inside a card. Animation end states use `transform: none`, never `translateY(0)`, for the same reason.
+
+## Type
+
+One system. `font-sans` → Inter, `font-serif` → Cormorant Garamond, `font-mono` → system mono.
+Cormorant only at display sizes (h1/h2 at `text-lg`+); small or uppercase headings render in Inter.
+
+## Color in dark themes
+
+Tailwind palette shades are remapped on dark themes (50–300 → translucent tints, 600–900 → light text),
+so utilities like `bg-red-50 text-red-700` adapt automatically. Prefer `--tone-*` for new work.
+
+## Accessibility & output
+
+- `prefers-reduced-motion`: no drift, no lamp motion, no parallax.
+- `prefers-reduced-transparency` / `prefers-contrast: more`: opaque surfaces, no blur, no lamp or glows.
+- `forced-colors`: ambient hidden.
+- Print: ambient hidden, surfaces white — agreements print clean.
+- Dark themes set `color-scheme: dark` (native date pickers, scrollbars, selects).

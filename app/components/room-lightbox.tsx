@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Room } from "@/lib/rooms";
+import BodyPortal from "./body-portal";
 
 interface Props {
   room: Room | null;
@@ -64,6 +65,7 @@ export function RoomLightbox({ room, isSelected, isNP, onClose, onToggle, galler
   const price = isNP ? room.baseNP : room.basePro;
 
   return (
+    <BodyPortal>
     <div
       className="fixed inset-0 z-50 overflow-y-auto"
       onClick={onClose}
@@ -91,6 +93,7 @@ export function RoomLightbox({ room, isSelected, isNP, onClose, onToggle, galler
         style={{
           background: "var(--bx-ink-soft)",
           border: "1px solid color-mix(in srgb, var(--bx-parchment) 12%, transparent)",
+          boxShadow: "inset 0 1px 0 var(--bx-highlight), 0 30px 80px -20px rgba(0,0,0,0.6)",
         }}
         onClick={e => e.stopPropagation()}
       >
@@ -260,5 +263,6 @@ export function RoomLightbox({ room, isSelected, isNP, onClose, onToggle, galler
       </div>
       </div>
     </div>
+    </BodyPortal>
   );
 }

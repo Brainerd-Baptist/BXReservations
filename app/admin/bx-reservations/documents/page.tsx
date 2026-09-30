@@ -135,7 +135,7 @@ export default function DocumentsHub() {
   const totalPayments = payments.reduce((s, p) => s + p.payment_amount, 0);
 
   return (
-    <div className="min-h-screen bg-ink font-sans">
+    <div className="min-h-screen">
       <div className="max-w-6xl mx-auto px-4 py-6 space-y-5">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -148,7 +148,7 @@ export default function DocumentsHub() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-ink-soft rounded-xl p-1 w-fit">
+        <div className="flex gap-1 bx-well rounded-xl p-1 w-fit">
           {(["agreements", "cois", "payments"] as Tab[]).map(t => (
             <button
               key={t}
@@ -168,7 +168,7 @@ export default function DocumentsHub() {
 
         {/* ── Agreements tab ─────────────────────────────────────────────────────── */}
         {activeTab === "agreements" && (
-          <div className="bg-ink-soft rounded-xl border border-parchment/10 overflow-hidden">
+          <div className="bx-glass rounded-xl overflow-hidden">
             {agreementsLoading && <p className="p-8 text-center text-slate text-sm animate-pulse">Loading…</p>}
             {!agreementsLoading && agreements.length === 0 && agreementsLoaded && (
               <p className="p-8 text-center text-slate text-sm">No signed agreements yet.</p>
@@ -186,7 +186,7 @@ export default function DocumentsHub() {
                 </thead>
                 <tbody>
                   {agreements.map(ag => (
-                    <tr key={ag.reservation_id} className="border-b border-parchment/5 hover:bg-ink/30">
+                    <tr key={ag.reservation_id} className="border-b border-parchment/5 hover:bg-parchment/5">
                       <td className="px-4 py-3">
                         <Link href={`/admin/bx-reservations?booking=${ag.booking_number}`} className="text-[var(--bx-brass)] hover:underline font-mono text-xs">
                           {ag.booking_number}
@@ -245,7 +245,7 @@ export default function DocumentsHub() {
               </div>
             </div>
 
-            <div className="bg-ink-soft rounded-xl border border-parchment/10 overflow-hidden">
+            <div className="bx-glass rounded-xl overflow-hidden">
               {coisLoading && <ReservationListSkeleton rows={5} />}
               {!coisLoading && filteredCois.length === 0 && coisLoaded && (
                 <p className="p-8 text-center text-slate text-sm">No COIs match this filter.</p>
@@ -264,7 +264,7 @@ export default function DocumentsHub() {
                   </thead>
                   <tbody>
                     {filteredCois.map(c => (
-                      <tr key={c.reservation_id} className="border-b border-parchment/5 hover:bg-ink/30">
+                      <tr key={c.reservation_id} className="border-b border-parchment/5 hover:bg-parchment/5">
                         <td className="px-4 py-3">
                           <Link href={`/admin/bx-reservations?booking=${c.booking_number}`} className="text-[var(--bx-brass)] hover:underline font-mono text-xs">
                             {c.booking_number}
@@ -306,7 +306,7 @@ export default function DocumentsHub() {
         {/* ── Payments tab ────────────────────────────────────────────────────────── */}
         {activeTab === "payments" && (
           <div className="space-y-3">
-            <div className="bg-ink-soft rounded-xl border border-parchment/10 overflow-hidden">
+            <div className="bx-glass rounded-xl overflow-hidden">
               {paymentsLoading && <p className="p-8 text-center text-slate text-sm animate-pulse">Loading…</p>}
               {!paymentsLoading && payments.length === 0 && paymentsLoaded && (
                 <p className="p-8 text-center text-slate text-sm">No payments recorded yet.</p>
@@ -327,7 +327,7 @@ export default function DocumentsHub() {
                     </thead>
                     <tbody>
                       {payments.map(p => (
-                        <tr key={p.reservation_id} className="border-b border-parchment/5 hover:bg-ink/30">
+                        <tr key={p.reservation_id} className="border-b border-parchment/5 hover:bg-parchment/5">
                           <td className="px-4 py-3">
                             <Link href={`/admin/bx-reservations?booking=${p.booking_number}`} className="text-[var(--bx-brass)] hover:underline font-mono text-xs">
                               {p.booking_number}

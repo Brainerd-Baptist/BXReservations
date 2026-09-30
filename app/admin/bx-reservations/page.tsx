@@ -636,7 +636,7 @@ export default function BxReservationsAdmin() {
   }
 
   return (
-    <div className="min-h-screen bg-ink font-sans">
+    <div className="min-h-screen">
 
       <div key={tab} className={`animate-in max-w-7xl mx-auto px-4 py-6 gap-6 ${tab === "requests" ? "grid lg:grid-cols-[1fr_320px]" : "block"}`}>
         {/* Left: queue / settings */}
@@ -741,7 +741,7 @@ export default function BxReservationsAdmin() {
               <ReservationListSkeleton rows={8} />
             )}
             {!reservationsLoading && filtered.length === 0 && (
-              <div className="bg-ink-soft rounded-xl border border-parchment/10">
+              <div className="bx-glass rounded-xl">
                 <div className="bx-empty">
                   <svg className="bx-empty-icon" width={40} height={40} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
                     <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
@@ -756,7 +756,7 @@ export default function BxReservationsAdmin() {
             {filtered.map((req) => (
               <div
                 key={req.id}
-                className={`bx-row bg-ink-soft rounded-xl border border-parchment/10 p-4 cursor-pointer transition-all hover:shadow-md ${
+                className={`bx-row bx-glass-flat rounded-xl p-4 cursor-pointer ${
                   selected?.id === req.id ? "ring-2 ring-[var(--bbc-blue)]" : ""
                 }`}
                 onClick={() => setSelected(selected?.id === req.id ? null : req)}
@@ -840,7 +840,7 @@ export default function BxReservationsAdmin() {
                       const reason = cancelReason[req.id] ?? "";
                       const busy = changingStatus === req.id;
                       return (
-                        <div className="space-y-3 border border-parchment/10 rounded-xl p-4 bg-ink/40" onClick={e => e.stopPropagation()}>
+                        <div className="space-y-3 bx-well rounded-xl p-4" onClick={e => e.stopPropagation()}>
                           <p className="text-xs font-semibold text-slate uppercase tracking-widest">Update Status</p>
                           <select
                             className="w-full rounded-lg border border-parchment/20 bg-ink text-parchment text-sm px-3 py-2"
@@ -930,7 +930,7 @@ export default function BxReservationsAdmin() {
                         setTimeout(() => fetchDocStatus(req.id, req.dbId!), 0);
                       }
                       return (
-                        <div className="space-y-4 border border-parchment/10 rounded-xl p-4 bg-ink/40" onClick={e => e.stopPropagation()}>
+                        <div className="space-y-4 bx-well rounded-xl p-4" onClick={e => e.stopPropagation()}>
                           <p className="text-xs font-semibold text-slate uppercase tracking-widest">Documents &amp; Payment</p>
                           {loading && <InlineSkeleton width="60px" />}
                           {!loading && ds && (<>
@@ -1328,7 +1328,7 @@ export default function BxReservationsAdmin() {
                                 <p className="text-xs font-medium text-gray-600">Add booking discount override</p>
                                 <div className="grid grid-cols-2 gap-1.5">
                                   <select
-                                    className="border border-gray-300 rounded px-1.5 py-1 text-xs bg-white col-span-2"
+                                    className="border border-parchment/20 rounded px-1.5 py-1 text-xs bg-ink text-parchment col-span-2"
                                     value={bdf.type}
                                     onChange={e => setBookingDiscountForm(prev => ({ ...prev, [req.id]: { ...prev[req.id], type: e.target.value } }))}
                                   >
@@ -1346,7 +1346,7 @@ export default function BxReservationsAdmin() {
                                     onChange={e => setBookingDiscountForm(prev => ({ ...prev, [req.id]: { ...prev[req.id], value: e.target.value } }))}
                                   />
                                   <select
-                                    className="border border-gray-300 rounded px-1.5 py-1 text-xs bg-white"
+                                    className="border border-parchment/20 rounded px-1.5 py-1 text-xs bg-ink text-parchment"
                                     value={bdf.reason}
                                     onChange={e => setBookingDiscountForm(prev => ({ ...prev, [req.id]: { ...prev[req.id], reason: e.target.value } }))}
                                   >
@@ -1563,7 +1563,7 @@ export default function BxReservationsAdmin() {
 
         {/* Right: Calendar sidebar — Requests tab only */}
         {tab === "requests" && <div className={`${calOpen ? "block" : "hidden lg:block"}`}>
-          <div className="sticky top-20 bg-ink-soft rounded-xl border border-parchment/10 p-5 space-y-4">
+          <div className="sticky top-20 bx-glass rounded-xl p-5 space-y-4">
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold text-slate uppercase tracking-widest">Combined Calendar</p>
               <p className="text-xs text-slate">Oct – Nov 2026</p>
@@ -1635,9 +1635,9 @@ export default function BxReservationsAdmin() {
 // ─── Small helpers ─────────────────────────────────────────────────────────────
 function KPI({ label, value, color }: { label: string; value: string; color: string }) {
   return (
-    <div className="bg-ink-soft rounded-xl border border-parchment/10 p-4">
+    <div className="bx-glass rounded-xl p-4">
       <p className="text-xs text-slate font-semibold uppercase tracking-wider mb-1">{label}</p>
-      <p className={`text-2xl font-bold ${color}`}>{value}</p>
+      <p className={`text-2xl font-bold tracking-tight tabular ${color}`}>{value}</p>
     </div>
   );
 }
@@ -1695,7 +1695,7 @@ function AutomationSettings({
   const dirty = AUTOMATION_KEYS.some(k => draft[k.key] !== settings[k.key]);
 
   return (
-    <div className="rounded-2xl bg-ink-soft border border-parchment/10 overflow-hidden mb-4">
+    <div className="rounded-2xl bx-glass overflow-hidden mb-4">
       <div className="px-5 py-4 border-b border-parchment/10 flex items-center justify-between">
         <div>
           <p className="text-sm font-semibold text-parchment">Automation Thresholds</p>
@@ -1778,7 +1778,7 @@ function BlackoutSettings({
       </div>
 
       {/* Current rules */}
-      <div className="bg-ink-soft rounded-xl border border-parchment/10 divide-y divide-parchment/5">
+      <div className="bx-glass rounded-xl divide-y divide-parchment/5">
         {loading && (
           <div className="px-5 py-4"><CardSkeleton lines={2} height="80px" /></div>
         )}
@@ -1804,7 +1804,7 @@ function BlackoutSettings({
       </div>
 
       {/* Add new rule */}
-      <div className="bg-ink-soft rounded-xl border border-parchment/10 p-5 space-y-4">
+      <div className="bx-glass rounded-xl p-5 space-y-4">
         <p className="text-sm font-semibold text-parchment">Add a rule</p>
 
         {/* Rule type */}
@@ -1988,11 +1988,11 @@ function ReportsTab() {
     accent = false
   ) => (
     <div
-      className="rounded-xl p-5 flex flex-col gap-1"
+      className="bx-glass-flat rounded-xl p-5 flex flex-col gap-1"
       style={{
         background: accent
-          ? "color-mix(in srgb, var(--bx-brass) 8%, transparent)"
-          : "color-mix(in srgb, var(--bx-parchment) 4%, transparent)",
+          ? "color-mix(in srgb, var(--bx-brass) 10%, var(--bx-surface))"
+          : "var(--bx-surface)",
         border: `1px solid ${accent
           ? "color-mix(in srgb, var(--bx-brass) 25%, transparent)"
           : "color-mix(in srgb, var(--bx-parchment) 10%, transparent)"}`,
@@ -2095,7 +2095,7 @@ function ReportsTab() {
 
       {/* ── Org breakdown table ── */}
       {!loading && !error && sortedRows.length > 0 && (
-        <div className="rounded-xl overflow-x-auto" style={{ border: "1px solid color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>
+        <div className="bx-glass rounded-xl overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr style={{ background: "color-mix(in srgb, var(--bx-parchment) 6%, transparent)" }}>
@@ -2150,8 +2150,7 @@ function ReportsTab() {
       )}
 
       {loading && (
-        <div className="rounded-xl p-10 flex items-center justify-center"
-          style={{ border: "1px solid color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>
+        <div className="bx-glass-flat rounded-xl p-10 flex items-center justify-center">
           <p className="text-sm animate-pulse" style={{ color: "var(--bx-slate)" }}>Loading report data…</p>
         </div>
       )}

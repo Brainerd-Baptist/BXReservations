@@ -17,9 +17,9 @@ const MAX = 10 * 1024 * 1024;
 
 const STATUS: Record<LogoState["status"], { label: string; bg: string; color: string }> = {
   none: { label: "No logo yet", bg: "color-mix(in srgb, var(--bx-parchment) 8%, transparent)", color: "var(--bx-slate)" },
-  pending: { label: "Waiting for review", bg: "#FEF3C7", color: "#92400E" },
-  approved: { label: "Approved", bg: "#D1FAE5", color: "#065F46" },
-  rejected: { label: "Needs a different file", bg: "#FEE2E2", color: "#991B1B" },
+  pending: { label: "Waiting for review", bg: "var(--tone-amber-bg)", color: "var(--tone-amber-fg)" },
+  approved: { label: "Approved", bg: "var(--tone-green-bg)", color: "var(--tone-green-fg)" },
+  rejected: { label: "Needs a different file", bg: "var(--tone-red-bg)", color: "var(--tone-red-fg)" },
 };
 
 export default function EventLogoCard({
@@ -145,8 +145,7 @@ export default function EventLogoCard({
         borderRadius: "12px",
         padding: pad,
         marginBottom: compact ? 0 : "1rem",
-        background: "var(--bx-ink-soft)",
-          boxShadow: "var(--shadow-2)",
+        background: "var(--bx-surface)", backdropFilter: "blur(var(--bx-blur)) saturate(150%)", WebkitBackdropFilter: "blur(var(--bx-blur)) saturate(150%)", boxShadow: "inset 0 1px 0 var(--bx-highlight), var(--shadow-2)",
         color: "var(--bx-parchment)",
       }}
     >
@@ -166,7 +165,7 @@ export default function EventLogoCard({
             aspectRatio: "16 / 9",
             borderRadius: 10,
             background: "#fff",
-            border: has ? "1px solid #e5e7eb" : "1.5px dashed color-mix(in srgb, var(--bx-parchment) 25%, transparent)",
+            border: has ? "1px solid var(--bx-hairline)" : "1.5px dashed color-mix(in srgb, var(--bx-parchment) 25%, transparent)",
             display: "grid",
             placeItems: "center",
             padding: "10%",
@@ -178,7 +177,7 @@ export default function EventLogoCard({
             // eslint-disable-next-line @next/next/no-img-element
             <img src={s.previewUrl} alt="Event logo" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
           ) : (
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg style={{ color: "var(--bx-slate)" }} width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <rect x="3" y="5" width="18" height="14" rx="2" />
               <circle cx="8.5" cy="10" r="1.5" />
               <path d="M21 16l-5-5-7 7" />
@@ -200,7 +199,7 @@ export default function EventLogoCard({
             </p>
           )}
           {soft && (
-            <p style={{ margin: "0 0 0.5rem", color: "#92400E" }}>
+            <p style={{ margin: "0 0 0.5rem", color: "var(--tone-amber-fg)" }}>
               This file is on the small side ({s.meta?.original.width} px wide), so it may print soft on a letter-size sign. A larger file or an SVG will look sharper.
             </p>
           )}
@@ -259,7 +258,7 @@ export default function EventLogoCard({
             </div>
           )}
 
-          {error && <p role="alert" style={{ margin: "0.5rem 0 0", color: "#dc2626" }}>{error}</p>}
+          {error && <p role="alert" style={{ margin: "0.5rem 0 0", color: "var(--bx-clay)" }}>{error}</p>}
           {canEdit && !compact && (
             <p style={{ margin: "0.625rem 0 0", fontSize: "0.75rem", color: "var(--bx-slate)" }}>
               PNG, JPG or SVG, up to 10 MB. By uploading, you confirm you have the right to use this mark.

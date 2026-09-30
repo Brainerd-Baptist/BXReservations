@@ -48,12 +48,8 @@ export default function HeaderShell({
       />
 
       <header
-        className={`z-40 print:hidden fixed top-0 left-0 right-0 w-full border-b${scrolled ? " bx-scrolled" : ""}`}
-        style={{
-          background: "var(--bx-ink-soft)",
-          paddingTop: "env(safe-area-inset-top)",
-          borderColor: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)",
-        }}
+        className={`bx-header z-40 print:hidden fixed top-0 left-0 right-0 w-full border-b${scrolled ? " bx-scrolled" : ""}`}
+        style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
 

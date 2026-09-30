@@ -40,7 +40,9 @@ export default async function EventMapPage({ params }: { params: Promise<{ id: s
           gap: "0.75rem",
           padding: "0.5rem 1rem",
           borderBottom: "1px solid color-mix(in srgb, var(--bx-parchment) 10%, transparent)",
-          background: "var(--bx-ink)",
+          background: "var(--bx-surface-strong)",
+          backdropFilter: "blur(18px) saturate(160%)",
+          WebkitBackdropFilter: "blur(18px) saturate(160%)",
           flex: "none",
           minWidth: 0,
         }}

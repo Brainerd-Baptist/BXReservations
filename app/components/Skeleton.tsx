@@ -72,7 +72,7 @@ export function CardSkeleton({ lines = 3, height = "120px" }: { lines?: number; 
     <div
       className="bx-shimmer"
       style={{
-        background: "var(--bx-ink-soft)",
+        background: "var(--bx-surface)",
         border: "1px solid color-mix(in srgb, var(--bx-parchment) 10%, transparent)",
         borderRadius: "12px",
         padding: "1.25rem 1.5rem",

@@ -126,7 +126,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           borderRadius: "12px",
           overflow: "hidden",
           marginBottom: "1.5rem",
-          background: "var(--bx-ink-soft)",
+          background: "var(--bx-surface)", backdropFilter: "blur(var(--bx-blur)) saturate(150%)", WebkitBackdropFilter: "blur(var(--bx-blur)) saturate(150%)", boxShadow: "inset 0 1px 0 var(--bx-highlight), var(--shadow-2)",
         }}
       >
         <div style={{ padding: "1.25rem 1.5rem", display: "flex", alignItems: "center", gap: "1rem" }}>
@@ -207,7 +207,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           borderRadius: "12px",
           padding: "1.25rem 1.5rem",
           marginBottom: "1.5rem",
-          background: "var(--bx-ink-soft)",
+          background: "var(--bx-surface)", backdropFilter: "blur(var(--bx-blur)) saturate(150%)", WebkitBackdropFilter: "blur(var(--bx-blur)) saturate(150%)", boxShadow: "inset 0 1px 0 var(--bx-highlight), var(--shadow-2)",
         }}
       >
         <h2
@@ -237,7 +237,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           borderRadius: "12px",
           padding: "1.25rem 1.5rem",
           marginBottom: "1.5rem",
-          background: "var(--bx-ink-soft)",
+          background: "var(--bx-surface)", backdropFilter: "blur(var(--bx-blur)) saturate(150%)", WebkitBackdropFilter: "blur(var(--bx-blur)) saturate(150%)", boxShadow: "inset 0 1px 0 var(--bx-highlight), var(--shadow-2)",
         }}
       >
         <h2

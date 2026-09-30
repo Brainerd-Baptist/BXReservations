@@ -12,29 +12,29 @@ export default async function Home() {
     : null;
 
   return (
-    <main className="min-h-screen bg-ink">
+    <main className="min-h-screen">
 
       {/* ── Hero ── */}
-      <section className="bg-ink-soft border-b border-parchment/10 relative overflow-hidden">
+      <section className="bx-band border-b relative overflow-hidden">
         <div className="bx-bloom" aria-hidden="true" />
-        <div className="relative max-w-2xl mx-auto px-5 pt-10 pb-12 sm:pt-16 sm:pb-16 text-center">
+        <div className="relative max-w-2xl mx-auto px-5 pt-12 pb-14 sm:pt-20 sm:pb-20 text-center animate-in">
           <div className="flex justify-center mb-5">
             <Image
               src="/bx-logo-black.png"
               alt="BX Community Center"
               width={68}
               height={68}
-              className="rounded-2xl shadow-sm"
+              className="rounded-2xl shadow-lg ring-1 ring-parchment/10"
               priority
             />
           </div>
 
           {user ? (
             <>
-              <p className="text-xs font-semibold uppercase tracking-widest text-slate mb-2">
+              <p className="bx-eyebrow mb-4">
                 Welcome back{firstName ? `, ${firstName}` : ""}
               </p>
-              <h1 className="text-3xl sm:text-4xl font-bold text-parchment leading-tight mb-2">
+              <h1 className="text-4xl sm:text-5xl font-bold text-parchment leading-[1.05] mb-4">
                 BX Reservations
               </h1>
               <p className="text-base sm:text-[1.1rem] text-slate mb-8 max-w-md mx-auto leading-relaxed">
@@ -43,13 +43,13 @@ export default async function Home() {
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Link
                   href="/reserve"
-                  className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl bg-brass text-white font-bold text-base shadow-sm hover:opacity-90 active:scale-[0.98] transition-all"
+                  className="bx-cta inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl bg-brass text-white font-bold text-base active:scale-[0.98]"
                 >
                   Reserve a Space →
                 </Link>
                 <Link
                   href="/reservations"
-                  className="inline-flex items-center justify-center px-7 py-4 rounded-xl border border-parchment/20 text-parchment font-semibold text-base hover:bg-parchment/10 transition-colors"
+                  className="bx-glass-flat inline-flex items-center justify-center px-7 py-4 rounded-xl text-parchment font-semibold text-base hover:border-brass/40 transition-colors"
                 >
                   My Reservations
                 </Link>
@@ -57,7 +57,8 @@ export default async function Home() {
             </>
           ) : (
             <>
-              <h1 className="text-3xl sm:text-4xl font-bold text-parchment leading-tight mb-2">
+              <p className="bx-eyebrow mb-4">BX Community Center</p>
+              <h1 className="text-4xl sm:text-5xl font-bold text-parchment leading-[1.05] mb-4">
                 Welcome to BX Reservations
               </h1>
               <p className="text-base sm:text-[1.1rem] text-slate mb-8 max-w-md mx-auto leading-relaxed">
@@ -66,13 +67,13 @@ export default async function Home() {
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Link
                   href="/reserve"
-                  className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl bg-brass text-white font-bold text-base shadow-sm hover:opacity-90 active:scale-[0.98] transition-all"
+                  className="bx-cta inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl bg-brass text-white font-bold text-base active:scale-[0.98]"
                 >
                   Reserve a Space →
                 </Link>
                 <Link
                   href="/login"
-                  className="inline-flex items-center justify-center px-7 py-4 rounded-xl border border-parchment/20 text-parchment font-semibold text-base hover:bg-parchment/10 transition-colors"
+                  className="bx-glass-flat inline-flex items-center justify-center px-7 py-4 rounded-xl text-parchment font-semibold text-base hover:border-brass/40 transition-colors"
                 >
                   Sign in / Sign up
                 </Link>
@@ -89,23 +90,26 @@ export default async function Home() {
       {!user && (
         <section className="max-w-2xl mx-auto px-5 pt-8">
           <div
-            className="rounded-2xl px-6 py-5 flex items-start gap-4"
-            style={{ background: "var(--bx-parchment)" }}
+            className="bx-glass rounded-2xl px-6 py-5 flex items-start gap-4"
+            style={{
+              background: "color-mix(in srgb, var(--bx-brass) 9%, var(--bx-surface))",
+              borderColor: "color-mix(in srgb, var(--bx-brass) 30%, transparent)",
+            }}
           >
             <div className="shrink-0 mt-0.5" style={{color:"var(--bx-brass)"}}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>
             </div>
             <div>
-              <p className="font-semibold text-sm mb-1" style={{ color: "var(--bx-ink)" }}>
+              <p className="font-semibold text-sm mb-1" style={{ color: "var(--bx-parchment)" }}>
                 Your Google account is your BX account
               </p>
-              <p className="text-xs leading-relaxed mb-3" style={{ color: "color-mix(in srgb, var(--bx-ink) 70%, transparent)" }}>
+              <p className="text-xs leading-relaxed mb-3" style={{ color: "var(--bx-slate)" }}>
                 Sign in with Google once and your name, email, and phone pre-fill every future request automatically. Track your reservation from Pending all the way to Confirmed — no separate sign-up form, no new password.
               </p>
               <Link
                 href="/login"
                 className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors"
-                style={{ color: "var(--bx-ink)", background: "color-mix(in srgb, var(--bx-ink) 15%, transparent)" }}
+                style={{ color: "var(--bx-brass)", background: "color-mix(in srgb, var(--bx-brass) 14%, transparent)" }}
               >
                 Sign in with Google →
               </Link>
@@ -116,7 +120,7 @@ export default async function Home() {
 
       {/* ── Spaces overview ── */}
       <section className="max-w-2xl mx-auto px-5 py-9 bx-fade-in">
-        <h2 className="text-[10px] font-bold uppercase tracking-widest text-slate mb-4 text-center">
+        <h2 className="bx-eyebrow mb-5">
           Available spaces
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -124,7 +128,7 @@ export default async function Home() {
             <Link
               key={s.name}
               href={`/rooms#${s.roomId}`}
-              className="relative rounded-xl overflow-hidden border border-parchment/10 h-28 block group"
+              className="relative rounded-xl overflow-hidden border border-parchment/10 h-28 block group shadow-md hover:shadow-xl transition-shadow duration-300"
             >
               <Image
                 src={s.image}
@@ -162,17 +166,17 @@ export default async function Home() {
       </section>
 
       {/* ── How it works ── */}
-      <section className="bg-ink-soft border-t border-parchment/10 bx-fade-in">
+      <section className="bx-band border-y bx-fade-in">
         <div className="max-w-2xl mx-auto px-5 py-9">
-          <h2 className="text-[10px] font-bold uppercase tracking-widest text-slate mb-6 text-center">
+          <h2 className="bx-eyebrow mb-6">
             How it works
           </h2>
           <ol className="space-y-5">
             {STEPS.map((s, i) => (
               <li key={i} className="flex items-start gap-4">
                 <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0 mt-0.5"
-                  style={{ background: "var(--bx-brass)" }}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0 mt-0.5 tabular"
+                  style={{ background: "var(--bx-brass)", boxShadow: "0 0 0 4px color-mix(in srgb, var(--bx-brass) 14%, transparent), 0 4px 12px -2px color-mix(in srgb, var(--bx-brass) 50%, transparent)" }}
                 >
                   {i + 1}
                 </div>
@@ -188,12 +192,12 @@ export default async function Home() {
 
       {/* ── Meet the team ── */}
       <section className="max-w-2xl mx-auto px-5 py-9 bx-fade-in">
-        <h2 className="text-[10px] font-bold uppercase tracking-widest text-slate mb-6 text-center">
+        <h2 className="bx-eyebrow mb-6">
           Questions? We&#39;re here to help
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Barb */}
-          <div className="bg-ink-soft border border-parchment/10 rounded-2xl p-5 flex flex-col items-center text-center">
+          <div className="bx-glass rounded-2xl p-5 flex flex-col items-center text-center">
             <div className="mb-3">
               <StaffPhoto
                 thumbSrc="/staff/barb.jpg"
@@ -215,7 +219,7 @@ export default async function Home() {
             </a>
           </div>
           {/* Jo */}
-          <div className="bg-ink-soft border border-parchment/10 rounded-2xl p-5 flex flex-col items-center text-center">
+          <div className="bx-glass rounded-2xl p-5 flex flex-col items-center text-center">
             <div className="mb-3">
               <StaffPhoto
                 thumbSrc="/staff/jo.jpg"

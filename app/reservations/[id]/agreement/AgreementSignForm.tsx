@@ -46,7 +46,7 @@ export default function AgreementSignForm({ reservationId, token, contactName }:
 
   if (done) {
     return (
-      <div style={{ background: "#D1FAE5", border: "1px solid #6EE7B7", borderRadius: 10, padding: "1.5rem", color: "#065F46", textAlign: "center" }}>
+      <div style={{ background: "var(--tone-green-bg)", border: "1px solid var(--tone-green-bd)", borderRadius: 10, padding: "1.5rem", color: "var(--tone-green-fg)", textAlign: "center" }}>
         <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>✓</div>
         <h2 style={{ margin: "0 0 0.5rem", fontSize: "1.125rem" }}>Agreement Signed</h2>
         <p style={{ margin: 0, fontSize: "0.9rem" }}>Thank you, {name}. Your signature has been recorded and the BX team has been notified. You can close this window.</p>
@@ -69,17 +69,17 @@ export default function AgreementSignForm({ reservationId, token, contactName }:
           style={{
             width: "100%", padding: "0.75rem 1rem", fontSize: "1rem",
             background: "color-mix(in srgb, var(--bx-parchment) 5%, transparent)",
-            border: `1px solid ${nameMatch && name.trim() ? "#6EE7B7" : "color-mix(in srgb, var(--bx-parchment) 20%, transparent)"}`,
+            border: `1px solid ${nameMatch && name.trim() ? "var(--tone-green-bd)" : "color-mix(in srgb, var(--bx-parchment) 20%, transparent)"}`,
             borderRadius: 8, color: "var(--bx-parchment)", outline: "none", boxSizing: "border-box",
           }}
         />
         {name.trim() && !nameMatch && (
-          <p style={{ margin: "0.4rem 0 0", fontSize: "0.8rem", color: "#F97316" }}>
+          <p style={{ margin: "0.4rem 0 0", fontSize: "0.8rem", color: "var(--tone-orange-fg)" }}>
             Name must match exactly: <em>{contactName}</em>
           </p>
         )}
         {nameMatch && name.trim() && (
-          <p style={{ margin: "0.4rem 0 0", fontSize: "0.8rem", color: "#6EE7B7" }}>✓ Name matches</p>
+          <p style={{ margin: "0.4rem 0 0", fontSize: "0.8rem", color: "var(--tone-green-fg)" }}>✓ Name matches</p>
         )}
       </div>
 
@@ -89,14 +89,14 @@ export default function AgreementSignForm({ reservationId, token, contactName }:
             type="checkbox"
             checked={agreed}
             onChange={e => setAgreed(e.target.checked)}
-            style={{ marginTop: "0.15rem", accentColor: "#C5A95A", flex: "none" }}
+            style={{ marginTop: "0.15rem", accentColor: "var(--bx-brass)", flex: "none" }}
           />
           I have read and understand the Facility Use Agreement above, and I agree to all terms on behalf of myself and my organization. I understand this electronic signature is legally binding.
         </label>
       </div>
 
       {error && (
-        <div style={{ background: "#FEE2E2", border: "1px solid #FCA5A5", borderRadius: 8, padding: "0.75rem 1rem", marginBottom: "1rem", color: "#991B1B", fontSize: "0.875rem" }}>
+        <div style={{ background: "var(--tone-red-bg)", border: "1px solid var(--tone-red-bd)", borderRadius: 8, padding: "0.75rem 1rem", marginBottom: "1rem", color: "var(--tone-red-fg)", fontSize: "0.875rem" }}>
           {error}
         </div>
       )}
@@ -105,8 +105,8 @@ export default function AgreementSignForm({ reservationId, token, contactName }:
         type="submit"
         disabled={!canSubmit}
         style={{
-          background: canSubmit ? "#C5A95A" : "color-mix(in srgb, var(--bx-parchment) 10%, transparent)",
-          color: canSubmit ? "#1a1a1a" : "var(--bx-slate)",
+          background: canSubmit ? "var(--bx-brass)" : "color-mix(in srgb, var(--bx-parchment) 10%, transparent)",
+          color: canSubmit ? "#fff" : "var(--bx-slate)",
           border: "none", borderRadius: 8, padding: "0.875rem 2rem",
           fontSize: "0.9375rem", fontWeight: 700, cursor: canSubmit ? "pointer" : "not-allowed",
           transition: "background 0.15s",

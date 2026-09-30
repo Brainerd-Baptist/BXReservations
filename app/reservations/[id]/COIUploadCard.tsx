@@ -42,7 +42,7 @@ export default function COIUploadCard({ reservationId }: Props) {
 
   if (done) {
     return (
-      <div style={{ background: "#D1FAE5", border: "1px solid #6EE7B7", borderRadius: 10, padding: "1rem 1.25rem", color: "#065F46" }}>
+      <div style={{ background: "#D1FAE5", border: "1px solid var(--tone-green-bd)", borderRadius: 10, padding: "1rem 1.25rem", color: "var(--tone-green-fg)" }}>
         <p style={{ margin: 0, fontWeight: 700 }}>✓ COI uploaded successfully</p>
         <p style={{ margin: "0.3rem 0 0", fontSize: "0.875rem" }}>The BX team has been notified and will review your certificate.</p>
       </div>
@@ -67,7 +67,7 @@ export default function COIUploadCard({ reservationId }: Props) {
       <div
         onClick={() => fileRef.current?.click()}
         style={{
-          border: `2px dashed ${file ? "#6EE7B7" : "color-mix(in srgb, var(--bx-parchment) 25%, transparent)"}`,
+          border: `2px dashed ${file ? "var(--tone-green-bd)" : "color-mix(in srgb, var(--bx-parchment) 25%, transparent)"}`,
           borderRadius: 8, padding: "1.5rem", textAlign: "center", cursor: "pointer",
           marginBottom: "1rem", background: "color-mix(in srgb, var(--bx-parchment) 3%, transparent)",
           transition: "border-color 0.15s",
@@ -92,7 +92,7 @@ export default function COIUploadCard({ reservationId }: Props) {
       </div>
 
       {error && (
-        <div style={{ background: "#FEE2E2", border: "1px solid #FCA5A5", borderRadius: 8, padding: "0.75rem 1rem", marginBottom: "0.75rem", color: "#991B1B", fontSize: "0.875rem" }}>
+        <div style={{ background: "var(--tone-red-bg)", border: "1px solid var(--tone-red-bd)", borderRadius: 8, padding: "0.75rem 1rem", marginBottom: "0.75rem", color: "var(--tone-red-fg)", fontSize: "0.875rem" }}>
           {error}
         </div>
       )}
@@ -101,8 +101,8 @@ export default function COIUploadCard({ reservationId }: Props) {
         onClick={handleUpload}
         disabled={!file || loading}
         style={{
-          background: file && !loading ? "#C5A95A" : "color-mix(in srgb, var(--bx-parchment) 10%, transparent)",
-          color: file && !loading ? "#1a1a1a" : "var(--bx-slate)",
+          background: file && !loading ? "var(--bx-brass)" : "color-mix(in srgb, var(--bx-parchment) 10%, transparent)",
+          color: file && !loading ? "#fff" : "var(--bx-slate)",
           border: "none", borderRadius: 8, padding: "0.75rem 1.5rem",
           fontSize: "0.9rem", fontWeight: 700, cursor: file && !loading ? "pointer" : "not-allowed",
         }}

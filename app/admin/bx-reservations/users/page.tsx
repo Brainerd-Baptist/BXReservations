@@ -1,5 +1,6 @@
 "use client";
 
+import BodyPortal from "@/app/components/body-portal";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Search, UserPlus, Shield, ChevronDown, Check, X, Loader2, Mail, Trash2 } from "lucide-react";
@@ -126,7 +127,7 @@ function RolePicker({
         )}
       </button>
       {open && (
-        <div className="absolute z-50 left-0 mt-1 w-52 bg-ink-soft border border-parchment/20 rounded-xl shadow-xl py-1">
+        <div className="absolute z-50 left-0 mt-1 w-52 bx-glass-strong rounded-xl py-1">
           {assignable.map((r) => (
             <button
               key={r}
@@ -188,8 +189,9 @@ function InviteModal({
   }
 
   return (
+    <BodyPortal>
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-ink-soft border border-parchment/20 rounded-2xl w-full max-w-md p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
+      <div className="bx-glass-strong rounded-2xl w-full max-w-md p-6 overflow-y-auto max-h-[90vh]">
         <div className="flex items-center justify-between mb-5">
           <div>
             <h2 className="text-parchment font-bold text-lg">Invite a user</h2>
@@ -277,6 +279,7 @@ function InviteModal({
         </div>
       </div>
     </div>
+    </BodyPortal>
   );
 }
 
@@ -317,7 +320,7 @@ export default function UsersPage() {
   });
 
   return (
-    <div className="min-h-screen bg-ink font-sans">
+    <div className="min-h-screen">
       <div className="max-w-5xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -347,7 +350,7 @@ export default function UsersPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by name, email, or org…"
-              className="w-full bg-ink-soft border border-parchment/15 text-parchment text-sm rounded-xl pl-9 pr-3 py-2.5 placeholder-slate/50 focus:outline-none focus:ring-2 focus:ring-[var(--bbc-blue)]"
+              className="w-full bg-[var(--bx-surface)] border border-parchment/15 text-parchment text-sm rounded-xl pl-9 pr-3 py-2.5 placeholder-slate/50 focus:outline-none focus:ring-2 focus:ring-[var(--bbc-blue)]"
             />
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -364,7 +367,7 @@ export default function UsersPage() {
         </div>
 
         {/* Table */}
-        <div className="bg-ink-soft border border-parchment/10 rounded-2xl overflow-hidden">
+        <div className="bx-glass rounded-2xl overflow-hidden">
           {loading ? (
             <div className="flex items-center justify-center py-16 text-slate gap-2">
               <Loader2 size={18} className="animate-spin" />
@@ -481,7 +484,7 @@ export default function UsersPage() {
         {/* Role legend */}
         <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {ROLES_ORDERED.map((r) => (
-            <div key={r} className="bg-ink-soft border border-parchment/10 rounded-xl p-3 flex flex-col gap-1">
+            <div key={r} className="bx-glass-flat rounded-xl p-3 flex flex-col gap-1">
               <span className="text-xs font-bold text-parchment/80 tracking-wide uppercase">{ROLE_LABELS[r]}</span>
               <p className="text-xs text-slate leading-tight">{ROLE_DESCRIPTIONS[r]}</p>
             </div>

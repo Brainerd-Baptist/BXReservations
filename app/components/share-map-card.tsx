@@ -79,7 +79,7 @@ export default function ShareMapCard({
     font: "inherit",
     border: kind === "ghost" ? "1px solid color-mix(in srgb, var(--bx-parchment) 20%, transparent)" : "1px solid transparent",
     background: kind === "primary" ? "var(--bx-brass)" : kind === "danger" ? "transparent" : "transparent",
-    color: kind === "primary" ? "#fff" : kind === "danger" ? "#dc2626" : "var(--bx-parchment)",
+    color: kind === "primary" ? "#fff" : kind === "danger" ? "var(--bx-clay)" : "var(--bx-parchment)",
   });
 
   return (
@@ -91,7 +91,7 @@ export default function ShareMapCard({
         borderRadius: "12px",
         padding: "1.25rem 1.5rem",
         marginBottom: "1rem",
-        background: "var(--bx-ink-soft)",
+        background: "var(--bx-surface)", backdropFilter: "blur(var(--bx-blur)) saturate(150%)", WebkitBackdropFilter: "blur(var(--bx-blur)) saturate(150%)", boxShadow: "inset 0 1px 0 var(--bx-highlight), var(--shadow-2)",
         color: "var(--bx-parchment)",
       }}
     >
@@ -106,8 +106,8 @@ export default function ShareMapCard({
             borderRadius: 9999,
             fontSize: "0.75rem",
             fontWeight: 600,
-            background: state.enabled ? "#D1FAE5" : "color-mix(in srgb, var(--bx-parchment) 8%, transparent)",
-            color: state.enabled ? "#065F46" : "var(--bx-slate)",
+            background: state.enabled ? "var(--tone-green-bg)" : "color-mix(in srgb, var(--bx-parchment) 8%, transparent)",
+            color: state.enabled ? "var(--tone-green-fg)" : "var(--bx-slate)",
           }}
         >
           {state.enabled ? "Link is on" : "Off"}
@@ -117,7 +117,7 @@ export default function ShareMapCard({
         Anyone with the link sees your room names and setups on the building map — volunteers, vendors, attendees — with no sign-in.
         Staff notes never appear. The QR on your door signs points here while the link is on. Turn it off any time.
       </p>
-      {locked && !state.enabled && <p style={{ margin: "0 0 0.75rem", fontSize: "0.8125rem", color: "#92400E" }}>{locked}</p>}
+      {locked && !state.enabled && <p style={{ margin: "0 0 0.75rem", fontSize: "0.8125rem", color: "var(--tone-amber-fg)" }}>{locked}</p>}
 
       {state.enabled && url && (
         <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap", marginBottom: "0.75rem" }}>
@@ -150,7 +150,7 @@ export default function ShareMapCard({
           </>
         )}
       </div>
-      {error && <p role="alert" style={{ margin: "0.5rem 0 0", fontSize: "0.8125rem", color: "#dc2626" }}>{error}</p>}
+      {error && <p role="alert" style={{ margin: "0.5rem 0 0", fontSize: "0.8125rem", color: "var(--bx-clay)" }}>{error}</p>}
     </section>
   );
 }

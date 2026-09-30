@@ -140,10 +140,10 @@ export default function NotificationBell() {
             top: "calc(100% + 8px)",
             right: 0,
             width: 320,
-            background: "#ffffff",
-            border: "1px solid #e5e7eb",
-            borderRadius: 12,
-            boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+            background: "var(--bx-surface-menu)",
+            border: "1px solid var(--bx-hairline)",
+            borderRadius: 14,
+            boxShadow: "inset 0 1px 0 var(--bx-highlight), 0 16px 40px -8px rgba(0,0,0,0.28)",
             zIndex: 1000,
             overflow: "hidden",
           }}
@@ -151,12 +151,12 @@ export default function NotificationBell() {
           aria-label="Notifications"
         >
           {/* Header */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px 12px", borderBottom: "1px solid #f3f4f6" }}>
-            <span style={{ fontWeight: 600, fontSize: 14, color: "#111827" }}>Notifications</span>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px 12px", borderBottom: "1px solid var(--bx-hairline)" }}>
+            <span style={{ fontWeight: 600, fontSize: 14, color: "var(--bx-parchment)" }}>Notifications</span>
             {count > 0 && (
               <button
                 onClick={markAllRead}
-                style={{ fontSize: 12, color: "#00abc9", background: "none", border: "none", cursor: "pointer", padding: 0, fontWeight: 500 }}
+                style={{ fontSize: 12, color: "var(--bx-brass)", background: "none", border: "none", cursor: "pointer", padding: 0, fontWeight: 500 }}
               >
                 Mark all read
               </button>
@@ -166,9 +166,9 @@ export default function NotificationBell() {
           {/* List */}
           <div style={{ maxHeight: 360, overflowY: "auto" }}>
             {!listLoaded ? (
-              <div style={{ padding: "32px 16px", textAlign: "center", color: "#9ca3af", fontSize: 13 }}>Loading…</div>
+              <div style={{ padding: "32px 16px", textAlign: "center", color: "var(--bx-slate)", fontSize: 13 }}>Loading…</div>
             ) : notifications.length === 0 ? (
-              <div style={{ padding: "32px 16px", textAlign: "center", color: "#9ca3af", fontSize: 13 }}>
+              <div style={{ padding: "32px 16px", textAlign: "center", color: "var(--bx-slate)", fontSize: 13 }}>
                 <svg style={{ width: 32, height: 32, margin: "0 auto 8px", display: "block", opacity: 0.4 }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
@@ -181,31 +181,31 @@ export default function NotificationBell() {
                   onClick={() => { if (!n.read_at) markOneRead(n.id); if (n.reservation_id) window.location.href = `/reservations/${n.reservation_id}`; }}
                   style={{
                     padding: "12px 16px",
-                    borderBottom: "1px solid #f9fafb",
+                    borderBottom: "1px solid var(--bx-hairline-soft)",
                     cursor: "pointer",
-                    background: n.read_at ? "#ffffff" : "#f0f9ff",
+                    background: n.read_at ? "transparent" : "color-mix(in srgb, var(--bx-brass) 8%, transparent)",
                     display: "flex",
                     gap: 10,
                     alignItems: "flex-start",
                   }}
-                  onMouseEnter={e => (e.currentTarget.style.background = n.read_at ? "#f9fafb" : "#e0f4fb")}
-                  onMouseLeave={e => (e.currentTarget.style.background = n.read_at ? "#ffffff" : "#f0f9ff")}
+                  onMouseEnter={e => (e.currentTarget.style.background = n.read_at ? "color-mix(in srgb, var(--bx-parchment) 5%, transparent)" : "color-mix(in srgb, var(--bx-brass) 13%, transparent)")}
+                  onMouseLeave={e => (e.currentTarget.style.background = n.read_at ? "transparent" : "color-mix(in srgb, var(--bx-brass) 8%, transparent)")}
                 >
                   {/* Unread dot */}
                   <div style={{ marginTop: 4, flexShrink: 0 }}>
                     <div style={{
                       width: 8, height: 8, borderRadius: "50%",
-                      background: n.read_at ? "transparent" : "#00abc9",
+                      background: n.read_at ? "transparent" : "var(--bx-brass)",
                     }} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: n.read_at ? 400 : 600, fontSize: 13, color: "#111827", marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    <div style={{ fontWeight: n.read_at ? 400 : 600, fontSize: 13, color: "var(--bx-parchment)", marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {n.title}
                     </div>
-                    <div style={{ fontSize: 12, color: "#6b7280", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                    <div style={{ fontSize: 12, color: "var(--bx-slate)", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                       {n.body}
                     </div>
-                    <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 4 }}>{formatTime(n.created_at)}</div>
+                    <div style={{ fontSize: 11, color: "var(--bx-slate)", marginTop: 4 }}>{formatTime(n.created_at)}</div>
                   </div>
                 </div>
               ))
@@ -213,8 +213,8 @@ export default function NotificationBell() {
           </div>
 
           {/* Footer */}
-          <div style={{ padding: "10px 16px", borderTop: "1px solid #f3f4f6", textAlign: "center" }}>
-            <a href="/reservations" style={{ fontSize: 12, color: "#00abc9", textDecoration: "none", fontWeight: 500 }}>View all reservations →</a>
+          <div style={{ padding: "10px 16px", borderTop: "1px solid var(--bx-hairline)", textAlign: "center" }}>
+            <a href="/reservations" style={{ fontSize: 12, color: "var(--bx-brass)", textDecoration: "none", fontWeight: 500 }}>View all reservations →</a>
           </div>
         </div>
       )}

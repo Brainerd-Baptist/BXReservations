@@ -90,7 +90,7 @@ export default async function PlanPage() {
         border: "1px solid color-mix(in srgb, var(--bx-parchment) 12%, transparent)",
         borderRadius: "12px",
         padding: "1rem 1.25rem",
-        background: "var(--bx-ink-soft)",
+        background: "var(--bx-surface)", backdropFilter: "blur(var(--bx-blur)) saturate(150%)", WebkitBackdropFilter: "blur(var(--bx-blur)) saturate(150%)", boxShadow: "inset 0 1px 0 var(--bx-highlight), var(--shadow-2)",
         textDecoration: "none",
         color: "var(--bx-parchment)",
       }}

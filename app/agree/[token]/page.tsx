@@ -56,7 +56,7 @@ export default function AgreePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-ink flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <p className="text-slate text-sm">Loading agreement…</p>
       </div>
     );
@@ -64,7 +64,7 @@ export default function AgreePage() {
 
   if (error || !agreement) {
     return (
-      <div className="min-h-screen bg-ink flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600 font-medium mb-2">Agreement not found</p>
           <p className="text-slate text-sm">
@@ -84,7 +84,7 @@ export default function AgreePage() {
     : null;
 
   return (
-    <div className="min-h-screen bg-ink py-10 px-4">
+    <div className="min-h-screen py-10 px-4">
       <div className="max-w-2xl mx-auto">
 
         {/* Header */}
@@ -94,8 +94,8 @@ export default function AgreePage() {
         </div>
 
         {/* Agreement text */}
-        <div className="bg-ink-soft border border-parchment/10 rounded-xl p-6 mb-6 shadow-sm">
-          <pre className="whitespace-pre-wrap font-sans text-sm text-parchment leading-relaxed">
+        <div className="bx-glass rounded-2xl p-6 mb-6">
+          <pre className="whitespace-pre-wrap font-sans text-[0.9rem] leading-7 text-parchment leading-relaxed">
             {agreement.agreement_text}
           </pre>
         </div>
@@ -142,7 +142,7 @@ export default function AgreePage() {
           </div>
         ) : (
           /* Signing form */
-          <div className="bg-ink-soft border border-parchment/10 rounded-xl p-6 shadow-sm">
+          <div className="bx-glass rounded-2xl p-6">
             <h2 className="font-semibold text-parchment mb-4">Sign this agreement</h2>
             <form onSubmit={handleSign} className="space-y-4">
               <div>

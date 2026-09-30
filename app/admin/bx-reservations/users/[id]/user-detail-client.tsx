@@ -131,7 +131,7 @@ function RolePicker({ userId, current, callerRole, onSaved }: {
         {saving ? <><Loader2 size={12} className="animate-spin" />{display ? ROLE_LABELS[display] : "Assigning"}</> : <>{current ? ROLE_LABELS[current] : "Assign role"}<ChevronDown size={12} /></>}
       </button>
       {open && (
-        <div className="absolute z-[500] left-0 mt-1 w-56 bg-[var(--bx-ink-soft)] border border-parchment/20 rounded-xl shadow-xl py-1">
+        <div className="absolute z-[500] left-0 mt-1 w-56 bx-glass-strong rounded-xl py-1">
           {assignable.map((r) => (
             <button key={r} onClick={() => pick(r)} className="w-full text-left px-3 py-2 text-xs hover:bg-parchment/5 flex items-start gap-2 group">
               <Check size={12} className={`mt-0.5 flex-shrink-0 ${current === r ? "text-[var(--bbc-blue)]" : "opacity-0 group-hover:opacity-30"}`} />
@@ -202,7 +202,7 @@ export default function UserDetailClient({ authUser, profile: initialProfile, us
   ];
 
   return (
-    <div className="min-h-screen bg-[var(--bx-ink)] font-sans">
+    <div className="min-h-screen">
       <div className="max-w-4xl mx-auto px-4 py-6">
         <nav className="flex items-center gap-2 text-xs text-slate mb-6">
           <Link href="/admin/bx-reservations/users" className="flex items-center gap-1 hover:text-parchment transition-colors">
@@ -212,7 +212,7 @@ export default function UserDetailClient({ authUser, profile: initialProfile, us
           <span className="text-parchment">{displayName ?? authUser.email}</span>
         </nav>
 
-        <div className="bg-[var(--bx-ink-soft)] border border-parchment/10 rounded-2xl p-6 mb-6">
+        <div className="bx-glass rounded-2xl p-6 mb-6">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-4">
               <Initials name={displayName} email={authUser.email} />
@@ -279,7 +279,7 @@ export default function UserDetailClient({ authUser, profile: initialProfile, us
         </div>
 
         {tab === "profile" && (
-          <div className="bg-[var(--bx-ink-soft)] border border-parchment/10 rounded-2xl p-6">
+          <div className="bx-glass rounded-2xl p-6">
             <div className="flex items-center gap-2 mb-5"><User size={15} className="text-slate" /><h2 className="text-parchment font-semibold text-sm">Profile information</h2></div>
             <div className="grid sm:grid-cols-2 gap-5">
               <Field label="Display name">
@@ -301,7 +301,7 @@ export default function UserDetailClient({ authUser, profile: initialProfile, us
         )}
 
         {tab === "reservations" && (
-          <div className="bg-[var(--bx-ink-soft)] border border-parchment/10 rounded-2xl overflow-hidden">
+          <div className="bx-glass rounded-2xl overflow-hidden">
             <div className="flex items-center gap-2 px-5 py-4 border-b border-parchment/8">
               <Calendar size={15} className="text-slate" /><h2 className="text-parchment font-semibold text-sm">Reservations</h2>
               <span className="text-xs text-slate ml-auto">{reservations.length} shown (max 25)</span>
@@ -341,7 +341,7 @@ export default function UserDetailClient({ authUser, profile: initialProfile, us
         )}
 
         {tab === "orgs" && (
-          <div className="bg-[var(--bx-ink-soft)] border border-parchment/10 rounded-2xl overflow-hidden">
+          <div className="bx-glass rounded-2xl overflow-hidden">
             <div className="flex items-center gap-2 px-5 py-4 border-b border-parchment/8">
               <Building2 size={15} className="text-slate" /><h2 className="text-parchment font-semibold text-sm">Linked organizations</h2>
             </div>

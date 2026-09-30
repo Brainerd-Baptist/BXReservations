@@ -36,7 +36,7 @@ export default function VenueSettings() {
   };
 
   return (
-    <section className="border border-parchment/10 rounded-xl p-5 bg-ink/40 space-y-4" aria-label="Venue info">
+    <section className="bx-glass rounded-xl p-5 space-y-4" aria-label="Venue info">
       <div>
         <p className="text-xs font-semibold text-slate uppercase tracking-widest">Venue info for attendees</p>
         <p className="text-sm text-slate mt-1">Printed on the event packet planners send to their attendees: cover, Getting here page, footer. Blank fields are left off.</p>

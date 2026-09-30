@@ -244,8 +244,7 @@ function renderPage(
           borderRadius: "12px",
           overflow: "hidden",
           marginBottom: "1rem",
-          background: "var(--bx-ink-soft)",
-          boxShadow: "var(--shadow-2)",
+          background: "var(--bx-surface)", backdropFilter: "blur(var(--bx-blur)) saturate(150%)", WebkitBackdropFilter: "blur(var(--bx-blur)) saturate(150%)", boxShadow: "inset 0 1px 0 var(--bx-highlight), var(--shadow-2)",
         }}
       >
         <div style={{ padding: "1.25rem 1.5rem" }}>
@@ -350,7 +349,7 @@ function renderPage(
           borderRadius: "12px",
           padding: "1rem 1.25rem",
           marginBottom: "1rem",
-          background: "color-mix(in srgb, var(--bx-brass) 8%, var(--bx-ink-soft))",
+          background: "color-mix(in srgb, var(--bx-brass) 10%, var(--bx-surface))",
           textDecoration: "none",
           color: "var(--bx-parchment)",
         }}
@@ -402,8 +401,7 @@ function renderPage(
               borderRadius: "12px",
               padding: "1.25rem 1.5rem",
               marginBottom: "1rem",
-              background: "var(--bx-ink-soft)",
-          boxShadow: "var(--shadow-2)",
+              background: "var(--bx-surface)", backdropFilter: "blur(var(--bx-blur)) saturate(150%)", WebkitBackdropFilter: "blur(var(--bx-blur)) saturate(150%)", boxShadow: "inset 0 1px 0 var(--bx-highlight), var(--shadow-2)",
               color: "var(--bx-parchment)",
             }}
           >
@@ -417,7 +415,7 @@ function renderPage(
             </p>
             <SignOptions reservationId={reservation.id} initialQr={reservation.sign_options?.qr !== false} canEdit={view.canEdit} />
             {!gate.ok && (
-              <p style={{ margin: "0 0 0.75rem", fontSize: "0.8125rem", color: "#92400E" }}>{gate.why}</p>
+              <p style={{ margin: "0 0 0.75rem", fontSize: "0.8125rem", color: "var(--tone-amber-fg)" }}>{gate.why}</p>
             )}
             <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
               <a href={`${api}?inline=1`} target="_blank" rel="noopener" style={btn(true)} aria-disabled={!gate.ok}>Preview signs</a>
@@ -458,8 +456,7 @@ function renderPage(
               borderRadius: "12px",
               padding: "1.25rem 1.5rem",
               marginBottom: "1rem",
-              background: "var(--bx-ink-soft)",
-          boxShadow: "var(--shadow-2)",
+              background: "var(--bx-surface)", backdropFilter: "blur(var(--bx-blur)) saturate(150%)", WebkitBackdropFilter: "blur(var(--bx-blur)) saturate(150%)", boxShadow: "inset 0 1px 0 var(--bx-highlight), var(--shadow-2)",
               color: "var(--bx-parchment)",
             }}
           >
@@ -472,7 +469,7 @@ function renderPage(
               rebuilt from the latest details every time you download.
             </p>
             {!gate.ok && (
-              <p style={{ margin: "0 0 0.75rem", fontSize: "0.8125rem", color: "#92400E" }}>{gate.why?.replace("The share link unlocks", "The packet unlocks")}</p>
+              <p style={{ margin: "0 0 0.75rem", fontSize: "0.8125rem", color: "var(--tone-amber-fg)" }}>{gate.why?.replace("The share link unlocks", "The packet unlocks")}</p>
             )}
             <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
               <a href={`${api}?inline=1`} target="_blank" rel="noopener" style={btn(true)} aria-disabled={!gate.ok}>Preview packet</a>
@@ -499,8 +496,7 @@ function renderPage(
           borderRadius: "12px",
           padding: "1.25rem 1.5rem",
           marginBottom: "1rem",
-          background: "var(--bx-ink-soft)",
-          boxShadow: "var(--shadow-2)",
+          background: "var(--bx-surface)", backdropFilter: "blur(var(--bx-blur)) saturate(150%)", WebkitBackdropFilter: "blur(var(--bx-blur)) saturate(150%)", boxShadow: "inset 0 1px 0 var(--bx-highlight), var(--shadow-2)",
         }}
       >
         <h2
@@ -577,8 +573,7 @@ function renderPage(
           borderRadius: "12px",
           padding: "1.25rem 1.5rem",
           marginBottom: "1.5rem",
-          background: "var(--bx-ink-soft)",
-          boxShadow: "var(--shadow-2)",
+          background: "var(--bx-surface)", backdropFilter: "blur(var(--bx-blur)) saturate(150%)", WebkitBackdropFilter: "blur(var(--bx-blur)) saturate(150%)", boxShadow: "inset 0 1px 0 var(--bx-highlight), var(--shadow-2)",
         }}
       >
         <h2
@@ -601,9 +596,9 @@ function renderPage(
 
       {/* Agreement signing card — show if there's an unsent/unsigned agreement */}
       {!view.staffView && view.agreement && !view.agreement.customer_signed_at && (
-        <div style={{ border: "1px solid color-mix(in srgb, #C5A95A 35%, transparent)", borderRadius: "12px", padding: "1.25rem 1.5rem", marginBottom: "1rem", background: "color-mix(in srgb, #C5A95A 6%, transparent)" }}>
+        <div style={{ border: "1px solid color-mix(in srgb, var(--bx-brass) 35%, transparent)", borderRadius: "12px", padding: "1.25rem 1.5rem", marginBottom: "1rem", background: "color-mix(in srgb, var(--bx-brass) 6%, transparent)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.625rem", marginBottom: "0.75rem" }}>
-            <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#C5A95A", display: "inline-block" }} />
+            <span style={{ width: 10, height: 10, borderRadius: "50%", background: "var(--bx-brass)", display: "inline-block" }} />
             <span style={{ fontSize: "0.9375rem", fontWeight: 700, color: "var(--bx-parchment)" }}>Signature Required</span>
           </div>
           <p style={{ margin: "0 0 1rem", fontSize: "0.875rem", color: "var(--bx-slate)", lineHeight: 1.55 }}>
@@ -611,7 +606,7 @@ function renderPage(
           </p>
           <a
             href={`/reservations/${reservation.id}/agreement?token=${view.agreement.token}`}
-            style={{ display: "inline-block", background: "#C5A95A", color: "#1a1a1a", padding: "0.625rem 1.25rem", borderRadius: 8, fontWeight: 700, fontSize: "0.9rem", textDecoration: "none" }}
+            style={{ display: "inline-block", background: "var(--bx-brass)", color: "#fff", padding: "0.625rem 1.25rem", borderRadius: 8, fontWeight: 700, fontSize: "0.9rem", textDecoration: "none" }}
           >
             Review &amp; Sign Agreement →
           </a>
@@ -620,8 +615,8 @@ function renderPage(
 
       {/* Agreement signed confirmation */}
       {!view.staffView && view.agreement?.customer_signed_at && (
-        <div style={{ border: "1px solid #6EE7B7", borderRadius: "12px", padding: "0.875rem 1.25rem", marginBottom: "1rem", background: "color-mix(in srgb, #10B981 8%, transparent)" }}>
-          <span style={{ fontSize: "0.875rem", color: "#6EE7B7", fontWeight: 600 }}>✓ Facility Use Agreement signed</span>
+        <div style={{ border: "1px solid var(--tone-green-bd)", borderRadius: "12px", padding: "0.875rem 1.25rem", marginBottom: "1rem", background: "var(--tone-green-bg)" }}>
+          <span style={{ fontSize: "0.875rem", color: "var(--tone-green-fg)", fontWeight: 600 }}>✓ Facility Use Agreement signed</span>
         </div>
       )}
 
@@ -634,8 +629,8 @@ function renderPage(
 
       {/* COI accepted confirmation */}
       {!view.staffView && !!(reservation as Record<string, unknown>).coi_accepted_at && (
-        <div style={{ border: "1px solid #6EE7B7", borderRadius: "12px", padding: "0.875rem 1.25rem", marginBottom: "1rem", background: "color-mix(in srgb, #10B981 8%, transparent)" }}>
-          <span style={{ fontSize: "0.875rem", color: "#6EE7B7", fontWeight: 600 }}>✓ Certificate of Insurance verified</span>
+        <div style={{ border: "1px solid var(--tone-green-bd)", borderRadius: "12px", padding: "0.875rem 1.25rem", marginBottom: "1rem", background: "var(--tone-green-bg)" }}>
+          <span style={{ fontSize: "0.875rem", color: "var(--tone-green-fg)", fontWeight: 600 }}>✓ Certificate of Insurance verified</span>
         </div>
       )}
 
@@ -647,8 +642,7 @@ function renderPage(
           borderRadius: "12px",
           padding: "1.25rem 1.5rem",
           marginBottom: "1rem",
-          background: "var(--bx-ink-soft)",
-          boxShadow: "var(--shadow-2)",
+          background: "var(--bx-surface)", backdropFilter: "blur(var(--bx-blur)) saturate(150%)", WebkitBackdropFilter: "blur(var(--bx-blur)) saturate(150%)", boxShadow: "inset 0 1px 0 var(--bx-highlight), var(--shadow-2)",
         }}
       >
         <h2

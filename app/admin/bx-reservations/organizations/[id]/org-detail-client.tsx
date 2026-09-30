@@ -1,5 +1,6 @@
 "use client";
 
+import BodyPortal from "@/app/components/body-portal";
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -140,12 +141,14 @@ function DiscountFormModal({
   }
 
   return (
+    <BodyPortal>
     <div
-      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }}
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}
       onClick={onClose}
     >
       <div
-        style={{ background: "#1a1a22", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 16, padding: 28, width: "100%", maxWidth: 480, maxHeight: "90vh", overflowY: "auto" }}
+        className="bx-glass-strong"
+        style={{ borderRadius: 16, padding: 28, width: "100%", maxWidth: 480, maxHeight: "90vh", overflowY: "auto" }}
         onClick={(e) => e.stopPropagation()}
       >
         <h2 style={{ margin: "0 0 20px", fontSize: 18, fontWeight: 700, color: "var(--bx-parchment)" }}>
@@ -279,6 +282,7 @@ function DiscountFormModal({
         </form>
       </div>
     </div>
+    </BodyPortal>
   );
 }
 
@@ -359,7 +363,7 @@ export default function OrgDetailClient({ org: initialOrg, linkedUsers, reservat
   ] as const;
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bx-ink)", color: "var(--bx-parchment)" }}>
+    <div style={{ minHeight: "100vh", color: "var(--bx-parchment)" }}>
       {/* Header */}
       <div style={{ borderBottom: "1px solid color-mix(in srgb, var(--bx-parchment) 12%, transparent)", padding: "20px 32px 0" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>

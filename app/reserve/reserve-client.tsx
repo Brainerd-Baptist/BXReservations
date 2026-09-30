@@ -176,13 +176,13 @@ function ContactStep({
 
   return (
     <div className="max-w-lg mx-auto">
-      <div className="animate-in bg-ink-soft rounded-2xl border border-parchment/10 shadow-sm p-6 mb-6">
+      <div className="animate-in bx-glass rounded-2xl p-6 mb-6">
       <h2 className="text-2xl font-bold text-parchment mb-1">Let's get started</h2>
       <p className="text-slate mb-4">Tell us a bit about you and your event.</p>
 
       {/* Returning-user nudge — only shown when signed out */}
       {!isSignedIn && (
-        <div className="flex items-center justify-between bg-ink border border-parchment/15 rounded-xl px-4 py-3 mb-6">
+        <div className="flex items-center justify-between bx-well rounded-xl px-4 py-3 mb-6">
           <p className="text-sm text-slate">Already have an account?</p>
           <a
             href="/login?next=/reserve"
@@ -395,7 +395,7 @@ function BuilderStep({
       <p className="text-slate mb-6">Set your dates, configure each day, and choose your spaces.</p>
 
       {/* Date range + default headcount */}
-      <div className="animate-in bg-ink-soft border border-parchment/10 rounded-2xl p-5 mb-6 shadow-sm">
+      <div className="animate-in bx-glass rounded-2xl p-5 mb-6">
         <div className="grid grid-cols-1 gap-3 mb-4 sm:grid-cols-2 sm:gap-4 overflow-hidden">
           <Field label="Start date" required>
             <input type="date" value={startDate}
@@ -586,7 +586,7 @@ function DayCard({
   const est = dayEstimate(day, isNP);
 
   return (
-    <div className={`rounded-2xl border transition-all ${isDayBlocked ? "border-red-200 bg-red-50" : day.included ? "border-parchment/15 bg-ink-soft shadow-sm" : "border-dashed border-parchment/15 bg-ink opacity-60"}`}>
+    <div className={`rounded-2xl border transition-all ${isDayBlocked ? "bx-tone-red" : day.included ? "bx-glass-flat border-parchment/15" : "bx-well border-dashed border-parchment/15 opacity-70"}`}>
       {isDayBlocked && (
         <div className="flex items-center gap-2 px-4 py-2 bg-red-50 rounded-t-2xl border-b border-red-100 text-xs text-red-700 font-medium">
           <span style={{color:"var(--bx-clay)"}}><svg width="1.5rem" height="1.5rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" style={{display:"inline",verticalAlign:"-0.2em"}}><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg></span>
@@ -921,7 +921,7 @@ function ReviewStep({
 
         {/* ── Sign-in nudge (only shown when not logged in) ─── */}
         {!userId && (
-        <div className="mt-6 p-4 bg-ink-soft border border-brass/30 rounded-2xl text-left flex items-start gap-3">
+        <div className="mt-6 p-4 bx-glass-flat border-brass/30 rounded-2xl text-left flex items-start gap-3">
           <div className="w-8 h-8 rounded-full bg-brass/5 flex items-center justify-center shrink-0 mt-0.5">
             <svg className="w-4 h-4 text-brass" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
@@ -964,7 +964,7 @@ function ReviewStep({
       <p className="text-slate mb-6">Everything look right? Add any notes, then send your request.</p>
 
       {/* Contact summary */}
-      <div className="bg-ink rounded-2xl p-4 mb-4 border border-parchment/10">
+      <div className="bx-well rounded-2xl p-4 mb-4">
         <p className="text-xs font-semibold text-slate uppercase tracking-wide mb-2">About you</p>
         <p className="font-semibold text-parchment">{contact.name} · {contact.org}</p>
         <p className="text-sm text-slate">{contact.email} · {contact.phone}</p>
@@ -972,7 +972,7 @@ function ReviewStep({
       </div>
 
       {/* Event summary */}
-      <div className="bg-ink rounded-2xl p-4 mb-4 border border-parchment/10">
+      <div className="bx-well rounded-2xl p-4 mb-4">
         <p className="text-xs font-semibold text-slate uppercase tracking-wide mb-2">Event</p>
         <p className="font-semibold text-parchment text-lg">{contact.eventName}</p>
         <p className="text-sm text-slate">
@@ -990,7 +990,7 @@ function ReviewStep({
           const confirmed = day.rooms.filter(r => !r.requested);
           const requested = day.rooms.filter(r => r.requested);
           return (
-            <div key={day.date} className="bg-ink-soft border border-parchment/15 rounded-2xl p-4">
+            <div key={day.date} className="bx-glass-flat border-parchment/15 rounded-2xl p-4">
               <div className="flex items-center justify-between mb-2">
                 <p className="font-semibold text-parchment text-sm">{fmtDate(day.date)}</p>
                 <span className="text-xs text-slate">{slotLabel[day.timeSlot] ?? "Any time"} · {day.headcount} people</span>
@@ -1186,7 +1186,7 @@ function ShareSection({ reservationId }: { reservationId: string }) {
   const canSend = rows.some(r => r.email.trim().length > 0);
 
   return (
-    <div className="mt-6 p-4 bg-ink-soft border border-brass/30 rounded-2xl text-left">
+    <div className="mt-6 p-4 bx-glass-flat border-brass/30 rounded-2xl text-left">
       <div className="flex items-center gap-2 mb-3">
         <svg className="w-4 h-4 text-brass shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
@@ -1381,7 +1381,7 @@ export default function ReserveClient({ initialContact, userId }: ReserveClientP
   }
 
   return (
-    <div className="min-h-screen bg-ink relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden">
       <div className="bx-bloom" aria-hidden="true" />
       <div className="relative px-4 pt-6 pb-16">
         <StepBar step={step} />

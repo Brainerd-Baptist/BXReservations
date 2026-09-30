@@ -71,7 +71,7 @@ export default function RoomRates() {
 
   return (
     <section
-      className="border border-parchment/10 rounded-xl p-5 bg-ink/40 space-y-4"
+      className="bx-glass rounded-xl p-5 space-y-4"
       aria-label="Room rates"
     >
       <div>
@@ -100,7 +100,7 @@ export default function RoomRates() {
             return (
               <div
                 key={room.id}
-                className="rounded-lg border border-parchment/10 bg-ink/60 p-4 space-y-2"
+                className="rounded-lg bx-well p-4 space-y-2"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>

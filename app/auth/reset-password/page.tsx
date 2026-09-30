@@ -47,7 +47,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-ink">
+    <div className="min-h-screen flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-sm">
 
         <div className="text-center mb-8 flex flex-col items-center">
@@ -58,7 +58,7 @@ export default function ResetPasswordPage() {
           <h1 className="text-xl font-bold text-parchment">Set a new password</h1>
         </div>
 
-        <div className="bg-ink-soft border border-parchment/10 rounded-xl p-7 shadow-sm">
+        <div className="bx-glass rounded-2xl p-7 animate-in">
 
           {sessionReady === null && (
             <p className="text-sm text-slate text-center py-4">Verifying reset link…</p>

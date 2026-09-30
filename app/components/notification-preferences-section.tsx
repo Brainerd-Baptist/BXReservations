@@ -120,7 +120,7 @@ export default function NotificationPreferencesSection({
       className="rounded-xl p-5"
       style={{
         border: "1px solid color-mix(in srgb, var(--bx-brass) 20%, transparent)",
-        background: "color-mix(in srgb, var(--bx-ink-soft) 80%, transparent)",
+        background: "var(--bx-surface)", backdropFilter: "blur(var(--bx-blur)) saturate(150%)", WebkitBackdropFilter: "blur(var(--bx-blur)) saturate(150%)", boxShadow: "inset 0 1px 0 var(--bx-highlight), var(--shadow-2)",
       }}
     >
       <p

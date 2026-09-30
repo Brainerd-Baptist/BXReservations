@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import BodyPortal from "./body-portal";
 
 interface StaffPhotoProps {
   thumbSrc: string;
@@ -54,19 +55,20 @@ export default function StaffPhoto({ thumbSrc, fullSrc, name, size = 80 }: Staff
 
       {/* Lightbox */}
       {open && (
+        <BodyPortal>
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
           onClick={() => setOpen(false)}
         >
           <div
-            className="relative bg-white rounded-3xl overflow-hidden shadow-2xl"
+            className="relative bx-glass-strong rounded-3xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
             style={{ maxWidth: 360, width: "100%" }}
           >
             {/* Close button */}
             <button
               onClick={() => setOpen(false)}
-              className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white/80 backdrop-blur flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-white shadow transition-colors"
+              className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-black/40 backdrop-blur flex items-center justify-center text-white/90 hover:text-white hover:bg-black/60 shadow transition-colors"
               aria-label="Close"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -86,10 +88,11 @@ export default function StaffPhoto({ thumbSrc, fullSrc, name, size = 80 }: Staff
 
             {/* Name strip */}
             <div className="px-5 py-4 text-center">
-              <div className="font-bold text-gray-900">{name}</div>
+              <div className="font-bold text-parchment">{name}</div>
             </div>
           </div>
         </div>
+        </BodyPortal>
       )}
     </>
   );
