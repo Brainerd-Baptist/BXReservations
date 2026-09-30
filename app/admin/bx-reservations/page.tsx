@@ -23,6 +23,7 @@ import CommentsThread from "@/components/bx/CommentsThread";
 import EventLogoCard from "@/app/components/event-logo-card";
 import VenueSettings from "@/app/components/venue-settings";
 import BillingCard from "@/app/components/billing-card";
+import EditBooking from "@/app/components/edit-booking";
 import RoomRates from "@/app/components/room-rates";
 import AddonCatalog from "@/app/components/addon-catalog";
 import { useState, useEffect, useCallback } from "react";
@@ -778,6 +779,13 @@ export default function BxReservationsAdmin() {
                             Attendee packet
                           </a>
                         </div>
+                      </div>
+                    )}
+
+                    {/* ── Edit booking details (names, contact, schedule) */}
+                    {req.dbId && (
+                      <div onClick={e => e.stopPropagation()}>
+                        <EditBooking reservationId={req.dbId} onSaved={fetchReservations} compact />
                       </div>
                     )}
 

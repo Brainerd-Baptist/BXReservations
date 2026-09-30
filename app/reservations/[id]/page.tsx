@@ -16,6 +16,7 @@ import SignOptions from "@/app/components/sign-options";
 import SelfCancelButton from "./SelfCancelButton";
 import CommentsThread from "@/components/bx/CommentsThread";
 import BillingCard from "@/app/components/billing-card";
+import EditBooking from "@/app/components/edit-booking";
 import COIUploadCard from "./COIUploadCard";
 
 const STATUS_META: Record<string, { dot: string }> = {
@@ -509,6 +510,8 @@ function renderPage(
         >
           Details
         </h2>
+
+        <EditBooking reservationId={reservation.id} />
 
         <Field label="Space" value={spaceLine} />
         <Field label="Event name" value={reservation.event_name} />
