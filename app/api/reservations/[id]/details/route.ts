@@ -5,6 +5,7 @@ import { adminClient, getEventMapContext } from "@/lib/event-map";
 import { isClosedStatus } from "@/lib/dates";
 import { ROOMS } from "@/lib/rooms";
 import { sendEmail, brandedEmailHtml } from "@/lib/email";
+import { findConflicts, type Conflict } from "@/lib/conflicts";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -37,6 +38,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
   const open = !(isClosedStatus(r.status) || ["declined", "expired"].includes(r.status ?? ""));
   return NextResponse.json({
     reservation: { ...r, days: (r.payload as { days?: unknown[] } | null)?.days ?? [] },
+    review: ctx.staff ? ((r.payload as { schedule_review?: unknown } | null)?.schedule_review ?? null) : null,
     staff: ctx.staff,
     canEdit: ctx.staff || (ctx.access === "edit" && open),
     canRequestChange: !ctx.staff && ctx.access === "edit" && open,
@@ -107,6 +109,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   // ── Days ──
   const oldDays = Array.isArray(payload.days) ? (payload.days as Day[]) : [];
+  let acknowledged: Conflict[] = [];
+  let conflictNote = "";
   if (Array.isArray(body.days)) {
     const incoming = body.days as Partial<Day>[];
     if (!staff) {
@@ -144,6 +148,21 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       next.sort((a, b) => a.date.localeCompare(b.date));
       const sig = (ds: Day[]) => JSON.stringify(ds.map((d) => [d.date, d.included !== false, d.headcount, d.customStart, d.customEnd, d.timeSlot, (d.rooms ?? []).filter((rm) => rm.requested !== false).map((rm) => [rm.roomId, rm.setup])]));
       if (sig(next) !== sig(oldDays)) {
+        // Calendar check on what changed. Staff see the clashes and either
+        // go back or confirm the overlap is OK ("acknowledge_conflicts").
+        const conflicts = await findConflicts(db, r.id, oldDays, next);
+        if (conflicts.length && body.acknowledge_conflicts !== true) {
+          return NextResponse.json({ error: "Possible conflicts", conflicts }, { status: 409 });
+        }
+        if (conflicts.length) {
+          conflictNote = String(body.conflict_note ?? "").trim().slice(0, 500);
+          acknowledged = conflicts;
+          payload.schedule_review = {
+            conflicts, note: conflictNote || null, approved_by: user.id, approved_at: new Date().toISOString(),
+          };
+        } else if (payload.schedule_review) {
+          delete payload.schedule_review;   // nothing clashes any more
+        }
         payload.days = next;
         if (JSON.stringify(next.map((d) => d.headcount)) !== JSON.stringify(oldDays.map((d) => d.headcount))) changes.push("headcount");
         changes.push("schedule");
@@ -163,6 +182,13 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     reservation_id: r.id, actor_id: user.id, actor_name: who, actor_role: staff ? "admin" : "user",
     action: "details_edited", note: `Updated ${list}.`,
   });
+  if (acknowledged.length) {
+    await db.from("reservation_history").insert({
+      reservation_id: r.id, actor_id: user.id, actor_name: who, actor_role: "admin",
+      action: "conflict_approved",
+      note: `Approved overlap: ${acknowledged.map((c) => c.message).join(" ")}${conflictNote ? ` — ${conflictNote}` : ""}`.slice(0, 1000),
+    });
+  }
 
   // Let the other side know
   const ref = r.booking_number ?? r.id.slice(0, 8);

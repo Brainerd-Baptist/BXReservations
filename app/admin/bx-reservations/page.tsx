@@ -26,6 +26,7 @@ import BillingCard from "@/app/components/billing-card";
 import EditBooking from "@/app/components/edit-booking";
 import RoomRates from "@/app/components/room-rates";
 import AddonCatalog from "@/app/components/addon-catalog";
+import GridToggle from "@/app/components/grid-toggle";
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { BlackoutRule, ruleDescription } from "@/lib/blackouts";
@@ -619,6 +620,7 @@ export default function BxReservationsAdmin() {
             <VenueSettings />
             <RoomRates />
             <AddonCatalog />
+            <GridToggle />
             <BlackoutSettings
               rules={blackouts}
               loading={blackoutsLoading}

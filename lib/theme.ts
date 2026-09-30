@@ -1,8 +1,8 @@
 // Appearance for BX Reservations — two themes and an automatic mode.
 //
-//   Light  (data-theme="brainerd")   the church's brand colors; the default
+//   Light  (data-theme="brainerd")   the church's brand colors
 //   Dark   (data-theme="glass-dark") deep navy with the brand teal
-//   Auto   follows the device's light/dark setting, live
+//   Auto   follows the device's light/dark setting, live — the default
 //
 // The data-theme ids are kept from the old eight-theme system so CSS, the
 // building map and saved preferences keep working. Retired themes are mapped
@@ -12,7 +12,7 @@ export const THEMES = [
   {
     id: "brainerd",
     label: "Light",
-    description: "Warm linen and the church's navy and teal. The default.",
+    description: "Warm linen and the church's navy and teal.",
     swatch: ["#F5F1EB", "#FEFCF8", "#00abc9", "#00205b"],
   },
   {
@@ -29,11 +29,11 @@ export type Appearance = ThemeId | "system";
 export const APPEARANCES: { id: Appearance; label: string; description: string }[] = [
   { id: "brainerd", label: "Light", description: THEMES[0].description },
   { id: "glass-dark", label: "Dark", description: THEMES[1].description },
-  { id: "system", label: "Auto", description: "Matches your device — light by day, dark by night if your phone or computer is set that way." },
+  { id: "system", label: "Auto", description: "Matches your device — light by day, dark by night if your phone or computer is set that way. The default." },
 ];
 
 export const DEFAULT_THEME: ThemeId = "brainerd";
-export const DEFAULT_APPEARANCE: Appearance = "brainerd";
+export const DEFAULT_APPEARANCE: Appearance = "system";
 export const THEME_STORAGE_KEY = "bx-reservations-theme";
 
 /** Retired themes → the survivor that feels closest. */
@@ -99,4 +99,4 @@ export function currentAppearance(): Appearance {
 
 // Blocking inline script — inlined into <head> before first paint to prevent a flash.
 // Normalizes legacy ids, resolves "system", and keeps Auto live if the OS flips.
-export const THEME_INIT_SCRIPT = `(function(){try{var L={"glass-light":"brainerd",ledger:"glass-dark",harbor:"glass-dark",heather:"glass-dark",moss:"glass-dark",orbit:"glass-dark"};var r=document.documentElement,a=localStorage.getItem("bx-reservations-theme");if(a&&L[a]){a=L[a];localStorage.setItem("bx-reservations-theme",a);}if(a!=="brainerd"&&a!=="glass-dark"&&a!=="system")a="brainerd";var m=window.__bxMQ=window.matchMedia("(prefers-color-scheme: dark)");r.setAttribute("data-appearance",a);r.setAttribute("data-theme",a==="system"?(m.matches?"glass-dark":"brainerd"):a);if(a==="system"&&m.addEventListener)m.addEventListener("change",function(e){if(r.getAttribute("data-appearance")==="system")r.setAttribute("data-theme",e.matches?"glass-dark":"brainerd");});var d=localStorage.getItem("bx-reservations-grid-dots");if(d===null||d==="on")r.setAttribute("data-grid-dots","on");var l=localStorage.getItem("bx-reservations-grid-lines");if(l==="on")r.setAttribute("data-grid-lines","on");}catch(e){}try{if(!window.matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.setAttribute("data-reveal","");}catch(e){}})();`;
+export const THEME_INIT_SCRIPT = `(function(){try{var K="bx-reservations-theme",V="bx-reservations-theme-v2",L={"glass-light":"brainerd",ledger:"glass-dark",harbor:"glass-dark",heather:"glass-dark",moss:"glass-dark",orbit:"glass-dark"};var r=document.documentElement,a=null;try{if(!localStorage.getItem(V)){localStorage.setItem(V,"1");localStorage.setItem(K,"system");}a=localStorage.getItem(K);}catch(e){}if(a&&L[a])a=L[a];if(a!=="brainerd"&&a!=="glass-dark"&&a!=="system")a="system";var m=window.__bxMQ=window.matchMedia("(prefers-color-scheme: dark)");r.setAttribute("data-appearance",a);r.setAttribute("data-theme",a==="system"?(m.matches?"glass-dark":"brainerd"):a);if(a==="system"&&m.addEventListener)m.addEventListener("change",function(e){if(r.getAttribute("data-appearance")==="system")r.setAttribute("data-theme",e.matches?"glass-dark":"brainerd");});}catch(e){}try{if(!window.matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.setAttribute("data-reveal","");}catch(e){}})();`;

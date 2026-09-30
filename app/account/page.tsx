@@ -8,7 +8,6 @@ import { cookies } from "next/headers";
 import SignOutButton from "./sign-out-button";
 import ProfileForm from "./profile-form";
 import ThemeGrid from "../components/theme-grid";
-import GridToggle from "../components/grid-toggle";
 import NotificationPreferencesSection, {
   type BxNotificationPrefs,
 } from "../components/notification-preferences-section";
@@ -255,14 +254,10 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           Appearance
         </h2>
         <p style={{ fontSize: "0.75rem", color: "var(--bx-slate)", margin: "0 0 1rem", opacity: 0.8 }}>
-          Light, Dark, or Auto to follow your device. Saved to your account, so it follows you to every phone and computer.
+          Auto follows your device (the default), or pick Light or Dark. Saved to your account, so it follows you to every phone and computer.
         </p>
         <ThemeGrid userId={user.id} savedTheme={userPrefs?.theme ?? null} />
 
-        {/* Grid / dot-pattern toggle */}
-        <div style={{ marginTop: "1.25rem" }}>
-          <GridToggle userId={user.id} savedDots={userPrefs?.show_grid ?? true} savedLines={userPrefs?.show_grid_lines ?? false} />
-        </div>
       </div>
 
       {/* ── Notification preferences ── */}

@@ -5,6 +5,7 @@ import ScrollReveal from "./components/scroll-reveal";
 import AmbientBackground from "./components/ambient-background";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
+import { getSiteLook } from "@/lib/site-look";
 import { ToastProvider } from "./components/Toast";
 
 const inter = Inter({
@@ -35,15 +36,23 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-const APP_VERSION = "1.48.0";
+const APP_VERSION = "1.49.0";
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Background grid is one site-wide choice (Owner, Admin → Settings)
+  const look = await getSiteLook();
   return (
-    <html lang="en" className={`${inter.variable} ${cormorant.variable}`}>
+    <html
+      lang="en"
+      className={`${inter.variable} ${cormorant.variable}`}
+      data-grid-dots={look.gridDots ? "on" : undefined}
+      data-grid-lines={look.gridLines ? "on" : undefined}
+      suppressHydrationWarning
+    >
       <head>
         {/* Blocking theme-init script — must run before first paint to prevent flash */}
         {/* eslint-disable-next-line @next/next/no-before-interactive-script-component */}

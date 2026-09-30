@@ -1,155 +1,71 @@
 "use client";
+
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { useToast } from "./Toast";
 
-export const GRID_DOTS_KEY = "bx-reservations-grid-dots";
-export const GRID_LINES_KEY = "bx-reservations-grid-lines";
-
-export function applyGridDots(enabled: boolean) {
-  if (typeof document === "undefined") return;
-  if (enabled) {
-    document.documentElement.setAttribute("data-grid-dots", "on");
-  } else {
-    document.documentElement.removeAttribute("data-grid-dots");
-  }
-  try { window.localStorage.setItem(GRID_DOTS_KEY, enabled ? "on" : "off"); } catch {}
+function setAttr(name: string, on: boolean) {
+  if (on) document.documentElement.setAttribute(name, "on");
+  else document.documentElement.removeAttribute(name);
 }
 
-export function applyGridLines(enabled: boolean) {
-  if (typeof document === "undefined") return;
-  if (enabled) {
-    document.documentElement.setAttribute("data-grid-lines", "on");
-  } else {
-    document.documentElement.removeAttribute("data-grid-lines");
-  }
-  try { window.localStorage.setItem(GRID_LINES_KEY, enabled ? "on" : "off"); } catch {}
-}
-
-function Toggle({
-  enabled,
-  onToggle,
-  saving,
-  label,
-}: {
-  enabled: boolean;
-  onToggle: () => void;
-  saving: boolean;
-  label: string;
-}) {
+function Switch({ label, hint, on, busy, onToggle }: { label: string; hint: string; on: boolean; busy: boolean; onToggle: () => void }) {
   return (
-    <button
-      role="switch"
-      aria-label={label}
-      aria-checked={enabled}
-      onClick={onToggle}
-      disabled={saving}
-      className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
-      style={{
-        background: enabled
-          ? "var(--bx-brass)"
-          : "color-mix(in srgb, var(--bx-parchment) 20%, transparent)",
-        opacity: saving ? 0.6 : 1,
-      }}
-    >
-      <span
-        className="inline-block h-4 w-4 transform rounded-full transition-transform"
-        style={{
-          background: "var(--bx-parchment)",
-          transform: enabled ? "translateX(1.375rem)" : "translateX(0.25rem)",
-        }}
-      />
-    </button>
+    <div className="flex items-center justify-between gap-4">
+      <div>
+        <p className="text-sm font-medium text-parchment">{label}</p>
+        <p className="text-xs text-slate">{hint}</p>
+      </div>
+      <button
+        type="button" role="switch" aria-label={label} aria-checked={on} onClick={onToggle} disabled={busy}
+        className="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors"
+        style={{ background: on ? "var(--bx-action-bg)" : "color-mix(in srgb, var(--bx-parchment) 20%, transparent)", opacity: busy ? 0.6 : 1 }}
+      >
+        <span className="inline-block h-4 w-4 rounded-full transition-transform"
+          style={{ background: on ? "var(--bx-action-fg)" : "var(--bx-parchment)", transform: on ? "translateX(1.375rem)" : "translateX(0.25rem)" }} />
+      </button>
+    </div>
   );
 }
 
-export default function GridToggle({
-  userId,
-  savedDots,
-  savedLines,
-}: {
-  userId: string;
-  savedDots: boolean;
-  savedLines: boolean;
-}) {
-  const [dotsEnabled, setDotsEnabled] = useState(savedDots);
-  const [linesEnabled, setLinesEnabled] = useState(savedLines);
-  const [savingDots, setSavingDots] = useState(false);
-  const [savingLines, setSavingLines] = useState(false);
+/**
+ * Admin → Settings → Site background (Owner only). One choice for every
+ * visitor; renders nothing for other roles.
+ */
+export default function GridToggle() {
   const { toast } = useToast();
+  const [look, setLook] = useState<{ gridDots: boolean; gridLines: boolean } | null>(null);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    let live = true;
+    fetch("/api/admin/site-look").then((r) => (r.ok ? r.json() : null)).then((d) => { if (live && d) setLook(d); }).catch(() => {});
+    return () => { live = false; };
+  }, []);
+  if (!look) return null;
+
+  async function save(patch: Partial<typeof look>) {
+    const next = { ...look!, ...patch };
+    setLook(next);
+    setAttr("data-grid-dots", next.gridDots);
+    setAttr("data-grid-lines", next.gridLines);
+    setBusy(true);
     try {
-      const storedDots = localStorage.getItem(GRID_DOTS_KEY);
-      const storedLines = localStorage.getItem(GRID_LINES_KEY);
-      const d = storedDots !== null ? storedDots !== "off" : savedDots;
-      const l = storedLines !== null ? storedLines !== "off" : savedLines;
-      setDotsEnabled(d);
-      setLinesEnabled(l);
-      applyGridDots(d);
-      applyGridLines(l);
-    } catch {
-      applyGridDots(savedDots);
-      applyGridLines(savedLines);
-    }
-  }, [savedDots, savedLines]);
-
-  async function handleDotsToggle() {
-    if (savingDots) return;
-    const next = !dotsEnabled;
-    setDotsEnabled(next);
-    applyGridDots(next);
-    setSavingDots(true);
-    const supabase = createClient();
-    const { error } = await supabase.from("bx_user_prefs").upsert({
-      user_id: userId,
-      show_grid: next,
-      updated_at: new Date().toISOString(),
-    });
-    if (error) toast("Changed on this device, but we couldn't save it to your account.", "error");
-    setSavingDots(false);
-  }
-
-  async function handleLinesToggle() {
-    if (savingLines) return;
-    const next = !linesEnabled;
-    setLinesEnabled(next);
-    applyGridLines(next);
-    setSavingLines(true);
-    const supabase = createClient();
-    const { error } = await supabase.from("bx_user_prefs").upsert({
-      user_id: userId,
-      show_grid_lines: next,
-      updated_at: new Date().toISOString(),
-    });
-    if (error) toast("Changed on this device, but we couldn't save it to your account.", "error");
-    setSavingLines(false);
+      const r = await fetch("/api/admin/site-look", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) });
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error ?? "Couldn't save");
+      toast("Saved for everyone.", "success");
+    } catch (e) {
+      toast((e as Error).message, "error");
+    } finally { setBusy(false); }
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium" style={{ color: "var(--bx-parchment)" }}>
-            Background dots
-          </p>
-          <p className="text-xs" style={{ color: "color-mix(in srgb, var(--bx-parchment) 60%, transparent)" }}>
-            Subtle dot pattern on page backgrounds.
-          </p>
-        </div>
-        <Toggle label="Background dots" enabled={dotsEnabled} onToggle={handleDotsToggle} saving={savingDots} />
+    <section className="rounded-2xl bx-glass p-5 mb-4 space-y-4" aria-label="Site background">
+      <div>
+        <p className="font-semibold text-parchment">Site background <span className="text-xs font-normal text-slate">· Owner only</span></p>
+        <p className="text-sm text-slate mt-1">The animated grid behind every page, for every visitor.</p>
       </div>
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium" style={{ color: "var(--bx-parchment)" }}>
-            Background grid lines
-          </p>
-          <p className="text-xs" style={{ color: "color-mix(in srgb, var(--bx-parchment) 60%, transparent)" }}>
-            Fine crosshatch pattern on page backgrounds.
-          </p>
-        </div>
-        <Toggle label="Background grid lines" enabled={linesEnabled} onToggle={handleLinesToggle} saving={savingLines} />
-      </div>
-    </div>
+      <Switch label="Background dots" hint="Subtle twinkling dot grid." on={look.gridDots} busy={busy} onToggle={() => save({ gridDots: !look.gridDots })} />
+      <Switch label="Background lines" hint="Faint line grid." on={look.gridLines} busy={busy} onToggle={() => save({ gridLines: !look.gridLines })} />
+    </section>
   );
 }
