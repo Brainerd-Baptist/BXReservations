@@ -19,16 +19,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: callerRole } = await supabase
+  // Read the caller's role with the service key: the roles table's own
+  // row-level rules are for the browser, not for this server check.
+  const svc = serviceClient();
+  if (!svc) {
+    return NextResponse.json({ error: "Service client unavailable" }, { status: 503 });
+  }
+  const { data: callerRole } = await svc
     .from("bx_user_roles")
     .select("role")
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
 
   const role = callerRole?.role ?? "member";
-  const isAdmin = ["owner", "system_admin", "booking_admin"].includes(role);
-  if (!isAdmin) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  // Only Owners and System Admins manage roles.
+  if (role !== "owner" && role !== "system_admin") {
+    return NextResponse.json({ error: "Only an Owner or System Admin can change roles." }, { status: 403 });
   }
 
   let body: { userId?: string; role?: string };
@@ -46,18 +52,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `Invalid role. Valid: ${VALID_ROLES.join(", ")}` }, { status: 400 });
   }
 
-  const svc = serviceClient();
-  if (!svc) {
-    return NextResponse.json({ error: "Service client unavailable" }, { status: 503 });
-  }
-
   // Safeguard: refuse to demote/remove the last owner
   if (newRole !== "owner") {
     const { data: currentRoleRow } = await svc
       .from("bx_user_roles")
       .select("role")
       .eq("user_id", userId)
-      .single();
+      .maybeSingle();
     if (currentRoleRow?.role === "owner") {
       const { count } = await svc
         .from("bx_user_roles")
@@ -72,11 +73,18 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Safeguard: only owners can assign or revoke the owner role
-  if (newRole === "owner" || /* revoking owner */ false) {
-    if (role !== "owner") {
+  // Safeguard: only an Owner can grant Owner or System Admin, or change
+  // someone who already holds either.
+  if (role !== "owner") {
+    const { data: targetRow } = await svc
+      .from("bx_user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .maybeSingle();
+    const target = targetRow?.role;
+    if (newRole === "owner" || newRole === "system_admin" || target === "owner" || target === "system_admin") {
       return NextResponse.json(
-        { error: "Only an owner can assign the owner role." },
+        { error: "Only an Owner can assign or change Owner and System Admin roles." },
         { status: 403 }
       );
     }

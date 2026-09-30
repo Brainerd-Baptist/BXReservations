@@ -2,10 +2,11 @@
 
 import BodyPortal from "@/app/components/body-portal";
 import LoadError from "@/app/components/load-error";
+import RolePicker from "@/app/components/role-picker";
 import { useModalDialog } from "@/app/components/use-modal-dialog";
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { Search, UserPlus, Shield, ChevronDown, Check, X, Loader2, Mail, Trash2 } from "lucide-react";
+import { Search, UserPlus, Shield, Check, X, Loader2, Mail, Trash2 } from "lucide-react";
 import { can, ROLES_ORDERED, ROLE_LABELS, ROLE_DESCRIPTIONS, type BxRole } from "@/lib/roles";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -64,88 +65,6 @@ function RoleBadge({ role }: { role: BxRole | null }) {
     <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold tracking-wide border border-parchment/20 bg-parchment/8 text-parchment/70">
       {ROLE_LABELS[role]}
     </span>
-  );
-}
-
-// ─── Role picker dropdown ─────────────────────────────────────────────────────
-
-function RolePicker({
-  userId,
-  current,
-  callerRole,
-  onSaved,
-}: {
-  userId: string;
-  current: BxRole | null;
-  callerRole: BxRole;
-  onSaved: (newRole: BxRole) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [pending, setPending] = useState<BxRole | null>(null);
-
-  // Roles the caller is allowed to assign
-  const assignable = ROLES_ORDERED.filter((r) => {
-    if (r === "owner") return false; // owner can't be assigned via UI
-    if (callerRole === "owner") return true;
-    if (callerRole === "system_admin") return r !== "system_admin";
-    return false;
-  });
-
-  async function save(role: BxRole) {
-    setPending(role);
-    setSaving(true);
-    setOpen(false);
-    try {
-      const res = await fetch("/api/bx/roles", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, role }),
-      });
-      if (!res.ok) throw new Error("Failed");
-      onSaved(role);
-    } catch {
-      alert("Failed to save role. Try again.");
-    } finally {
-      setSaving(false);
-      setPending(null);
-    }
-  }
-
-  if (current === "owner") {
-    return <RoleBadge role="owner" />;
-  }
-
-  return (
-    <div className="relative inline-block">
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold border transition-all hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-[var(--bx-focus)] bg-ink-soft border-parchment/20 text-parchment"
-      >
-        {saving ? (
-          <><Loader2 size={12} className="animate-spin" />{ROLE_LABELS[pending ?? (current ?? "member")]}</>
-        ) : (
-          <>{current ? ROLE_LABELS[current] : "Assign role"}<ChevronDown size={12} /></>
-        )}
-      </button>
-      {open && (
-        <div className="absolute z-50 left-0 mt-1 w-52 bx-glass-strong rounded-xl py-1">
-          {assignable.map((r) => (
-            <button
-              key={r}
-              onClick={() => save(r)}
-              className="w-full text-left px-3 py-2 text-xs hover:bg-parchment/5 flex items-start gap-2 group"
-            >
-              <Check size={12} className={`mt-0.5 flex-shrink-0 ${current === r ? "text-[var(--bx-accent-text)]" : "opacity-0 group-hover:opacity-30"}`} />
-              <div>
-                <div className="font-semibold text-parchment">{ROLE_LABELS[r]}</div>
-                <div className="text-slate text-[11px] leading-tight mt-0.5">{ROLE_DESCRIPTIONS[r]}</div>
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
   );
 }
 
@@ -421,6 +340,7 @@ export default function UsersPage() {
                         userId={u.id}
                         current={u.role}
                         callerRole={callerRole}
+                        badge={<RoleBadge role={u.role} />}
                         onSaved={(newRole) => {
                           setUsers((prev) => prev.map((x) => x.id === u.id ? { ...x, role: newRole } : x));
                         }}

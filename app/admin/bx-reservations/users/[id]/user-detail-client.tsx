@@ -2,13 +2,15 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
+import RolePicker from "@/app/components/role-picker";
+import { Tabs, tabId, panelId } from "@/app/components/ui/tabs";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft, User, Calendar, Building2, Mail,
-  Check, X, Pencil, Loader2, ChevronDown,
+  Check, X, Pencil, Loader2,
 } from "lucide-react";
 import {
-  ROLES_ORDERED, ROLE_LABELS, ROLE_DESCRIPTIONS, ROLE_RANK, type BxRole,
+  ROLE_LABELS, ROLE_RANK, type BxRole,
 } from "@/lib/roles";
 import type { UserAuth, UserProfile, UserReservation, LinkedOrg } from "./page";
 
@@ -104,58 +106,6 @@ function ReadValue({ value }: { value: string | null }) {
   return value ? <span className="text-parchment text-sm">{value}</span> : <span className="text-slate/40 text-sm italic">Not set</span>;
 }
 
-function RolePicker({ userId, current, callerRole, onSaved }: {
-  userId: string; current: BxRole | null; callerRole: BxRole | null; onSaved: (r: BxRole) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [resetSending, setResetSending] = useState(false);
-  const [resetDone, setResetDone] = useState(false);
-  const [pending, setPending] = useState<BxRole | null>(null);
-  const callerIsOwner = callerRole === "owner";
-  const callerIsSysAdmin = callerRole === "system_admin";
-  const assignable = ROLES_ORDERED.filter((r) => {
-    if (r === "owner") return callerIsOwner;
-    if (callerIsOwner) return true;
-    if (callerIsSysAdmin) return r !== "system_admin";  // r already ≠ "owner" here
-    return false;
-  });
-  if (current === "owner" && !callerIsOwner) return <RoleBadge role="owner" />;
-  if (!assignable.length) return <RoleBadge role={current} />;
-  async function pick(r: BxRole) {
-    setPending(r); setSaving(true); setOpen(false);
-    try {
-      const res = await fetch("/api/bx/roles", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId, role: r }) });
-      if (!res.ok) throw new Error("Failed");
-      onSaved(r);
-    } catch { alert("Failed to save role."); }
-    finally { setSaving(false); setPending(null); }
-  }
-  const display = saving ? pending ?? current : current;
-  return (
-    <div className="relative inline-block">
-      <button onClick={() => setOpen((o) => !o)}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-[var(--bx-focus)] border-parchment/20"
-        style={display ? { background: ROLE_COLORS[display].bg, color: ROLE_COLORS[display].text } : { background: "rgba(100,116,139,0.12)", color: "var(--bx-slate)" }}>
-        {saving ? <><Loader2 size={12} className="animate-spin" />{display ? ROLE_LABELS[display] : "Assigning"}</> : <>{current ? ROLE_LABELS[current] : "Assign role"}<ChevronDown size={12} /></>}
-      </button>
-      {open && (
-        <div className="absolute z-[500] left-0 mt-1 w-56 bx-glass-strong rounded-xl py-1">
-          {assignable.map((r) => (
-            <button key={r} onClick={() => pick(r)} className="w-full text-left px-3 py-2 text-xs hover:bg-parchment/5 flex items-start gap-2 group">
-              <Check size={12} className={`mt-0.5 flex-shrink-0 ${current === r ? "text-[var(--bx-accent-text)]" : "opacity-0 group-hover:opacity-30"}`} />
-              <div>
-                <div className="font-semibold text-parchment">{ROLE_LABELS[r]}</div>
-                <div className="text-slate text-[11px] leading-tight mt-0.5">{ROLE_DESCRIPTIONS[r]}</div>
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 type Tab = "profile" | "reservations" | "orgs";
 
 export default function UserDetailClient({ authUser, profile: initialProfile, userRole: initialRole, callerRole, reservations, linkedOrgs }: {
@@ -222,16 +172,16 @@ export default function UserDetailClient({ authUser, profile: initialProfile, us
         </nav>
 
         <div className="bx-glass rounded-2xl p-6 mb-6">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex items-center gap-4 min-w-0">
               <Initials name={displayName} email={authUser.email} />
-              <div>
+              <div className="min-w-0">
                 <h1 className="text-parchment font-bold text-xl leading-tight">
                   {displayName ?? <span className="text-slate italic font-normal">No display name</span>}
                 </h1>
-                <p className="text-slate text-sm mt-0.5">{authUser.email}</p>
+                <p className="text-slate text-sm mt-0.5 break-all">{authUser.email}</p>
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  <RolePicker userId={authUser.id} current={userRole} callerRole={callerRole} onSaved={setUserRole} />
+                  <RolePicker userId={authUser.id} current={userRole} callerRole={callerRole} onSaved={setUserRole} size="md" badge={<RoleBadge role={userRole} />} />
                   {authUser.email_confirmed_at
                     ? <span className="text-xs text-[var(--bx-sage)] bg-[rgba(5,150,105,0.1)] px-2 py-0.5 rounded-full">Confirmed</span>
                     : <span className="text-xs text-amber-400 bg-[rgba(217,119,6,0.1)] px-2 py-0.5 rounded-full">Pending confirmation</span>}
@@ -239,10 +189,10 @@ export default function UserDetailClient({ authUser, profile: initialProfile, us
               </div>
             </div>
             {canEdit && (
-              <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex flex-wrap items-center gap-2">
                 {editing ? (
                   <>
-                    <button onClick={cancelEdit} disabled={saving} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate hover:text-parchment rounded-lg border border-parchment/15 transition-colors">
+                    <button onClick={cancelEdit} disabled={saving} className="bx-btn bx-btn--secondary bx-btn--sm">
                       <X size={13} /> Cancel
                     </button>
                     <button onClick={saveEdit} disabled={saving} className="bx-btn bx-btn--primary bx-btn--sm">
@@ -258,12 +208,12 @@ export default function UserDetailClient({ authUser, profile: initialProfile, us
                         onClick={sendPasswordReset}
                         disabled={resetSending}
                         title="Send password reset email"
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate hover:text-brass rounded-lg border border-parchment/15 transition-colors disabled:opacity-50"
+                        className="bx-btn bx-btn--secondary bx-btn--sm"
                       >
                         <Mail size={13} /> {resetSending ? "Sending…" : "Send reset email"}
                       </button>
                     )}
-                    <button onClick={startEdit} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate hover:text-parchment rounded-lg border border-parchment/15 transition-colors">
+                    <button onClick={startEdit} className="bx-btn bx-btn--secondary bx-btn--sm">
                       <Pencil size={13} /> Edit
                     </button>
                   </>
@@ -274,19 +224,13 @@ export default function UserDetailClient({ authUser, profile: initialProfile, us
           <div className="mt-4 pt-4 border-t border-parchment/8 flex flex-wrap gap-x-6 gap-y-1">
             <span className="text-xs text-slate"><span className="font-semibold">Joined</span> {fmt(authUser.created_at)}</span>
             <span className="text-xs text-slate"><span className="font-semibold">Last active</span> {relTime(authUser.last_sign_in_at)}</span>
-            <span className="text-xs text-slate font-mono opacity-40">{authUser.id.slice(0, 8)}\u2026</span>
+            <span className="text-xs text-slate font-mono opacity-40">{authUser.id.slice(0, 8)}…</span>
           </div>
         </div>
 
-        <div className="flex gap-1 mb-4 border-b border-parchment/10">
-          {tabs.map((t) => (
-            <button key={t.key} onClick={() => setTab(t.key)}
-              className={`px-4 py-2 text-sm font-semibold rounded-t-xl border-b-2 transition-all -mb-px ${tab === t.key ? "border-[var(--bx-accent-text)] text-[var(--bx-accent-text)]" : "border-transparent text-slate hover:text-parchment"}`}>
-              {t.label}{t.count != null && t.count > 0 && <span className="ml-1.5 text-xs opacity-60">({t.count})</span>}
-            </button>
-          ))}
-        </div>
+        <Tabs group="user" label="User sections" className="mb-4" items={tabs} value={tab} onChange={setTab} />
 
+        <div role="tabpanel" id={panelId("user", tab)} aria-labelledby={tabId("user", tab)}>
         {tab === "profile" && (
           <div className="bx-glass rounded-2xl p-6">
             <div className="flex items-center gap-2 mb-5"><User size={15} className="text-slate" /><h2 className="text-parchment font-semibold text-sm">Profile information</h2></div>
@@ -328,13 +272,15 @@ export default function UserDetailClient({ authUser, profile: initialProfile, us
                   <th className="px-4 py-3 text-xs font-semibold text-slate hidden sm:table-cell">Status</th>
                   <th className="px-4 py-3 text-xs font-semibold text-slate hidden md:table-cell">Rack</th>
                   <th className="px-4 py-3 text-xs font-semibold text-slate hidden md:table-cell">Net</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate">Date</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate">Requested</th>
                 </tr></thead>
                 <tbody className="divide-y divide-parchment/5">
                   {reservations.map((r) => (
-                    <tr key={r.id} className="hover:bg-parchment/3 transition-colors">
+                    <tr key={r.id} className="bx-row-link relative hover:bg-parchment/3 transition-colors">
                       <td className="px-4 py-3">
-                        <div className="font-semibold text-parchment text-xs leading-tight">{r.event_name ?? "\u2014"}</div>
+                        <Link href={`/admin/bx-reservations?open=${r.id}`} className="bx-row-link__a font-semibold text-parchment text-xs leading-tight hover:text-[var(--bx-accent-text)]">
+                          {r.event_name ?? "Untitled event"}
+                        </Link>
                         {r.booking_number && <div className="text-[11px] text-slate mt-0.5 font-mono">{r.booking_number}</div>}
                       </td>
                       <td className="px-4 py-3 hidden sm:table-cell"><StatusBadge status={r.status} /></td>
@@ -380,6 +326,7 @@ export default function UserDetailClient({ authUser, profile: initialProfile, us
             )}
           </div>
         )}
+        </div>
       </div>
     </div>
   );

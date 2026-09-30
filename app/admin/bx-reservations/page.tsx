@@ -126,6 +126,22 @@ export default function BxReservationsAdmin() {
     if (seenUrl.status !== rawStatus) setFilter(statusFromUrl(rawStatus));
     if (seenUrl.view !== rawView) setCalOpen(rawView === "calendar");
   }
+  // ?open=<reservation id> (e.g. from a user's Reservations tab) selects that booking once it loads.
+  const openId = searchParams.get("open");
+  const [openedId, setOpenedId] = useState<string | null>(null);
+  if (openId && openedId !== openId && requests.length) {
+    const match = requests.find((r) => r.dbId === openId);
+    if (match) {
+      setOpenedId(openId);
+      setFilter("All");
+      setSelected(match);
+    }
+  }
+  useEffect(() => {
+    if (openedId && selected?.dbId === openedId) {
+      document.getElementById(`req-${openedId}`)?.scrollIntoView({ block: "start", behavior: "smooth" });
+    }
+  }, [openedId, selected]);
   const router = useRouter();
   const rawTab = searchParams.get("tab") ?? "requests";
   const tab = ["requests", "users", "ministries", "settings", "reports"].includes(rawTab)
@@ -688,6 +704,7 @@ export default function BxReservationsAdmin() {
             {filtered.map((req) => (
               <div
                 key={req.id}
+                id={req.dbId ? `req-${req.dbId}` : undefined}
                 className={`bx-row bx-glass-flat rounded-xl p-4 cursor-pointer ${
                   selected?.id === req.id ? "ring-2 ring-[var(--bx-accent-text)]" : ""
                 }`}

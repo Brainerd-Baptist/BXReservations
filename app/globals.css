@@ -510,6 +510,41 @@ code, kbd, samp, pre, .font-mono { font-family: var(--font-mono); font-feature-s
   .bx-btn__spinner { width: 1em; height: 1em; animation: bx-spin 0.8s linear infinite; }
   @keyframes bx-spin { to { transform: rotate(360deg); } }
 
+  /* Role picker (app/components/role-picker.tsx) — menu lives on its own top layer */
+  .bx-role-btn {
+    display: inline-flex; align-items: center; gap: 0.375rem; white-space: nowrap;
+    min-height: 2rem; padding: 0.25rem 0.75rem; border-radius: 9999px;
+    font-size: 0.75rem; font-weight: 600; color: var(--bx-parchment);
+    background-color: var(--bx-surface-strong); border: 1px solid var(--bx-hairline);
+    transition: border-color var(--duration-fast);
+  }
+  .bx-role-btn:hover:not(:disabled) { border-color: color-mix(in srgb, var(--bx-accent-text) 45%, transparent); }
+  .bx-role-btn:disabled { opacity: 0.7; cursor: progress; }
+  .bx-role-btn--md { min-height: 2.25rem; padding: 0.375rem 0.875rem; font-size: 0.8125rem; }
+  @media (pointer: coarse) { .bx-role-btn { min-height: 2.75rem; } }
+  .bx-role-menu {
+    position: fixed; z-index: 1000; overflow-y: auto; overscroll-behavior: contain;
+    padding: 0.25rem; border-radius: 0.875rem;
+    box-shadow: 0 18px 48px -12px rgba(0,0,0,0.45), 0 0 0 1px var(--bx-hairline);
+    animation: bx-role-in 120ms var(--ease-out);
+  }
+  @keyframes bx-role-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+  .bx-role-menu__item {
+    display: flex; align-items: flex-start; gap: 0.5rem; width: 100%; text-align: left;
+    padding: 0.5rem 0.625rem; border-radius: 0.625rem; font-size: 0.8125rem;
+  }
+  .bx-role-menu__item:hover, .bx-role-menu__item:focus-visible { background-color: color-mix(in srgb, var(--bx-parchment) 7%, transparent); }
+  .bx-role-menu__check { margin-top: 0.15rem; flex-shrink: 0; opacity: 0; color: var(--bx-accent-text); }
+  .bx-role-menu__check.is-on { opacity: 1; }
+  .bx-role-menu__label { display: block; font-weight: 600; color: var(--bx-parchment); }
+  .bx-role-menu__desc { display: block; margin-top: 0.125rem; font-size: 0.6875rem; line-height: 1.35; color: var(--bx-slate); }
+
+  /* Whole table row clickable through its one link (keeps a single tab stop) */
+  .bx-row-link { cursor: pointer; }
+  .bx-row-link__a::after { content: ""; position: absolute; inset: 0; }
+  .bx-row-link__a:focus-visible { outline: none; }
+  .bx-row-link:has(.bx-row-link__a:focus-visible) { outline: 2px solid var(--bx-focus); outline-offset: -2px; }
+
   .bx-field { display: flex; flex-direction: column; gap: 0.375rem; }
   .bx-field__label { font-size: 0.875rem; font-weight: 500; color: var(--bx-parchment); }
   .bx-field__req { margin-left: 0.125rem; color: var(--bx-clay); }
