@@ -7,6 +7,7 @@ import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 import { getSiteLook } from "@/lib/site-look";
 import { ToastProvider } from "./components/Toast";
+import SiteMetrics from "./components/site-metrics";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -36,7 +37,7 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-const APP_VERSION = "1.51.1";
+const APP_VERSION = "1.52.0";
 
 export default async function RootLayout({
   children,
@@ -74,6 +75,7 @@ export default async function RootLayout({
             BX Reservations v{APP_VERSION}
           </p>
         </footer>
+        <SiteMetrics />
       </body>
     </html>
   );

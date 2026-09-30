@@ -27,6 +27,7 @@ import EditBooking from "@/app/components/edit-booking";
 import PeopleCard from "@/app/components/people-card";
 import RoomRates from "@/app/components/room-rates";
 import { ROOMS } from "@/lib/rooms";
+import BookingInsights from "./booking-insights";
 import AddonCatalog from "@/app/components/addon-catalog";
 import GridToggle from "@/app/components/grid-toggle";
 import { useState, useEffect, useCallback } from "react";
@@ -1952,6 +1953,7 @@ function ReportsTab() {
 
   return (
     <div className="flex flex-col gap-6 p-1">
+      <BookingInsights />
 
       {/* ── Period selector ── */}
       <div className="flex items-center gap-3 flex-wrap">

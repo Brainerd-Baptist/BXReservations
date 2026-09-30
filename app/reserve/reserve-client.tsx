@@ -9,6 +9,7 @@ import { COLLAB_ROLE_LABELS, COLLAB_ROLE_DESCRIPTIONS, type CollabRole } from "@
 import { ROOMS, type Room } from "@/lib/rooms";
 import { RoomCard } from "@/app/components/room-card";
 import { RoomLightbox } from "@/app/components/room-lightbox";
+import { trackFunnel } from "@/lib/funnel";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1428,7 +1429,12 @@ export default function ReserveClient({ initialContact, userId }: ReserveClientP
       .catch(() => {}); // fail silently — no rules = no blocking
   }, []);
 
+  // Phase 6 measurement: one view per visit, then the furthest step reached.
+  const furthest = useRef(0);
+  useEffect(() => { trackFunnel("reserve_view", { step: 0 }); }, []);
+
   function goToStep(n: number) {
+    if (n > furthest.current) { furthest.current = n; trackFunnel("step_reached", { step: n }); }
     setStep(n);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -1442,6 +1448,7 @@ export default function ReserveClient({ initialContact, userId }: ReserveClientP
     // emails), so a timeout may mean it DID save: say so, to avoid duplicates.
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 60_000);
+    trackFunnel("submit_attempt", { step: 2 });
     try {
       const res = await fetch("/api/submit-reservation", {
         method: "POST",
@@ -1454,6 +1461,7 @@ export default function ReserveClient({ initialContact, userId }: ReserveClientP
       let data: { error?: string; bookingNumber?: string; reservationId?: string } = {};
       try { data = await res.json(); } catch { /* non-JSON body */ }
       if (!res.ok || data.error) {
+        trackFunnel("submit_fail", { detail: `${res.status >= 500 || !data.error ? "server" : "rejected"} ${res.status}${data.error ? `: ${data.error}` : ""}` });
         setSubmitError(
           res.status >= 500 || !data.error
             ? "Our reservation system had a problem saving your request."
@@ -1463,10 +1471,12 @@ export default function ReserveClient({ initialContact, userId }: ReserveClientP
       }
       if (data.bookingNumber) setBookingNumber(data.bookingNumber);
       if (data.reservationId) setReservationId(data.reservationId as string);
+      trackFunnel("submit_ok");
       setSubmitted(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       console.error("Submission error:", err);
+      trackFunnel("submit_fail", { detail: (err as Error)?.name === "AbortError" ? "timeout" : "network" });
       setSubmitError(
         (err as Error)?.name === "AbortError"
           ? SUBMIT_TIMEOUT_MSG

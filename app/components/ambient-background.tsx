@@ -21,7 +21,10 @@ import { useEffect, useRef } from "react";
 
 const PERIOD = 28;        // grid cell, px — must match --bx-grid-size in globals.css
 const PARALLAX = 0.12;    // grid scrolls at 12% of page speed → reads as depth
-const EASE = 0.025;       // lamp follow easing per frame (lower = lazier)
+const EASE = 0.025;       // lamp follow easing per 60fps frame (lower = lazier)
+const IDLE_MS = 66;       // idle wander redraws at ~15fps: it moves ≤2px a step, so
+                          // it looks the same and costs a quarter of the main thread
+                          // (measured in Phase 6: 22% → ~6% busy on a throttled phone)
 
 export default function AmbientBackground() {
   const gridRef = useRef<HTMLDivElement>(null);
@@ -44,6 +47,7 @@ export default function AmbientBackground() {
     let x = window.innerWidth * 0.5;
     let y = window.innerHeight * (0.34 + 0.2 * Math.sin(1.1));
     const start = performance.now();
+    let last = 0;
 
     const place = (lx: number, ly: number) => {
       // Parallax is motion too — honor reduced-motion by pinning the grid.
@@ -73,15 +77,22 @@ export default function AmbientBackground() {
         if (pull === 0) pointer = null;
       }
 
-      x += (tx - x) * EASE;
-      y += (ty - y) * EASE;
-      place(x, y);
+      // Advance by elapsed time so easing is the same at any frame rate.
+      const steps = last ? Math.min(8, (now - last) / 16.67) : 1;
+      if (pointer || now - last >= IDLE_MS) {
+        const k = 1 - Math.pow(1 - EASE, steps);
+        x += (tx - x) * k;
+        y += (ty - y) * k;
+        place(x, y);
+        last = now;
+      }
       raf = requestAnimationFrame(frame);
     };
 
     const startLoop = () => {
       if (running || reduce.matches || document.hidden) return;
       running = true;
+      last = 0;
       raf = requestAnimationFrame(frame);
     };
     const stopLoop = () => {
@@ -93,9 +104,8 @@ export default function AmbientBackground() {
       if (!finePointer.matches || e.pointerType !== "mouse") return;
       pointer = { x: e.clientX, y: e.clientY, t: performance.now() };
     };
-    const onScroll = () => {
-      if (!running) place(x, y); // keep parallax honest even when the loop is off
-    };
+    // Parallax follows the scroll directly (the idle loop runs at a lower rate).
+    const onScroll = () => place(x, y);
     const onVisibility = () => (document.hidden ? stopLoop() : startLoop());
     const onReduceChange = () => (reduce.matches ? (stopLoop(), place(x, y)) : startLoop());
 
