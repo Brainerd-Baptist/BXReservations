@@ -560,6 +560,13 @@ code, kbd, samp, pre, .font-mono { font-family: var(--font-mono); font-feature-s
   .bx-input::placeholder { color: color-mix(in srgb, var(--bx-slate) 70%, transparent); }
   .bx-input:focus { border-color: var(--bx-focus); }
   textarea.bx-input { min-height: 5.5rem; resize: vertical; }
+  /* iOS gives date/time inputs a wide built-in minimum width, which pushed
+     them over the next column in two-column forms. */
+  .bx-field { min-width: 0; }
+  .bx-input[type="date"], .bx-input[type="time"], .bx-input[type="datetime-local"] {
+    min-width: 0; max-width: 100%; -webkit-appearance: none; appearance: none; text-align: left;
+  }
+  .bx-input[type="date"]::-webkit-date-and-time-value { text-align: left; }
   .bx-input--sm { min-height: 2.25rem; padding: 0.375rem 0.625rem; border-radius: 0.625rem; }
   @media (min-width: 640px) { .bx-input--sm { font-size: 0.8125rem; } }
   textarea.bx-input--sm { min-height: 3.5rem; }
@@ -1236,3 +1243,6 @@ html[data-reveal] .bx-fade-in.bx-visible {
 /* "Add your name" banner sits in the page flow just under the fixed header */
 .bx-name-banner { margin-top: var(--bx-header-h); position: relative; z-index: 1; }
 .bx-name-banner + main { padding-top: 0 !important; }
+
+/* Every date/time field: never wider than its column (iOS default min-width) */
+input[type="date"], input[type="time"], input[type="datetime-local"] { min-width: 0; max-width: 100%; }
