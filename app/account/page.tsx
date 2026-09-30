@@ -253,7 +253,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           Appearance
         </h2>
         <p style={{ fontSize: "0.75rem", color: "var(--bx-slate)", margin: "0 0 1rem", opacity: 0.8 }}>
-          Choose a color theme. Your preference is saved and applied on every device.
+          Light, Dark, or Auto to follow your device. Saved to your account, so it follows you to every phone and computer.
         </p>
         <ThemeGrid userId={user.id} savedTheme={userPrefs?.theme ?? null} />
 

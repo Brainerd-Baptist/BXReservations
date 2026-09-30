@@ -59,3 +59,12 @@ so utilities like `bg-red-50 text-red-700` adapt automatically. Prefer `--tone-*
 - `forced-colors`: ambient hidden.
 - Print: ambient hidden, surfaces white — agreements print clean.
 - Dark themes set `color-scheme: dark` (native date pickers, scrollbars, selects).
+
+## Appearance (v1.39.0)
+
+Two themes and an automatic mode — **Light** (`data-theme="brainerd"`, default), **Dark**
+(`data-theme="glass-dark"`, brand navy + teal) and **Auto** (follows the device, live). The chosen
+value is stored in `localStorage` and in `bx_user_prefs.theme` (`brainerd` | `glass-dark` | `system`);
+the account value is applied on sign-in so the choice follows people across devices. Retired theme ids
+(Daylight, Classic, Harbor, Heather, Moss, Orbit) are migrated automatically: Daylight → Light, the rest → Dark.
+`<html data-appearance>` holds the preference, `<html data-theme>` the resolved theme.

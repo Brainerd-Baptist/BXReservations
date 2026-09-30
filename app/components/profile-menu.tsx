@@ -3,11 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { can, type BxRole } from "@/lib/roles";
 import Link from "next/link";
-import { THEMES, type ThemeId, DEFAULT_THEME, THEME_STORAGE_KEY, applyTheme, isValidTheme } from "@/lib/theme";
-import { createClient } from "@/lib/supabase/client";
+import AppearancePicker from "./appearance-picker";
+import { applyAppearance, currentAppearance, normalizeAppearance } from "@/lib/theme";
 
-// Quick-pick themes shown in the dropdown (first 3 — Brainerd, Midnight, Daylight)
-const QUICK_THEMES = THEMES.filter((t): t is typeof t & { quick: true } => 'quick' in t && !!(t as { quick?: boolean }).quick);
 
 interface ProfileMenuProps {
   userId: string;
@@ -18,26 +16,6 @@ interface ProfileMenuProps {
   savedTheme?: string | null;
 }
 
-function ThemeSwatch({ colors, size = "sm" }: { colors: readonly string[]; size?: "sm" | "lg" }) {
-  const dim = size === "lg" ? "100%" : "1rem";
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        borderRadius: "50%",
-        overflow: "hidden",
-        width: dim,
-        height: dim,
-        flexShrink: 0,
-        border: "1px solid rgba(255,255,255,0.1)",
-      }}
-    >
-      {colors.slice(0, 2).map((c, i) => (
-        <span key={i} style={{ background: c, flex: 1 }} />
-      ))}
-    </span>
-  );
-}
 
 export default function ProfileMenu({
   userId,
@@ -48,15 +26,14 @@ export default function ProfileMenu({
   savedTheme,
 }: ProfileMenuProps) {
   const [open, setOpen] = useState(false);
-  const [activeTheme, setActiveTheme] = useState<ThemeId>(() => {
-    if (isValidTheme(savedTheme ?? null)) return savedTheme as ThemeId;
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem(THEME_STORAGE_KEY);
-      if (isValidTheme(stored)) return stored;
-    }
-    return DEFAULT_THEME;
-  });
-  const [saving, setSaving] = useState(false);
+
+  // The account's saved appearance wins over this device's last choice, so a
+  // new phone or computer opens in the look you picked. (Previously the saved
+  // theme was stored but never applied on a fresh device.)
+  useEffect(() => {
+    const saved = normalizeAppearance(savedTheme);
+    if (saved && saved !== currentAppearance()) applyAppearance(saved);
+  }, [savedTheme]);
   const panelRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
 
@@ -87,23 +64,6 @@ export default function ProfileMenu({
     return () => document.removeEventListener("keydown", handle);
   }, [open]);
 
-  // Sync activeTheme with the DOM on mount
-  useEffect(() => {
-    const current = document.documentElement.getAttribute("data-theme");
-    if (isValidTheme(current)) setActiveTheme(current);
-  }, []);
-
-  async function handleThemeClick(id: ThemeId) {
-    if (saving) return;
-    setActiveTheme(id);
-    applyTheme(id);
-    setSaving(true);
-    const supabase = createClient();
-    await supabase
-      .from("bx_user_prefs")
-      .upsert({ user_id: userId, theme: id, updated_at: new Date().toISOString() });
-    setSaving(false);
-  }
 
   return (
     <div className="relative">
@@ -153,42 +113,12 @@ export default function ProfileMenu({
           {/* Divider */}
           <hr style={{ borderColor: "color-mix(in srgb, var(--bx-brass) 15%, transparent)" }} />
 
-          {/* Quick-pick themes */}
+          {/* Appearance — Light / Dark / Auto */}
           <div>
             <p className="text-[10px] uppercase tracking-wide mb-1.5 px-1" style={{ color: "var(--bx-slate)" }}>
               Appearance
             </p>
-            <div className="flex gap-1.5 px-1">
-              {QUICK_THEMES.map((t) => {
-                const isActive = activeTheme === t.id;
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    disabled={saving}
-                    onClick={() => handleThemeClick(t.id)}
-                    title={t.label}
-                    className="flex flex-col items-center gap-1 flex-1 py-1.5 rounded-lg transition-colors"
-                    style={{
-                      background: isActive
-                        ? "color-mix(in srgb, var(--bx-brass) 15%, transparent)"
-                        : "transparent",
-                      border: isActive
-                        ? "1px solid color-mix(in srgb, var(--bx-brass) 35%, transparent)"
-                        : "1px solid transparent",
-                    }}
-                  >
-                    <ThemeSwatch colors={t.swatch} />
-                    <span
-                      className="text-[9px] font-medium leading-none"
-                      style={{ color: isActive ? "var(--bx-brass)" : "var(--bx-slate)" }}
-                    >
-                      {t.label}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+            <AppearancePicker userId={userId} />
           </div>
 
           {/* Divider */}

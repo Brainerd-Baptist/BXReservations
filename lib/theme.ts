@@ -1,76 +1,102 @@
-// Theme system for BX Reservations — mirrors BrainerdHQ/Personnel exactly.
-// Ordering rule: Brainerd · Midnight · Daylight first, then alphabetical.
+// Appearance for BX Reservations — two themes and an automatic mode.
+//
+//   Light  (data-theme="brainerd")   the church's brand colors; the default
+//   Dark   (data-theme="glass-dark") deep navy with the brand teal
+//   Auto   follows the device's light/dark setting, live
+//
+// The data-theme ids are kept from the old eight-theme system so CSS, the
+// building map and saved preferences keep working. Retired themes are mapped
+// to the closest survivor by normalizeAppearance().
 
 export const THEMES = [
   {
     id: "brainerd",
-    label: "Brainerd",
-    description: "Light, built from the church's own brand colors. The default.",
+    label: "Light",
+    description: "Warm linen and the church's navy and teal. The default.",
     swatch: ["#F5F1EB", "#FEFCF8", "#00abc9", "#00205b"],
-    quick: true,
   },
   {
     id: "glass-dark",
-    label: "Midnight",
-    description: "Frosted, translucent panels over a dark gradient.",
-    swatch: ["#0c1018", "#1e293b", "#38bdf8", "#f1f5f9"],
-    quick: true,
-  },
-  {
-    id: "glass-light",
-    label: "Daylight",
-    description: "Frosted white glass over a soft brand-tinted gradient.",
-    swatch: ["#eef2f7", "#ffffff", "#00abc9", "#1e293b"],
-    quick: true,
-  },
-  {
-    id: "ledger",
-    label: "Classic",
-    description: "Ink & gold — a refined dark theme.",
-    swatch: ["#282a2d", "#313438", "#e5a00d", "#ededeb"],
-  },
-  {
-    id: "harbor",
-    label: "Harbor",
-    description: "Deep teal-navy — corporate/nautical.",
-    swatch: ["#0c1218", "#16202a", "#5a8c96", "#e8eef0"],
-  },
-  {
-    id: "heather",
-    label: "Heather",
-    description: "Muted plum and lavender — soft, not bright pink.",
-    swatch: ["#181420", "#241d2e", "#a67ca0", "#f0ecf4"],
-  },
-  {
-    id: "moss",
-    label: "Moss",
-    description: "Muted forest green with warm cream text — earthy, not neon.",
-    swatch: ["#10160f", "#1b2419", "#8a9a5b", "#f0ece1"],
-  },
-  {
-    id: "orbit",
-    label: "Orbit",
-    description: "Black and silver — a sleek, cold instrument-panel feel.",
-    swatch: ["#0a0c10", "#181b21", "#7a8a9c", "#e2e6ec"],
+    label: "Dark",
+    description: "Deep navy glass with the brand teal — easy on the eyes at night.",
+    swatch: ["#0a1020", "#142039", "#2ec4de", "#eef2f8"],
   },
 ] as const;
 
 export type ThemeId = (typeof THEMES)[number]["id"];
+export type Appearance = ThemeId | "system";
+
+export const APPEARANCES: { id: Appearance; label: string; description: string }[] = [
+  { id: "brainerd", label: "Light", description: THEMES[0].description },
+  { id: "glass-dark", label: "Dark", description: THEMES[1].description },
+  { id: "system", label: "Auto", description: "Matches your device — light by day, dark by night if your phone or computer is set that way." },
+];
 
 export const DEFAULT_THEME: ThemeId = "brainerd";
+export const DEFAULT_APPEARANCE: Appearance = "brainerd";
 export const THEME_STORAGE_KEY = "bx-reservations-theme";
 
-export function isValidTheme(id: string | null): id is ThemeId {
+/** Retired themes → the survivor that feels closest. */
+const LEGACY: Record<string, Appearance> = {
+  "glass-light": "brainerd",
+  ledger: "glass-dark",
+  harbor: "glass-dark",
+  heather: "glass-dark",
+  moss: "glass-dark",
+  orbit: "glass-dark",
+};
+
+export function isValidTheme(id: string | null | undefined): id is ThemeId {
   return THEMES.some((t) => t.id === id);
 }
 
-export function applyTheme(id: ThemeId) {
-  if (typeof document === "undefined" || !isValidTheme(id)) return;
-  document.documentElement.setAttribute("data-theme", id);
+/** Any stored value (current, legacy, or junk) → a valid appearance, or null. */
+export function normalizeAppearance(v: string | null | undefined): Appearance | null {
+  if (!v) return null;
+  if (v === "system" || isValidTheme(v)) return v as Appearance;
+  return LEGACY[v] ?? null;
+}
+
+export function resolveAppearance(a: Appearance): ThemeId {
+  if (a !== "system") return a;
+  if (typeof window === "undefined") return DEFAULT_THEME;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "glass-dark" : "brainerd";
+}
+
+let systemListener: ((e: MediaQueryListEvent) => void) | null = null;
+
+/** Apply + remember an appearance. "system" keeps tracking the OS setting live. */
+export function applyAppearance(a: Appearance) {
+  if (typeof document === "undefined") return;
+  const root = document.documentElement;
+  root.setAttribute("data-theme", resolveAppearance(a));
+  root.setAttribute("data-appearance", a);
+  // Keep one long-lived MediaQueryList (shared with the init script); a
+  // throwaway one can be garbage-collected and silently drop its listener.
+  const w = window as Window & { __bxMQ?: MediaQueryList };
+  const mq = (w.__bxMQ ??= window.matchMedia("(prefers-color-scheme: dark)"));
+  if (systemListener) mq.removeEventListener("change", systemListener);
+  systemListener = null;
+  if (a === "system") {
+    systemListener = (e) => root.setAttribute("data-theme", e.matches ? "glass-dark" : "brainerd");
+    mq.addEventListener("change", systemListener);
+  }
   try {
-    window.localStorage.setItem(THEME_STORAGE_KEY, id);
+    window.localStorage.setItem(THEME_STORAGE_KEY, a);
   } catch {}
 }
 
-// Blocking inline script — inlined into <head> before first paint to prevent flash.
-export const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem("bx-reservations-theme");if(t)document.documentElement.setAttribute("data-theme",t);var d=localStorage.getItem("bx-reservations-grid-dots");if(d===null||d==="on")document.documentElement.setAttribute("data-grid-dots","on");var l=localStorage.getItem("bx-reservations-grid-lines");if(l==="on")document.documentElement.setAttribute("data-grid-lines","on");}catch(e){}})();`;
+/** Back-compat for callers that pass a concrete theme id. */
+export function applyTheme(id: ThemeId) {
+  applyAppearance(id);
+}
+
+/** What the page is currently set to (reads the attribute the init script wrote). */
+export function currentAppearance(): Appearance {
+  if (typeof document === "undefined") return DEFAULT_APPEARANCE;
+  return normalizeAppearance(document.documentElement.getAttribute("data-appearance")) ?? DEFAULT_APPEARANCE;
+}
+
+// Blocking inline script — inlined into <head> before first paint to prevent a flash.
+// Normalizes legacy ids, resolves "system", and keeps Auto live if the OS flips.
+export const THEME_INIT_SCRIPT = `(function(){try{var L={"glass-light":"brainerd",ledger:"glass-dark",harbor:"glass-dark",heather:"glass-dark",moss:"glass-dark",orbit:"glass-dark"};var r=document.documentElement,a=localStorage.getItem("bx-reservations-theme");if(a&&L[a]){a=L[a];localStorage.setItem("bx-reservations-theme",a);}if(a!=="brainerd"&&a!=="glass-dark"&&a!=="system")a="brainerd";var m=window.__bxMQ=window.matchMedia("(prefers-color-scheme: dark)");r.setAttribute("data-appearance",a);r.setAttribute("data-theme",a==="system"?(m.matches?"glass-dark":"brainerd"):a);if(a==="system"&&m.addEventListener)m.addEventListener("change",function(e){if(r.getAttribute("data-appearance")==="system")r.setAttribute("data-theme",e.matches?"glass-dark":"brainerd");});var d=localStorage.getItem("bx-reservations-grid-dots");if(d===null||d==="on")r.setAttribute("data-grid-dots","on");var l=localStorage.getItem("bx-reservations-grid-lines");if(l==="on")r.setAttribute("data-grid-lines","on");}catch(e){}})();`;

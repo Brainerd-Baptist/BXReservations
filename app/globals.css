@@ -111,8 +111,7 @@
 }
 
 /* ── Dark-mode tokens — shared by every dark theme ─────────────────────── */
-[data-theme="ledger"], [data-theme="glass-dark"], [data-theme="harbor"],
-[data-theme="heather"], [data-theme="moss"], [data-theme="orbit"] {
+[data-theme="glass-dark"] {
   color-scheme: dark;                               /* native controls, scrollbars, date pickers */
   --bx-surface-alpha: 70%;
   --bx-surface-strong: color-mix(in srgb, var(--bx-ink-soft) 86%, transparent);
@@ -122,7 +121,7 @@
   --bx-blur:          14px;
   --bx-glow-a:        color-mix(in srgb, var(--bx-brass) 22%, transparent);
   --bx-glow-b:        color-mix(in srgb, var(--bx-brass-soft) 12%, transparent);
-  --bx-glow-c:        color-mix(in srgb, var(--bx-parchment) 5%, transparent);
+  --bx-glow-c:        color-mix(in srgb, #2b4fae 16%, transparent);  /* BBC navy, lifted */
   --bx-lamp-glow:     color-mix(in srgb, var(--bx-brass) 14%, transparent);
   --bx-lamp-dot:      color-mix(in srgb, var(--bx-brass-soft) 60%, transparent);
   --bx-lamp-line:     color-mix(in srgb, var(--bx-brass-soft) 24%, transparent);
@@ -142,8 +141,7 @@
    On dark themes those rendered as pasted-on pastel boxes. Remapping the
    palette variables makes every one of them adapt without touching markup:
    50–300 become translucent tints, 600–900 become light, legible text. */
-[data-theme="ledger"], [data-theme="glass-dark"], [data-theme="harbor"],
-[data-theme="heather"], [data-theme="moss"], [data-theme="orbit"] {
+[data-theme="glass-dark"] {
   --color-red-50: color-mix(in srgb, #ef4444 12%, transparent); --color-red-100: color-mix(in srgb, #ef4444 18%, transparent);
   --color-red-200: color-mix(in srgb, #ef4444 32%, transparent); --color-red-300: color-mix(in srgb, #ef4444 45%, transparent);
   --color-red-600: #fca5a5; --color-red-700: #fca5a5; --color-red-800: #fecaca; --color-red-900: #fecaca;
@@ -215,136 +213,31 @@
   .bx-tone-stone  { background-color: var(--tone-stone-bg);  color: var(--tone-stone-fg);  border-color: var(--tone-stone-bd); }
 }
 
-/* Daylight: slightly cooler glows to match its blue-tinted gradient */
-[data-theme="glass-light"] {
-  --bx-surface-alpha: 68%;
-  --bx-glow-b: color-mix(in srgb, #7aa7e0 16%, transparent);
-}
-
-/* ── Classic (Ledger) ───────────────────────────────────────────────────── */
-[data-theme="ledger"] {
-  --bx-grid-opacity: 6%;
-  --bx-ink:        #282a2d;
-  --bx-ink-soft:   #313438;
-  --bx-parchment:  #ededeb;
-  --bx-brass:      #e5a00d;
-  --bx-brass-soft: #f0b429;
-  --bx-slate:      #9ca3af;
-  --bx-clay:       #ef4444;
-  --bx-sage:       #34d399;
-  --shadow-1: 0 1px 2px rgba(0,0,0,0.20), 0 1px 4px rgba(0,0,0,0.22);
-  --shadow-2: 0 2px 6px rgba(0,0,0,0.24), 0 4px 16px rgba(0,0,0,0.26);
-  --shadow-3: 0 4px 10px rgba(0,0,0,0.30), 0 8px 28px rgba(0,0,0,0.34);
-  --shadow-warm: 0 2px 10px rgba(180,120,0,0.18), 0 1px 3px rgba(0,0,0,0.22);
-}
-
-/* ── Midnight (glass-dark) ──────────────────────────────────────────────── */
+/* ── Dark (data-theme="glass-dark") — Brainerd after dark ───────────────
+   Deep navy built from BBC navy, with the brand teal. The teal is tuned so
+   white button text clears 3:1 and teal links clear 5.9:1 on the page. */
 [data-theme="glass-dark"] {
-  --bx-grid-opacity: 6%;
-  --bx-ink:        #0c1018;
-  --bx-ink-soft:   #1e293b;
-  --bx-parchment:  #f1f5f9;
-  --bx-brass:      #38bdf8;
-  --bx-brass-soft: #7dd3fc;
-  --bx-slate:      #94a3b8;
+  --bx-grid-opacity: 7%;
+  --bx-ink:        #0a1020;
+  --bx-ink-soft:   #142039;
+  --bx-parchment:  #eef2f8;
+  --bx-brass:      #0b9ab6;
+  --bx-brass-soft: #3cc3dc;
+  --bx-slate:      #93a3ba;
   --bx-clay:       #f87171;
-  --bx-sage:       #4ade80;
-  --shadow-1: 0 1px 2px rgba(0,0,0,0.22), 0 1px 4px rgba(0,0,0,0.26);
-  --shadow-2: 0 2px 6px rgba(0,0,0,0.28), 0 4px 16px rgba(0,0,0,0.32);
-  --shadow-3: 0 4px 10px rgba(0,0,0,0.36), 0 8px 28px rgba(0,0,0,0.42);
-  --shadow-warm: 0 2px 10px rgba(100,100,200,0.15), 0 1px 3px rgba(0,0,0,0.26);
-}
-
-/* ── Daylight (glass-light) ─────────────────────────────────────────────── */
-[data-theme="glass-light"] {
-  --bx-ink:        #eef2f7;
-  --bx-ink-soft:   #FEFCF8;
-  --bx-parchment:  #1e293b;
-  --bx-brass:      #00abc9;
-  --bx-brass-soft: #33c1d9;
-  --bx-slate:      #64748b;
-  --bx-clay:       #dc2626;
-  --bx-sage:       #059669;
-}
-
-/* ── Harbor ─────────────────────────────────────────────────────────────── */
-[data-theme="harbor"] {
-  --bx-grid-opacity: 6%;
-  --bx-ink:        #0c1218;
-  --bx-ink-soft:   #16202a;
-  --bx-parchment:  #e8eef0;
-  --bx-brass:      #5a8c96;
-  --bx-brass-soft: #7aaab4;
-  --bx-slate:      #90a4ae;
-  --bx-clay:       #ef5350;
-  --bx-sage:       #4caf50;
-  --shadow-1: 0 1px 2px rgba(0,0,0,0.22), 0 1px 4px rgba(0,0,0,0.26);
-  --shadow-2: 0 2px 6px rgba(0,0,0,0.28), 0 4px 16px rgba(0,0,0,0.32);
-  --shadow-3: 0 4px 10px rgba(0,0,0,0.36), 0 8px 28px rgba(0,0,0,0.42);
-  --shadow-warm: 0 2px 10px rgba(100,100,200,0.15), 0 1px 3px rgba(0,0,0,0.26);
-}
-
-/* ── Heather ─────────────────────────────────────────────────────────────── */
-[data-theme="heather"] {
-  --bx-grid-opacity: 6%;
-  --bx-ink:        #181420;
-  --bx-ink-soft:   #241d2e;
-  --bx-parchment:  #f0ecf4;
-  --bx-brass:      #a67ca0;
-  --bx-brass-soft: #c09abc;
-  --bx-slate:      #a395ae;
-  --bx-clay:       #e57373;
-  --bx-sage:       #81c784;
-  --shadow-1: 0 1px 2px rgba(0,0,0,0.22), 0 1px 4px rgba(0,0,0,0.26);
-  --shadow-2: 0 2px 6px rgba(0,0,0,0.28), 0 4px 16px rgba(0,0,0,0.32);
-  --shadow-3: 0 4px 10px rgba(0,0,0,0.36), 0 8px 28px rgba(0,0,0,0.42);
-  --shadow-warm: 0 2px 10px rgba(100,100,200,0.15), 0 1px 3px rgba(0,0,0,0.26);
-}
-
-/* ── Moss ────────────────────────────────────────────────────────────────── */
-[data-theme="moss"] {
-  --bx-grid-opacity: 6%;
-  --bx-ink:        #10160f;
-  --bx-ink-soft:   #1b2419;
-  --bx-parchment:  #f0ece1;
-  --bx-brass:      #8a9a5b;
-  --bx-brass-soft: #a8b878;
-  --bx-slate:      #8d9e7a;
-  --bx-clay:       #e57373;
-  --bx-sage:       #aed581;
-  --shadow-1: 0 1px 2px rgba(0,0,0,0.22), 0 1px 4px rgba(0,0,0,0.26);
-  --shadow-2: 0 2px 6px rgba(0,0,0,0.28), 0 4px 16px rgba(0,0,0,0.32);
-  --shadow-3: 0 4px 10px rgba(0,0,0,0.36), 0 8px 28px rgba(0,0,0,0.42);
-  --shadow-warm: 0 2px 10px rgba(100,100,200,0.15), 0 1px 3px rgba(0,0,0,0.26);
-}
-
-/* ── Orbit ───────────────────────────────────────────────────────────────── */
-[data-theme="orbit"] {
-  --bx-grid-opacity: 6%;
-  --bx-ink:        #0a0c10;
-  --bx-ink-soft:   #181b21;
-  --bx-parchment:  #e2e6ec;
-  --bx-brass:      #7a8a9c;
-  --bx-brass-soft: #9aaabb;
-  --bx-slate:      #6b7a8d;
-  --bx-clay:       #ef5350;
-  --bx-sage:       #4caf50;
-  --shadow-1: 0 1px 2px rgba(0,0,0,0.22), 0 1px 4px rgba(0,0,0,0.26);
-  --shadow-2: 0 2px 6px rgba(0,0,0,0.28), 0 4px 16px rgba(0,0,0,0.32);
-  --shadow-3: 0 4px 10px rgba(0,0,0,0.36), 0 8px 28px rgba(0,0,0,0.42);
-  --shadow-warm: 0 2px 10px rgba(100,100,200,0.15), 0 1px 3px rgba(0,0,0,0.26);
+  --bx-sage:       #34d399;
+  --shadow-1: 0 1px 2px rgba(0,0,0,0.24), 0 1px 4px rgba(0,0,0,0.28);
+  --shadow-2: 0 2px 6px rgba(0,0,0,0.30), 0 6px 18px rgba(0,0,0,0.34);
+  --shadow-3: 0 4px 12px rgba(0,0,0,0.38), 0 12px 32px rgba(0,0,0,0.44);
+  --shadow-warm: 0 2px 10px rgba(11,154,182,0.16), 0 1px 3px rgba(0,0,0,0.28);
 }
 
 /* ── Glass theme special backgrounds ────────────────────────────────────── */
 /* These live on <html> (the bottom of the stack). They used to sit on <body>,
    which painted OVER the dot/line pattern and grain — hiding both on every page. */
 html[data-theme="glass-dark"] {
-  background: linear-gradient(135deg, #0c1018 0%, #1a2744 50%, #0c1018 100%) fixed;
-  background-color: #0c1018;
-}
-html[data-theme="glass-light"] {
-  background: linear-gradient(135deg, #eef2f7 0%, #dde8f5 50%, #eef2f7 100%) fixed;
-  background-color: #eef2f7;
+  background: linear-gradient(160deg, #0a1020 0%, #0d1a38 48%, #0a1020 100%) fixed;
+  background-color: #0a1020;
 }
 
 /* ── Dropdown panel utility ─────────────────────────────────────────────── */
@@ -624,12 +517,7 @@ select:focus {
 
 
 /* ── BBC stacked logo: black artwork — invert to white on dark-header themes */
-[data-theme="ledger"] .bbc-logo,
-[data-theme="glass-dark"] .bbc-logo,
-[data-theme="harbor"] .bbc-logo,
-[data-theme="heather"] .bbc-logo,
-[data-theme="moss"] .bbc-logo,
-[data-theme="orbit"] .bbc-logo {
+[data-theme="glass-dark"] .bbc-logo {
   filter: brightness(0) invert(1);
 }
 
