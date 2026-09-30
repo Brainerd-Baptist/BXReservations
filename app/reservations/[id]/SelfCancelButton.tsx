@@ -68,12 +68,13 @@ export default function SelfCancelButton({ reservationId }: Props) {
         Cancel this request?
       </p>
       <p style={{ margin: "0 0 0.75rem", fontSize: "0.8125rem", color: "var(--bx-slate)" }}>
-        This can&#8217;t be undone. Let us know why you&#8217;re cancelling so we can improve.
+        This can&#8217;t be undone. A reason is required &#8212; everyone on this booking and the BX team will see who cancelled, when, and why.
       </p>
       <textarea
         value={reason}
         onChange={(e) => setReason(e.target.value)}
-        placeholder="Reason for cancelling…"
+        aria-label="Reason for cancelling (required)"
+        placeholder="Reason for cancelling (required)"
         rows={3}
         style={{
           width: "100%",
@@ -90,7 +91,7 @@ export default function SelfCancelButton({ reservationId }: Props) {
         }}
       />
       {error && (
-        <p style={{ margin: "0 0 0.5rem", fontSize: "0.8125rem", color: "#EF4444" }}>{error}</p>
+        <p style={{ margin: "0 0 0.5rem", fontSize: "0.8125rem", color: "var(--bx-clay)" }}>{error}</p>
       )}
       <div style={{ display: "flex", gap: "0.625rem" }}>
         <button

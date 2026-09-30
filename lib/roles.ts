@@ -65,9 +65,9 @@ export const ROLE_DESCRIPTIONS: Record<BxRole, string> = {
   booking_admin:
     "Approve and deny reservations, view all bookings, message requesters.",
   ministry_coordinator:
-    "Book for their ministry, view ministry reservation history.",
+    "Books for their ministry and for others (add people to a booking as co-organizers). No agreement, insurance or payment by default, fast-tracked review, and any day of the year.",
   brainerd_staff:
-    "Church staff: book outside public windows, no COI or agreement required, 100% discount auto-applied. Reservations still require booking admin approval.",
+    "Church staff: no agreement, insurance or payment by default, fast-tracked review, and any day of the year. A booking admin still approves each booking.",
   member: "Book for themselves, view their own reservation history.",
 };
 
@@ -99,6 +99,11 @@ export function hasRole(
   return ROLE_RANK[userRole] >= ROLE_RANK[minRole];
 }
 
+/** Ministry Coordinators, Brainerd Staff and BX staff book as the church. */
+export function isChurchRole(role: BxRole | null | undefined): boolean {
+  return role === "ministry_coordinator" || role === "brainerd_staff" || hasRole(role, "booking_admin");
+}
+
 /** Shorthand role checks */
 export const can = {
   viewAdminPanel: (role: BxRole | null) => hasRole(role, "booking_admin"),
@@ -123,17 +128,19 @@ export const can = {
   bookOnBehalfOf: (role: BxRole | null) =>
     hasRole(role, "ministry_coordinator"),
 
-  // ── Brainerd Staff privileges ──────────────────────────────────
-  /** May submit reservations outside the public booking window (weekends, Wed nights). */
-  bookOutsideWindow: (role: BxRole | null) => role === "brainerd_staff" || hasRole(role, "booking_admin"),
-  /** COI upload is not required for this user's reservations. */
-  skipCoi: (role: BxRole | null) => role === "brainerd_staff" || hasRole(role, "booking_admin"),
-  /** Agreement signing is not required for this user's reservations. */
-  skipAgreement: (role: BxRole | null) => role === "brainerd_staff" || hasRole(role, "booking_admin"),
-  /** Reservation should be surfaced at the top of the admin queue with a "Staff Event" badge. */
-  fastTrackQueue: (role: BxRole | null) => role === "brainerd_staff",
-  /** 100% discount is automatically applied to this user's reservations. */
-  autoFullDiscount: (role: BxRole | null) => role === "brainerd_staff",
+  // ── Church-use privileges (Ministry Coordinator, Brainerd Staff, staff) ──
+  /** Books count as church use: fast-tracked and exempt from blackout dates. */
+  churchUse: (role: BxRole | null) => isChurchRole(role),
+  /** May book on days that are normally closed (blackout dates). */
+  bookOutsideWindow: (role: BxRole | null) => isChurchRole(role),
+  /** Insurance (COI) isn't required by default. */
+  skipCoi: (role: BxRole | null) => isChurchRole(role),
+  /** The Facility Use Agreement isn't required by default. */
+  skipAgreement: (role: BxRole | null) => isChurchRole(role),
+  /** No payment is expected by default. */
+  skipPayment: (role: BxRole | null) => isChurchRole(role),
+  /** Shown at the top of the admin queue with a "Church use" badge. */
+  fastTrackQueue: (role: BxRole | null) => role === "ministry_coordinator" || role === "brainerd_staff",
 };
 
 // ----------------------------------------------------------------
@@ -148,19 +155,14 @@ export const can = {
  * and admin UI can act on them without re-checking role at every step.
  */
 export function reservationFlagsForRole(role: BxRole | null): {
-  requires_coi: boolean;
-  requires_agreement: boolean;
-  booking_window_exempt: boolean;
-  fast_track: boolean;
-  staff_discount: boolean;
+  church_use: boolean;
+  waived: { agreement?: true; coi?: true; payment?: true };
 } {
-  return {
-    requires_coi: !can.skipCoi(role),
-    requires_agreement: !can.skipAgreement(role),
-    booking_window_exempt: can.bookOutsideWindow(role),
-    fast_track: can.fastTrackQueue(role),
-    staff_discount: can.autoFullDiscount(role),
-  };
+  const waived: { agreement?: true; coi?: true; payment?: true } = {};
+  if (can.skipAgreement(role)) waived.agreement = true;
+  if (can.skipCoi(role)) waived.coi = true;
+  if (can.skipPayment(role)) waived.payment = true;
+  return { church_use: can.churchUse(role), waived };
 }
 
 // ----------------------------------------------------------------

@@ -305,6 +305,10 @@ export default function LoginPage() {
                 {loading ? "Creating account…" : "Create account"}
               </button>
               <p className="text-center text-xs text-slate">
+                By creating an account you agree to the <a href="/terms" className="underline underline-offset-2">terms of use</a> and{" "}
+                <a href="/privacy" className="underline underline-offset-2">privacy notice</a>.
+              </p>
+              <p className="text-center text-xs text-slate">
                 Already have an account?{" "}
                 <button type="button" onClick={() => switchMode("signin")} className="text-brass hover:underline font-semibold">
                   Sign in

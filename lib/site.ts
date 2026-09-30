@@ -4,5 +4,6 @@ export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PU
 export const SUPPORT_EMAIL = "BXreservations@brainerdbaptist.org";
 export const SUPPORT_PHONE = "(423) 643-4978";
 export const SUPPORT_PHONE_TEL = "4236434978";
-/** Where staff alerts go when ADMIN_EMAIL isn't set in Vercel. */
-export const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "jking@brainerdbaptist.org";
+/** Staff alert emails go to the shared BX inbox (every staff member also gets
+ *  an in-app notification). Set ADMIN_EMAIL in Vercel to send them elsewhere. */
+export const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? SUPPORT_EMAIL;

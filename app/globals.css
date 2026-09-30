@@ -1271,3 +1271,12 @@ html, body { overflow-x: clip; }
 .bx-only-dark { display: none !important; }
 [data-theme="glass-dark"] .bx-only-dark { display: inline-block !important; }
 [data-theme="glass-dark"] .bx-only-light { display: none !important; }
+
+/* Privacy notice and terms (C4) — readable long-form text in both themes */
+.bx-legal h2 { font-size: 1.05rem; font-weight: 700; color: var(--bx-parchment); margin: 1.75rem 0 0.5rem; }
+.bx-legal p, .bx-legal li { font-size: 0.9375rem; line-height: 1.65; color: var(--bx-slate); }
+.bx-legal p + p { margin-top: 0.75rem; }
+.bx-legal ul { list-style: disc; padding-left: 1.25rem; margin: 0.5rem 0; }
+.bx-legal li + li { margin-top: 0.35rem; }
+.bx-legal strong { color: var(--bx-parchment); font-weight: 600; }
+.bx-legal a { color: var(--bx-accent-text); text-decoration: underline; text-underline-offset: 2px; }

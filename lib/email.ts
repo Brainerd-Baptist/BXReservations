@@ -744,3 +744,32 @@ export async function sendInvoiceEmail(opts: {
     attachments: [{ filename: opts.filename, content: Buffer.from(opts.pdf) }],
   });
 }
+
+// ─── Cancellation notice (everyone on the booking) ────────────────────────────
+export async function sendCancellationNotice(opts: {
+  to: string;
+  bookingNumber: string;
+  reservationId: string;
+  eventName: string;
+  who: string;        // "Jane Smith (co-organizer)"
+  when: string;       // "Wed, Oct 1, 2026, 3:42 PM ET"
+  reason: string;
+}): Promise<void> {
+  if (!process.env.RESEND_API_KEY) return;
+  const html = brandedEmailHtml({
+    preheader: `${opts.eventName} (${opts.bookingNumber}) was cancelled by ${opts.who}.`,
+    headline: "This booking was cancelled.",
+    body: `
+      <p style="margin:0 0 16px 0;"><strong style="color:${NAVY};">${escHtml(opts.eventName)}</strong> (${escHtml(opts.bookingNumber)}) has been cancelled.</p>
+      <table role="presentation" style="width:100%;border-collapse:collapse;margin:0 0 16px 0;border-top:1px solid #e5e7eb;">
+        <tr><td style="padding:8px 0;color:#6b7280;width:32%;border-bottom:1px solid #e5e7eb;">Cancelled by</td><td style="padding:8px 0;border-bottom:1px solid #e5e7eb;">${escHtml(opts.who)}</td></tr>
+        <tr><td style="padding:8px 0;color:#6b7280;border-bottom:1px solid #e5e7eb;">When</td><td style="padding:8px 0;border-bottom:1px solid #e5e7eb;">${escHtml(opts.when)}</td></tr>
+        <tr><td style="padding:8px 0;color:#6b7280;vertical-align:top;">Reason</td><td style="padding:8px 0;">${escMultiline(opts.reason)}</td></tr>
+      </table>
+      <p style="margin:0;font-size:13px;color:#6b7280;">You're getting this because you're on this booking. Questions? Reply to this email.</p>`,
+    ctaText: "View the booking",
+    ctaUrl: `${SITE_URL}/reservations/${opts.reservationId}`,
+    footnoteHtml: null,
+  });
+  await deliver({ from: FROM, to: opts.to, subject: `Cancelled: ${opts.eventName} — ${opts.bookingNumber}`, html });
+}

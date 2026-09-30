@@ -36,7 +36,7 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-const APP_VERSION = "1.55.0";
+const APP_VERSION = "1.56.0";
 
 export default async function RootLayout({
   children,
@@ -69,8 +69,12 @@ export default async function RootLayout({
 
         {/* Version footer */}
         <footer className="border-t py-3 px-4" style={{ borderColor: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>
-          <p className="text-center text-xs font-mono" style={{ color: "color-mix(in srgb, var(--bx-slate) 60%, transparent)" }}>
-            BX Reservations v{APP_VERSION}
+          <p className="text-center text-xs" style={{ color: "var(--bx-slate)" }}>
+            <a href="/privacy" className="underline underline-offset-2 inline-block py-2 px-1.5">Privacy</a>
+            <span aria-hidden="true"> · </span>
+            <a href="/terms" className="underline underline-offset-2 inline-block py-2 px-1.5">Terms</a>
+            <span aria-hidden="true"> · </span>
+            <span className="font-mono" style={{ color: "color-mix(in srgb, var(--bx-slate) 60%, transparent)" }}>BX Reservations v{APP_VERSION}</span>
           </p>
         </footer>
         <SiteMetrics />

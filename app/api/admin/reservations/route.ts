@@ -5,6 +5,9 @@ import { sendStatusUpdateEmail } from "@/lib/email";
 import { getUserAndRole } from "@/lib/get-user-role";
 import { isStaffRole } from "@/lib/event-map";
 import { SITE_URL } from "@/lib/site";
+import { createAgreement } from "@/lib/agreement-token";
+import { readWaived } from "@/lib/waivers";
+import { notifyCancellation } from "@/lib/cancellation";
 
 /** 401/403 unless the signed-in user holds a staff role — this route lists every reservation and changes statuses. */
 async function requireStaff(): Promise<NextResponse | null> {
@@ -92,7 +95,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("reservations")
-    .select("id, booking_number, status, event_name, contact_name, contact_email, contact_org, is_non_profit, created_at, payload, coi_accepted_at, coi_uploaded_at, payment_received_at, organization_id")
+    .select("id, booking_number, status, event_name, contact_name, contact_email, contact_org, is_non_profit, created_at, payload, coi_accepted_at, coi_uploaded_at, payment_received_at, organization_id, church_use, waived")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -142,6 +145,8 @@ export async function GET() {
       coiAccepted:     !!(row.coi_accepted_at),
       hasPayment:      !!(row.payment_received_at),
       organizationId:  row.organization_id as string | undefined,
+      churchUse:       !!row.church_use,
+      waived:          readWaived(row.waived),
     };
   });
 
@@ -160,7 +165,11 @@ export async function PATCH(req: NextRequest) {
     actorId?:         string;   // admin's user_id (optional, from client)
     actorName?:       string;   // admin's display name
   };
-  const { dbId, status, note, cancelReason, actorId, actorName } = body;
+  const { dbId, status, note, cancelReason } = body;
+  // Who did it comes from the signed-in staff member, not the request (C4)
+  const { user: me, profile: myProfile } = await getUserAndRole();
+  const actorId = me?.id ?? body.actorId;
+  const actorName = myProfile?.display_name || me?.email || body.actorName;
 
   if (!dbId || !status) {
     return NextResponse.json({ error: "Missing dbId or status" }, { status: 400 });
@@ -179,7 +188,7 @@ export async function PATCH(req: NextRequest) {
   // Fetch the reservation so we can send a status email + write history
   const { data: row, error: fetchErr } = await supabase
     .from("reservations")
-    .select("id, booking_number, event_name, contact_name, contact_email, status, payload, user_id, pco_event_id")
+    .select("id, booking_number, event_name, contact_name, contact_email, status, payload, user_id, pco_event_id, waived")
     .eq("id", dbId)
     .single();
 
@@ -196,6 +205,10 @@ export async function PATCH(req: NextRequest) {
     updated_at: new Date().toISOString(),
   };
   if (dbStatus === "cancelled_by_admin") {
+    // Every cancellation needs a reason (C4)
+    if (!String(cancelReason ?? note ?? "").trim()) {
+      return NextResponse.json({ error: "Please give a reason for cancelling." }, { status: 400 });
+    }
     updateFields.cancelled_by      = actorName ?? "BX Team";
     updateFields.cancellation_reason = cancelReason ?? note ?? null;
     updateFields.cancelled_at      = new Date().toISOString();
@@ -225,7 +238,7 @@ export async function PATCH(req: NextRequest) {
   //    the actor info and note by finding the just-inserted row and updating it)
   // Actually, since the trigger fires synchronously, we can just insert an additional
   // history row with the human note and actor details if note/actor are provided.
-  if (note || actorId || actorName) {
+  if (note || cancelReason || actorId || actorName) {
     const { error: histErr } = await supabase.from("reservation_history").insert({
       reservation_id: dbId,
       actor_id:       actorId  ?? null,
@@ -239,6 +252,17 @@ export async function PATCH(req: NextRequest) {
     if (histErr) {
       console.warn("[history] insert error (non-fatal):", histErr);
     }
+  }
+
+  // ── Staff cancel: everyone else on the booking hears who, when and why (C4)
+  if (dbStatus === "cancelled_by_admin") {
+    after(() => notifyCancellation(supabase, {
+      reservation: { id: row.id as string, booking_number: row.booking_number as string | null, event_name: row.event_name as string | null, contact_email: row.contact_email as string | null, user_id: row.user_id as string | null },
+      who: `${actorName ?? "BX Team"} (BX staff)`,
+      reason: String(cancelReason ?? note ?? "").trim(),
+      actorUserId: actorId ?? null,
+      emailOrganizer: false,
+    }));
   }
 
   // ── Status-change email ─────────────────────────────────────────────────────
@@ -265,34 +289,21 @@ export async function PATCH(req: NextRequest) {
 
   // For Proposal Sent — auto-create a facility use agreement and include the link
   let agreementUrl: string | undefined;
-  if (emailType === "proposal_sent") {
+  // Church use without an agreement: no agreement to create or sign (C4)
+  if (emailType === "proposal_sent" && !readWaived(row.waived).agreement) {
     try {
       const payload  = (row.payload ?? {}) as Record<string, unknown>;
       const days     = (payload.days as Record<string, unknown>[]) ?? [];
       const firstDay = (days[0] ?? {}) as Record<string, unknown>;
       const dateStr  = (firstDay.date as string) ?? "";
       const summary  = `${row.event_name as string}${dateStr ? " — " + dateStr : ""}`;
-      const svcUrl   = SITE_URL;
-      const agmtRes  = await fetch(`${svcUrl}/api/agreements`, {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({
-          reservation_id:      row.id as string,
-          reservation_summary: summary,
-          contact_name:        (row.contact_name as string) || (row.contact_email as string),
-        }),
+      const token = await createAgreement(supabase, {
+        reservationId: row.id as string,
+        summary,
+        contactName: (row.contact_name as string) || (row.contact_email as string),
       });
-      if (agmtRes.ok) {
-        const agmtData = (await agmtRes.json()) as { token?: string };
-        if (agmtData.token) {
-          agreementUrl = `${svcUrl}/agree/${agmtData.token}`;
-          console.log(`[agreements] created for ${row.booking_number as string}: ${agreementUrl}`);
-        }
-      } else {
-        const errText = await agmtRes.text();
-        console.warn("[agreements] failed to create:", errText);
-        return NextResponse.json({ error: "Failed to create facility use agreement — proposal not sent." }, { status: 502 });
-      }
+      agreementUrl = `${SITE_URL}/agree/${token}`;
+      console.log(`[agreements] created for ${row.booking_number as string}`);
     } catch (err) {
       console.warn("[agreements] error creating:", err);
       return NextResponse.json({ error: "Failed to create facility use agreement — proposal not sent." }, { status: 502 });
@@ -307,7 +318,7 @@ export async function PATCH(req: NextRequest) {
       reservationId: row.id as string,
       eventName:     row.event_name as string,
       newStatus:     emailType,
-      adminNote:     note,
+      adminNote:     dbStatus === "cancelled_by_admin" ? (cancelReason || note) : note,
       agreementUrl,
     }).then(() => {
       console.log(`[email] status-update(${emailType}) sent OK for ${row.booking_number as string}`);
@@ -325,8 +336,11 @@ export async function PATCH(req: NextRequest) {
     "Deposit Received": { title: "Deposit received — almost there!", body: `We received your deposit for ${row.event_name as string} (${row.booking_number as string}).` },
     Confirmed:          { title: "Your reservation is confirmed!", body: `${row.event_name as string} (${row.booking_number as string}) has been confirmed.` },
     Declined:           { title: "Reservation update", body: `Your request for ${row.event_name as string} (${row.booking_number as string}) could not be accommodated.` },
-    "Cancelled by BX":  { title: "Reservation cancelled", body: `Your reservation for ${row.event_name as string} (${row.booking_number as string}) has been cancelled.` },
+    // "Cancelled by BX" is covered by notifyCancellation (who, when and why)
   };
+  if (status === "Proposal Sent" && readWaived(row.waived).agreement) {
+    NOTIF_LABEL["Proposal Sent"] = { title: "Your BX reservation was reviewed", body: `The BX team reviewed ${row.event_name as string} (${row.booking_number as string}). No agreement is needed for this church-use booking.` };
+  }
   const notifCopy = NOTIF_LABEL[status];
   if (notifCopy && row.user_id) {
     after(async () => {

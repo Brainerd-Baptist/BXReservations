@@ -10,7 +10,7 @@ import { pcoCreateEvent } from "@/lib/pco";
 import { rateLimit, clientIp, HOUR } from "@/lib/rate-limit";
 import { type BlackoutRule } from "@/lib/blackouts";
 import { checkDays } from "@/lib/booking-checks";
-import { isStaffRole } from "@/lib/event-map";
+import { can, reservationFlagsForRole, type BxRole } from "@/lib/roles";
 
 // ─── Types mirrored from reserve/page.tsx ─────────────────────────────────────
 interface ContactInfo {
@@ -125,11 +125,13 @@ export async function POST(req: NextRequest) {
       const { data: { user: authUser } } = await ssrClient.auth.getUser();
 
       // ── Re-check the dates on the server (C2) — the browser checks too, but a
-      // request can skip it. Staff may still book around the rules.
+      // request can skip it. Church staff and ministry coordinators may book any day.
       const { data: roleRow } = authUser
         ? await supabase.from("bx_user_roles").select("role").eq("user_id", authUser.id).maybeSingle()
         : { data: null };
-      if (!isStaffRole(roleRow?.role as string | undefined)) {
+      const role = (roleRow?.role as BxRole | undefined) ?? null;
+      const flags = reservationFlagsForRole(role);
+      if (!can.bookOutsideWindow(role)) {
         const { data: rules } = await supabase.from("blackout_rules").select("id, rule_type, data, label, active").eq("active", true);
         const problem = checkDays(days, (rules ?? []) as BlackoutRule[]);
         if (problem) return NextResponse.json({ error: problem }, { status: 400 });
@@ -145,6 +147,8 @@ export async function POST(req: NextRequest) {
 
       const { data: insertData, error: insertErr } = await supabase.from("reservations").insert({
         booking_number:  bookingNumber,
+        church_use:      flags.church_use,
+        waived:          flags.waived,
         status:          "pending",
         contact_name:    contact.name,
         contact_email:   contact.email,

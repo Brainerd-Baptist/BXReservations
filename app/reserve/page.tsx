@@ -3,6 +3,7 @@ import { adminClient } from "@/lib/event-map";
 import { getTemplateFor, listTemplatesFor, patternForRebook } from "@/lib/templates";
 import type { BookingPattern } from "@/lib/booking-pattern";
 import ReserveClient from "./reserve-client";
+import { can } from "@/lib/roles";
 
 export interface StartingPoint {
   kind: "rebook" | "template";
@@ -14,7 +15,7 @@ export interface TemplateOption { id: string; name: string; description: string 
 type Props = { searchParams: Promise<{ from?: string; template?: string }> };
 
 export default async function ReservePage({ searchParams }: Props) {
-  const { user, profile } = await getUserAndRole();
+  const { user, profile, role } = await getUserAndRole();
   const sp = await searchParams;
 
   const initialContact = user
@@ -52,6 +53,7 @@ export default async function ReservePage({ searchParams }: Props) {
       userId={user?.id ?? null}
       start={start}
       templates={templates}
+      churchUse={can.churchUse(role)}
     />
   );
 }

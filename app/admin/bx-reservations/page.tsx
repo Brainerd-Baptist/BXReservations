@@ -30,6 +30,7 @@ import { ROOMS } from "@/lib/rooms";
 import BookingInsights from "./booking-insights";
 import { useAdminRole } from "./admin-role";
 import TemplatesManager, { SaveTemplateButton } from "./booking-templates";
+import WaiverEditor from "./waiver-editor";
 import { can } from "@/lib/roles";
 import AddonCatalog from "@/app/components/addon-catalog";
 import GridToggle from "@/app/components/grid-toggle";
@@ -63,6 +64,8 @@ interface Request {
   agreementSigned?: boolean;
   coiAccepted?: boolean;
   hasPayment?: boolean;
+  churchUse?: boolean;       // C4: Ministry Coordinator / Brainerd Staff / staff
+  waived?: { agreement: boolean; coi: boolean; payment: boolean };
 }
 
 // All statuses in display order (used for filter tabs)
@@ -401,7 +404,8 @@ export default function BxReservationsAdmin() {
       );
     }
     return true;
-  });
+  // Church use is fast-tracked: waiting church requests come first (C4)
+  }).sort((a, b) => Number(!!b.churchUse && b.status === "Requested") - Number(!!a.churchUse && a.status === "Requested"));
 
   async function changeStatus(req: Request, newStatus: Status, note?: string, reason?: string) {
     if (!req.dbId) return;
@@ -732,6 +736,9 @@ export default function BxReservationsAdmin() {
                     <div className="flex items-center gap-2 flex-wrap mb-0.5">
                       <p className="font-bold text-parchment text-sm">{req.name}</p>
                       {req.org && <p className="text-xs text-slate">· {req.org}</p>}
+                      {req.churchUse && (
+                        <span className="bx-tone-green border px-2 py-0.5 rounded-full text-xs font-semibold">Church use</span>
+                      )}
                       {req.flexible && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
                           <AlertTriangle size={10} className="inline mr-0.5" />Soft block
@@ -745,10 +752,19 @@ export default function BxReservationsAdmin() {
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     {/* Doc status indicators */}
-                    <span className="flex gap-1 items-center" title="Agreement / COI / Payment">
-                      <span className={`${req.agreementSigned ? "text-emerald-400" : "text-slate/40"}`} title={req.agreementSigned ? "Agreement signed" : "No agreement"}><FileText size={13} /></span>
-                      <span className={`${req.coiAccepted ? "text-emerald-400" : "text-slate/40"}`} title={req.coiAccepted ? "COI accepted" : "No COI"}><Shield size={13} /></span>
-                      <span className={`${req.hasPayment ? "text-emerald-400" : "text-slate/40"}`} title={req.hasPayment ? "Payment recorded" : "No payment"}><DollarSign size={13} /></span>
+                    <span className="flex gap-1.5 items-center" aria-label="Agreement, insurance and payment">
+                      {([
+                        ["Agreement", req.agreementSigned, req.waived?.agreement, <FileText key="a" size={13} />],
+                        ["Insurance", req.coiAccepted, req.waived?.coi, <Shield key="c" size={13} />],
+                        ["Payment", req.hasPayment, req.waived?.payment, <DollarSign key="p" size={13} />],
+                      ] as const).map(([label, done, waived, icon]) => {
+                        const state = waived ? "not needed" : done ? "done" : "to do";
+                        return (
+                          <span key={label} title={`${label}: ${state}`} className={`inline-flex items-center gap-0.5 text-[10px] ${waived ? "text-slate/40 line-through" : done ? "text-emerald-400" : "text-slate/60"}`}>
+                            {icon}<span className="sr-only">{label}: {state}</span>
+                          </span>
+                        );
+                      })}
                     </span>
                     <span className="font-bold text-sm text-parchment">${req.estimate.toLocaleString()}</span>
                     <span
@@ -798,6 +814,7 @@ export default function BxReservationsAdmin() {
                             Attendee packet
                           </a>
                           <SaveTemplateButton reservationId={req.dbId} eventName={req.event} organizationId={req.organizationId ?? null} />
+                          <WaiverEditor key={`${req.churchUse}-${JSON.stringify(req.waived)}`} reservationId={req.dbId} churchUse={!!req.churchUse} waived={req.waived ?? { agreement: false, coi: false, payment: false }} onSaved={fetchReservations} />
                         </div>
                       </div>
                     )}

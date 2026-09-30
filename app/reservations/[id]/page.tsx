@@ -20,6 +20,7 @@ import PeopleCard from "@/app/components/people-card";
 import EditBooking from "@/app/components/edit-booking";
 import COIUploadCard from "./COIUploadCard";
 import { ButtonLink } from "@/app/components/ui/button";
+import { readWaived, WAIVER_LABEL } from "@/lib/waivers";
 
 const STATUS_META: Record<string, { dot: string }> = {
   pending:            { dot: "#FBBF24" },
@@ -89,7 +90,7 @@ interface PayloadDay { date?: string; included?: boolean; customStart?: string; 
 interface Payload { days?: PayloadDay[]; spaceMode?: string }
 
 const COLS =
-  "id, booking_number, created_at, status, event_name, space_mode, notes, contact_name, contact_email, contact_phone, contact_org, user_id, payload, sign_options, coi_accepted_at";
+  "id, booking_number, created_at, status, event_name, space_mode, notes, contact_name, contact_email, contact_phone, contact_org, user_id, payload, sign_options, coi_accepted_at, church_use, waived";
 
 const SETUP_NAMES: Record<string, string> = {
   theater: "Theater", banquet: "Banquet", reception: "Reception", cocktail: "Cocktail",
@@ -132,16 +133,18 @@ export default async function ReservationDetailPage({
     (reservation.contact_email ?? "").toLowerCase() === user.email.toLowerCase();
   const staff = isStaffRole(role);
   let isCollab = false;
+  let isCoOwner = false;
   if (!isOwner && !staff) {
     const { data: collab } = await db
       .from("reservation_collaborators")
-      .select("id")
+      .select("id, collab_role")
       .eq("reservation_id", id)
       .eq("user_id", user.id)
       .not("accepted_at", "is", null)
       .maybeSingle();
     if (!collab) notFound();
     isCollab = true;
+    isCoOwner = collab.collab_role === "co_owner";
   }
 
   // Rooms named or set up on the event map (the card below shows progress), and the logo
@@ -166,6 +169,7 @@ export default async function ReservationDetailPage({
     staffView: staff && !isOwner,
     staff,
     canEdit: isOwner || staff, // accepted co-owners edit through the event map API; viewers only look
+    canCancel: isOwner || isCoOwner, // co-organizers may cancel too (C4); staff use Admin
     labelCount: labelCount ?? 0,
     logo,
     share,
@@ -192,8 +196,10 @@ function renderPage(
     payload?: unknown;
     sign_options?: { qr?: boolean } | null;
     coi_accepted_at?: string | null;
+    church_use?: boolean | null;
+    waived?: unknown;
   },
-  view: { isCollab: boolean; staffView: boolean; staff: boolean; canEdit: boolean; labelCount: number; logo: LogoState | null; share: { enabled: boolean; token: string | null; path: string | null }; agreement?: { customer_signed_at: string | null; token: string } | null }
+  view: { isCollab: boolean; staffView: boolean; staff: boolean; canEdit: boolean; canCancel?: boolean; labelCount: number; logo: LogoState | null; share: { enabled: boolean; token: string | null; path: string | null }; agreement?: { customer_signed_at: string | null; token: string } | null }
 ) {
   const submittedDate = new Date(reservation.created_at).toLocaleDateString("en-US", {
     month: "long",
@@ -330,7 +336,7 @@ function renderPage(
             {exp.detail && (
               <p style={{ margin: "0 0 0 1.625rem", fontSize: "0.875rem", color: "var(--bx-slate)", lineHeight: 1.55 }}>{exp.detail}</p>
             )}
-            {SELF_CANCEL_STATUSES.has(reservation.status) && !view.staffView && (
+            {SELF_CANCEL_STATUSES.has(reservation.status) && !view.staffView && view.canCancel && (
               <div style={{ marginTop: "0.875rem", marginLeft: "1.625rem" }}>
                 <SelfCancelButton reservationId={reservation.id} />
               </div>
@@ -606,8 +612,20 @@ function renderPage(
         <Field label="Phone" value={reservation.contact_phone} />
       </div>
 
+      {/* Church use: say plainly what isn't needed (C4) */}
+      {(() => {
+        const w = readWaived(reservation.waived);
+        const skipped = (Object.keys(w) as (keyof typeof w)[]).filter((k) => w[k]).map((k) => WAIVER_LABEL[k].toLowerCase());
+        return skipped.length ? (
+          <div className="bx-tone-green border rounded-xl" style={{ padding: "0.875rem 1.25rem", marginBottom: "1rem", fontSize: "0.875rem" }}>
+            <strong>{reservation.church_use ? "Church use" : "Not needed for this booking"}:</strong>{" "}
+            no {skipped.join(", ").replace(/, ([^,]*)$/, " or $1")} needed{reservation.church_use ? " unless the BX team asks" : ""}.
+          </div>
+        ) : null;
+      })()}
+
       {/* Agreement signing card — show if there's an unsent/unsigned agreement */}
-      {!view.staffView && view.agreement && !view.agreement.customer_signed_at && (
+      {!view.staffView && !readWaived(reservation.waived).agreement && view.agreement && !view.agreement.customer_signed_at && (
         <div style={{ border: "1px solid color-mix(in srgb, var(--bx-brass) 35%, transparent)", borderRadius: "12px", padding: "1.25rem 1.5rem", marginBottom: "1rem", background: "color-mix(in srgb, var(--bx-brass) 6%, transparent)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.625rem", marginBottom: "0.75rem" }}>
             <span style={{ width: 10, height: 10, borderRadius: "50%", background: "var(--bx-brass)", display: "inline-block" }} />
@@ -633,7 +651,7 @@ function renderPage(
       )}
 
       {/* COI upload card — show when pending_documents and not yet accepted */}
-      {!view.staffView && reservation.status === "pending_documents" && !reservation.coi_accepted_at && (
+      {!view.staffView && !readWaived(reservation.waived).coi && reservation.status === "pending_documents" && !reservation.coi_accepted_at && (
         <div style={{ marginBottom: "1rem" }}>
           <COIUploadCard reservationId={reservation.id} />
         </div>

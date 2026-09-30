@@ -54,12 +54,13 @@ export async function runAutoReminders(db: SupabaseClient, days: number[]): Prom
   if (!windows.length) return { sent: 0, errors: [] };
   const { data: rows } = await db
     .from("reservations")
-    .select("id, status, payload")
+    .select("id, status, payload, waived")
     .limit(500);
   let sent = 0;
   const errors: string[] = [];
   for (const r of rows ?? []) {
     if (isClosedStatus(r.status) || ["declined", "expired", "pending"].includes(r.status ?? "")) continue;
+    if ((r.waived as { payment?: boolean } | null)?.payment) continue; // church use: no payment expected
     const date = firstEventDate(r.payload);
     if (!date) continue;
     const away = daysFromToday(date);

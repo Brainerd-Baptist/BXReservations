@@ -8,7 +8,9 @@ import { adminClient } from "@/lib/event-map";
 
 type Rule = { key: string; max: number; windowSec: number };
 
-const hash = (s: string) => createHash("sha256").update(`bx-rl:${s}`).digest("hex").slice(0, 32);
+// Keyed with a server secret so a stored hash can't be matched back to an IP by guessing
+const SALT = process.env.RATE_LIMIT_SALT ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? "bx";
+const hash = (s: string) => createHash("sha256").update(`bx-rl:${SALT}:${s}`).digest("hex").slice(0, 32);
 
 export function clientIp(req: Request): string {
   const fwd = req.headers.get("x-forwarded-for");

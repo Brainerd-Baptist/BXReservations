@@ -1405,9 +1405,11 @@ interface ReserveClientProps {
   userId?: string | null;
   start?: StartingPoint | null;
   templates?: TemplateOption[];
+  /** Ministry Coordinators, Brainerd Staff, staff: any day, no documents by default */
+  churchUse?: boolean;
 }
 
-export default function ReserveClient({ initialContact, userId, start = null, templates = [] }: ReserveClientProps) {
+export default function ReserveClient({ initialContact, userId, start = null, templates = [], churchUse = false }: ReserveClientProps) {
   const pattern = start?.pattern ?? null;
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
@@ -1437,12 +1439,14 @@ export default function ReserveClient({ initialContact, userId, start = null, te
   const [blackoutRules, setBlackoutRules] = useState<BlackoutRule[]>([]);
 
   useEffect(() => {
+    // Church use may book any day, so normally-closed days aren't blocked
+    if (churchUse) return;
     fetch("/api/blackouts")
       .then(r => (r.ok ? r.json() : []))
       // Only ever store an array: an error object here would crash every step.
       .then((data: unknown) => setBlackoutRules(Array.isArray(data) ? (data as BlackoutRule[]) : []))
       .catch(() => {}); // fail silently — no rules = no blocking
-  }, []);
+  }, [churchUse]);
 
   // Phase 6 measurement: one view per visit, then the furthest step reached.
   const furthest = useRef(0);
@@ -1515,6 +1519,12 @@ export default function ReserveClient({ initialContact, userId, start = null, te
         {step === 0 && (
           <div className="bx-fade-in">
           <StartingPointCard start={start} templates={templates} />
+          {churchUse && (
+            <div className="w-full max-w-2xl mx-auto mb-6 bx-tone-green border rounded-xl px-4 py-3 text-sm" role="note">
+              <p className="font-semibold">Booking as church use</p>
+              <p className="text-xs mt-0.5">Any day of the year, fast-tracked review, and no agreement, insurance or payment unless the BX team asks. Booking for someone else? Put their details below, or add them to the booking as co-organizers after you submit.</p>
+            </div>
+          )}
           <ContactStep
             contact={contact}
             onChange={p => setContact(c => ({ ...c, ...p }))}
