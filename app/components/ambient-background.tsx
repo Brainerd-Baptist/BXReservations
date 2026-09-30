@@ -9,6 +9,7 @@ import { useEffect, useRef } from "react";
  *   └─ .bx-ambient (fixed, z-index -1, never intercepts input)
  *      ├─ three slow "aurora" glows        — CSS-animated, transform only
  *      ├─ .bx-amb-grid                      — dots/lines, vignette-masked, scroll parallax
+ *      │   └─ .bx-amb-twinkle ×6            — scattered dots that softly light and fade
  *      ├─ .bx-amb-lamp > .bx-amb-lamp-grid  — a soft light that lifts nearby dots/lines
  *      └─ .bx-amb-grain                     — static paper grain
  *
@@ -119,7 +120,14 @@ export default function AmbientBackground() {
       <div className="bx-amb-glow bx-amb-glow--a" />
       <div className="bx-amb-glow bx-amb-glow--b" />
       <div className="bx-amb-glow bx-amb-glow--c" />
-      <div ref={gridRef} className="bx-amb-grid" />
+      <div ref={gridRef} className="bx-amb-grid">
+        <div className="bx-amb-twinkle bx-amb-twinkle--a" />
+        <div className="bx-amb-twinkle bx-amb-twinkle--b" />
+        <div className="bx-amb-twinkle bx-amb-twinkle--c" />
+        <div className="bx-amb-twinkle bx-amb-twinkle--d" />
+        <div className="bx-amb-twinkle bx-amb-twinkle--e" />
+        <div className="bx-amb-twinkle bx-amb-twinkle--f" />
+      </div>
       <div ref={lampRef} className="bx-amb-lamp">
         <div ref={lampGridRef} className="bx-amb-lamp-grid" />
       </div>

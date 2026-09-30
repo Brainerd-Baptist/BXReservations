@@ -68,3 +68,9 @@ value is stored in `localStorage` and in `bx_user_prefs.theme` (`brainerd` | `gl
 the account value is applied on sign-in so the choice follows people across devices. Retired theme ids
 (Daylight, Classic, Harbor, Heather, Moss, Orbit) are migrated automatically: Daylight → Light, the rest → Dark.
 `<html data-appearance>` holds the preference, `<html data-theme>` the resolved theme.
+
+## v1.39.1 — softer glow, twinkling dots
+
+Aurora glows, lamp glow and hero bloom were turned down ~35%. In exchange, six sparse "twinkle" layers
+(`.bx-amb-twinkle--a…f`) make a few scattered grid dots gently light up and fade (9–19.5s cycles, co-prime
+tile sizes so nothing pulses in unison). Dots only; off under reduced motion.

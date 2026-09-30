@@ -91,11 +91,13 @@
 
   /* ── Ambient layer ─────────────────────────────────────────────────── */
   --bx-grid-size:   28px;
-  --bx-glow-a:      color-mix(in srgb, #00abc9 17%, transparent);  /* BBC teal   */
-  --bx-glow-b:      color-mix(in srgb, #e9c46a 16%, transparent);  /* warm brass */
+  --bx-glow-a:      color-mix(in srgb, #00abc9 11%, transparent);  /* BBC teal   */
+  --bx-glow-b:      color-mix(in srgb, #e9c46a 12%, transparent);  /* warm brass */
   --bx-glow-c:      color-mix(in srgb, #00205b 8%, transparent);   /* BBC navy   */
   --bx-lamp:        var(--bx-brass);
-  --bx-lamp-glow:   color-mix(in srgb, var(--bx-brass) 10%, transparent);
+  --bx-lamp-glow:   color-mix(in srgb, var(--bx-brass) 6%, transparent);
+  --bx-twinkle:      color-mix(in srgb, var(--bx-brass) 60%, transparent);
+  --bx-twinkle-halo: color-mix(in srgb, var(--bx-brass) 14%, transparent);
   --bx-lamp-dot:    color-mix(in srgb, var(--bx-brass) 55%, transparent);
   --bx-lamp-line:   color-mix(in srgb, var(--bx-brass) 22%, transparent);
   --bx-grain-opacity: 0.035;
@@ -119,10 +121,12 @@
   --bx-hairline:      color-mix(in srgb, var(--bx-parchment) 11%, transparent);
   --bx-highlight:     rgba(255, 255, 255, 0.07);
   --bx-blur:          14px;
-  --bx-glow-a:        color-mix(in srgb, var(--bx-brass) 22%, transparent);
-  --bx-glow-b:        color-mix(in srgb, var(--bx-brass-soft) 12%, transparent);
-  --bx-glow-c:        color-mix(in srgb, #2b4fae 16%, transparent);  /* BBC navy, lifted */
-  --bx-lamp-glow:     color-mix(in srgb, var(--bx-brass) 14%, transparent);
+  --bx-glow-a:        color-mix(in srgb, var(--bx-brass) 15%, transparent);
+  --bx-glow-b:        color-mix(in srgb, var(--bx-brass-soft) 9%, transparent);
+  --bx-glow-c:        color-mix(in srgb, #2b4fae 13%, transparent);  /* BBC navy, lifted */
+  --bx-lamp-glow:     color-mix(in srgb, var(--bx-brass) 9%, transparent);
+  --bx-twinkle:       color-mix(in srgb, var(--bx-brass-soft) 80%, transparent);
+  --bx-twinkle-halo:  color-mix(in srgb, var(--bx-brass-soft) 18%, transparent);
   --bx-lamp-dot:      color-mix(in srgb, var(--bx-brass-soft) 60%, transparent);
   --bx-lamp-line:     color-mix(in srgb, var(--bx-brass-soft) 24%, transparent);
   --bx-grain-opacity: 0.05;
@@ -605,6 +609,98 @@ html[data-grid-lines="on"][data-grid-dots="on"] .bx-amb-grid { opacity: 0.85; }
   will-change: transform;
 }
 
+/* Twinkle — a few scattered grid dots gently light up and fade, like distant
+   lights. Six sparse layers with large co-prime tile sizes and periods, so the
+   pattern never visibly repeats and never pulses in unison. Dots sit exactly
+   on grid intersections; opacity-only animation (composited). */
+.bx-amb-twinkle {
+  position: absolute;
+  inset: 0;
+  display: none;
+  opacity: 0;
+  animation-name: bx-twinkle;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  will-change: opacity;
+}
+html[data-grid-dots="on"] .bx-amb-twinkle { display: block; }
+@keyframes bx-twinkle {
+  0%, 100% { opacity: 0; }
+  18%      { opacity: 0; }
+  50%      { opacity: 1; }
+  82%      { opacity: 0; }
+}
+.bx-amb-twinkle--a {
+  background-image:
+    radial-gradient(circle at 168px 448px, var(--bx-twinkle) 1.4px, transparent 2.4px),
+    radial-gradient(circle at 168px 448px, var(--bx-twinkle-halo), transparent 9px),
+    radial-gradient(circle at 420px 196px, var(--bx-twinkle) 1.4px, transparent 2.4px),
+    radial-gradient(circle at 420px 196px, var(--bx-twinkle-halo), transparent 9px),
+    radial-gradient(circle at 420px 420px, var(--bx-twinkle) 1.4px, transparent 2.4px),
+    radial-gradient(circle at 420px 420px, var(--bx-twinkle-halo), transparent 9px);
+  background-size: 644px 476px;
+  animation-duration: 9s;
+  animation-delay: -3s;
+}
+.bx-amb-twinkle--b {
+  background-image:
+    radial-gradient(circle at 140px 84px, var(--bx-twinkle) 1.4px, transparent 2.4px),
+    radial-gradient(circle at 140px 84px, var(--bx-twinkle-halo), transparent 9px),
+    radial-gradient(circle at 168px 112px, var(--bx-twinkle) 1.4px, transparent 2.4px),
+    radial-gradient(circle at 168px 112px, var(--bx-twinkle-halo), transparent 9px),
+    radial-gradient(circle at 420px 280px, var(--bx-twinkle) 1.4px, transparent 2.4px),
+    radial-gradient(circle at 420px 280px, var(--bx-twinkle-halo), transparent 9px);
+  background-size: 532px 812px;
+  animation-duration: 11.5s;
+  animation-delay: -8s;
+}
+.bx-amb-twinkle--c {
+  background-image:
+    radial-gradient(circle at 504px 336px, var(--bx-twinkle) 1.4px, transparent 2.4px),
+    radial-gradient(circle at 504px 336px, var(--bx-twinkle-halo), transparent 9px),
+    radial-gradient(circle at 560px 196px, var(--bx-twinkle) 1.4px, transparent 2.4px),
+    radial-gradient(circle at 560px 196px, var(--bx-twinkle-halo), transparent 9px),
+    radial-gradient(circle at 588px 28px, var(--bx-twinkle) 1.4px, transparent 2.4px),
+    radial-gradient(circle at 588px 28px, var(--bx-twinkle-halo), transparent 9px);
+  background-size: 812px 364px;
+  animation-duration: 13s;
+  animation-delay: -1.5s;
+}
+.bx-amb-twinkle--d {
+  background-image:
+    radial-gradient(circle at 28px 476px, var(--bx-twinkle) 1.4px, transparent 2.4px),
+    radial-gradient(circle at 28px 476px, var(--bx-twinkle-halo), transparent 9px),
+    radial-gradient(circle at 168px 560px, var(--bx-twinkle) 1.4px, transparent 2.4px),
+    radial-gradient(circle at 168px 560px, var(--bx-twinkle-halo), transparent 9px),
+    radial-gradient(circle at 420px 588px, var(--bx-twinkle) 1.4px, transparent 2.4px),
+    radial-gradient(circle at 420px 588px, var(--bx-twinkle-halo), transparent 9px);
+  background-size: 476px 644px;
+  animation-duration: 15.5s;
+  animation-delay: -11s;
+}
+.bx-amb-twinkle--e {
+  background-image:
+    radial-gradient(circle at 56px 196px, var(--bx-twinkle) 1.4px, transparent 2.4px),
+    radial-gradient(circle at 56px 196px, var(--bx-twinkle-halo), transparent 9px),
+    radial-gradient(circle at 84px 56px, var(--bx-twinkle) 1.4px, transparent 2.4px),
+    radial-gradient(circle at 84px 56px, var(--bx-twinkle-halo), transparent 9px),
+    radial-gradient(circle at 812px 224px, var(--bx-twinkle) 1.4px, transparent 2.4px),
+    radial-gradient(circle at 812px 224px, var(--bx-twinkle-halo), transparent 9px);
+  background-size: 868px 532px;
+  animation-duration: 17s;
+  animation-delay: -5s;
+}
+.bx-amb-twinkle--f {
+  background-image:
+    radial-gradient(circle at 224px 308px, var(--bx-twinkle) 1.4px, transparent 2.4px),
+    radial-gradient(circle at 224px 308px, var(--bx-twinkle-halo), transparent 9px),
+    radial-gradient(circle at 280px 28px, var(--bx-twinkle) 1.4px, transparent 2.4px),
+    radial-gradient(circle at 280px 28px, var(--bx-twinkle-halo), transparent 9px);
+  background-size: 364px 868px;
+  animation-duration: 19.5s;
+  animation-delay: -14s;
+}
+
 /* Lamp — a soft light that lifts the grid it passes over */
 .bx-amb-lamp {
   --lamp: 46vmax;
@@ -654,6 +750,7 @@ html[data-grid-lines="on"][data-grid-dots="on"] .bx-amb-grid { opacity: 0.85; }
 /* Accessibility & output modes */
 @media (prefers-reduced-motion: reduce) {
   .bx-amb-glow, .bx-amb-lamp { animation: none !important; }
+  .bx-amb-twinkle { display: none !important; }
 }
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
   :root, [data-theme] {
@@ -961,7 +1058,7 @@ select:disabled,
   pointer-events: none;
   overflow: hidden;
   background:
-    radial-gradient(60% 70% at 50% 0%, color-mix(in srgb, var(--bx-brass) 12%, transparent), transparent 70%),
+    radial-gradient(60% 70% at 50% 0%, color-mix(in srgb, var(--bx-brass) 7%, transparent), transparent 70%),
     radial-gradient(40% 50% at 85% 100%, color-mix(in srgb, var(--bx-parchment) 4%, transparent), transparent 70%);
   animation: bxWashDrift 14s ease-in-out infinite alternate;
 }
