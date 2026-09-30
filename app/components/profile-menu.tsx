@@ -102,7 +102,7 @@ export default function ProfileMenu({
                 className="inline-block mt-1 text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded"
                 style={{
                   background: "color-mix(in srgb, var(--bx-brass) 20%, transparent)",
-                  color: "var(--bx-brass)",
+                  color: "var(--bx-accent-text)",
                 }}
               >
                 Admin

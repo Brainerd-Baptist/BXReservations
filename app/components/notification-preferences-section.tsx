@@ -43,16 +43,19 @@ function Toggle({
   on,
   disabled,
   onToggle,
+  label,
 }: {
   on: boolean;
   disabled?: boolean;
   onToggle: () => void;
+  label: string;
 }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={on}
+      aria-label={label}
       disabled={disabled}
       onClick={onToggle}
       className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
@@ -145,6 +148,7 @@ export default function NotificationPreferencesSection({
               </p>
             </div>
             <Toggle
+              label={n.label}
               on={prefs[n.key]}
               disabled={savingKey === n.key}
               onToggle={() => toggle(n.key)}
@@ -176,7 +180,7 @@ export default function NotificationPreferencesSection({
                 {n.description}
               </p>
             </div>
-            <Toggle on disabled onToggle={() => {}} />
+            <Toggle label={n.label} on disabled onToggle={() => {}} />
           </div>
         ))}
         <p

@@ -74,3 +74,18 @@ the account value is applied on sign-in so the choice follows people across devi
 Aurora glows, lamp glow and hero bloom were turned down ~35%. In exchange, six sparse "twinkle" layers
 (`.bx-amb-twinkle--a…f`) make a few scattered grid dots gently light up and fade (9–19.5s cycles, co-prime
 tile sizes so nothing pulses in unison). Dots only; off under reduced motion.
+
+## v1.42.0 — contrast roles and shared components
+
+**Contrast roles** (`globals.css`): brand teal `#00abc9` stays the fill; each job has its own token.
+
+| Token | Light | Dark | Use |
+|---|---|---|---|
+| `--bx-action-bg` / `--bx-action-fg` | `#00abc9` / navy `#00205b` (5.7:1) | `#3cc3dc` / `#0a1020` (9:1) | filled buttons |
+| `--bx-accent-text` | `#00748a` (4.8:1 on linen) | `#3cc3dc` | teal text & links |
+| `--bx-slate` | `#5f6673` (5.1:1) | `#93a3ba` | muted text |
+| `--bx-focus` | `#00748a` | `#6ad3e6` | focus rings |
+
+`.bg-brass`, `.text-brass` and `.bg-brass.text-white` are remapped to these, so older markup is correct until it moves to the components.
+
+**Components** (`app/components/ui/`): `Button` / `ButtonLink` (primary · secondary · danger · ghost; sm/md/lg; 44px targets on touch; `loading`), `Field` + `Input`/`Textarea`/`Select` (label, hint and error wired with ids and aria), `Tabs` (APG keyboard pattern), `StatusBadge`, `EmptyState`, plus `LoadError`. Route-level `app/error.tsx` and `app/not-found.tsx`. One `<main id="main-content">` with a "Skip to content" link.

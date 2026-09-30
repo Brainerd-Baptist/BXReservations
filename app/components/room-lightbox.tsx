@@ -174,7 +174,7 @@ export function RoomLightbox({ room, isSelected, isNP, onClose, onToggle, galler
           {/* Header */}
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest mb-1"
-              style={{ color: "var(--bx-brass)" }}>
+              style={{ color: "var(--bx-accent-text)" }}>
               {room.floor === "upstairs" ? "Upstairs" : "Downstairs"}
             </p>
             <h2 className="text-2xl font-bold mb-1" style={{ color: "var(--bx-parchment)" }}>
@@ -235,7 +235,7 @@ export function RoomLightbox({ room, isSelected, isNP, onClose, onToggle, galler
               background: "color-mix(in srgb, var(--bx-brass) 8%, transparent)",
               border: "1px solid color-mix(in srgb, var(--bx-brass) 20%, transparent)",
             }}>
-            <p className="text-xs uppercase tracking-widest font-semibold mb-2" style={{ color: "var(--bx-brass)" }}>
+            <p className="text-xs uppercase tracking-widest font-semibold mb-2" style={{ color: "var(--bx-accent-text)" }}>
               Starting Rate
             </p>
             <p className="text-3xl font-bold" style={{ color: "var(--bx-parchment)" }}>
@@ -252,7 +252,7 @@ export function RoomLightbox({ room, isSelected, isNP, onClose, onToggle, galler
             <Link
               href="/reserve"
               className="w-full py-3 rounded-xl font-semibold text-sm transition-all hover:opacity-90 active:scale-[0.98] text-center inline-block"
-              style={{ background: "var(--bx-brass)", color: "white" }}
+              style={{ background: "var(--bx-action-bg)", color: "var(--bx-action-fg)" }}
             >
               Reserve this space →
             </Link>
@@ -261,8 +261,8 @@ export function RoomLightbox({ room, isSelected, isNP, onClose, onToggle, galler
               onClick={() => { onToggle(); onClose(); }}
               className="w-full py-3 rounded-xl font-semibold text-sm transition-all hover:opacity-90 active:scale-[0.98]"
               style={isSelected
-                ? { background: "color-mix(in srgb, var(--bx-brass) 15%, transparent)", color: "var(--bx-brass)", border: "1px solid var(--bx-brass)" }
-                : { background: "var(--bx-brass)", color: "white" }
+                ? { background: "color-mix(in srgb, var(--bx-brass) 15%, transparent)", color: "var(--bx-accent-text)", border: "1px solid var(--bx-brass)" }
+                : { background: "var(--bx-action-bg)", color: "var(--bx-action-fg)" }
               }
             >
               {isSelected ? "✓ Selected — click to remove" : "Select this space →"}

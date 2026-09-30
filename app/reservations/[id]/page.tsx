@@ -1,4 +1,5 @@
 import { redirect, notFound } from "next/navigation";
+import StatusBadge from "@/app/components/ui/status-badge";
 import { loginHref } from "@/lib/return-path";
 import Link from "next/link";
 import { getUserAndRole } from "@/lib/get-user-role";
@@ -14,7 +15,6 @@ import SignOptions from "@/app/components/sign-options";
 import SelfCancelButton from "./SelfCancelButton";
 import CommentsThread from "@/components/bx/CommentsThread";
 import COIUploadCard from "./COIUploadCard";
-import { RESERVATION_STATUS, BADGE_FALLBACK } from "@/lib/status-tokens";
 
 const STATUS_META: Record<string, { dot: string }> = {
   pending:            { dot: "#FBBF24" },
@@ -52,27 +52,8 @@ const SELF_CANCEL_STATUSES = new Set(["pending", "under_review", "approved", "pe
 
 export const metadata = { title: "Reservation · BX Reservations" };
 
-function statusChip(status: string) {
-  const s = RESERVATION_STATUS[status] ?? { ...BADGE_FALLBACK, label: status };
-  return (
-    <span
-      className="bx-badge"
-      style={{
-        display: "inline-block",
-        padding: "3px 10px",
-        borderRadius: "9999px",
-        fontSize: "0.8125rem",
-        fontWeight: 600,
-        letterSpacing: "0.03em",
-        background: s.bg,
-        color: s.color,
-        border: s.border ? `1px solid ${s.border}` : undefined,
-      }}
-    >
-      {s.label}
-    </span>
-  );
-}
+// One badge for every status, everywhere (shared, theme-aware)
+const statusChip = (status: string) => <StatusBadge status={status} />;
 
 function Field({ label, value }: { label: string; value?: string | null }) {
   if (!value) return null;
@@ -229,7 +210,7 @@ function renderPage(
   const headcount = Math.max(0, ...days.map((d) => Number(d.headcount) || 0)) || null;
 
   return (
-    <main className="animate-in" style={{ maxWidth: "640px", margin: "0 auto", padding: "2rem 1rem 4rem" }}>
+    <div className="animate-in" style={{ maxWidth: "640px", margin: "0 auto", padding: "2rem 1rem 4rem" }}>
 
       {/* Back link */}
       <Link
@@ -619,7 +600,7 @@ function renderPage(
           </p>
           <a
             href={`/reservations/${reservation.id}/agreement?token=${view.agreement.token}`}
-            style={{ display: "inline-block", background: "var(--bx-brass)", color: "#fff", padding: "0.625rem 1.25rem", borderRadius: 8, fontWeight: 700, fontSize: "0.9rem", textDecoration: "none" }}
+            style={{ display: "inline-block", background: "var(--bx-action-bg)", color: "var(--bx-action-fg)", padding: "0.625rem 1.25rem", borderRadius: 8, fontWeight: 700, fontSize: "0.9rem", textDecoration: "none" }}
           >
             Review &amp; Sign Agreement →
           </a>
@@ -709,6 +690,6 @@ function renderPage(
           New request
         </Link>
       </div>
-    </main>
+    </div>
   );
 }

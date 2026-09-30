@@ -67,7 +67,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
 
   return (
-    <main style={{ maxWidth: "640px", margin: "0 auto", padding: "2rem 1rem 4rem" }}>
+    <div style={{ maxWidth: "640px", margin: "0 auto", padding: "2rem 1rem 4rem" }}>
 
       {/* ── First-run welcome banner ── */}
       {isFirstVisit && (
@@ -84,7 +84,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
             alignItems: "flex-start",
           }}
         >
-          <span style={{ lineHeight: 1, marginTop: "0.1rem", color: "var(--bx-brass)" }}><svg width="1.25rem" height="1.25rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" style={{display:"inline",verticalAlign:"-0.2em"}}><path d="M7.5 5.5C7.5 4.1 8.6 3 10 3s2.5 1.1 2.5 2.5v5.5c0 1.4 1.1 2.5 2.5 2.5s2.5-1.1 2.5-2.5V5.5"/><path d="M4.5 8C4.5 6.6 5.6 5.5 7 5.5"/><path d="M3 12.5C3 11.1 4.1 10 5.5 10"/><path d="M20.5 12.5C20.5 14.9 18.5 20 12 21 6 21 3.5 16.5 3.5 13.5"/></svg></span>
+          <span style={{ lineHeight: 1, marginTop: "0.1rem", color: "var(--bx-accent-text)" }}><svg width="1.25rem" height="1.25rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" style={{display:"inline",verticalAlign:"-0.2em"}}><path d="M7.5 5.5C7.5 4.1 8.6 3 10 3s2.5 1.1 2.5 2.5v5.5c0 1.4 1.1 2.5 2.5 2.5s2.5-1.1 2.5-2.5V5.5"/><path d="M4.5 8C4.5 6.6 5.6 5.5 7 5.5"/><path d="M3 12.5C3 11.1 4.1 10 5.5 10"/><path d="M20.5 12.5C20.5 14.9 18.5 20 12 21 6 21 3.5 16.5 3.5 13.5"/></svg></span>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, fontSize: "0.9375rem", color: "var(--bx-parchment)", marginBottom: "0.2rem" }}>
               You're in{profile?.display_name ? `, ${profile.display_name.split(" ")[0]}` : ""}!
@@ -94,7 +94,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
             </div>
             {/* What to expect timeline */}
             <div style={{ marginTop: "0.875rem", paddingTop: "0.875rem", borderTop: "1px solid color-mix(in srgb, var(--bx-brass) 20%, transparent)" }}>
-              <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--bx-brass)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: "0.6rem" }}>
+              <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--bx-accent-text)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: "0.6rem" }}>
                 What happens after you submit a request
               </div>
               {[
@@ -107,7 +107,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                     flexShrink: 0, width: 20, height: 20, borderRadius: "50%",
                     background: "color-mix(in srgb, var(--bx-brass) 25%, transparent)",
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: "0.6875rem", fontWeight: 700, color: "var(--bx-brass)",
+                    fontSize: "0.6875rem", fontWeight: 700, color: "var(--bx-accent-text)",
                   }}>{step}</div>
                   <div>
                     <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "var(--bx-parchment)" }}>{label}</span>
@@ -193,7 +193,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           >
             <Link
               href="/admin/bx-reservations"
-              style={{ color: "var(--bx-brass)", fontWeight: 500, fontSize: "0.9375rem", textDecoration: "none" }}
+              style={{ color: "var(--bx-accent-text)", fontWeight: 500, fontSize: "0.9375rem", textDecoration: "none" }}
             >
               Admin dashboard →
             </Link>
@@ -274,6 +274,6 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
       {/* ── Sign out ── */}
       <SignOutButton />
-    </main>
+    </div>
   );
 }

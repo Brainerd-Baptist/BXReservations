@@ -282,7 +282,7 @@ function DiscountFormModal({
             <button
               type="submit"
               disabled={saving}
-              style={{ background: saving ? "var(--bx-slate)" : "var(--bx-brass)", color: "#fff", border: "none", borderRadius: 8, padding: "9px 18px", fontWeight: 600, fontSize: 14, cursor: saving ? "not-allowed" : "pointer" }}
+              style={{ background: saving ? "var(--bx-slate)" : "var(--bx-action-bg)", color: "var(--bx-action-fg)", border: "none", borderRadius: 8, padding: "9px 18px", fontWeight: 600, fontSize: 14, cursor: saving ? "not-allowed" : "pointer" }}
             >
               {saving ? "Saving…" : editingDiscount ? "Save Changes" : "Add Rule"}
             </button>
@@ -384,7 +384,7 @@ export default function OrgDetailClient({ org: initialOrg, linkedUsers, reservat
           <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", padding: "3px 10px", borderRadius: 20, background: tier.bg, color: tier.text }}>{tier.label}</span>
           <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
             {!editing ? (
-              <button onClick={startEdit} style={{ background: "var(--bx-brass)", color: "#fff", border: "none", borderRadius: 8, padding: "8px 18px", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>Edit</button>
+              <button onClick={startEdit} style={{ background: "var(--bx-action-bg)", color: "var(--bx-action-fg)", border: "none", borderRadius: 8, padding: "8px 18px", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>Edit</button>
             ) : (
               <>
                 <button form="org-edit-form" type="submit" disabled={isPending} style={{ background: isPending ? "var(--bx-slate)" : "var(--bx-sage)", color: "#fff", border: "none", borderRadius: 8, padding: "8px 18px", fontWeight: 600, fontSize: 14, cursor: isPending ? "not-allowed" : "pointer" }}>{isPending ? "Saving…" : "Save"}</button>
@@ -395,7 +395,7 @@ export default function OrgDetailClient({ org: initialOrg, linkedUsers, reservat
         </div>
         <div style={{ display: "flex", gap: 0 }}>
           {tabs.map((t) => (
-            <button key={t.key} onClick={() => setActiveTab(t.key)} style={{ background: "none", border: "none", borderBottom: activeTab === t.key ? "2px solid var(--bx-brass)" : "2px solid transparent", padding: "10px 18px", fontWeight: activeTab === t.key ? 700 : 500, fontSize: 14, cursor: "pointer", color: activeTab === t.key ? "var(--bx-brass)" : "var(--bx-slate)", transition: "all 0.15s", marginBottom: -1 }}>{t.label}</button>
+            <button key={t.key} onClick={() => setActiveTab(t.key)} style={{ background: "none", border: "none", borderBottom: activeTab === t.key ? "2px solid var(--bx-brass)" : "2px solid transparent", padding: "10px 18px", fontWeight: activeTab === t.key ? 700 : 500, fontSize: 14, cursor: "pointer", color: activeTab === t.key ? "var(--bx-accent-text)" : "var(--bx-slate)", transition: "all 0.15s", marginBottom: -1 }}>{t.label}</button>
           ))}
         </div>
       </div>
@@ -460,7 +460,7 @@ export default function OrgDetailClient({ org: initialOrg, linkedUsers, reservat
                     const statusStyle = STATUS_STYLES[r.status ?? ""] ?? STATUS_STYLES.cancelled;
                     return (
                       <tr key={r.id}>
-                        <Td><Link href="/admin/bx-reservations?tab=requests" style={{ color: "var(--bx-brass)", textDecoration: "none", fontWeight: 600 }}>{r.booking_number ?? r.id.slice(0, 8)}</Link></Td>
+                        <Td><Link href="/admin/bx-reservations?tab=requests" style={{ color: "var(--bx-accent-text)", textDecoration: "none", fontWeight: 600 }}>{r.booking_number ?? r.id.slice(0, 8)}</Link></Td>
                         <Td>{r.event_name ?? "—"}</Td>
                         <Td><span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", padding: "2px 8px", borderRadius: 12, background: statusStyle.bg, color: statusStyle.text }}>{r.status ?? "unknown"}</span></Td>
                         <Td muted>{r.contact_name ?? "—"}</Td>
@@ -489,7 +489,7 @@ export default function OrgDetailClient({ org: initialOrg, linkedUsers, reservat
               </div>
               <button
                 onClick={() => { setEditingDiscount(null); setShowDiscountModal(true); }}
-                style={{ background: "var(--bx-brass)", color: "#fff", border: "none", borderRadius: 8, padding: "9px 18px", fontWeight: 600, fontSize: 14, cursor: "pointer", whiteSpace: "nowrap" }}
+                style={{ background: "var(--bx-action-bg)", color: "var(--bx-action-fg)", border: "none", borderRadius: 8, padding: "9px 18px", fontWeight: 600, fontSize: 14, cursor: "pointer", whiteSpace: "nowrap" }}
               >
                 + Add Rule
               </button>
@@ -506,7 +506,7 @@ export default function OrgDetailClient({ org: initialOrg, linkedUsers, reservat
                 <p style={{ margin: "0 0 12px" }}>No discount rules for this organization.</p>
                 <button
                   onClick={() => { setEditingDiscount(null); setShowDiscountModal(true); }}
-                  style={{ background: "var(--bx-brass)", color: "#fff", border: "none", borderRadius: 8, padding: "8px 18px", fontWeight: 600, fontSize: 14, cursor: "pointer" }}
+                  style={{ background: "var(--bx-action-bg)", color: "var(--bx-action-fg)", border: "none", borderRadius: 8, padding: "8px 18px", fontWeight: 600, fontSize: 14, cursor: "pointer" }}
                 >
                   Add the first rule
                 </button>
@@ -524,7 +524,7 @@ export default function OrgDetailClient({ org: initialOrg, linkedUsers, reservat
                   {discounts.map((d) => (
                     <tr key={d.id}>
                       <Td>
-                        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", padding: "2px 8px", borderRadius: 12, background: "rgba(0,171,201,0.12)", color: "var(--bx-brass)" }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", padding: "2px 8px", borderRadius: 12, background: "rgba(0,171,201,0.12)", color: "var(--bx-accent-text)" }}>
                           {DISCOUNT_TYPE_LABELS[d.type] ?? d.type}
                         </span>
                       </Td>

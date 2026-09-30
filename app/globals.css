@@ -34,9 +34,9 @@
   --bx-parchment:  #00205b;
   --bx-brass:      #00abc9;
   --bx-brass-soft: #33c1d9;
-  --bx-slate:      #6b7280;
-  --bx-clay:       #dc2626;
-  --bx-sage:       #059669;
+  --bx-slate:      #5f6673;   /* muted text: 5.1:1 on linen (was #6b7280, 4.3:1) */
+  --bx-clay:       #c81e1e;   /* error text: 5.3:1 on linen */
+  --bx-sage:       #047857;
 
   /* keep legacy vars for any existing components that use them */
   --bbc-blue:       #00abc9;
@@ -70,6 +70,17 @@
   --duration-fast: 120ms;
   --duration-base: 200ms;
   --duration-slow: 350ms;
+
+  /* ── Contrast roles (audit F03) ─────────────────────────────────────────
+     The brand teal can't be every color at once: as text on linen it's
+     2.4:1 and white on it is 2.7:1 (the bar is 4.5:1). So each job gets its
+     own token. Brand teal stays the FILL; buttons carry BBC navy text (5.7:1);
+     teal text uses a deeper shade of the same hue (4.8:1 on the page). */
+  --bx-accent-text:     #00748a;
+  --bx-action-bg:       #00abc9;
+  --bx-action-bg-hover: #33c1d9;
+  --bx-action-fg:       #00205b;
+  --bx-focus:           #00748a;
 
   /* Typography identity — Brainerd light mode */
   --bx-font-display: var(--font-cormorant), 'Georgia', serif;
@@ -118,6 +129,11 @@
 /* ── Dark-mode tokens — shared by every dark theme ─────────────────────── */
 [data-theme="glass-dark"] {
   color-scheme: dark;                               /* native controls, scrollbars, date pickers */
+  --bx-accent-text:     #3cc3dc;   /* 7.7:1 on dark surfaces */
+  --bx-action-bg:       #3cc3dc;
+  --bx-action-bg-hover: #6ad3e6;
+  --bx-action-fg:       #0a1020;   /* 9:1 on the teal */
+  --bx-focus:           #6ad3e6;
   --bx-surface-alpha: 70%;
   --bx-surface-strong: color-mix(in srgb, var(--bx-ink-soft) 86%, transparent);
   --bx-well:          color-mix(in srgb, var(--bx-ink) 55%, transparent);
@@ -445,6 +461,104 @@ code, kbd, samp, pre, .font-mono { font-family: var(--font-mono); font-feature-s
   }
 }
 
+/* ── Components: Button · Field · Tabs · StatusBadge ───────────────────────
+   app/components/ui/*. In @layer components so a page can still adjust
+   spacing with utilities. */
+@layer components {
+  .bx-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    border-radius: 0.75rem; border: 1px solid transparent;
+    font-family: var(--bx-font-ui); font-weight: 600; line-height: 1.2;
+    text-decoration: none; white-space: nowrap; cursor: pointer; user-select: none;
+    transition: background-color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out),
+      box-shadow var(--duration-base) var(--ease-out), transform var(--duration-fast) var(--ease-spring), color var(--duration-fast);
+  }
+  .bx-btn:active:not(:disabled) { transform: scale(0.98); }
+  .bx-btn:disabled, .bx-btn[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
+  .bx-btn--sm { min-height: 2.25rem; padding: 0.375rem 0.875rem; font-size: 0.8125rem; border-radius: 0.625rem; }
+  .bx-btn--md { min-height: 2.75rem; padding: 0.625rem 1.25rem; font-size: 0.875rem; }
+  .bx-btn--lg { min-height: 3.25rem; padding: 0.875rem 1.75rem; font-size: 1rem; }
+  @media (pointer: coarse) { .bx-btn--sm { min-height: 2.75rem; } }  /* 44px tap target */
+  .bx-btn--block { display: flex; width: 100%; }
+
+  .bx-btn--primary {
+    background-color: var(--bx-action-bg); color: var(--bx-action-fg);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 1px 2px rgba(0,0,0,0.1),
+      0 8px 22px -8px color-mix(in srgb, var(--bx-action-bg) 70%, transparent);
+  }
+  .bx-btn--primary:hover:not(:disabled) {
+    background-color: var(--bx-action-bg-hover);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 2px 4px rgba(0,0,0,0.1),
+      0 12px 28px -8px color-mix(in srgb, var(--bx-action-bg) 80%, transparent);
+  }
+  .bx-btn--secondary {
+    background-color: var(--bx-surface-strong); color: var(--bx-parchment);
+    border-color: var(--bx-hairline);
+    box-shadow: inset 0 1px 0 var(--bx-highlight), var(--shadow-1);
+  }
+  .bx-btn--secondary:hover:not(:disabled) { border-color: color-mix(in srgb, var(--bx-accent-text) 45%, transparent); }
+  .bx-btn--danger { background-color: var(--bx-clay); color: #fff; }
+  .bx-btn--danger:hover:not(:disabled) { filter: brightness(1.08); }
+  .bx-btn--ghost { background: transparent; color: var(--bx-slate); }
+  .bx-btn--ghost:hover:not(:disabled) { color: var(--bx-parchment); background-color: color-mix(in srgb, var(--bx-parchment) 7%, transparent); }
+  .bx-btn__spinner { width: 1em; height: 1em; animation: bx-spin 0.8s linear infinite; }
+  @keyframes bx-spin { to { transform: rotate(360deg); } }
+
+  .bx-field { display: flex; flex-direction: column; gap: 0.375rem; }
+  .bx-field__label { font-size: 0.875rem; font-weight: 500; color: var(--bx-parchment); }
+  .bx-field__req { margin-left: 0.125rem; color: var(--bx-clay); }
+  .bx-field__hint { font-size: 0.75rem; color: var(--bx-slate); }
+  .bx-field__error { font-size: 0.75rem; font-weight: 600; color: var(--bx-clay); }
+  .bx-input {
+    width: 100%; min-height: 2.75rem; padding: 0.625rem 0.875rem;
+    border-radius: 0.75rem; border: 1px solid color-mix(in srgb, var(--bx-parchment) 20%, transparent);
+    background-color: var(--bx-ink); color: var(--bx-parchment); font-size: 1rem; /* 16px: no iOS zoom-on-focus */
+    transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
+  }
+  @media (min-width: 640px) { .bx-input { font-size: 0.875rem; } }
+  .bx-input::placeholder { color: color-mix(in srgb, var(--bx-slate) 70%, transparent); }
+  .bx-input:focus { border-color: var(--bx-focus); }
+  textarea.bx-input { min-height: 5.5rem; resize: vertical; }
+
+  .bx-tabs {
+    display: inline-flex; gap: 0.25rem; padding: 0.25rem; border-radius: 0.875rem;
+    background-color: var(--bx-well); border: 1px solid var(--bx-hairline-soft);
+    max-width: 100%; overflow-x: auto; scrollbar-width: none;
+  }
+  .bx-tab {
+    display: inline-flex; align-items: center; gap: 0.375rem; white-space: nowrap;
+    min-height: 2.25rem; padding: 0.375rem 0.875rem; border-radius: 0.625rem;
+    font-size: 0.8125rem; font-weight: 600; color: var(--bx-slate); background: transparent;
+    transition: color var(--duration-fast), background-color var(--duration-fast), box-shadow var(--duration-fast);
+  }
+  @media (pointer: coarse) { .bx-tab { min-height: 2.75rem; } }
+  .bx-tab:hover { color: var(--bx-parchment); }
+  .bx-tab[aria-selected="true"] {
+    color: var(--bx-parchment); background-color: var(--bx-surface-strong);
+    box-shadow: inset 0 1px 0 var(--bx-highlight), 0 1px 3px rgba(0,0,0,0.12);
+  }
+  .bx-tab__count {
+    min-width: 1.25rem; padding: 0 0.375rem; border-radius: 999px; font-size: 0.6875rem;
+    background-color: color-mix(in srgb, var(--bx-parchment) 10%, transparent);
+  }
+
+  .bx-status {
+    display: inline-flex; align-items: center; border: 1px solid; border-radius: 999px;
+    font-weight: 600; letter-spacing: 0.02em; white-space: nowrap;
+  }
+  .bx-status--md { padding: 0.1875rem 0.625rem; font-size: 0.8125rem; }
+  .bx-status--sm { padding: 0.125rem 0.5rem; font-size: 0.6875rem; }
+
+  /* Skip link — first thing a keyboard user reaches */
+  .bx-skip {
+    position: fixed; left: 1rem; top: 0.75rem; z-index: 100;
+    transform: translateY(-200%); transition: transform var(--duration-base) var(--ease-out);
+    padding: 0.625rem 1rem; border-radius: 0.625rem; font-weight: 600; font-size: 0.875rem;
+    background: var(--bx-action-bg); color: var(--bx-action-fg); text-decoration: none;
+  }
+  .bx-skip:focus { transform: none; }
+}
+
 /* ── Recessed inputs ─────────────────────────────────────────────────────── */
 input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="submit"]):not([type="button"]),
 textarea,
@@ -474,6 +588,17 @@ select:focus {
   outline-offset: 1px;
 }
 
+/* ── Contrast roles applied app-wide ────────────────────────────────────
+   Every brass-filled control gets the action colors; teal text uses the
+   accessible text shade. Keeps ~40 older call sites correct until each
+   moves to <Button>. */
+.text-brass { color: var(--bx-accent-text); }
+.bg-brass { background-color: var(--bx-action-bg); }
+.bg-brass.text-white, .bg-brass .text-white { color: var(--bx-action-fg); }
+.bg-brass svg[stroke="white"], .bg-brass svg[stroke="#fff"] { stroke: currentColor; }
+:is(button, a).bg-brass:not(:disabled):hover { background-color: var(--bx-action-bg-hover); }
+:focus-visible { outline-color: var(--bx-focus); }
+
 /* Fields flagged invalid get a red edge, not just a message below */
 :is(input, textarea, select)[aria-invalid="true"] {
   border-color: var(--bx-clay) !important;
@@ -483,8 +608,8 @@ select:focus {
 .btn-primary {
   font-weight: 600;
   font-size: 0.875rem;
-  background: var(--bx-brass, #00abc9);
-  color: #fff;
+  background: var(--bx-action-bg);
+  color: var(--bx-action-fg);
   padding: 0.625rem 1.5rem;
   border-radius: 9999px;
   transition:

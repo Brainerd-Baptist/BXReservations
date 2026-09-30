@@ -1,5 +1,6 @@
 
 "use client";
+import { Button } from "@/app/components/ui/button";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { BlackoutRule, isDateBlackedOut, isSlotBlackedOut, blackoutReason } from "@/lib/blackouts";
@@ -115,7 +116,7 @@ function getRoomTag(headcount: number, capacityTheater: number, capacityBanquet:
     return { label: "Best fit", style: { background: "rgba(34,197,94,0.15)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.3)" } };
   }
   if (ratio >= 0.25 && ratio < 0.6) {
-    return { label: "Good fit", style: { background: "color-mix(in srgb, var(--bx-brass) 12%, transparent)", color: "var(--bx-brass)", border: "1px solid color-mix(in srgb, var(--bx-brass) 30%, transparent)" } };
+    return { label: "Good fit", style: { background: "color-mix(in srgb, var(--bx-brass) 12%, transparent)", color: "var(--bx-accent-text)", border: "1px solid color-mix(in srgb, var(--bx-brass) 30%, transparent)" } };
   }
   return { label: "Oversized", style: { background: "rgba(0,0,0,0.25)", color: "var(--bx-slate)", border: "1px solid rgba(255,255,255,0.1)" } };
 }
@@ -285,10 +286,7 @@ function ContactStep({
       </div>{/* end white card */}
 
       <div className="mt-6 flex justify-end">
-        <button onClick={tryContinue}
-          className="px-8 py-3 rounded-xl bg-brass text-white font-semibold text-sm disabled:opacity-40 hover:bg-brass/90 transition-colors">
-          Continue →
-        </button>
+        <Button onClick={tryContinue} size="lg">Continue →</Button>
       </div>
     </div>
   );
@@ -414,8 +412,8 @@ function BuilderStep({
       {/* Date range + default headcount */}
       <div className="animate-in bx-glass rounded-2xl p-5 mb-6">
         <div className="grid grid-cols-1 gap-3 mb-4 sm:grid-cols-2 sm:gap-4 overflow-hidden">
-          <Field label="Start date" required>
-            <input type="date" value={startDate}
+          <Field label="Start date" required htmlFor="bx-start">
+            <input id="bx-start" type="date" value={startDate}
               onChange={e => {
                 setStartDate(e.target.value);
                 // Default end date to start date if unset or before new start
@@ -425,8 +423,8 @@ function BuilderStep({
               /* native picker follows the site theme (was forced dark — F16) */
               className={`${input} min-w-0 cursor-pointer`} />
           </Field>
-          <Field label="End date" required>
-            <input type="date" value={endDate} min={startDate}
+          <Field label="End date" required htmlFor="bx-end">
+            <input id="bx-end" type="date" value={endDate} min={startDate}
               onChange={e => setEndDate(e.target.value)}
               onClick={e => { try { (e.target as HTMLInputElement).showPicker(); } catch {} }}
               /* native picker follows the site theme (was forced dark — F16) */
@@ -472,8 +470,8 @@ function BuilderStep({
             </div>
           );
         })()}
-        <Field label={`Default headcount (applies to all days unless overridden)`}>
-          <input type="text" inputMode="numeric" pattern="[0-9]*"
+        <Field label={`Default headcount (applies to all days unless overridden)`} htmlFor="bx-headcount">
+          <input id="bx-headcount" type="text" inputMode="numeric" pattern="[0-9]*"
             value={rawDefaultHeadcount}
             onChange={e => {
               const raw = e.target.value.replace(/[^0-9]/g, "");
@@ -553,14 +551,8 @@ function BuilderStep({
       )}
 
       <div className="mt-6 flex justify-between">
-        <button onClick={onBack}
-          className="px-6 py-3 rounded-xl text-slate font-medium text-sm hover:bg-parchment/10 transition-colors">
-          ← Back
-        </button>
-        <button onClick={onNext} disabled={!canContinue}
-          className="px-8 py-3 rounded-xl bg-brass text-white font-semibold text-sm disabled:opacity-40 hover:bg-brass/90 transition-colors">
-          Review & Request →
-        </button>
+        <Button variant="ghost" size="lg" onClick={onBack}>← Back</Button>
+        <Button size="lg" onClick={onNext} disabled={!canContinue}>Review &amp; Request →</Button>
       </div>
     </div>
   );
@@ -1076,8 +1068,8 @@ function ReviewStep({
       )}
 
       {/* Notes */}
-      <Field label="Anything else we should know?">
-        <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3}
+      <Field label="Anything else we should know?" htmlFor="bx-notes">
+        <textarea id="bx-notes" value={notes} onChange={e => setNotes(e.target.value)} rows={3}
           placeholder="Special requests, questions, AV needs, catering thoughts…"
           className={`${input} resize-none`} />
       </Field>
@@ -1120,21 +1112,16 @@ function ReviewStep({
       )}
 
       <div className="mt-6 flex justify-between">
-        <button onClick={onBack} className="px-6 py-3 rounded-xl text-slate font-medium text-sm hover:bg-parchment/10 transition-colors">
-          ← Back
-        </button>
-        <button onClick={() => { void onSubmit(); }} disabled={submitting} aria-describedby={submitError ? "bx-submit-error" : undefined}
-          className="px-8 py-3 rounded-xl bg-parchment text-ink font-semibold text-sm hover:bg-parchment/90 disabled:opacity-60 transition-colors flex items-center gap-2">
-          {submitting ? (
-            <>
-              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
-              </svg>
-              Sending…
-            </>
-          ) : submitError ? "Try Again →" : "Send Request →"}
-        </button>
+        <Button variant="ghost" size="lg" onClick={onBack}>← Back</Button>
+        <Button
+          size="lg"
+          onClick={() => { void onSubmit(); }}
+          loading={submitting}
+          loadingText="Sending…"
+          aria-describedby={submitError ? "bx-submit-error" : undefined}
+        >
+          {submitError ? "Try Again →" : "Send Request →"}
+        </Button>
       </div>
     </div>
   );
@@ -1358,15 +1345,17 @@ function ShareSection({ reservationId }: { reservationId: string }) {
 
 // ─── Shared primitives ────────────────────────────────────────────────────────
 
+// Same look as the shared <Field> (app/components/ui/field.tsx); kept local
+// because these inputs pass ids explicitly.
 function Field({ label, required, children, htmlFor, error }: { label: string; required?: boolean; children: React.ReactNode; htmlFor?: string; error?: string | null }) {
   return (
-    <div>
-      <label htmlFor={htmlFor} className="block text-sm font-medium text-parchment mb-1">
-        {label}{required && <span className="text-red-400 ml-0.5" aria-hidden="true">*</span>}
+    <div className="bx-field">
+      <label htmlFor={htmlFor} className="bx-field__label">
+        {label}{required && <span className="bx-field__req" aria-hidden="true">*</span>}
       </label>
       {children}
       {error && htmlFor && (
-        <p id={`${htmlFor}-error`} className="mt-1 text-xs font-medium text-[var(--bx-clay)]">{error}</p>
+        <p id={`${htmlFor}-error`} className="bx-field__error">{error}</p>
       )}
     </div>
   );
@@ -1388,7 +1377,7 @@ function contactErrors(c: ContactInfo): Record<string, string | null> {
   };
 }
 
-const input = "w-full border border-parchment/20 rounded-xl px-3 py-2.5 text-sm bg-ink text-parchment placeholder:text-slate/50 focus:outline-none focus:ring-2 focus:ring-brass/30 focus:border-brass transition-colors";
+const input = "bx-input"; // shared field style (globals.css)
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 

@@ -156,7 +156,7 @@ export default function NotificationBell() {
             {count > 0 && (
               <button
                 onClick={markAllRead}
-                style={{ fontSize: 12, color: "var(--bx-brass)", background: "none", border: "none", cursor: "pointer", padding: 0, fontWeight: 500 }}
+                style={{ fontSize: 12, color: "var(--bx-accent-text)", background: "none", border: "none", cursor: "pointer", padding: 0, fontWeight: 500 }}
               >
                 Mark all read
               </button>
@@ -214,7 +214,7 @@ export default function NotificationBell() {
 
           {/* Footer */}
           <div style={{ padding: "10px 16px", borderTop: "1px solid var(--bx-hairline)", textAlign: "center" }}>
-            <a href="/reservations" style={{ fontSize: 12, color: "var(--bx-brass)", textDecoration: "none", fontWeight: 500 }}>View all reservations →</a>
+            <a href="/reservations" style={{ fontSize: 12, color: "var(--bx-accent-text)", textDecoration: "none", fontWeight: 500 }}>View all reservations →</a>
           </div>
         </div>
       )}

@@ -67,7 +67,7 @@ export default async function ReservationsPage() {
   const past: Reservation[] = all.filter((r) => !isUpcoming(r.status, r.payload));
 
   return (
-    <main className="animate-in" style={{ maxWidth: "640px", margin: "0 auto", padding: "2rem 1rem 4rem" }}>
+    <div className="animate-in" style={{ maxWidth: "640px", margin: "0 auto", padding: "2rem 1rem 4rem" }}>
 
       {/* Page title */}
       <div
@@ -115,7 +115,7 @@ export default async function ReservationsPage() {
                 fontWeight: 700,
                 letterSpacing: "0.05em",
                 textTransform: "uppercase",
-                color: "var(--bx-brass)",
+                color: "var(--bx-accent-text)",
               }}
             >
               Pending invites
@@ -128,7 +128,7 @@ export default async function ReservationsPage() {
                 fontWeight: 700,
                 background: "color-mix(in srgb, var(--bx-brass) 20%, transparent)",
             boxShadow: "var(--shadow-warm)",
-                color: "var(--bx-brass)",
+                color: "var(--bx-accent-text)",
               }}
             >
               {pendingInvites.length}
@@ -236,6 +236,6 @@ export default async function ReservationsPage() {
           </Link>
         </div>
       )}
-    </main>
+    </div>
   );
 }

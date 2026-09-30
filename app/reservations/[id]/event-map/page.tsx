@@ -83,7 +83,7 @@ export default async function EventMapPage({ params }: { params: Promise<{ id: s
         {ctx.access === "edit" && r.logo_status !== "approved" && (
           <Link
             href={`/reservations/${r.id}#logo`}
-            style={{ flex: "none", fontSize: "0.8125rem", fontWeight: 600, color: "var(--bx-brass)", textDecoration: "none" }}
+            style={{ flex: "none", fontSize: "0.8125rem", fontWeight: 600, color: "var(--bx-accent-text)", textDecoration: "none" }}
           >
             {r.logo_status === "pending" ? "Logo in review" : "Add a logo"}
           </Link>
@@ -92,7 +92,7 @@ export default async function EventMapPage({ params }: { params: Promise<{ id: s
           <Link
             href={`/api/event-map/${r.id}/signs${ctx.staff ? "?variant=staff" : ""}`}
             prefetch={false}
-            style={{ flex: "none", fontSize: "0.8125rem", fontWeight: 600, color: "var(--bx-brass)", textDecoration: "none" }}
+            style={{ flex: "none", fontSize: "0.8125rem", fontWeight: 600, color: "var(--bx-accent-text)", textDecoration: "none" }}
           >
             {ctx.staff ? "Staff signs" : "Door signs"}
           </Link>
@@ -101,7 +101,7 @@ export default async function EventMapPage({ params }: { params: Promise<{ id: s
           <Link
             href={`/api/event-map/${r.id}/setup-sheet`}
             prefetch={false}
-            style={{ flex: "none", fontSize: "0.8125rem", fontWeight: 600, color: "var(--bx-brass)", textDecoration: "none" }}
+            style={{ flex: "none", fontSize: "0.8125rem", fontWeight: 600, color: "var(--bx-accent-text)", textDecoration: "none" }}
           >
             Setup sheet
           </Link>

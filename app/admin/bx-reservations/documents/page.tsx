@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FileText, Shield, DollarSign } from "lucide-react";
 import { ReservationListSkeleton } from "@/app/components/Skeleton";
 import LoadError from "@/app/components/load-error";
+import { Tabs, tabId, panelId } from "@/app/components/ui/tabs";
 import { fetchArray } from "@/lib/fetch-list";
 import { daysFromToday, formatDateish, toVenueYmd } from "@/lib/dates";
 
@@ -163,27 +164,21 @@ export default function DocumentsHub() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 bx-well rounded-xl p-1 w-fit">
-          {(["agreements", "cois", "payments"] as Tab[]).map(t => (
-            <button
-              key={t}
-              onClick={() => setActiveTab(t)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                activeTab === t
-                  ? "bg-[var(--bbc-navy)] text-white shadow"
-                  : "text-slate hover:text-parchment"
-              }`}
-            >
-              {t === "agreements" && <span className="flex items-center gap-1.5"><FileText size={14} />Agreements</span>}
-              {t === "cois"       && <span className="flex items-center gap-1.5"><Shield size={14} />COIs</span>}
-              {t === "payments"   && <span className="flex items-center gap-1.5"><DollarSign size={14} />Payments</span>}
-            </button>
-          ))}
-        </div>
+        <Tabs<Tab>
+          group="docs"
+          label="Document type"
+          value={activeTab}
+          onChange={setActiveTab}
+          items={[
+            { key: "agreements", label: <><FileText size={14} aria-hidden="true" />Agreements</> },
+            { key: "cois", label: <><Shield size={14} aria-hidden="true" />Insurance (COIs)</> },
+            { key: "payments", label: <><DollarSign size={14} aria-hidden="true" />Payments</> },
+          ]}
+        />
 
         {/* ── Agreements tab ─────────────────────────────────────────────────────── */}
         {activeTab === "agreements" && (
-          <div className="bx-glass rounded-xl overflow-hidden">
+          <div role="tabpanel" id={panelId("docs", "agreements")} aria-labelledby={tabId("docs", "agreements")} className="bx-glass rounded-xl overflow-hidden">
             {agreementsLoading && <p className="p-8 text-center text-slate text-sm animate-pulse">Loading…</p>}
             {loadErr.agreements && <div className="p-4"><LoadError what="agreements" message={loadErr.agreements} onRetry={() => retry("agreements")} /></div>}
             {!agreementsLoading && agreements.length === 0 && agreementsLoaded && (
@@ -235,7 +230,7 @@ export default function DocumentsHub() {
 
         {/* ── COIs tab ────────────────────────────────────────────────────────────── */}
         {activeTab === "cois" && (
-          <div className="space-y-3">
+          <div role="tabpanel" id={panelId("docs", "cois")} aria-labelledby={tabId("docs", "cois")} className="space-y-3">
             <div className="flex flex-wrap gap-3 items-center">
               <input
                 type="search"
@@ -322,7 +317,7 @@ export default function DocumentsHub() {
 
         {/* ── Payments tab ────────────────────────────────────────────────────────── */}
         {activeTab === "payments" && (
-          <div className="space-y-3">
+          <div role="tabpanel" id={panelId("docs", "payments")} aria-labelledby={tabId("docs", "payments")} className="space-y-3">
             <div className="bx-glass rounded-xl overflow-hidden">
               {paymentsLoading && <p className="p-8 text-center text-slate text-sm animate-pulse">Loading…</p>}
               {loadErr.payments && <div className="p-4"><LoadError what="payments" message={loadErr.payments} onRetry={() => retry("payments")} /></div>}

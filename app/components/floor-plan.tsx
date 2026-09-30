@@ -306,7 +306,7 @@ export function FloorPlan({ activeIds, onRoomClick, floor: floorProp, onFloorCha
                 · {hoveredRoom.capacity} seats · {hoveredRoom.floor === "upstairs" ? "Upstairs" : "Downstairs"}
               </span>
             </div>
-            <span className="text-xs font-medium" style={{ color: "var(--bx-brass)" }}>
+            <span className="text-xs font-medium" style={{ color: "var(--bx-accent-text)" }}>
               Click to explore →
             </span>
           </div>

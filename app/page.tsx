@@ -12,7 +12,7 @@ export default async function Home() {
     : null;
 
   return (
-    <main className="min-h-screen">
+    <div className="min-h-screen">
 
       {/* ── Hero ── */}
       <section className="bx-band border-b relative overflow-hidden">
@@ -109,7 +109,7 @@ export default async function Home() {
               <Link
                 href="/login"
                 className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors"
-                style={{ color: "var(--bx-brass)", background: "color-mix(in srgb, var(--bx-brass) 14%, transparent)" }}
+                style={{ color: "var(--bx-accent-text)", background: "color-mix(in srgb, var(--bx-brass) 14%, transparent)" }}
               >
                 Sign in with Google →
               </Link>
@@ -175,8 +175,8 @@ export default async function Home() {
             {STEPS.map((s, i) => (
               <li key={i} className="flex items-start gap-4">
                 <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0 mt-0.5 tabular"
-                  style={{ background: "var(--bx-brass)", boxShadow: "0 0 0 4px color-mix(in srgb, var(--bx-brass) 14%, transparent), 0 4px 12px -2px color-mix(in srgb, var(--bx-brass) 50%, transparent)" }}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 mt-0.5 tabular"
+                  style={{ background: "var(--bx-action-bg)", color: "var(--bx-action-fg)", boxShadow: "0 0 0 4px color-mix(in srgb, var(--bx-brass) 14%, transparent), 0 4px 12px -2px color-mix(in srgb, var(--bx-brass) 50%, transparent)" }}
                 >
                   {i + 1}
                 </div>
@@ -247,7 +247,7 @@ export default async function Home() {
       <footer className="text-center pb-10 text-xs text-slate">
         BX Community Center · Brainerd Baptist Church
       </footer>
-    </main>
+    </div>
   );
 }
 

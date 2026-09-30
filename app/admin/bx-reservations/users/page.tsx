@@ -198,7 +198,7 @@ function InviteModal({
             <h2 id="invite-user-title" className="text-parchment font-bold text-lg">Invite a user</h2>
             <p className="text-slate text-sm mt-0.5">They'll receive a sign-in link with this role pre-assigned.</p>
           </div>
-          <button onClick={onClose} className="text-slate hover:text-parchment p-1 rounded-lg">
+          <button onClick={onClose} aria-label="Close" className="text-slate hover:text-parchment p-1 rounded-lg">
             <X size={18} />
           </button>
         </div>

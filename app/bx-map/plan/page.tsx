@@ -111,12 +111,12 @@ export default async function PlanPage() {
       </div>
       <div style={{ fontSize: "0.875rem", color: "var(--bx-slate)", marginTop: "0.25rem" }}>{fmtDates(dates)}</div>
       <div style={{ fontSize: "0.8125rem", marginTop: "0.5rem" }}>{roomsSummary(r.payload)}</div>
-      <div style={{ marginTop: "0.75rem", fontSize: "0.875rem", fontWeight: 600, color: "var(--bx-brass)" }}>Open event map →</div>
+      <div style={{ marginTop: "0.75rem", fontSize: "0.875rem", fontWeight: 600, color: "var(--bx-accent-text)" }}>Open event map →</div>
     </Link>
   );
 
   return (
-    <main style={{ maxWidth: "640px", margin: "0 auto", padding: "2rem 1rem 4rem" }}>
+    <div style={{ maxWidth: "640px", margin: "0 auto", padding: "2rem 1rem 4rem" }}>
       <Link href="/bx-map" style={{ fontSize: "0.875rem", color: "var(--bx-slate)", textDecoration: "none" }}>
         ← Building map
       </Link>
@@ -149,7 +149,7 @@ export default async function PlanPage() {
           }}
         >
           No upcoming reservations yet.{" "}
-          <Link href="/reserve" style={{ color: "var(--bx-brass)", fontWeight: 600 }}>
+          <Link href="/reserve" style={{ color: "var(--bx-accent-text)", fontWeight: 600 }}>
             Start a reservation
           </Link>{" "}
           and come back to lay it out.
@@ -165,6 +165,6 @@ export default async function PlanPage() {
           <div style={{ display: "grid", gap: "0.75rem", opacity: 0.8 }}>{past.slice(0, 10).map(card)}</div>
         </>
       )}
-    </main>
+    </div>
   );
 }

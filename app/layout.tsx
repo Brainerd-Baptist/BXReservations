@@ -35,7 +35,7 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-const APP_VERSION = "1.41.0";
+const APP_VERSION = "1.42.0";
 
 export default function RootLayout({
   children,
@@ -50,10 +50,12 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body className="flex flex-col min-h-screen">
+        <a href="#main-content" className="bx-skip">Skip to content</a>
         <AmbientBackground />
         <ToastProvider>
           <SiteHeader />
-          <main className="flex-1 isolate" style={{ paddingTop: "var(--bx-header-h)" }}>{children}</main>
+          {/* The page's one main region; the skip link lands here */}
+          <main id="main-content" tabIndex={-1} className="flex-1 isolate outline-none" style={{ paddingTop: "var(--bx-header-h)" }}>{children}</main>
           <ScrollReveal />
         </ToastProvider>
 

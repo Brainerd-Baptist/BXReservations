@@ -95,7 +95,7 @@ export default function AppearancePicker({ userId, size = "sm" }: Props) {
               on
                 ? {
                     background: "var(--bx-surface-strong)",
-                    color: "var(--bx-brass)",
+                    color: "var(--bx-accent-text)",
                     boxShadow: "inset 0 1px 0 var(--bx-highlight), 0 1px 3px rgba(0,0,0,0.12), 0 0 0 1px color-mix(in srgb, var(--bx-brass) 30%, transparent)",
                   }
                 : { background: "transparent", color: "var(--bx-slate)" }

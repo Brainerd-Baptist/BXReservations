@@ -145,8 +145,8 @@ export default function LoginPage() {
     return (
       <div className="min-h-screen flex items-center justify-center px-4 py-10">
         <div className="w-full max-w-sm text-center space-y-5">
-          <div className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center" style={{ background: "var(--bx-brass)" }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="M2 7l10 7 10-7" /></svg>
+          <div className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center" style={{ background: "var(--bx-action-bg)", color: "var(--bx-action-fg)" }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="M2 7l10 7 10-7" /></svg>
           </div>
           <h1 className="text-xl font-bold text-parchment">Check your email</h1>
           <p className="text-sm text-slate leading-relaxed">
@@ -169,7 +169,7 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => { setMode("signin"); setError(""); }}
-            className="bx-cta block w-full bg-brass text-white font-semibold rounded-lg py-2.5 text-sm"
+            className="bx-btn bx-btn--primary bx-btn--md bx-btn--block"
           >
             Back to sign in
           </button>
@@ -243,45 +243,49 @@ export default function LoginPage() {
             <form onSubmit={handleSignUp} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate mb-1.5 uppercase tracking-wide">First name</label>
+                  <label htmlFor="login-first" className="bx-field__label block mb-1.5">First name</label>
                   <input
+                    id="login-first"
                     type="text"
                     required
                     autoComplete="given-name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="First"
-                    className="w-full border border-parchment/20 rounded-lg py-2.5 px-3 text-sm text-parchment placeholder:text-slate/50 bg-ink focus:outline-none focus:ring-2 focus:ring-brass/40 focus:border-brass"
+                    className="bx-input"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate mb-1.5 uppercase tracking-wide">Last name</label>
+                  <label htmlFor="login-last" className="bx-field__label block mb-1.5">Last name</label>
                   <input
+                    id="login-last"
                     type="text"
                     required
                     autoComplete="family-name"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     placeholder="Last"
-                    className="w-full border border-parchment/20 rounded-lg py-2.5 px-3 text-sm text-parchment placeholder:text-slate/50 bg-ink focus:outline-none focus:ring-2 focus:ring-brass/40 focus:border-brass"
+                    className="bx-input"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate mb-1.5 uppercase tracking-wide">Email</label>
+                <label htmlFor="login-su-email" className="bx-field__label block mb-1.5">Email</label>
                 <input
+                  id="login-su-email"
                   type="email"
                   required
                   autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="w-full border border-parchment/20 rounded-lg py-2.5 px-3 text-sm text-parchment placeholder:text-slate/50 bg-ink focus:outline-none focus:ring-2 focus:ring-brass/40 focus:border-brass"
+                  className="bx-input"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate mb-1.5 uppercase tracking-wide">Password</label>
+                <label htmlFor="login-su-password" className="bx-field__label block mb-1.5">Password</label>
                 <input
+                  id="login-su-password"
                   type="password"
                   required
                   minLength={8}
@@ -289,7 +293,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="At least 8 characters"
-                  className="w-full border border-parchment/20 rounded-lg py-2.5 px-3 text-sm text-parchment placeholder:text-slate/50 bg-ink focus:outline-none focus:ring-2 focus:ring-brass/40 focus:border-brass"
+                  className="bx-input"
                 />
               </div>
               {error && (
@@ -300,7 +304,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="bx-cta w-full bg-brass text-white font-semibold rounded-lg py-2.5 text-sm disabled:opacity-60 active:scale-[0.98]"
+                className="bx-btn bx-btn--primary bx-btn--md bx-btn--block"
               >
                 {loading ? "Creating account…" : "Create account"}
               </button>
@@ -317,27 +321,29 @@ export default function LoginPage() {
           {mode === "signin" && (
             <form onSubmit={handleSignIn} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate mb-1.5 uppercase tracking-wide">Email</label>
+                <label htmlFor="login-email" className="bx-field__label block mb-1.5">Email</label>
                 <input
+                  id="login-email"
                   type="email"
                   required
                   autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full border border-parchment/20 rounded-lg py-2.5 px-3 text-sm text-parchment placeholder:text-slate/50 bg-ink focus:outline-none focus:ring-2 focus:ring-brass/40 focus:border-brass"
+                  className="bx-input"
                   placeholder="you@example.com"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate mb-1.5 uppercase tracking-wide">Password</label>
+                <label htmlFor="login-password" className="bx-field__label block mb-1.5">Password</label>
                 <input
+                  id="login-password"
                   type="password"
                   required
                   autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full border border-parchment/20 rounded-lg py-2.5 px-3 text-sm text-parchment placeholder:text-slate/50 bg-ink focus:outline-none focus:ring-2 focus:ring-brass/40 focus:border-brass"
+                  className="bx-input"
                   placeholder="••••••••"
                 />
               </div>
@@ -368,7 +374,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="bx-cta w-full bg-brass text-white font-semibold rounded-lg py-2.5 text-sm disabled:opacity-60 active:scale-[0.98]"
+                className="bx-btn bx-btn--primary bx-btn--md bx-btn--block"
               >
                 {loading ? "Signing in…" : "Sign in"}
               </button>
@@ -420,27 +426,29 @@ export default function LoginPage() {
                   <p className="text-sm text-slate mb-5 leading-relaxed">Enter the email address on your account and we&apos;ll send a reset link.</p>
                   <form onSubmit={handleForgotPassword} className="space-y-4">
                     <input
+                      aria-label="Email address"
+                      data-autofocus
                       type="email"
                       required
                       autoFocus
                       value={resetEmail}
                       onChange={(e) => setResetEmail(e.target.value)}
                       placeholder="you@example.com"
-                      className="w-full border border-parchment/20 rounded-lg py-2.5 px-3 text-sm text-parchment placeholder:text-slate/50 bg-ink focus:outline-none focus:ring-2 focus:ring-brass/40 focus:border-brass"
+                      className="bx-input"
                     />
                     {resetError && <p role="alert" className="text-xs text-[var(--bx-clay)]">{resetError}</p>}
                     <div className="flex gap-3">
                       <button
                         type="button"
                         onClick={() => setForgotMode(false)}
-                        className="flex-1 border border-parchment/20 text-slate font-medium rounded-lg py-2.5 text-sm hover:border-parchment/40 transition-colors"
+                        className="bx-btn bx-btn--ghost bx-btn--md flex-1"
                       >
                         Cancel
                       </button>
                       <button
                         type="submit"
                         disabled={resetLoading}
-                        className="flex-1 bg-brass hover:bg-brass/90 text-white font-semibold rounded-lg py-2.5 text-sm disabled:opacity-60 transition-colors"
+                        className="bx-btn bx-btn--primary bx-btn--md flex-1"
                       >
                         {resetLoading ? "Sending…" : "Send reset link"}
                       </button>

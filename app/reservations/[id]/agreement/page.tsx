@@ -10,12 +10,12 @@ export default async function AgreementPage({ params, searchParams }: Props) {
 
   if (!token) {
     return (
-      <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--bx-parchment)" }}>
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--bx-parchment)" }}>
         <div style={{ textAlign: "center", padding: "2rem" }}>
           <h1 style={{ fontSize: "1.5rem", marginBottom: "0.75rem" }}>Invalid Link</h1>
           <p style={{ color: "var(--bx-slate)" }}>This agreement link is invalid or has expired. Please contact the BX team.</p>
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -38,25 +38,25 @@ export default async function AgreementPage({ params, searchParams }: Props) {
 
   if (!agreement) {
     return (
-      <main style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--bx-parchment)" }}>
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--bx-parchment)" }}>
         <div style={{ textAlign: "center", padding: "2rem" }}>
           <h1 style={{ fontSize: "1.5rem", marginBottom: "0.75rem" }}>Link Not Found</h1>
           <p style={{ color: "var(--bx-slate)" }}>This agreement link is invalid or has expired. Please contact the BX team for a new link.</p>
         </div>
-      </main>
+      </div>
     );
   }
 
   const alreadySigned = !!agreement.customer_signed_at;
 
   return (
-    <main style={{ minHeight: "100vh", color: "var(--bx-parchment)" }}>
+    <div style={{ minHeight: "100vh", color: "var(--bx-parchment)" }}>
       <div style={{ maxWidth: 760, margin: "0 auto", padding: "2rem 1.25rem 4rem" }}>
         {/* Header */}
         <div style={{ marginBottom: "2rem", paddingBottom: "1.25rem", borderBottom: "1px solid color-mix(in srgb, var(--bx-parchment) 12%, transparent)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.5rem" }}>
             
-            <span style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--bx-brass)" }}>Brainerd Baptist · BX Reservations</span>
+            <span style={{ fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--bx-accent-text)" }}>Brainerd Baptist · BX Reservations</span>
           </div>
           <h1 style={{ margin: 0, fontSize: "1.5rem", fontWeight: 700 }}>Facility Use Agreement</h1>
           <p style={{ margin: "0.4rem 0 0", color: "var(--bx-slate)", fontSize: "0.9rem" }}>
@@ -93,6 +93,6 @@ export default async function AgreementPage({ params, searchParams }: Props) {
           </>
         )}
       </div>
-    </main>
+    </div>
   );
 }

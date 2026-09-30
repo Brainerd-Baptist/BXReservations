@@ -1,8 +1,8 @@
 "use client";
 
+import StatusBadge from "@/app/components/ui/status-badge";
 import { formatDateish } from "@/lib/dates";
 import Link from "next/link";
-import { RESERVATION_STATUS, BADGE_FALLBACK } from "@/lib/status-tokens";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -67,27 +67,8 @@ function formatDate(dateStr?: string | null, fallback?: string | null) {
   return formatDateish(d);
 }
 
-function statusChip(status: string) {
-  const s = RESERVATION_STATUS[status] ?? { ...BADGE_FALLBACK, label: status };
-  return (
-    <span
-      className="bx-badge"
-      style={{
-        padding: "2px 8px",
-        borderRadius: "9999px",
-        fontSize: "0.75rem",
-        fontWeight: 600,
-        letterSpacing: "0.03em",
-        background: s.bg,
-        color: s.color,
-        border: s.border ? `1px solid ${s.border}` : undefined,
-        flexShrink: 0,
-      }}
-    >
-      {s.label}
-    </span>
-  );
-}
+// One badge for every status, everywhere (shared, theme-aware)
+const statusChip = (status: string) => <StatusBadge status={status} />;
 
 function sectionHeader(label: string, count?: number) {
   return (
@@ -172,7 +153,7 @@ export default function ReservationList({ upcoming, sharedCollabs, past }: Props
           {upcoming.length === 0 ? (
             <div style={{ padding: "2.5rem 1.5rem", textAlign: "center", color: "var(--bx-slate)" }}>
               <p style={{ margin: "0 0 0.5rem" }}>No upcoming reservations.</p>
-              <Link href="/reserve" style={{ color: "var(--bx-brass)", fontWeight: 600, textDecoration: "none" }}>
+              <Link href="/reserve" style={{ color: "var(--bx-accent-text)", fontWeight: 600, textDecoration: "none" }}>
                 Make a request →
               </Link>
             </div>

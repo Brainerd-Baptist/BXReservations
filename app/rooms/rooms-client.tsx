@@ -50,7 +50,7 @@ export function RoomsClient() {
   }), [floor, cap, setup]);
 
   return (
-    <main className="min-h-screen relative overflow-x-hidden">
+    <div className="min-h-screen relative overflow-x-hidden">
       {/* Bloom glow */}
       <div className="bx-bloom" aria-hidden="true" />
 
@@ -61,10 +61,10 @@ export function RoomsClient() {
           {/* Floor */}
           <div className="flex items-center gap-1 mr-1">
             {(["all", "upstairs", "downstairs"] as FloorFilter[]).map(f => (
-              <button key={f} onClick={() => setFloor(f)}
+              <button key={f} onClick={() => setFloor(f)} aria-pressed={floor === f}
                 className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
                 style={floor === f
-                  ? { background: "var(--bx-brass)", color: "#fff" }
+                  ? { background: "var(--bx-action-bg)", color: "var(--bx-action-fg)" }
                   : { background: "color-mix(in srgb, var(--bx-parchment) 8%, transparent)", color: "var(--bx-slate)" }
                 }>
                 {FLOOR_LABELS[f]}
@@ -77,10 +77,10 @@ export function RoomsClient() {
           {/* Capacity */}
           <div className="flex items-center gap-1 mr-1">
             {(["all", "small", "medium", "large"] as CapacityFilter[]).map(c => (
-              <button key={c} onClick={() => setCap(c)}
+              <button key={c} onClick={() => setCap(c)} aria-pressed={cap === c}
                 className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
                 style={cap === c
-                  ? { background: "color-mix(in srgb, var(--bx-brass) 20%, transparent)", color: "var(--bx-brass)", border: "1px solid color-mix(in srgb, var(--bx-brass) 40%, transparent)" }
+                  ? { background: "color-mix(in srgb, var(--bx-brass) 20%, transparent)", color: "var(--bx-accent-text)", border: "1px solid color-mix(in srgb, var(--bx-brass) 40%, transparent)" }
                   : { background: "color-mix(in srgb, var(--bx-parchment) 8%, transparent)", color: "var(--bx-slate)", border: "1px solid transparent" }
                 }>
                 {CAP_LABELS[c]}
@@ -92,7 +92,7 @@ export function RoomsClient() {
 
           {/* Setup */}
           <div className="flex items-center gap-1 flex-wrap">
-            <button onClick={() => setSetup("all")}
+            <button onClick={() => setSetup("all")} aria-pressed={setup === "all"}
               className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
               style={setup === "all"
                 ? { background: "color-mix(in srgb, var(--bx-parchment) 15%, transparent)", color: "var(--bx-parchment)", border: "1px solid color-mix(in srgb, var(--bx-parchment) 25%, transparent)" }
@@ -101,7 +101,7 @@ export function RoomsClient() {
               Any setup
             </button>
             {SETUP_FILTER_IDS.map(sid => (
-              <button key={sid} onClick={() => setSetup(sid)}
+              <button key={sid} onClick={() => setSetup(sid)} aria-pressed={setup === sid}
                 className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
                 style={setup === sid
                   ? { background: "color-mix(in srgb, var(--bx-parchment) 15%, transparent)", color: "var(--bx-parchment)", border: "1px solid color-mix(in srgb, var(--bx-parchment) 25%, transparent)" }
@@ -124,7 +124,7 @@ export function RoomsClient() {
               {/* Grid — current view */}
               <button
                 className="px-3 py-1 text-xs font-medium transition-all"
-                style={{ background: "var(--bx-brass)", color: "var(--bx-ink)" }}
+                style={{ background: "var(--bx-action-bg)", color: "var(--bx-action-fg)" }}
                 disabled
               >
                 ⊞ Grid
@@ -149,7 +149,7 @@ export function RoomsClient() {
             <div style={{marginBottom:"0.75rem",color:"var(--bx-slate)"}}><svg width="2.5rem" height="2.5rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{display:"block",margin:"0 auto"}}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></div>
             <p className="font-semibold mb-1" style={{ color: "var(--bx-parchment)" }}>No spaces match these filters</p>
             <button onClick={() => { setFloor("all"); setCap("all"); setSetup("all"); }}
-              className="mt-4 text-sm font-medium" style={{ color: "var(--bx-brass)" }}>
+              className="mt-4 text-sm font-medium" style={{ color: "var(--bx-accent-text)" }}>
               Clear filters
             </button>
           </div>
@@ -203,8 +203,7 @@ export function RoomsClient() {
           </p>
           <Link
             href="/reserve"
-            className="bx-cta inline-flex items-center gap-2 px-8 py-3.5 rounded-xl font-bold text-sm text-white active:scale-[0.98]"
-            style={{ background: "var(--bx-brass)" }}
+            className="bx-cta inline-flex items-center gap-2 px-8 py-3.5 rounded-xl font-bold text-sm bg-brass text-white active:scale-[0.98]"
           >
             Start your reservation →
           </Link>
@@ -220,6 +219,6 @@ export function RoomsClient() {
         onToggle={() => {}}
         galleryMode
       />
-    </main>
+    </div>
   );
 }

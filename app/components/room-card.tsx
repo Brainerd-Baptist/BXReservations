@@ -110,7 +110,7 @@ export function RoomCard({ room, signal, isSelected, isDisabled, isNP, tag, onTo
         )}
 
         {/* Preview icon — shows on hover */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-200 pointer-events-none">
           <div className="px-4 py-2 rounded-full text-xs font-semibold text-white"
             style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)" }}>
             View room ↗
@@ -122,6 +122,15 @@ export function RoomCard({ room, signal, isSelected, isDisabled, isNP, tag, onTo
           <p className="font-bold text-white text-base leading-tight drop-shadow">{room.name}</p>
           <p className="text-white/75 text-xs mt-0.5 drop-shadow">{room.tagline}</p>
         </div>
+
+        {/* Keyboard + screen-reader way to open the preview (the card itself
+            is only mouse-clickable) — audit F11 */}
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onPreview(); }}
+          aria-label={`View ${room.name} photos and details`}
+          className="absolute inset-0 rounded-t-2xl focus-visible:outline-offset-[-3px]"
+        />
       </div>
 
       {/* ── Card footer ── */}
@@ -150,7 +159,7 @@ export function RoomCard({ room, signal, isSelected, isDisabled, isNP, tag, onTo
             href="/reserve"
             onClick={e => e.stopPropagation()}
             className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-90 active:scale-95"
-            style={{ background: "var(--bx-brass)", color: "white" }}
+            style={{ background: "var(--bx-action-bg)", color: "var(--bx-action-fg)" }}
           >
             Reserve →
           </a>
@@ -160,7 +169,7 @@ export function RoomCard({ room, signal, isSelected, isDisabled, isNP, tag, onTo
             onClick={e => { e.stopPropagation(); onToggle(); }}
             className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-90 active:scale-95"
             style={isSelected
-              ? { background: "var(--bx-brass)", color: "white" }
+              ? { background: "var(--bx-action-bg)", color: "var(--bx-action-fg)" }
               : unavailable
               ? { background: "color-mix(in srgb, var(--bx-parchment) 8%, transparent)", color: "var(--bx-slate)", border: "1px solid color-mix(in srgb, var(--bx-parchment) 15%, transparent)" }
               : { background: "color-mix(in srgb, var(--bx-parchment) 10%, transparent)", color: "var(--bx-parchment)", border: "1px solid color-mix(in srgb, var(--bx-parchment) 15%, transparent)" }

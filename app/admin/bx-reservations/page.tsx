@@ -1929,14 +1929,14 @@ function ReportsTab() {
       }}
     >
       <p className="text-xs uppercase tracking-widest"
-        style={{ color: accent ? "var(--bx-brass)" : "var(--bx-slate)" }}>
+        style={{ color: accent ? "var(--bx-accent-text)" : "var(--bx-slate)" }}>
         {label}
       </p>
       {loading
         ? <div className="h-8 w-20 rounded animate-pulse"
             style={{ background: "color-mix(in srgb, var(--bx-parchment) 8%, transparent)" }} />
         : <p className="text-3xl font-bold"
-            style={{ color: accent ? "var(--bx-brass)" : "var(--bx-parchment)" }}>
+            style={{ color: accent ? "var(--bx-accent-text)" : "var(--bx-parchment)" }}>
             {value}
           </p>
       }
@@ -1954,7 +1954,7 @@ function ReportsTab() {
       key={col}
       onClick={() => toggleSort(col)}
       className="px-4 py-3 text-left cursor-pointer select-none whitespace-nowrap"
-      style={{ color: sortCol === col ? "var(--bx-brass)" : "var(--bx-slate)", fontWeight: 500, fontSize: "0.75rem" }}
+      style={{ color: sortCol === col ? "var(--bx-accent-text)" : "var(--bx-slate)", fontWeight: 500, fontSize: "0.75rem" }}
     >
       {label}{sortCol === col ? (sortDir === "asc" ? " ↑" : " ↓") : ""}
     </th>
@@ -2050,7 +2050,7 @@ function ReportsTab() {
                   </td>
                   <td className="px-4 py-3 text-right font-mono" style={{ color: "var(--bx-parchment)" }}>{row.bookings}</td>
                   <td className="px-4 py-3 text-right font-mono" style={{ color: "var(--bx-slate)" }}>{row.rack_rate > 0 ? fmt(row.rack_rate) : "—"}</td>
-                  <td className="px-4 py-3 text-right font-mono" style={{ color: row.discount > 0 ? "var(--bx-brass)" : "var(--bx-slate)" }}>{row.discount > 0 ? fmt(row.discount) : "—"}</td>
+                  <td className="px-4 py-3 text-right font-mono" style={{ color: row.discount > 0 ? "var(--bx-accent-text)" : "var(--bx-slate)" }}>{row.discount > 0 ? fmt(row.discount) : "—"}</td>
                   <td className="px-4 py-3 text-right font-mono" style={{ color: row.net > 0 ? "var(--bx-parchment)" : "var(--bx-slate)" }}>{row.net > 0 ? fmt(row.net) : "—"}</td>
                 </tr>
               ))}
@@ -2058,11 +2058,11 @@ function ReportsTab() {
             <tfoot>
               <tr style={{ borderTop: "2px solid color-mix(in srgb, var(--bx-parchment) 15%, transparent)", background: "color-mix(in srgb, var(--bx-parchment) 4%, transparent)" }}>
                 <td className="px-4 py-3 font-semibold text-xs uppercase tracking-widest" colSpan={2} style={{ color: "var(--bx-slate)" }}>Total</td>
-                <td className="px-4 py-3 text-right font-mono font-semibold" style={{ color: "var(--bx-brass)" }}>{kpis?.total ?? 0}</td>
+                <td className="px-4 py-3 text-right font-mono font-semibold" style={{ color: "var(--bx-accent-text)" }}>{kpis?.total ?? 0}</td>
                 <td className="px-4 py-3 text-right font-mono" style={{ color: "var(--bx-slate)" }}>
                   {fmt((kpis?.internal.rack_rate_total ?? 0) + (kpis?.bbs.rack_rate_total ?? 0))}
                 </td>
-                <td className="px-4 py-3 text-right font-mono" style={{ color: "var(--bx-brass)" }}>
+                <td className="px-4 py-3 text-right font-mono" style={{ color: "var(--bx-accent-text)" }}>
                   {fmt(kpis?.discounts_given ?? 0)}
                 </td>
                 <td className="px-4 py-3 text-right font-mono font-semibold" style={{ color: "var(--bx-parchment)" }}>

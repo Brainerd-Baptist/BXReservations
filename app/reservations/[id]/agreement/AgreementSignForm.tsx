@@ -105,8 +105,8 @@ export default function AgreementSignForm({ reservationId, token, contactName }:
         type="submit"
         disabled={!canSubmit}
         style={{
-          background: canSubmit ? "var(--bx-brass)" : "color-mix(in srgb, var(--bx-parchment) 10%, transparent)",
-          color: canSubmit ? "#fff" : "var(--bx-slate)",
+          background: canSubmit ? "var(--bx-action-bg)" : "color-mix(in srgb, var(--bx-parchment) 10%, transparent)",
+          color: canSubmit ? "var(--bx-action-fg)" : "var(--bx-slate)",
           border: "none", borderRadius: 8, padding: "0.875rem 2rem",
           fontSize: "0.9375rem", fontWeight: 700, cursor: canSubmit ? "pointer" : "not-allowed",
           transition: "background 0.15s",

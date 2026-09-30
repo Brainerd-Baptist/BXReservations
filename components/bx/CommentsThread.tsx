@@ -42,7 +42,7 @@ function Initials({ name }: { name: string }) {
       border: "1px solid color-mix(in srgb, var(--bx-brass) 35%, transparent)",
       fontSize: "0.6875rem",
       fontWeight: 700,
-      color: "var(--bx-brass)",
+      color: "var(--bx-accent-text)",
       flex: "none",
     }}>{init}</span>
   );
@@ -102,7 +102,7 @@ export default function CommentsThread({ reservationId, fetchUrl, postUrl, canIn
     return (
       <button
         onClick={load}
-        style={{ background: "none", border: "none", padding: 0, fontSize: "0.8125rem", color: "var(--bx-brass)", cursor: "pointer", textDecoration: "underline", textUnderlineOffset: "2px" }}
+        style={{ background: "none", border: "none", padding: 0, fontSize: "0.8125rem", color: "var(--bx-accent-text)", cursor: "pointer", textDecoration: "underline", textUnderlineOffset: "2px" }}
       >
         Load messages {loading && "…"}
       </button>
@@ -134,7 +134,7 @@ export default function CommentsThread({ reservationId, fetchUrl, postUrl, canIn
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "baseline", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.25rem" }}>
                   <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "var(--bx-parchment)" }}>{c.author_name}</span>
-                  {isAdmin && <span style={{ fontSize: "0.6875rem", color: "var(--bx-brass)", fontWeight: 600, letterSpacing: "0.04em" }}>BX TEAM</span>}
+                  {isAdmin && <span style={{ fontSize: "0.6875rem", color: "var(--bx-accent-text)", fontWeight: 600, letterSpacing: "0.04em" }}>BX TEAM</span>}
                   {isInternal && <span style={{ fontSize: "0.6875rem", color: "var(--bx-slate)", fontStyle: "italic" }}>internal note</span>}
                   <span style={{ fontSize: "0.75rem", color: "var(--bx-slate)" }}>{fmtTs(c.created_at)}</span>
                 </div>

@@ -152,7 +152,7 @@ export default function OrganizationsClient({
         </div>
         <button
           onClick={() => setSlideOpen(true)}
-          style={{ background: "var(--bx-brass)", color: "#fff", border: "none", borderRadius: 8, padding: "10px 20px", fontWeight: 600, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
+          style={{ background: "var(--bx-action-bg)", color: "var(--bx-action-fg)", border: "none", borderRadius: 8, padding: "10px 20px", fontWeight: 600, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
         >
           <span style={{ fontSize: 18, lineHeight: 1 }}>+</span> New Organization
         </button>
@@ -171,7 +171,7 @@ export default function OrganizationsClient({
             <button
               key={t.value}
               onClick={() => setTierFilter(t.value)}
-              style={{ padding: "6px 14px", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", border: tierFilter === t.value ? "2px solid var(--bx-brass)" : "2px solid color-mix(in srgb, var(--bx-parchment) 15%, transparent)", background: tierFilter === t.value ? "color-mix(in srgb, var(--bx-brass) 12%, transparent)" : "transparent", color: tierFilter === t.value ? "var(--bx-brass)" : "var(--bx-slate)", transition: "all 0.15s" }}
+              style={{ padding: "6px 14px", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", border: tierFilter === t.value ? "2px solid var(--bx-brass)" : "2px solid color-mix(in srgb, var(--bx-parchment) 15%, transparent)", background: tierFilter === t.value ? "color-mix(in srgb, var(--bx-brass) 12%, transparent)" : "transparent", color: tierFilter === t.value ? "var(--bx-accent-text)" : "var(--bx-slate)", transition: "all 0.15s" }}
             >
               {t.label}
             </button>
@@ -236,7 +236,7 @@ export default function OrganizationsClient({
                 <textarea rows={3} value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Internal notes about this organization…" />
               </Field>
               <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
-                <button type="submit" disabled={isPending} style={{ flex: 1, background: isPending ? "var(--bx-slate)" : "var(--bx-brass)", color: "#fff", border: "none", borderRadius: 8, padding: "11px 0", fontWeight: 600, fontSize: 15, cursor: isPending ? "not-allowed" : "pointer" }}>
+                <button type="submit" disabled={isPending} style={{ flex: 1, background: isPending ? "var(--bx-slate)" : "var(--bx-action-bg)", color: "var(--bx-action-fg)", border: "none", borderRadius: 8, padding: "11px 0", fontWeight: 600, fontSize: 15, cursor: isPending ? "not-allowed" : "pointer" }}>
                   {isPending ? "Creating…" : "Create Organization"}
                 </button>
                 <button type="button" onClick={() => { setSlideOpen(false); setForm(EMPTY_FORM); setFormError(null); }} style={{ background: "transparent", border: "1px solid color-mix(in srgb, var(--bx-parchment) 20%, transparent)", borderRadius: 8, padding: "11px 20px", fontWeight: 600, fontSize: 15, cursor: "pointer", color: "var(--bx-slate)" }}>

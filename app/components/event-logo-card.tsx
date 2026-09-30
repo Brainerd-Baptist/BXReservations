@@ -282,7 +282,7 @@ function btn(kind: "primary" | "action" | "confirm" | "ghost" | "danger" | "appr
     color: "var(--bx-parchment)",
     font: "inherit",
   };
-  if (kind === "primary") return { ...base, background: "var(--bx-brass)", color: "#fff" };
+  if (kind === "primary") return { ...base, background: "var(--bx-action-bg)", color: "var(--bx-action-fg)" };
   if (kind === "approve") return { ...base, background: "#059669", color: "#fff" };
   if (kind === "action") return { ...base, background: "#D97706", color: "#fff" };
   if (kind === "confirm") return { ...base, background: "#059669", color: "#fff" };

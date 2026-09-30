@@ -101,8 +101,8 @@ export default function COIUploadCard({ reservationId }: Props) {
         onClick={handleUpload}
         disabled={!file || loading}
         style={{
-          background: file && !loading ? "var(--bx-brass)" : "color-mix(in srgb, var(--bx-parchment) 10%, transparent)",
-          color: file && !loading ? "#fff" : "var(--bx-slate)",
+          background: file && !loading ? "var(--bx-action-bg)" : "color-mix(in srgb, var(--bx-parchment) 10%, transparent)",
+          color: file && !loading ? "var(--bx-action-fg)" : "var(--bx-slate)",
           border: "none", borderRadius: 8, padding: "0.75rem 1.5rem",
           fontSize: "0.9rem", fontWeight: 700, cursor: file && !loading ? "pointer" : "not-allowed",
         }}
