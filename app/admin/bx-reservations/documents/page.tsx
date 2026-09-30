@@ -6,6 +6,7 @@ import { ReservationListSkeleton } from "@/app/components/Skeleton";
 import LoadError from "@/app/components/load-error";
 import { Tabs, tabId, panelId } from "@/app/components/ui/tabs";
 import { fetchArray } from "@/lib/fetch-list";
+import PaymentHub from "./payment-hub";
 import { daysFromToday, formatDateish, toVenueYmd } from "@/lib/dates";
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
@@ -30,18 +31,6 @@ interface COIRow {
   coi_accepted_at: string | null;
   coi_expiry_date: string | null;
   coi_file_url: string | null;
-}
-
-interface PaymentRow {
-  reservation_id: string;
-  booking_number: string;
-  contact_name: string;
-  contact_org: string;
-  event_name: string;
-  payment_received_at: string;
-  payment_amount: number;
-  payment_method: string;
-  payment_receipt_url: string | null;
 }
 
 type Tab = "agreements" | "cois" | "payments";
@@ -84,10 +73,6 @@ export default function DocumentsHub() {
   const [coiFilter, setCoiFilter] = useState<"all" | "pending" | "accepted" | "expired">("all");
   const [coiSearch, setCoiSearch] = useState("");
 
-  // Payments
-  const [payments, setPayments] = useState<PaymentRow[]>([]);
-  const [paymentsLoading, setPaymentsLoading] = useState(false);
-  const [paymentsLoaded, setPaymentsLoaded] = useState(false);
 
   // A failed load is shown as an error with Retry — never as an empty list,
   // and never stored as if the error object were the list (audit F06).
@@ -98,7 +83,6 @@ export default function DocumentsHub() {
     setLoadErr(prev => ({ ...prev, [tab]: null }));
     if (tab === "agreements") setAgreementsLoaded(false);
     if (tab === "cois") setCoisLoaded(false);
-    if (tab === "payments") setPaymentsLoaded(false);
     setReloadKey(k => k + 1);
   }
 
@@ -117,13 +101,6 @@ export default function DocumentsHub() {
         .then(d => { setCois(d); setCoisLoaded(true); })
         .catch(e => setLoadErr(prev => ({ ...prev, cois: errMsg(e) })))
         .finally(() => setCoisLoading(false));
-    }
-    if (activeTab === "payments" && !paymentsLoaded && !paymentsLoading && !loadErr.payments) {
-      setPaymentsLoading(true);
-      fetchArray<PaymentRow>("/api/admin/documents?type=payments")
-        .then(d => { setPayments(d); setPaymentsLoaded(true); })
-        .catch(e => setLoadErr(prev => ({ ...prev, payments: errMsg(e) })))
-        .finally(() => setPaymentsLoading(false));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, reloadKey]);
@@ -148,7 +125,6 @@ export default function DocumentsHub() {
     return true;
   });
 
-  const totalPayments = payments.reduce((s, p) => s + p.payment_amount, 0);
 
   return (
     <div className="min-h-screen">
@@ -172,7 +148,7 @@ export default function DocumentsHub() {
           items={[
             { key: "agreements", label: <><FileText size={14} aria-hidden="true" />Agreements</> },
             { key: "cois", label: <><Shield size={14} aria-hidden="true" />Insurance (COIs)</> },
-            { key: "payments", label: <><DollarSign size={14} aria-hidden="true" />Payments</> },
+            { key: "payments", label: <><DollarSign size={14} aria-hidden="true" />Payments &amp; balances</> },
           ]}
         />
 
@@ -318,71 +294,8 @@ export default function DocumentsHub() {
 
         {/* ── Payments tab ────────────────────────────────────────────────────────── */}
         {activeTab === "payments" && (
-          <div role="tabpanel" id={panelId("docs", "payments")} aria-labelledby={tabId("docs", "payments")} className="space-y-3">
-            <div className="bx-glass rounded-xl overflow-hidden">
-              {paymentsLoading && <p className="p-8 text-center text-slate text-sm animate-pulse">Loading…</p>}
-              {loadErr.payments && <div className="p-4"><LoadError what="payments" message={loadErr.payments} onRetry={() => retry("payments")} /></div>}
-              {!paymentsLoading && payments.length === 0 && paymentsLoaded && (
-                <p className="p-8 text-center text-slate text-sm">No payments recorded yet.</p>
-              )}
-              {!paymentsLoading && payments.length > 0 && (
-                <>
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-parchment/10 text-xs text-slate uppercase tracking-widest">
-                        <th className="text-left px-4 py-3">Booking</th>
-                        <th className="text-left px-4 py-3">Renter / Org</th>
-                        <th className="text-left px-4 py-3 hidden sm:table-cell">Event</th>
-                        <th className="text-left px-4 py-3">Date</th>
-                        <th className="text-right px-4 py-3">Amount</th>
-                        <th className="text-left px-4 py-3">Method</th>
-                        <th className="text-left px-4 py-3">Receipt</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {payments.map(p => (
-                        <tr key={p.reservation_id} className="border-b border-parchment/5 hover:bg-parchment/5">
-                          <td className="px-4 py-3">
-                            <Link href={`/admin/bx-reservations?booking=${p.booking_number}`} className="text-[var(--bx-brass)] hover:underline font-mono text-xs">
-                              {p.booking_number}
-                            </Link>
-                          </td>
-                          <td className="px-4 py-3">
-                            <p className="text-parchment font-medium">{p.contact_name}</p>
-                            {p.contact_org && <p className="text-xs text-slate">{p.contact_org}</p>}
-                          </td>
-                          <td className="px-4 py-3 hidden sm:table-cell text-parchment/80">{p.event_name}</td>
-                          <td className="px-4 py-3 text-slate text-xs">
-                            {new Date(p.payment_received_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                          </td>
-                          <td className="px-4 py-3 text-right font-semibold text-parchment">
-                            ${p.payment_amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                          </td>
-                          <td className="px-4 py-3 text-parchment/80 capitalize">{p.payment_method}</td>
-                          <td className="px-4 py-3">
-                            {p.payment_receipt_url
-                              ? <a href={p.payment_receipt_url} target="_blank" rel="noreferrer" className="text-[var(--bx-brass)] hover:underline text-xs">View</a>
-                              : <span className="text-slate text-xs">—</span>
-                            }
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                    <tfoot>
-                      <tr className="border-t border-parchment/20">
-                        <td colSpan={4} className="px-4 py-3 text-xs font-semibold text-slate uppercase tracking-widest">
-                          Total ({payments.length} payment{payments.length !== 1 ? "s" : ""})
-                        </td>
-                        <td className="px-4 py-3 text-right font-bold text-parchment">
-                          ${totalPayments.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                        </td>
-                        <td colSpan={2} />
-                      </tr>
-                    </tfoot>
-                  </table>
-                </>
-              )}
-            </div>
+          <div role="tabpanel" id={panelId("docs", "payments")} aria-labelledby={tabId("docs", "payments")}>
+            <PaymentHub />
           </div>
         )}
       </div>

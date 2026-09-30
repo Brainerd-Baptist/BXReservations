@@ -39,6 +39,7 @@ interface SubmitBody {
   days: DayConfig[];
   spaceMode: "single" | "main-plus" | "multiple";
   notes: string;
+  addons?: { addon_id: string; quantity: number }[];
 }
 
 // ─── Booking number generator ─────────────────────────────────────────────────
@@ -143,6 +144,24 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Failed to save reservation" }, { status: 500 });
       }
       const reservationId = insertData.id as string;
+
+      // ── Add-ons chosen on the form → charge lines at catalog price ─────────
+      const picked = (Array.isArray(body.addons) ? body.addons : [])
+        .map((a) => ({ id: String(a?.addon_id ?? ""), qty: Math.min(500, Math.max(0, Math.floor(Number(a?.quantity) || 0))) }))
+        .filter((a) => a.id && a.qty > 0)
+        .slice(0, 30);
+      if (picked.length) {
+        const { data: catalog } = await supabase
+          .from("bx_addons").select("id, name, price").eq("active", true).in("id", picked.map((a) => a.id));
+        const rows = picked.flatMap((a) => {
+          const item = (catalog ?? []).find((c: { id: string }) => c.id === a.id) as { id: string; name: string; price: number } | undefined;
+          return item ? [{ reservation_id: reservationId, kind: "addon", addon_id: item.id, label: item.name, unit_price: item.price, quantity: a.qty, added_by: authUser?.id ?? null, added_by_staff: false }] : [];
+        });
+        if (rows.length) {
+          const { error: aErr } = await supabase.from("reservation_charges").insert(rows);
+          if (aErr) console.error("[submit] add-ons insert failed:", aErr);
+        }
+      }
 
       // ── PCO Calendar event creation (awaited — serverless functions terminate on response) ──
       const pcoEventId = await pcoCreateEvent({

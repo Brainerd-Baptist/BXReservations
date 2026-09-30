@@ -21,7 +21,9 @@ function calendarRangeLabel(): string {
 import CommentsThread from "@/components/bx/CommentsThread";
 import EventLogoCard from "@/app/components/event-logo-card";
 import VenueSettings from "@/app/components/venue-settings";
+import BillingCard from "@/app/components/billing-card";
 import RoomRates from "@/app/components/room-rates";
+import AddonCatalog from "@/app/components/addon-catalog";
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { BlackoutRule, ruleDescription } from "@/lib/blackouts";
@@ -192,8 +194,6 @@ export default function BxReservationsAdmin() {
   const [coiExpiry, setCoiExpiry] = useState<Record<string, string>>({});
   const [coiFlagNote, setCoiFlagNote] = useState<Record<string, string>>({});
   const [coiBusy, setCoiBusy] = useState<Record<string, boolean>>({});
-  const [payForm, setPayForm] = useState<Record<string, { amount: string; method: string; received_at: string; receipt_url: string }>>({});
-  const [payBusy, setPayBusy] = useState<Record<string, boolean>>({});
   const [bookingDiscounts, setBookingDiscounts] = useState<Record<string, Array<{ id: string; type: string; value: number; scope: string; discount_reason: string | null; note: string | null }>>>({});
   const [bookingDiscountForm, setBookingDiscountForm] = useState<Record<string, { open: boolean; type: string; value: string; reason: string; note: string; busy: boolean }>>({});
   const [sendingAgreementV2, setSendingAgreementV2] = useState<Record<string, boolean>>({});
@@ -493,33 +493,6 @@ export default function BxReservationsAdmin() {
     finally { setCoiBusy(prev => ({ ...prev, [req.id]: false })); }
   }
 
-  async function handlePayment(req: Request) {
-    if (!req.dbId) return;
-    const pf = payForm[req.id] ?? { amount: "", method: "", received_at: "", receipt_url: "" };
-    if (!pf.amount || isNaN(parseFloat(pf.amount)) || parseFloat(pf.amount) <= 0) { toast("Enter a valid payment amount.", "error"); return; }
-    if (!pf.method.trim()) { toast("Enter a payment method (e.g. check, card, cash).", "error"); return; }
-    setPayBusy(prev => ({ ...prev, [req.id]: true }));
-    try {
-      const res = await fetch(`/api/admin/reservations/${req.dbId}/payment`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          payment_amount:      parseFloat(pf.amount),
-          payment_method:      pf.method.trim(),
-          payment_received_at: pf.received_at || undefined,
-          payment_receipt_url: pf.receipt_url.trim() || undefined,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) { toast(data.error ?? "Error", "error"); return; }
-      setPayForm(prev => { const n = { ...prev }; delete n[req.id]; return n; });
-      setDocStatus(prev => { const n = { ...prev }; delete n[req.id]; return n; });
-      setDocLoading(prev => { const n = { ...prev }; delete n[req.id]; return n; });
-      fetchDocStatus(req.id, req.dbId!);
-    } catch { toast("Request failed — please try again.", "error"); }
-    finally { setPayBusy(prev => ({ ...prev, [req.id]: false })); }
-  }
-
   async function handleSendAgreementV2(req: Request) {
     if (!req.dbId) return;
     setSendingAgreementV2(prev => ({ ...prev, [req.id]: true }));
@@ -633,6 +606,7 @@ export default function BxReservationsAdmin() {
             />
             <VenueSettings />
             <RoomRates />
+            <AddonCatalog />
             <BlackoutSettings
               rules={blackouts}
               loading={blackoutsLoading}
@@ -1020,62 +994,10 @@ export default function BxReservationsAdmin() {
                               )}
                             </div>
 
-                            {/* Payment */}
+                            {/* Charges & payments (lib/billing.ts) */}
                             <div className="space-y-2">
-                              <p className="text-xs font-semibold text-parchment/70">Payment</p>
-                              {ds.payment_received_at ? (
-                                <div className="space-y-1">
-                                  <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-2 py-1">
-                                    ✓ ${Number(ds.payment_amount ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })} via {ds.payment_method} — received {new Date(ds.payment_received_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                                  </p>
-                                  {ds.payment_receipt_url && (
-                                    <a href={ds.payment_receipt_url} target="_blank" rel="noreferrer" className="text-xs text-[var(--bx-brass)] underline">
-                                      View receipt
-                                    </a>
-                                  )}
-                                </div>
-                              ) : (() => {
-                                const pf = payForm[req.id] ?? { amount: "", method: "", received_at: "", receipt_url: "" };
-                                const busy = payBusy[req.id];
-                                function updPay(k: string, v: string) {
-                                  setPayForm(prev => ({ ...prev, [req.id]: { ...(prev[req.id] ?? { amount: "", method: "", received_at: "", receipt_url: "" }), [k]: v } }));
-                                }
-                                return (
-                                  <div className="space-y-2">
-                                    <div className="grid grid-cols-2 gap-2">
-                                      <div>
-                                        <label htmlFor="bx-reserva-amount-2" className="text-xs text-slate">Amount ($)</label>
-                                        <input id="bx-reserva-amount-2" type="number" min="0" step="0.01" placeholder="0.00"
-                                          className="bx-input bx-input--sm w-full mt-0.5"
-                                          value={pf.amount} onChange={e => updPay("amount", e.target.value)} />
-                                      </div>
-                                      <div>
-                                        <label htmlFor="bx-reserva-method-3" className="text-xs text-slate">Method</label>
-                                        <input id="bx-reserva-method-3" type="text" placeholder="check, card, cash…"
-                                          className="bx-input bx-input--sm w-full mt-0.5"
-                                          value={pf.method} onChange={e => updPay("method", e.target.value)} />
-                                      </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-2">
-                                      <div>
-                                        <label htmlFor="bx-reserva-date-received-4" className="text-xs text-slate">Date received</label>
-                                        <input id="bx-reserva-date-received-4" type="date"
-                                          className="bx-input bx-input--sm w-full mt-0.5"
-                                          value={pf.received_at} onChange={e => updPay("received_at", e.target.value)} />
-                                      </div>
-                                      <div>
-                                        <label htmlFor="bx-reserva-receipt-url-optional-5" className="text-xs text-slate">Receipt URL (optional)</label>
-                                        <input id="bx-reserva-receipt-url-optional-5" type="url" placeholder="https://…"
-                                          className="bx-input bx-input--sm w-full mt-0.5"
-                                          value={pf.receipt_url} onChange={e => updPay("receipt_url", e.target.value)} />
-                                      </div>
-                                    </div>
-                                    <button className="bx-btn bx-btn--primary bx-btn--sm" disabled={busy} onClick={() => handlePayment(req)}>
-                                      {busy ? "Saving…" : "Record Payment"}
-                                    </button>
-                                  </div>
-                                );
-                              })()}
+                              <p className="text-xs font-semibold text-parchment/70">Charges &amp; payments</p>
+                              <BillingCard reservationId={req.dbId!} compact />
                             </div>
                           </>)}
                         </div>
@@ -1644,6 +1566,8 @@ const AUTOMATION_KEYS: { key: string; label: string; unit: string; description: 
   { key: "auto_cancel_days",        label: "Auto-cancellation",         unit: "days", description: "Days of user inactivity before automatically cancelling a needs_info or pending_documents reservation" },
   { key: "admin_reminder_days",     label: "Admin review reminder",     unit: "days", description: "Days before sending an internal admin reminder for unreviewed submitted reservations" },
   { key: "coi_expiry_warning_days", label: "COI expiry warning",        unit: "days", description: "Days before COI expiration to send a renewal reminder to the organization contact" },
+  { key: "payment_reminder_1_days", label: "First payment reminder",    unit: "days", description: "Days before the event to email the requester if a balance is due (confirmed bookings)" },
+  { key: "payment_reminder_2_days", label: "Second payment reminder",   unit: "days", description: "Days before the event for a final balance reminder" },
 ];
 
 function AutomationSettings({

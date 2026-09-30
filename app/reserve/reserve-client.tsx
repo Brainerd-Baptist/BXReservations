@@ -1,5 +1,6 @@
 
 "use client";
+import AddonPicker, { type AddonSelection } from "@/app/components/addon-picker";
 import { Button } from "@/app/components/ui/button";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
@@ -893,12 +894,13 @@ function DayCard({
 const SUBMIT_TIMEOUT_MSG = "timeout";
 
 function ReviewStep({
-  contact, days, isNP, notes, setNotes, onBack, onSubmit, submitted, submitting, bookingNumber, submitError, reservationId, userId,
+  contact, days, isNP, notes, setNotes, addons, setAddons, onBack, onSubmit, submitted, submitting, bookingNumber, submitError, reservationId, userId,
 }: {
   contact: ContactInfo;
   days: DayConfig[];
   isNP: boolean;
   notes: string; setNotes: (v: string) => void;
+  addons: AddonSelection; setAddons: (v: AddonSelection) => void;
   onBack: () => void;
   onSubmit: () => Promise<void>;
   submitted: boolean;
@@ -1068,6 +1070,8 @@ function ReviewStep({
           </p>
         </div>
       )}
+
+      <AddonPicker value={addons} onChange={setAddons} days={days.filter((d) => d.included !== false).length} />
 
       {/* Notes */}
       <Field label="Anything else we should know?" htmlFor="bx-notes">
@@ -1413,6 +1417,7 @@ export default function ReserveClient({ initialContact, userId }: ReserveClientP
   const [rawDefaultHeadcount, setRawDefaultHeadcount] = useState("50");
   const [days, setDays] = useState<DayConfig[]>([]);
   const [notes, setNotes] = useState("");
+  const [addons, setAddons] = useState<AddonSelection>({});
   const [blackoutRules, setBlackoutRules] = useState<BlackoutRule[]>([]);
 
   useEffect(() => {
@@ -1441,7 +1446,7 @@ export default function ReserveClient({ initialContact, userId }: ReserveClientP
       const res = await fetch("/api/submit-reservation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contact, days, spaceMode, notes }),
+        body: JSON.stringify({ contact, days, spaceMode, notes, addons: Object.entries(addons).map(([addon_id, quantity]) => ({ addon_id, quantity })) }),
         signal: controller.signal,
       });
       // The server can answer with a non-JSON error page (500, 502, 413…);
@@ -1515,6 +1520,7 @@ export default function ReserveClient({ initialContact, userId }: ReserveClientP
             days={days}
             isNP={contact.isNonProfit}
             notes={notes} setNotes={setNotes}
+            addons={addons} setAddons={setAddons}
             onBack={() => goToStep(1)}
             onSubmit={handleSubmit}
             submitted={submitted}

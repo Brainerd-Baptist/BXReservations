@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { brandedEmailHtml, sendEmail } from "@/lib/email";
+import { runAutoReminders } from "@/lib/payment-reminders";
 
 // ─── Auth ──────────────────────────────────────────────────────────────────────
 // Vercel invokes this with: Authorization: Bearer <CRON_SECRET>
 // Local dev: set CRON_SECRET in .env.local and call with the header
 function authorized(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET;
-  if (!secret) return true; // dev fallback — no secret configured
+  // Without a secret, only allow local dev. In production set CRON_SECRET in
+  // Vercel (Vercel then sends it to this job automatically).
+  if (!secret) return process.env.NODE_ENV !== "production" || (req.headers.get("user-agent") ?? "").startsWith("vercel-cron/");
   const header = req.headers.get("authorization") ?? "";
   return header === `Bearer ${secret}`;
 }
@@ -27,6 +30,8 @@ async function getSettings(sb: ReturnType<typeof adminSb>): Promise<Record<strin
     user_reminder_2_days:    10,
     admin_reminder_days:     3,
     coi_expiry_warning_days: 30,
+    payment_reminder_1_days: 14,
+    payment_reminder_2_days: 3,
   };
   const { data } = await sb.from("bx_settings").select("key, value");
   if (!data) return defaults;
@@ -480,6 +485,13 @@ export async function GET(req: NextRequest) {
       log.push(`auto_completed → ${res.booking_number}`);
     } catch (e) { errors++; console.error(e); }
   }
+
+  // ── Payment reminders (balance due, N days before the event) ─────────────
+  try {
+    const r = await runAutoReminders(sb, [settings.payment_reminder_1_days, settings.payment_reminder_2_days]);
+    if (r.sent) log.push(`payment_reminders → ${r.sent} sent`);
+    if (r.errors.length) { errors += r.errors.length; console.error("[bx-automation] reminders:", r.errors); }
+  } catch (e) { errors++; console.error("[bx-automation] reminders failed:", e); }
 
   return NextResponse.json({
     ok: true,

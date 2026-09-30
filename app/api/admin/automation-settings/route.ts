@@ -12,6 +12,8 @@ async function requireStaff(): Promise<NextResponse | null> {
 }
 
 const ALLOWED_KEYS = [
+  "payment_reminder_1_days",
+  "payment_reminder_2_days",
   "user_reminder_1_days",
   "user_reminder_2_days",
   "auto_cancel_days",

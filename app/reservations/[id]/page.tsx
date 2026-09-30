@@ -14,6 +14,7 @@ import ShareMapCard from "@/app/components/share-map-card";
 import SignOptions from "@/app/components/sign-options";
 import SelfCancelButton from "./SelfCancelButton";
 import CommentsThread from "@/components/bx/CommentsThread";
+import BillingCard from "@/app/components/billing-card";
 import COIUploadCard from "./COIUploadCard";
 
 const STATUS_META: Record<string, { dot: string }> = {
@@ -628,6 +629,14 @@ function renderPage(
         </div>
       )}
 
+
+      {/* Charges & payments */}
+      <section id="billing" aria-labelledby="billing-title" className="bx-glass rounded-xl" style={{ padding: "1.25rem 1.5rem", marginBottom: "1rem" }}>
+        <h2 id="billing-title" style={{ margin: "0 0 1rem", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--bx-slate)" }}>
+          Charges &amp; payments
+        </h2>
+        <BillingCard reservationId={reservation.id} />
+      </section>
 
       {/* Messages thread */}
       <div

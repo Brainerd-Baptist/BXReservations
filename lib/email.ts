@@ -624,6 +624,48 @@ export async function sendEmail(opts: {
     to:       opts.to,
     subject:  opts.subject,
     html:     opts.html,
-    ...(opts.replyTo ? { reply_to: opts.replyTo } : {}),
+    ...(opts.replyTo ? { replyTo: opts.replyTo } : {}),
   });
+}
+
+// ─── Payment reminder ─────────────────────────────────────────────────────────
+const escHtml = (t: string) =>
+  t.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+
+export async function sendPaymentReminder(opts: {
+  to: string;
+  name: string;
+  bookingNumber: string;
+  reservationId: string;
+  eventName: string;
+  eventDate: string | null;   // "Oct 21, 2026"
+  charges: number;
+  paid: number;
+  balance: number;
+}): Promise<void> {
+  const fmt = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+  const row = (label: string, value: string, bold = false) =>
+    `<tr><td style="padding:6px 0;color:#4b5563;">${label}</td><td style="padding:6px 0;text-align:right;${bold ? "font-weight:700;color:#00205b;" : "color:#111827;"}">${value}</td></tr>`;
+  const html = brandedEmailHtml({
+    preheader: `Balance due ${fmt(opts.balance)} for ${opts.eventName}.`,
+    headline: "Payment reminder",
+    body: `
+      <p style="margin:0 0 16px 0;">Hi <strong style="color:#00205b;">${escHtml(opts.name.split(" ")[0] || opts.name)}</strong>,</p>
+      <p style="margin:0 0 16px 0;">
+        This is a friendly reminder about the balance for <strong>${escHtml(opts.eventName)}</strong>
+        (${escHtml(opts.bookingNumber)})${opts.eventDate ? ` on <strong>${escHtml(opts.eventDate)}</strong>` : ""}.
+      </p>
+      <table role="presentation" style="width:100%;border-collapse:collapse;margin:0 0 20px 0;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb;">
+        ${row("Total", fmt(opts.charges))}
+        ${row("Paid", fmt(opts.paid))}
+        ${row("Balance due", fmt(opts.balance), true)}
+      </table>
+      <p style="margin:0; color:#6b7280; font-size:13px;">
+        Already paid? Thank you — reply to this email and we'll update our records.
+      </p>`,
+    ctaText: "View your reservation",
+    ctaUrl: `${SITE_URL}/reservations/${opts.reservationId}`,
+    footnoteHtml: `<p style="margin:0;">Questions? Email <a href="mailto:BXreservations@brainerdbaptist.org" style="color:#00abc9;">BXreservations@brainerdbaptist.org</a>.</p>`,
+  });
+  await deliver({ from: FROM, to: opts.to, subject: `Payment reminder — ${opts.bookingNumber}`, html, replyTo: "BXreservations@brainerdbaptist.org" });
 }
