@@ -1,5 +1,6 @@
 "use client";
 
+import { formatDateish } from "@/lib/dates";
 import Link from "next/link";
 import { RESERVATION_STATUS, BADGE_FALLBACK } from "@/lib/status-tokens";
 
@@ -51,7 +52,8 @@ function parsePayload(payload: unknown) {
     days?: Array<{ date?: string; rooms?: Array<{ roomId?: string }> }>;
     contact?: { eventName?: string };
   } | null;
-  const firstDay = p?.days?.[0];
+  // First day the requester kept (excluded days don't count)
+  const firstDay = p?.days?.find((d) => (d as { included?: boolean }).included !== false && !!d.date) ?? p?.days?.[0];
   const startDate = firstDay?.date ?? null;
   const roomId = firstDay?.rooms?.[0]?.roomId ?? null;
   const space = roomId ? (ROOM_LABELS[roomId] ?? roomId) : null;
@@ -61,11 +63,8 @@ function parsePayload(payload: unknown) {
 function formatDate(dateStr?: string | null, fallback?: string | null) {
   const d = dateStr || fallback;
   if (!d) return null;
-  return new Date(d).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  // Calendar dates are never read as UTC (Oct 21 used to show as Oct 20)
+  return formatDateish(d);
 }
 
 function statusChip(status: string) {

@@ -404,12 +404,12 @@ export default function OrgDetailClient({ org: initialOrg, linkedUsers, reservat
         <div style={{ margin: "16px 32px 0", padding: "10px 14px", background: "color-mix(in srgb, var(--bx-clay) 10%, transparent)", border: "1px solid var(--bx-clay)", borderRadius: 8, color: "var(--bx-clay)", fontSize: 13 }}>{saveError}</div>
       )}
 
-      <div style={{ padding: "28px 32px" }}>
+      <div style={{ padding: "28px clamp(16px, 4vw, 32px)" }}>
         {/* ── Info tab ── */}
         {activeTab === "info" && (
           editing ? (
             <form id="org-edit-form" onSubmit={handleSave}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: 20 }}>
                 <EditField label="Organization Name *" value={editForm.name ?? ""} onChange={(v) => setEditForm((f) => ({ ...f, name: v }))} required />
                 <EditField label="Canonical Name (slug)" value={editForm.canonical_name ?? ""} onChange={(v) => setEditForm((f) => ({ ...f, canonical_name: v }))} hint="Lowercase identifier used for dedup matching" />
                 <EditSelectField label="Tier" value={editForm.tier ?? "external"} onChange={(v) => setEditForm((f) => ({ ...f, tier: v as OrgDetail["tier"] }))} options={[{ value: "external", label: "External" }, { value: "internal", label: "Internal (BBC Ministry)" }, { value: "bbs", label: "BBS" }]} />
@@ -421,7 +421,7 @@ export default function OrgDetailClient({ org: initialOrg, linkedUsers, reservat
               </div>
             </form>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 24 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))", gap: 24 }}>
               <InfoField label="Organization Name" value={org.name} />
               <InfoField label="Canonical Name" value={org.canonical_name} />
               <InfoField label="Tier" value={tier.label} />
@@ -440,10 +440,10 @@ export default function OrgDetailClient({ org: initialOrg, linkedUsers, reservat
         {activeTab === "users" && (
           <div>
             {linkedUsers.length === 0 ? <EmptyState message="No users linked to this organization." /> : (
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}><table style={{ width: "100%", minWidth: 560, borderCollapse: "collapse" }}>
                 <thead><tr>{["Name", "Email", "Linked"].map((h) => <th key={h} style={{ textAlign: "left", padding: "8px 12px", fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--bx-slate)", borderBottom: "1px solid color-mix(in srgb, var(--bx-parchment) 10%, transparent)" }}>{h}</th>)}</tr></thead>
                 <tbody>{linkedUsers.map((u) => <tr key={u.user_id}><Td>{u.display_name ?? "—"}</Td><Td>{u.email}</Td><Td muted>{fmtDate(u.linked_at)}</Td></tr>)}</tbody>
-              </table>
+              </table></div>
             )}
             <p style={{ marginTop: 16, fontSize: 12, color: "var(--bx-slate)", fontStyle: "italic" }}>User linking is managed from the Users page.</p>
           </div>
@@ -453,7 +453,7 @@ export default function OrgDetailClient({ org: initialOrg, linkedUsers, reservat
         {activeTab === "bookings" && (
           <div>
             {reservations.length === 0 ? <EmptyState message="No bookings linked to this organization." /> : (
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}><table style={{ width: "100%", minWidth: 560, borderCollapse: "collapse" }}>
                 <thead><tr>{["Booking #", "Event", "Status", "Contact", "Rack Rate", "Net", "Date"].map((h) => <th key={h} style={{ textAlign: "left", padding: "8px 12px", fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--bx-slate)", borderBottom: "1px solid color-mix(in srgb, var(--bx-parchment) 10%, transparent)", whiteSpace: "nowrap" }}>{h}</th>)}</tr></thead>
                 <tbody>
                   {reservations.map((r) => {
@@ -471,7 +471,7 @@ export default function OrgDetailClient({ org: initialOrg, linkedUsers, reservat
                     );
                   })}
                 </tbody>
-              </table>
+              </table></div>
             )}
           </div>
         )}
@@ -512,7 +512,7 @@ export default function OrgDetailClient({ org: initialOrg, linkedUsers, reservat
                 </button>
               </div>
             ) : (
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}><table style={{ width: "100%", minWidth: 560, borderCollapse: "collapse" }}>
                 <thead>
                   <tr>
                     {["Type", "Value", "Scope", "Reason", "Note", "Added", ""].map((h) => (
@@ -553,7 +553,7 @@ export default function OrgDetailClient({ org: initialOrg, linkedUsers, reservat
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </table></div>
             )}
           </div>
         )}

@@ -2,6 +2,7 @@
 // Exchanges the one-time `code` param for a real session cookie,
 // then redirects to /account. This is the standard @supabase/ssr
 // pattern — identical to Personnel and HQ.
+import { safeNext } from "@/lib/return-path";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
@@ -10,7 +11,10 @@ import { sendWelcomeEmail } from "@/lib/email";
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
-  const next = requestUrl.searchParams.get("next") ?? "/reservations";
+  // Only same-site paths; an explicit destination (an invite, a reservation)
+  // wins over the first-run welcome page (audit F12).
+  const explicitNext = safeNext(requestUrl.searchParams.get("next"));
+  const next = explicitNext ?? "/reservations";
 
   if (code) {
     const cookieStore = await cookies();
@@ -90,7 +94,9 @@ export async function GET(request: Request) {
 
           // Redirect first-time users with welcome flag so the account page
           // can show a warm onboarding banner.
-          return NextResponse.redirect(new URL("/reserve?welcome=1", requestUrl.origin));
+          if (!explicitNext || explicitNext === "/account") {
+            return NextResponse.redirect(new URL("/reserve?welcome=1", requestUrl.origin));
+          }
         }
       } else if (isNewUser) {
         // Email/password sign-up — no googleName but also no profile yet.

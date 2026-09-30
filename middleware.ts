@@ -28,14 +28,20 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Protect /account — must be signed in
+  // Send people back where they were headed after sign-in (audit F12)
+  const toLogin = () => {
+    const u = new URL("/login", request.url);
+    u.searchParams.set("next", pathname + request.nextUrl.search);
+    return NextResponse.redirect(u);
+  };
   if (pathname.startsWith("/account") && !user) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return toLogin();
   }
 
   // Protect /admin/bx-reservations — must be signed in AND admin
   if (pathname.startsWith("/admin/bx-reservations")) {
     if (!user) {
-      return NextResponse.redirect(new URL("/login", request.url));
+      return toLogin();
     }
 
     // Check admin role via service role client (bypass RLS)

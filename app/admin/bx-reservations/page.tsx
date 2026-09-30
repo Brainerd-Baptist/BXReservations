@@ -6,6 +6,18 @@ import { ReservationListSkeleton, CardSkeleton, InlineSkeleton } from "@/app/com
 import { useToast } from "@/app/components/Toast";
 import LoadError from "@/app/components/load-error";
 import { fetchArray } from "@/lib/fetch-list";
+import { venueToday, formatYmd } from "@/lib/dates";
+
+/** The calendar API returns 14 days back → 90 days ahead; label that window. */
+function calendarRangeLabel(): string {
+  const today = venueToday();
+  const shift = (days: number) => {
+    const [y, m, d] = today.split("-").map(Number);
+    return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+  };
+  const o: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" };
+  return `${formatYmd(shift(-14), o)} – ${formatYmd(shift(90), { ...o, year: "numeric" })}`;
+}
 import CommentsThread from "@/components/bx/CommentsThread";
 import EventLogoCard from "@/app/components/event-logo-card";
 import VenueSettings from "@/app/components/venue-settings";
@@ -41,114 +53,6 @@ interface Request {
   coiAccepted?: boolean;
   hasPayment?: boolean;
 }
-
-// ─── Mock data ─────────────────────────────────────────────────────────────────
-const INITIAL_REQUESTS: Request[] = [
-  {
-    id: "BX-IS117",
-    name: "Michelle Smith",
-    org: "Isaiah 117 House at Chambliss Center",
-    email: "michelle.smith@isaiah117house.com",
-    room: "The Crossing",
-    date: "2026-10-20",
-    event: "Isaiah 117 House Luncheon & Dinner",
-    guests: 250,
-    setup: "Banquet/Rounds",
-    estimate: 750,
-    status: "Requested",
-    submitted: "2026-03-24",
-    nonProfit: true,
-    avNeeded: true,
-    tablecloths: 32,
-    flexible: false,
-  },
-  {
-    id: "BX-HCGOV",
-    name: "LaDarius Price",
-    org: "Hamilton County Government",
-    email: "lprice@hamiltontn.gov",
-    room: "The Crossing",
-    date: "2026-10-29",
-    event: "Mental Health Summit",
-    guests: 75,
-    setup: "Banquet/Rounds",
-    estimate: 900,
-    status: "Proposal Sent",
-    submitted: "2026-08-14",
-    nonProfit: false,
-    avNeeded: true,
-    tablecloths: 0,
-    flexible: false,
-  },
-  {
-    id: "BX-YMCA1",
-    name: "Susan Moriarty",
-    org: "YMCA Center for Civic Engagement",
-    email: "smoriarty@ymcamidtn.org",
-    room: "The Crossing",
-    date: "2026-10-22",
-    event: "Middle School Model UN",
-    guests: 200,
-    setup: "Theater",
-    estimate: 750,
-    status: "Deposit Received",
-    submitted: "2026-05-27",
-    nonProfit: true,
-    avNeeded: true,
-    tablecloths: 0,
-    flexible: false,
-  },
-  {
-    id: "BX-PERRL",
-    name: "Kelly Perrel",
-    org: "",
-    email: "Kperrel@gmail.com",
-    room: "CrossView",
-    date: "2026-10-03",
-    event: "Jonckheere Baby Shower",
-    guests: 45,
-    setup: "Banquet/Rounds",
-    estimate: 250,
-    status: "Confirmed",
-    submitted: "2026-09-05",
-    nonProfit: true,
-    avNeeded: false,
-    tablecloths: 0,
-    flexible: false,
-  },
-  {
-    id: "BX-TRUST",
-    name: "Lindsey Gutierrez",
-    org: "The Generosity Trust",
-    email: "lindsey@thegenerositytrust.org",
-    room: "CrossPointe A",
-    date: "2026-10-22",
-    event: "Faith Community Leadership Roundtable",
-    guests: 25,
-    setup: "Classroom",
-    estimate: 200,
-    status: "Declined",
-    submitted: "2026-09-09",
-    nonProfit: true,
-    avNeeded: true,
-    tablecloths: 0,
-    flexible: false,
-  },
-]
-
-// ─── Calendar data (combined staff view — real names + flex flags) ─────────────
-const CALENDAR_EVENTS = [
-  { date: "2026-10-03", room: "CrossView", label: "Perrel Baby Shower (Confirmed)", kind: "rental" as const },
-  { date: "2026-10-06", room: "CrossPointe A", label: "City of Chattanooga — Team Training", kind: "rental" as const },
-  { date: "2026-10-10", room: "The Crossing", label: "Breton Birthday Party (Inquiry)", kind: "rental" as const },
-  { date: "2026-10-20", room: "The Crossing", label: "Isaiah 117 House Luncheon & Dinner (New)", kind: "rental" as const },
-  { date: "2026-10-22", room: "The Crossing", label: "YMCA Model UN (Deposit In)", kind: "rental" as const },
-  { date: "2026-10-22", room: "CrossPointe A", label: "Generosity Trust Roundtable (Declined)", kind: "declined" as const },
-  { date: "2026-10-29", room: "The Crossing", label: "Hamilton Co. Mental Health Summit (Proposal Out)", kind: "rental" as const },
-  { date: "2026-10-22", room: "The Loft", label: "Men's Bible Study (weekly — can flex)", kind: "flex" as const },
-]
-
-
 
 // All statuses in display order (used for filter tabs)
 const ALL_STATUSES: Status[] = [
@@ -205,13 +109,23 @@ export default function BxReservationsAdmin() {
   const [reservationsLoading, setReservationsLoading] = useState(true);
   const [reservationsError, setReservationsError] = useState<string | null>(null);
   const rawStatus = searchParams.get("status") ?? "";
-  const [filter, setFilter] = useState<Status | "All">(() => {
+  const statusFromUrl = (raw: string): Status | "All" => {
     const ALL_S: (Status | "All")[] = ["All","Requested","Proposal Sent","Needs Info","Pending Documents","Pending Payment","Deposit Received","Confirmed","Completed","Declined","Cancelled by BX","Cancelled by User","Expired"];
-    return ALL_S.includes(rawStatus as Status) ? (rawStatus as Status) : "All";
-  });
+    return ALL_S.includes(raw as Status) ? (raw as Status) : "All";
+  };
+  const [filter, setFilter] = useState<Status | "All">(() => statusFromUrl(rawStatus));
   const [searchQuery, setSearchQuery] = useState("");
   const [selected, setSelected] = useState<Request | null>(null);
   const [calOpen, setCalOpen] = useState(() => searchParams.get("view") === "calendar");
+  // Follow the URL when the sidebar links to ?status=… or ?view=calendar on
+  // this same page (state used to be read only once — audit F13).
+  const rawView = searchParams.get("view");
+  const [seenUrl, setSeenUrl] = useState({ status: rawStatus, view: rawView });
+  if (seenUrl.status !== rawStatus || seenUrl.view !== rawView) {
+    setSeenUrl({ status: rawStatus, view: rawView });
+    if (seenUrl.status !== rawStatus) setFilter(statusFromUrl(rawStatus));
+    if (seenUrl.view !== rawView) setCalOpen(rawView === "calendar");
+  }
   const router = useRouter();
   const rawTab = searchParams.get("tab") ?? "requests";
   const tab = ["requests", "users", "ministries", "settings", "reports"].includes(rawTab)
@@ -374,15 +288,17 @@ export default function BxReservationsAdmin() {
   // ── Load real reservations from DB ─────────────────────────────────────────
   // A failed load shows an error with Retry — not "No requests here", and the
   // error object is never stored as the list (audit F06).
-  const loadReservations = useCallback(() => {
-    setReservationsLoading(true);
-    setReservationsError(null);
+  const fetchReservations = useCallback(() =>
     fetchArray<Request>("/api/admin/reservations")
       .then(data => setRequests(data))
       .catch(err => setReservationsError(err instanceof Error ? err.message : "Something went wrong."))
-      .finally(() => setReservationsLoading(false));
-  }, []);
-  useEffect(() => { loadReservations(); }, [loadReservations]);
+      .finally(() => setReservationsLoading(false)), []);
+  useEffect(() => { fetchReservations(); }, [fetchReservations]); // loading starts true
+  const loadReservations = () => {
+    setReservationsLoading(true);
+    setReservationsError(null);
+    fetchReservations();
+  };
 
   useEffect(() => {
     fetch("/api/blackouts")
@@ -616,8 +532,11 @@ export default function BxReservationsAdmin() {
     } catch { toast("Failed to countersign — please try again.", "error"); }
   }
 
+  // Current month at the venue, not a fixed October 2026 (audit F13)
+  const monthKey = venueToday().slice(0, 7);
+  const monthLabel = formatYmd(`${monthKey}-01`, { month: "short" });
   const confirmedThisMonth = requests.filter(
-    (r) => r.status === "Confirmed" && r.date.startsWith("2026-10")
+    (r) => r.status === "Confirmed" && (r.date ?? "").startsWith(monthKey)
   ).length;
   const revenue = requests
     .filter((r) => r.status === "Confirmed" || r.status === "Deposit Received")
@@ -702,7 +621,7 @@ export default function BxReservationsAdmin() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <KPI label="Pending Review" value={String(pending)} color="text-amber-600" />
             <KPI label="Awaiting Deposit" value={String(awaitingDeposit)} color="text-blue-600" />
-            <KPI label="Confirmed (Oct)" value={String(confirmedThisMonth)} color="text-emerald-600" />
+            <KPI label={`Confirmed (${monthLabel})`} value={String(confirmedThisMonth)} color="text-emerald-600" />
             <KPI label="Revenue Pipeline" value={`$${revenue.toLocaleString()}`} color="text-[var(--bbc-blue)]" />
           </div>
 
@@ -1577,7 +1496,7 @@ export default function BxReservationsAdmin() {
           <div className="sticky top-20 bx-glass rounded-xl p-5 space-y-4">
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold text-slate uppercase tracking-widest">Combined Calendar</p>
-              <p className="text-xs text-slate">Oct – Nov 2026</p>
+              <p className="text-xs text-slate">{calendarRangeLabel()}</p>
             </div>
             <p className="text-xs text-slate leading-relaxed">
               Staff view — shows real event names and flex-block flags. Never visible to the public.

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { loginHref } from "@/lib/return-path";
 import Link from "next/link";
 import { getUserAndRole } from "@/lib/get-user-role";
 import { can } from "@/lib/roles";
@@ -14,7 +15,7 @@ import NotificationPreferencesSection, {
 
 export default async function AccountPage({ searchParams }: { searchParams: Promise<{ welcome?: string }> }) {
   const { user, role, profile } = await getUserAndRole();
-  if (!user) redirect("/login");
+  if (!user) redirect(loginHref("/account"));
 
   const params = await searchParams;
   const isFirstVisit = params.welcome === "1";

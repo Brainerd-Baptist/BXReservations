@@ -24,7 +24,7 @@ export default async function BxMapPage({ searchParams }: { searchParams: Promis
     : [{ label: "Sign in to plan an event", href: "/login" }];
 
   return (
-    <div style={{ height: "calc(100dvh - 56px)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+    <div style={{ height: "calc(100dvh - var(--bx-header-h))", overflow: "hidden", display: "flex", flexDirection: "column" }}>
       {token && !shared && (
         <div
           role="status"

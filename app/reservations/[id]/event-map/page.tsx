@@ -1,5 +1,6 @@
 // /reservations/[id]/event-map — the reservation's Event Map.
 // Server component: resolves access, loads the layer, mounts the editor.
+import { loginHref } from "@/lib/return-path";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getUserAndRole } from "@/lib/get-user-role";
@@ -21,8 +22,8 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default async function EventMapPage({ params }: { params: Promise<{ id: string }> }) {
   const { user } = await getUserAndRole();
-  if (!user) redirect("/login");
   const { id } = await params;
+  if (!user) redirect(loginHref(`/reservations/${id}/event-map`));
 
   const db = adminClient();
   const ctx = await getEventMapContext(db, { id: user.id, email: user.email }, id);
@@ -31,13 +32,14 @@ export default async function EventMapPage({ params }: { params: Promise<{ id: s
   const r = ctx.reservation;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "calc(100dvh - 56px)", overflow: "hidden" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "calc(100dvh - var(--bx-header-h))", overflow: "hidden" }}>
       {/* slim header: back link · event · status · mode */}
       <div
         style={{
           display: "flex",
+          flexWrap: "wrap", // actions drop to a second row on phones instead of overflowing (audit F08)
           alignItems: "center",
-          gap: "0.75rem",
+          gap: "0.5rem 0.75rem",
           padding: "0.5rem 1rem",
           borderBottom: "1px solid color-mix(in srgb, var(--bx-parchment) 10%, transparent)",
           background: "var(--bx-surface-strong)",
@@ -57,7 +59,7 @@ export default async function EventMapPage({ params }: { params: Promise<{ id: s
           </svg>
           Reservation
         </Link>
-        <div style={{ minWidth: 0, flex: 1, display: "flex", alignItems: "baseline", gap: "0.5rem", overflow: "hidden" }}>
+        <div style={{ minWidth: "min(12rem, 100%)", flex: 1, display: "flex", alignItems: "baseline", gap: "0.5rem", overflow: "hidden" }}>
           <span style={{ fontWeight: 700, color: "var(--bx-parchment)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {r.event_name}
           </span>

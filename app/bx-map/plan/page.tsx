@@ -1,6 +1,8 @@
 // /bx-map/plan — pick which reservation to lay out on the map.
 // Lists the reservations the signed-in person can edit or view; staff see
 // every upcoming reservation.
+import { loginHref } from "@/lib/return-path";
+import { isUpcoming } from "@/lib/dates";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getUserAndRole } from "@/lib/get-user-role";
@@ -37,37 +39,45 @@ function roomsSummary(payload: unknown): string {
 
 export default async function PlanPage() {
   const { user } = await getUserAndRole();
-  if (!user) redirect("/login");
+  if (!user) redirect(loginHref("/bx-map/plan"));
 
   const db = adminClient();
   const { data: roleRow } = await db.from("bx_user_roles").select("role").eq("user_id", user.id).maybeSingle();
   const staff = isStaffRole(roleRow?.role as string | undefined);
 
   const select = "id, booking_number, event_name, status, payload, user_id, contact_email";
+  // A failed query must not look like "no reservations"; a full page says so.
+  const LIMIT = 200;
   let rows: Row[] = [];
+  let loadFailed = false;
+  let truncated = false;
   if (staff) {
-    const { data } = await db
+    const { data, error } = await db
       .from("reservations")
       .select(select)
-      .not("status", "in", "(cancelled,rejected)")
+      .not("status", "in", "(cancelled,rejected,cancelled_by_user,cancelled_by_admin,auto_cancelled)")
       .order("created_at", { ascending: false })
-      .limit(60);
+      .limit(LIMIT);
+    loadFailed = !!error;
     rows = (data ?? []) as Row[];
+    truncated = rows.length === LIMIT;
   } else {
-    const [{ data: own }, { data: shared }] = await Promise.all([
+    const [{ data: own, error: ownErr }, { data: shared, error: sharedErr }] = await Promise.all([
       db
         .from("reservations")
         .select(select)
         .or(`user_id.eq.${user.id},contact_email.ilike.${user.email ?? "__none__"}`)
         .order("created_at", { ascending: false })
-        .limit(40),
+        .limit(LIMIT),
       db
         .from("reservation_collaborators")
         .select(`reservations(${select})`)
         .eq("user_id", user.id)
         .not("accepted_at", "is", null)
-        .limit(40),
+        .limit(LIMIT),
     ]);
+    loadFailed = !!(ownErr || sharedErr);
+    truncated = (own?.length ?? 0) === LIMIT;
     const seen = new Set<string>();
     for (const r of (own ?? []) as Row[]) if (!seen.has(r.id)) { seen.add(r.id); rows.push(r); }
     for (const c of (shared ?? []) as unknown as { reservations: Row | Row[] | null }[]) {
@@ -76,9 +86,9 @@ export default async function PlanPage() {
     }
   }
 
-  const today = new Date().toISOString().slice(0, 10);
   const withDates = rows.map((r) => ({ r, dates: reservationDates(r.payload) }));
-  const upcoming = withDates.filter(({ r, dates }) => r.status !== "cancelled" && r.status !== "rejected" && (!dates.length || dates[dates.length - 1] >= today));
+  // Same rules as My Reservations: venue "today", every closed status (audit F09)
+  const upcoming = withDates.filter(({ r }) => isUpcoming(r.status, r.payload));
   const past = withDates.filter((x) => !upcoming.includes(x));
 
   const card = ({ r, dates }: { r: Row; dates: string[] }) => (
@@ -118,7 +128,17 @@ export default async function PlanPage() {
         reservation as you go.
       </p>
 
-      {upcoming.length === 0 && (
+      {loadFailed && (
+        <div role="alert" className="bx-tone-red" style={{ border: "1px solid", borderRadius: 12, padding: "1rem 1.25rem", marginBottom: "1rem", fontSize: "0.9375rem" }}>
+          We couldn&apos;t load your reservations just now. Reload the page to try again.
+        </div>
+      )}
+      {truncated && (
+        <p style={{ margin: "0 0 1rem", color: "var(--bx-slate)", fontSize: "0.8125rem" }}>
+          Showing the {LIMIT} most recent reservations.
+        </p>
+      )}
+      {!loadFailed && upcoming.length === 0 && (
         <div
           style={{
             border: "1px dashed color-mix(in srgb, var(--bx-parchment) 20%, transparent)",

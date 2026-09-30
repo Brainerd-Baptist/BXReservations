@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { loginHref } from "@/lib/return-path";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { getUserAndRole } from "@/lib/get-user-role";
@@ -32,7 +33,7 @@ export default async function InvitesPage({ searchParams }: PageProps) {
   // Auth guard
   const { user } = await getUserAndRole();
   if (!user) {
-    redirect("/login?redirect=/account/invites?token=" + encodeURIComponent(token));
+    redirect(loginHref("/account/invites?token=" + encodeURIComponent(token)));
   }
 
   // Set up server supabase
@@ -82,7 +83,7 @@ export default async function InvitesPage({ searchParams }: PageProps) {
 
   // Already accepted
   if (invite.accepted_at) {
-    redirect("/?collab=already&res=" + invite.reservation_id);
+    redirect(`/reservations/${invite.reservation_id}`); // already joined: go straight there
   }
 
   // Verify email matches
@@ -98,9 +99,13 @@ export default async function InvitesPage({ searchParams }: PageProps) {
           You are signed in as <strong>{user.email}</strong>.<br /><br />
           Sign in with the correct account to accept this invite.
         </p>
-        <Link href="/login" style={{ color: "var(--bx-brass)", fontWeight: 600, fontSize: "0.875rem", textDecoration: "none" }}>
-          Switch account →
-        </Link>
+        {/* Sign out, then sign in again and land back on this invite */}
+        <form action="/api/auth/sign-out" method="post">
+          <input type="hidden" name="next" value={"/account/invites?token=" + encodeURIComponent(token)} />
+          <button type="submit" style={{ color: "var(--bx-brass)", fontWeight: 600, fontSize: "0.875rem", background: "none", border: 0, cursor: "pointer" }}>
+            Switch account →
+          </button>
+        </form>
       </main>
     );
   }
@@ -128,5 +133,24 @@ export default async function InvitesPage({ searchParams }: PageProps) {
     );
   }
 
-  redirect("/account?collab=accepted&res=" + invite.reservation_id);
+  // A clear confirmation instead of a silent redirect (nothing read ?collab=)
+  const roleLabel = invite.collab_role === "co_owner" ? "co-owner" : "viewer";
+  return (
+    <main className="bx-glass animate-in" style={{ maxWidth: "440px", margin: "4rem auto", padding: "2.5rem 1.75rem", borderRadius: 18, textAlign: "center", width: "calc(100% - 2rem)" }}>
+      <div style={{ marginBottom: "1rem", color: "var(--bx-sage)" }}>
+        <svg width="2.5rem" height="2.5rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ display: "block", margin: "0 auto" }} aria-hidden="true">
+          <circle cx="12" cy="12" r="10" /><path d="M7.5 12.5l3 3 6-6.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+      <h1 style={{ fontSize: "1.625rem", fontWeight: 600, color: "var(--bx-parchment)", marginBottom: "0.5rem" }}>
+        You&apos;re in
+      </h1>
+      <p style={{ fontSize: "0.875rem", color: "var(--bx-slate)", marginBottom: "1.5rem" }}>
+        You&apos;ve joined this reservation as a {roleLabel}. It now appears under My Reservations.
+      </p>
+      <Link href={`/reservations/${invite.reservation_id}`} className="bx-cta inline-flex items-center justify-center rounded-xl bg-brass px-6 py-3 text-sm font-semibold text-white">
+        Open the reservation →
+      </Link>
+    </main>
+  );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { safeNext } from "@/lib/return-path";
 import { useState, useRef, useCallback } from "react";
 import BodyPortal from "@/app/components/body-portal";
 import { useModalDialog } from "@/app/components/use-modal-dialog";
@@ -24,6 +25,7 @@ export default function LoginPage() {
   const [confirmEmail, setConfirmEmail] = useState("");
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSent, setResendSent] = useState(false);
+  const [resendError, setResendError] = useState("");
 
   // Forgot-password state
   const [forgotMode, setForgotMode] = useState(false);
@@ -32,7 +34,18 @@ export default function LoginPage() {
   useModalDialog(forgotMode, closeForgot, forgotRef);
   const [resetEmail, setResetEmail] = useState("");
   const [resetSent, setResetSent] = useState(false);
+  const [resetError, setResetError] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
+
+  // Where to go after signing in: ?next= (or legacy ?redirect=), validated
+  // to a same-site path. Defaults to Account (audit F12).
+  function destination(): string {
+    if (typeof window === "undefined") return "/account";
+    const q = new URLSearchParams(window.location.search);
+    return safeNext(q.get("next")) ?? safeNext(q.get("redirect")) ?? "/account";
+  }
+  const callbackUrl = () =>
+    `${window.location.origin}/auth/callback?next=${encodeURIComponent(destination())}`;
 
   function switchMode(next: "signin" | "signup") {
     setMode(next);
@@ -55,7 +68,7 @@ export default function LoginPage() {
       setError(signInError.message);
       return;
     }
-    router.push("/account");
+    router.push(destination());
     router.refresh();
   }
 
@@ -67,7 +80,7 @@ export default function LoginPage() {
     const res = await fetch("/api/auth/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, name: [name.trim(), lastName.trim()].filter(Boolean).join(" "), redirectTo: `${siteUrl}/auth/callback` }),
+      body: JSON.stringify({ email, password, name: [name.trim(), lastName.trim()].filter(Boolean).join(" "), redirectTo: callbackUrl() }),
     });
     const data = await res.json();
     setLoading(false);
@@ -86,14 +99,16 @@ export default function LoginPage() {
   async function handleResend() {
     setResendLoading(true);
     setResendSent(false);
-    const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
-    await fetch("/api/auth/resend-confirmation", {
+    setResendError("");
+    // Only say "sent" when the server says so (it used to report success on failure)
+    const ok = await fetch("/api/auth/resend-confirmation", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: confirmEmail, redirectTo: `${siteUrl}/auth/callback` }),
-    });
+      body: JSON.stringify({ email: confirmEmail, redirectTo: callbackUrl() }),
+    }).then((r) => r.ok, () => false);
     setResendLoading(false);
-    setResendSent(true);
+    if (ok) setResendSent(true);
+    else setResendError("We couldn't send another email just now. Please try again in a minute.");
   }
 
   async function handleGoogleSignIn() {
@@ -101,7 +116,7 @@ export default function LoginPage() {
     setGoogleLoading(true);
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo: callbackUrl() },
     });
     if (oauthError) {
       setError(oauthError.message);
@@ -113,14 +128,16 @@ export default function LoginPage() {
     e.preventDefault();
     if (!resetEmail.trim()) return;
     setResetLoading(true);
+    setResetError("");
     const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
-    await fetch("/api/auth/reset-password", {
+    const ok = await fetch("/api/auth/reset-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: resetEmail.trim(), redirectTo: `${siteUrl}/auth/callback?next=/auth/reset-password` }),
-    });
+    }).then((r) => r.ok, () => false);
     setResetLoading(false);
-    setResetSent(true);
+    if (ok) setResetSent(true);
+    else setResetError("We couldn't send the reset email just now. Please try again in a minute.");
   }
 
   // ── Confirm-sent state ────────────────────────────────────────────────────
@@ -136,6 +153,7 @@ export default function LoginPage() {
             We sent a confirmation link to <strong className="text-parchment">{confirmEmail}</strong>. Click it to activate your account, then come back here to sign in.
           </p>
           <p className="text-xs text-slate leading-relaxed">Didn&apos;t get it? Check your spam folder.</p>
+          {resendError && <p role="alert" className="text-xs text-[var(--bx-clay)]">{resendError}</p>}
           {resendSent ? (
             <p className="text-xs text-[var(--bx-sage)]">Another confirmation email was sent!</p>
           ) : (
@@ -383,7 +401,7 @@ export default function LoginPage() {
             <div className="w-full max-w-sm bx-glass-strong rounded-2xl p-7" onClick={(e) => e.stopPropagation()}>
               {resetSent ? (
                 <div className="text-center space-y-4">
-                  <div style={{color:"var(--bx-ink)"}}><svg width="1.75rem" height="1.75rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" style={{display:"block"}}><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg></div>
+                  <div style={{color:"var(--bx-brass)"}}><svg width="1.75rem" height="1.75rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" style={{display:"block"}}><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg></div>
                   <h2 className="text-lg font-bold text-parchment">Check your email</h2>
                   <p className="text-sm text-slate leading-relaxed">
                     If <strong>{resetEmail}</strong> has an account, we sent a password reset link. Check your inbox (and spam folder).
@@ -410,6 +428,7 @@ export default function LoginPage() {
                       placeholder="you@example.com"
                       className="w-full border border-parchment/20 rounded-lg py-2.5 px-3 text-sm text-parchment placeholder:text-slate/50 bg-ink focus:outline-none focus:ring-2 focus:ring-brass/40 focus:border-brass"
                     />
+                    {resetError && <p role="alert" className="text-xs text-[var(--bx-clay)]">{resetError}</p>}
                     <div className="flex gap-3">
                       <button
                         type="button"

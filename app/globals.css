@@ -91,6 +91,9 @@
 
   /* ── Ambient layer ─────────────────────────────────────────────────── */
   --bx-grid-size:   28px;
+  /* Fixed header height incl. the iPhone notch inset — one value for every
+     full-height layout (audit F08: the map used a bare 56px). */
+  --bx-header-h:    calc(3.5rem + env(safe-area-inset-top, 0px));
   --bx-glow-a:      color-mix(in srgb, #00abc9 11%, transparent);  /* BBC teal   */
   --bx-glow-b:      color-mix(in srgb, #e9c46a 12%, transparent);  /* warm brass */
   --bx-glow-c:      color-mix(in srgb, #00205b 8%, transparent);   /* BBC navy   */
@@ -469,6 +472,11 @@ select:focus {
   box-shadow: inset 0 1px 4px rgba(120,80,0,0.10), 0 0 0 4px color-mix(in srgb, var(--bx-brass) 22%, transparent);
   outline: 2px solid var(--bx-brass);
   outline-offset: 1px;
+}
+
+/* Fields flagged invalid get a red edge, not just a message below */
+:is(input, textarea, select)[aria-invalid="true"] {
+  border-color: var(--bx-clay) !important;
 }
 
 /* ── Legacy button classes (backward compat) ─────────────────────────────── */
@@ -1091,13 +1099,19 @@ select:disabled,
   to   { opacity: 1; }
 }
 
-/* Scroll reveal — IntersectionObserver in scroll-reveal.tsx adds .bx-visible */
-.bx-fade-in {
+/* Scroll reveal — IntersectionObserver in scroll-reveal.tsx adds .bx-visible.
+   Content is visible by default: it's only hidden-until-revealed when the
+   init script has run AND the person hasn't asked for reduced motion
+   (html[data-reveal]). No JavaScript → nothing stays invisible (audit F16). */
+html[data-reveal] .bx-fade-in {
   opacity: 0;
   transform: translateY(20px);
   transition: opacity 0.6s ease, transform 0.6s ease;
 }
-.bx-fade-in.bx-visible {
+html[data-reveal] .bx-fade-in.bx-visible {
   opacity: 1;
   transform: none; /* not translateY(0): any transform traps position:fixed children */
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
 }

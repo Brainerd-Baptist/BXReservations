@@ -55,7 +55,7 @@ export function RoomsClient() {
       <div className="bx-bloom" aria-hidden="true" />
 
       {/* ── Filters ── */}
-      <section className="bx-glass-strong sticky z-10 border-x-0 border-t-0" style={{ top: "calc(3.5rem + env(safe-area-inset-top))", boxShadow: "none" }}>
+      <section className="bx-glass-strong sticky z-10 border-x-0 border-t-0" style={{ top: "var(--bx-header-h)", boxShadow: "none" }}>
         <div className="max-w-5xl mx-auto px-4 py-3 flex flex-wrap gap-2 items-center">
 
           {/* Floor */}

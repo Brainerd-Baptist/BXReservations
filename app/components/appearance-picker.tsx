@@ -9,6 +9,7 @@ import {
   type Appearance,
 } from "@/lib/theme";
 import { createClient } from "@/lib/supabase/client";
+import { useToast } from "./Toast";
 
 /* Every picker on the page reads the same source of truth — the
    data-appearance attribute on <html> — so they can never disagree. */
@@ -51,6 +52,7 @@ interface Props {
 export default function AppearancePicker({ userId, size = "sm" }: Props) {
   const active = useAppearance();
   const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
 
   async function choose(a: Appearance) {
     if (a === active) return;
@@ -58,9 +60,13 @@ export default function AppearancePicker({ userId, size = "sm" }: Props) {
     if (!userId) return;
     setSaving(true);
     try {
-      await createClient()
+      const { error } = await createClient()
         .from("bx_user_prefs")
         .upsert({ user_id: userId, theme: a, updated_at: new Date().toISOString() });
+      if (error) throw error;
+    } catch {
+      // The look changed here, but say honestly that it won't follow you (audit F07)
+      toast("Changed on this device, but we couldn't save it to your account.", "error");
     } finally {
       setSaving(false);
     }

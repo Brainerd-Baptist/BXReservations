@@ -37,6 +37,12 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
+      - name: Unit tests (dates in Eastern time, sign-in return paths)
+        run: |
+          TZ=America/New_York node --experimental-strip-types scripts/test-dates.mts
+          TZ=UTC node --experimental-strip-types scripts/test-dates.mts
+          node --experimental-strip-types scripts/test-return-path.mts
+
       - name: Lint (not blocking yet)
         run: npm run lint
         continue-on-error: true

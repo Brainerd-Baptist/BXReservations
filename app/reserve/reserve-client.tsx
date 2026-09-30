@@ -173,7 +173,23 @@ function ContactStep({
   onNext: () => void;
   isSignedIn: boolean;
 }) {
-  const valid = contact.name && contact.email && contact.phone && contact.org && contact.eventName;
+  // Errors show once someone tries to continue (not while they're still typing),
+  // and focus jumps to the first field that needs attention.
+  const [showErrors, setShowErrors] = useState(false);
+  const errs = contactErrors(contact);
+  const err = (id: string) => (showErrors ? errs[id] : null);
+  const a11y = (id: string) => ({ id, "aria-invalid": !!err(id) || undefined, "aria-describedby": err(id) ? `${id}-error` : undefined });
+  function tryContinue() {
+    const first = Object.keys(errs).find((k) => errs[k]);
+    if (first) {
+      setShowErrors(true);
+      const el = document.getElementById(first);
+      el?.focus({ preventScroll: true });
+      el?.scrollIntoView({ behavior: "smooth", block: "center" }); // not hidden under the header
+      return;
+    }
+    onNext();
+  }
 
   return (
     <div className="max-w-lg mx-auto">
@@ -195,17 +211,17 @@ function ContactStep({
       )}
 
       <div className="space-y-4">
-        <Field label="Your name" required>
-          <input type="text" value={contact.name} onChange={e => onChange({ name: e.target.value })}
+        <Field label="Your name" required htmlFor="bx-name" error={err("bx-name")}>
+          <input {...a11y("bx-name")} type="text" value={contact.name} onChange={e => onChange({ name: e.target.value })}
             placeholder="Jane Smith" autoComplete="name" className={input} />
         </Field>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Email" required>
-            <input type="email" value={contact.email} onChange={e => onChange({ email: e.target.value })}
+          <Field label="Email" required htmlFor="bx-email" error={err("bx-email")}>
+            <input {...a11y("bx-email")} type="email" value={contact.email} onChange={e => onChange({ email: e.target.value })}
               placeholder="jane@example.com" autoComplete="email" className={input} />
           </Field>
-          <Field label="Phone" required>
-            <input type="tel" value={contact.phone}
+          <Field label="Phone" required htmlFor="bx-phone" error={err("bx-phone")}>
+            <input {...a11y("bx-phone")} type="tel" value={contact.phone}
               onChange={e => {
                 // Allow digits, spaces, dashes, parens, plus
                 const v = e.target.value.replace(/[^\d\s\-().+]/g, "");
@@ -216,12 +232,12 @@ function ContactStep({
               className={input} />
           </Field>
         </div>
-        <Field label="Organization / Church" required>
-          <input type="text" value={contact.org} onChange={e => onChange({ org: e.target.value })}
+        <Field label="Organization / Church" required htmlFor="bx-org" error={err("bx-org")}>
+          <input {...a11y("bx-org")} type="text" value={contact.org} onChange={e => onChange({ org: e.target.value })}
             placeholder="First Baptist Church of Example" autoComplete="organization" className={input} />
         </Field>
-        <Field label="Event name" required>
-          <input type="text" value={contact.eventName} onChange={e => onChange({ eventName: e.target.value })}
+        <Field label="Event name" required htmlFor="bx-event" error={err("bx-event")}>
+          <input {...a11y("bx-event")} type="text" value={contact.eventName} onChange={e => onChange({ eventName: e.target.value })}
             placeholder="Annual Gala, Youth Conference, Wedding…" className={input} />
         </Field>
 
@@ -269,7 +285,7 @@ function ContactStep({
       </div>{/* end white card */}
 
       <div className="mt-6 flex justify-end">
-        <button onClick={onNext} disabled={!valid}
+        <button onClick={tryContinue}
           className="px-8 py-3 rounded-xl bg-brass text-white font-semibold text-sm disabled:opacity-40 hover:bg-brass/90 transition-colors">
           Continue →
         </button>
@@ -406,14 +422,14 @@ function BuilderStep({
                 if (!endDate || endDate < e.target.value) setEndDate(e.target.value);
               }}
               onClick={e => { try { (e.target as HTMLInputElement).showPicker(); } catch {} }}
-              style={{ colorScheme: "dark" }}
+              /* native picker follows the site theme (was forced dark — F16) */
               className={`${input} min-w-0 cursor-pointer`} />
           </Field>
           <Field label="End date" required>
             <input type="date" value={endDate} min={startDate}
               onChange={e => setEndDate(e.target.value)}
               onClick={e => { try { (e.target as HTMLInputElement).showPicker(); } catch {} }}
-              style={{ colorScheme: "dark" }}
+              /* native picker follows the site theme (was forced dark — F16) */
               className={`${input} min-w-0 cursor-pointer`} />
           </Field>
         </div>
@@ -1342,15 +1358,34 @@ function ShareSection({ reservationId }: { reservationId: string }) {
 
 // ─── Shared primitives ────────────────────────────────────────────────────────
 
-function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+function Field({ label, required, children, htmlFor, error }: { label: string; required?: boolean; children: React.ReactNode; htmlFor?: string; error?: string | null }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-parchment mb-1">
-        {label}{required && <span className="text-red-400 ml-0.5">*</span>}
+      <label htmlFor={htmlFor} className="block text-sm font-medium text-parchment mb-1">
+        {label}{required && <span className="text-red-400 ml-0.5" aria-hidden="true">*</span>}
       </label>
       {children}
+      {error && htmlFor && (
+        <p id={`${htmlFor}-error`} className="mt-1 text-xs font-medium text-[var(--bx-clay)]">{error}</p>
+      )}
     </div>
   );
+}
+
+/** Contact step checks (audit F17): real email and phone formats, not just "something typed". */
+function contactErrors(c: ContactInfo): Record<string, string | null> {
+  const phoneDigits = (c.phone ?? "").replace(/\D/g, "");
+  return {
+    "bx-name": c.name?.trim() ? null : "Please enter your name.",
+    "bx-email": !c.email?.trim()
+      ? "Please enter your email."
+      : /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(c.email.trim()) ? null : "That email doesn't look right — check for typos.",
+    "bx-phone": !phoneDigits
+      ? "Please enter a phone number."
+      : phoneDigits.length >= 10 && phoneDigits.length <= 15 ? null : "Please enter a full phone number, including area code.",
+    "bx-org": c.org?.trim() ? null : "Please enter your organization or church.",
+    "bx-event": c.eventName?.trim() ? null : "Please give your event a name.",
+  };
 }
 
 const input = "w-full border border-parchment/20 rounded-xl px-3 py-2.5 text-sm bg-ink text-parchment placeholder:text-slate/50 focus:outline-none focus:ring-2 focus:ring-brass/30 focus:border-brass transition-colors";

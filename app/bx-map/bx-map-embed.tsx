@@ -85,7 +85,7 @@ export interface BxMapEmbedProps {
   className?: string;
 }
 
-export default function BxMapEmbed({ event = null, onChange, hash = true, actions, height = "calc(100dvh - 56px)", className }: BxMapEmbedProps) {
+export default function BxMapEmbed({ event = null, onChange, hash = true, actions, height = "calc(100dvh - var(--bx-header-h))", className }: BxMapEmbedProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const apiRef = useRef<BxMapApi | null>(null);
   const onChangeRef = useRef(onChange);
@@ -123,7 +123,13 @@ export default function BxMapEmbed({ event = null, onChange, hash = true, action
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
-    const apply = () => host.classList.toggle("dark", themeIsDark(document.documentElement.getAttribute("data-theme")));
+    // Set BOTH states explicitly: the map has an OS-dark rule that otherwise
+    // wins on a dark-mode device even when the site is on Light (audit F10).
+    const apply = () => {
+      const dark = themeIsDark(document.documentElement.getAttribute("data-theme"));
+      host.classList.toggle("dark", dark);
+      host.classList.toggle("light", !dark);
+    };
     apply();
     const mo = new MutationObserver(apply);
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });

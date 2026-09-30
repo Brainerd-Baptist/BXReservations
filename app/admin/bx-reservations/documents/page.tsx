@@ -5,6 +5,7 @@ import { FileText, Shield, DollarSign } from "lucide-react";
 import { ReservationListSkeleton } from "@/app/components/Skeleton";
 import LoadError from "@/app/components/load-error";
 import { fetchArray } from "@/lib/fetch-list";
+import { daysFromToday, formatDateish, toVenueYmd } from "@/lib/dates";
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 interface AgreementRow {
@@ -45,9 +46,12 @@ interface PaymentRow {
 type Tab = "agreements" | "cois" | "payments";
 
 // ─── COI expiry helpers ─────────────────────────────────────────────────────────
+// Whole days left in venue time: a certificate that expires today is valid
+// today (it used to read as expired from 8pm the day before — audit F09).
+const coiDaysLeft = (expiry: string) => daysFromToday(toVenueYmd(expiry));
 function coiExpiryColor(expiryDate: string | null): string {
   if (!expiryDate) return "text-slate bg-ink-soft border-parchment/10";
-  const days = Math.floor((new Date(expiryDate).getTime() - Date.now()) / 86_400_000);
+  const days = coiDaysLeft(expiryDate);
   if (days < 0)  return "text-red-700 bg-red-50 border-red-200";      // expired
   if (days < 14) return "text-red-700 bg-red-50 border-red-200";      // <14d urgent
   if (days < 45) return "text-amber-700 bg-amber-50 border-amber-200"; // 14-45d warning
@@ -56,9 +60,8 @@ function coiExpiryColor(expiryDate: string | null): string {
 
 function coiExpiryLabel(expiryDate: string | null): string {
   if (!expiryDate) return "No expiry recorded";
-  const d = new Date(expiryDate);
-  const days = Math.floor((d.getTime() - Date.now()) / 86_400_000);
-  const fmt = d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const days = coiDaysLeft(expiryDate);
+  const fmt = formatDateish(expiryDate) ?? expiryDate;
   if (days < 0)  return `Expired ${fmt}`;
   if (days === 0) return `Expires today`;
   return `${fmt} (${days}d)`;
@@ -129,7 +132,7 @@ export default function DocumentsHub() {
     if (coiFilter === "accepted" && !c.coi_accepted_at)  return false;
     if (coiFilter === "expired") {
       if (!c.coi_expiry_date) return false;
-      const days = Math.floor((new Date(c.coi_expiry_date).getTime() - Date.now()) / 86_400_000);
+      const days = coiDaysLeft(c.coi_expiry_date);
       if (days >= 0) return false;
     }
     if (coiSearch.trim()) {

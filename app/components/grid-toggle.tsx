@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useToast } from "./Toast";
 
 export const GRID_DOTS_KEY = "bx-reservations-grid-dots";
 export const GRID_LINES_KEY = "bx-reservations-grid-lines";
@@ -29,14 +30,17 @@ function Toggle({
   enabled,
   onToggle,
   saving,
+  label,
 }: {
   enabled: boolean;
   onToggle: () => void;
   saving: boolean;
+  label: string;
 }) {
   return (
     <button
       role="switch"
+      aria-label={label}
       aria-checked={enabled}
       onClick={onToggle}
       disabled={saving}
@@ -72,6 +76,7 @@ export default function GridToggle({
   const [linesEnabled, setLinesEnabled] = useState(savedLines);
   const [savingDots, setSavingDots] = useState(false);
   const [savingLines, setSavingLines] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     try {
@@ -96,11 +101,12 @@ export default function GridToggle({
     applyGridDots(next);
     setSavingDots(true);
     const supabase = createClient();
-    await supabase.from("bx_user_prefs").upsert({
+    const { error } = await supabase.from("bx_user_prefs").upsert({
       user_id: userId,
       show_grid: next,
       updated_at: new Date().toISOString(),
     });
+    if (error) toast("Changed on this device, but we couldn't save it to your account.", "error");
     setSavingDots(false);
   }
 
@@ -111,11 +117,12 @@ export default function GridToggle({
     applyGridLines(next);
     setSavingLines(true);
     const supabase = createClient();
-    await supabase.from("bx_user_prefs").upsert({
+    const { error } = await supabase.from("bx_user_prefs").upsert({
       user_id: userId,
       show_grid_lines: next,
       updated_at: new Date().toISOString(),
     });
+    if (error) toast("Changed on this device, but we couldn't save it to your account.", "error");
     setSavingLines(false);
   }
 
@@ -130,7 +137,7 @@ export default function GridToggle({
             Subtle dot pattern on page backgrounds.
           </p>
         </div>
-        <Toggle enabled={dotsEnabled} onToggle={handleDotsToggle} saving={savingDots} />
+        <Toggle label="Background dots" enabled={dotsEnabled} onToggle={handleDotsToggle} saving={savingDots} />
       </div>
       <div className="flex items-center justify-between">
         <div>
@@ -141,7 +148,7 @@ export default function GridToggle({
             Fine crosshatch pattern on page backgrounds.
           </p>
         </div>
-        <Toggle enabled={linesEnabled} onToggle={handleLinesToggle} saving={savingLines} />
+        <Toggle label="Background grid lines" enabled={linesEnabled} onToggle={handleLinesToggle} saving={savingLines} />
       </div>
     </div>
   );

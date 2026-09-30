@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { can, type BxRole } from "@/lib/roles";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { loginHref } from "@/lib/return-path";
 import Image from "next/image";
 import NavSidebar from "./nav-sidebar";
 import ProfileMenu from "./profile-menu";
@@ -28,6 +30,7 @@ export default function HeaderShell({
   savedTheme,
 }: HeaderShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -105,7 +108,7 @@ export default function HeaderShell({
               />
             ) : (
               <Link
-                href="/login"
+                href={loginHref(pathname)}
                 className="inline-flex items-center text-sm font-medium rounded-lg px-3 py-1.5 transition-colors border"
                 style={{
                   color: "var(--bx-parchment)",

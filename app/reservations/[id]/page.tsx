@@ -1,4 +1,5 @@
 import { redirect, notFound } from "next/navigation";
+import { loginHref } from "@/lib/return-path";
 import Link from "next/link";
 import { getUserAndRole } from "@/lib/get-user-role";
 import { adminClient, isStaffRole } from "@/lib/event-map";
@@ -129,9 +130,8 @@ export default async function ReservationDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { user, role } = await getUserAndRole();
-  if (!user) redirect("/login");
-
   const { id } = await params;
+  if (!user) redirect(loginHref(`/reservations/${id}`));
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
 
   // Access is decided here, then the row is read with the service role so staff can see any reservation.

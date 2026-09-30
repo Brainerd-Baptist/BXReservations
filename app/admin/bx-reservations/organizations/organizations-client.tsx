@@ -136,7 +136,7 @@ export default function OrganizationsClient({
       <div
         style={{
           borderBottom: "1px solid color-mix(in srgb, var(--bx-parchment) 12%, transparent)",
-          padding: "24px 32px 20px",
+          padding: "24px clamp(16px, 4vw, 32px) 20px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -158,13 +158,13 @@ export default function OrganizationsClient({
         </button>
       </div>
 
-      <div style={{ padding: "16px 32px", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", borderBottom: "1px solid color-mix(in srgb, var(--bx-parchment) 8%, transparent)" }}>
+      <div style={{ padding: "16px clamp(16px, 4vw, 32px)", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", borderBottom: "1px solid color-mix(in srgb, var(--bx-parchment) 8%, transparent)" }}>
         <input
           type="search"
           placeholder="Search organizations…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={{ background: "var(--bx-ink-soft)", border: "1px solid color-mix(in srgb, var(--bx-parchment) 15%, transparent)", borderRadius: 8, padding: "8px 14px", fontSize: 14, color: "var(--bx-parchment)", width: 260, outline: "none" }}
+          style={{ background: "var(--bx-ink-soft)", border: "1px solid color-mix(in srgb, var(--bx-parchment) 15%, transparent)", borderRadius: 8, padding: "8px 14px", fontSize: 14, color: "var(--bx-parchment)", width: "min(260px, 100%)", outline: "none" }}
         />
         <div style={{ display: "flex", gap: 6 }}>
           {TIERS.map((t) => (
@@ -183,12 +183,12 @@ export default function OrganizationsClient({
       </div>
 
       {fetchError && (
-        <div style={{ margin: "16px 32px", padding: "12px 16px", background: "color-mix(in srgb, var(--bx-clay) 10%, transparent)", border: "1px solid var(--bx-clay)", borderRadius: 8, color: "var(--bx-clay)", fontSize: 14 }}>
+        <div style={{ margin: "16px clamp(16px, 4vw, 32px)", padding: "12px 16px", background: "color-mix(in srgb, var(--bx-clay) 10%, transparent)", border: "1px solid var(--bx-clay)", borderRadius: 8, color: "var(--bx-clay)", fontSize: 14 }}>
           Error loading organizations: {fetchError}
         </div>
       )}
 
-      <div style={{ padding: "24px 32px", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 16 }}>
+      <div style={{ padding: "24px clamp(16px, 4vw, 32px)", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 320px), 1fr))", gap: 16 }}>
         {filtered.length === 0 ? (
           <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "60px 20px", color: "var(--bx-slate)" }}>
             {search || tierFilter ? "No organizations match your filters." : "No organizations yet. Create one to get started."}

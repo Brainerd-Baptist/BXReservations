@@ -37,7 +37,8 @@ export async function GET() {
   const { data: reservations, error } = await supabase
     .from("reservations")
     .select("id, booking_number, event_name, status, payload")
-    .neq("status", "cancelled")
+    // No cancelled variant belongs on the calendar
+    .not("status", "in", "(cancelled,cancelled_by_user,cancelled_by_admin,auto_cancelled)")
     .order("created_at", { ascending: false })
     .limit(200);
 
@@ -56,6 +57,7 @@ export async function GET() {
     for (const day of days) {
       const dateStr = (day as Record<string, unknown>).date as string;
       if (!dateStr) continue;
+      if ((day as Record<string, unknown>).included === false) continue; // day removed from the booking
 
       const d = new Date(dateStr + "T00:00:00");
       if (d < windowStart || d > windowEnd) continue;

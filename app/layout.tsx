@@ -35,7 +35,7 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-const APP_VERSION = "1.40.0";
+const APP_VERSION = "1.41.0";
 
 export default function RootLayout({
   children,
@@ -53,7 +53,7 @@ export default function RootLayout({
         <AmbientBackground />
         <ToastProvider>
           <SiteHeader />
-          <main className="flex-1 isolate" style={{ paddingTop: "calc(3.5rem + env(safe-area-inset-top))" }}>{children}</main>
+          <main className="flex-1 isolate" style={{ paddingTop: "var(--bx-header-h)" }}>{children}</main>
           <ScrollReveal />
         </ToastProvider>
 
