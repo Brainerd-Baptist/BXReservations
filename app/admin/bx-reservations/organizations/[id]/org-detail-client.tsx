@@ -3,6 +3,8 @@
 import BodyPortal from "@/app/components/body-portal";
 import { useModalDialog } from "@/app/components/use-modal-dialog";
 import { useState, useTransition, useRef } from "react";
+import { Field, Input, Select, Textarea } from "@/app/components/ui/field";
+import { Tabs, tabId, panelId } from "@/app/components/ui/tabs";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { OrgDetail, LinkedUser, ReservationRow, DiscountRule } from "./page";
@@ -96,18 +98,6 @@ function DiscountFormModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const inputStyle: React.CSSProperties = {
-    width: "100%",
-    background: "var(--bx-ink-soft, #111)",
-    border: "1px solid rgba(255,255,255,0.15)",
-    borderRadius: 8,
-    padding: "9px 12px",
-    fontSize: 14,
-    color: "var(--bx-parchment)",
-    fontFamily: "inherit",
-    boxSizing: "border-box",
-    outline: "none",
-  };
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -173,13 +163,13 @@ function DiscountFormModal({
           {/* Type */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--bx-slate)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>
+              <label htmlFor="org-detail-type-1" style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--bx-slate)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>
                 Type *
               </label>
-              <select
+              <select id="org-detail-type-1"
                 value={form.type}
                 onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as DiscountFormState["type"] }))}
-                style={inputStyle}
+                className="bx-input"
                 required
               >
                 <option value="percent">Percent (%)</option>
@@ -188,10 +178,10 @@ function DiscountFormModal({
               </select>
             </div>
             <div>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--bx-slate)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>
+              <label htmlFor="org-detail-value-2" style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--bx-slate)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>
                 Value * {form.type === "percent" ? "(%)" : "($)"}
               </label>
-              <input
+              <input id="org-detail-value-2"
                 type="number"
                 min="0"
                 step={form.type === "percent" ? "1" : "0.01"}
@@ -199,7 +189,7 @@ function DiscountFormModal({
                 value={form.value}
                 onChange={(e) => setForm((f) => ({ ...f, value: e.target.value }))}
                 placeholder={form.type === "percent" ? "e.g. 100" : "e.g. 250.00"}
-                style={inputStyle}
+                className="bx-input"
                 required
               />
             </div>
@@ -208,13 +198,13 @@ function DiscountFormModal({
           {/* Scope */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--bx-slate)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>
+              <label htmlFor="org-detail-scope-3" style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--bx-slate)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>
                 Scope *
               </label>
-              <select
+              <select id="org-detail-scope-3"
                 value={form.scope}
                 onChange={(e) => setForm((f) => ({ ...f, scope: e.target.value as DiscountFormState["scope"] }))}
-                style={inputStyle}
+                className="bx-input"
               >
                 <option value="all_rooms">All Rooms</option>
                 <option value="specific_room">Specific Room</option>
@@ -222,15 +212,15 @@ function DiscountFormModal({
             </div>
             {form.scope === "specific_room" && (
               <div>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--bx-slate)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>
+                <label htmlFor="org-detail-room-id-4" style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--bx-slate)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>
                   Room ID *
                 </label>
-                <input
+                <input id="org-detail-room-id-4"
                   type="text"
                   value={form.room_id}
                   onChange={(e) => setForm((f) => ({ ...f, room_id: e.target.value }))}
                   placeholder="Room UUID or name"
-                  style={inputStyle}
+                  className="bx-input"
                   required={form.scope === "specific_room"}
                 />
               </div>
@@ -239,13 +229,13 @@ function DiscountFormModal({
 
           {/* Reason */}
           <div>
-            <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--bx-slate)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>
+            <label htmlFor="org-detail-reason-5" style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--bx-slate)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>
               Reason
             </label>
-            <select
+            <select id="org-detail-reason-5"
               value={form.discount_reason}
               onChange={(e) => setForm((f) => ({ ...f, discount_reason: e.target.value }))}
-              style={inputStyle}
+              className="bx-input"
             >
               <option value="">— select a reason (optional) —</option>
               <option value="bbs_default">BBS Default</option>
@@ -258,15 +248,15 @@ function DiscountFormModal({
 
           {/* Note */}
           <div>
-            <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--bx-slate)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>
+            <label htmlFor="org-detail-note-6" style={{ display: "block", fontSize: 11, fontWeight: 700, color: "var(--bx-slate)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 5 }}>
               Note
             </label>
-            <textarea
+            <textarea id="org-detail-note-6"
               rows={2}
               value={form.note}
               onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
               placeholder="Optional note about this discount rule"
-              style={{ ...inputStyle, resize: "vertical" }}
+              className="bx-input"
             />
           </div>
 
@@ -275,14 +265,14 @@ function DiscountFormModal({
             <button
               type="button"
               onClick={onClose}
-              style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 8, padding: "9px 18px", fontWeight: 600, fontSize: 14, cursor: "pointer", color: "var(--bx-slate)" }}
+              className="bx-btn bx-btn--secondary bx-btn--md"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              style={{ background: saving ? "var(--bx-slate)" : "var(--bx-action-bg)", color: "var(--bx-action-fg)", border: "none", borderRadius: 8, padding: "9px 18px", fontWeight: 600, fontSize: 14, cursor: saving ? "not-allowed" : "pointer" }}
+              className="bx-btn bx-btn--primary bx-btn--md"
             >
               {saving ? "Saving…" : editingDiscount ? "Save Changes" : "Add Rule"}
             </button>
@@ -363,12 +353,6 @@ export default function OrgDetailClient({ org: initialOrg, linkedUsers, reservat
     }
   }
 
-  const tabs = [
-    { key: "info", label: "Contact Info" },
-    { key: "users", label: `Users (${linkedUsers.length})` },
-    { key: "bookings", label: `Bookings (${reservations.length})` },
-    { key: "discounts", label: `Discounts (${discounts.length})` },
-  ] as const;
 
   return (
     <div style={{ minHeight: "100vh", color: "var(--bx-parchment)" }}>
@@ -384,33 +368,41 @@ export default function OrgDetailClient({ org: initialOrg, linkedUsers, reservat
           <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", padding: "3px 10px", borderRadius: 20, background: tier.bg, color: tier.text }}>{tier.label}</span>
           <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
             {!editing ? (
-              <button onClick={startEdit} style={{ background: "var(--bx-action-bg)", color: "var(--bx-action-fg)", border: "none", borderRadius: 8, padding: "8px 18px", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>Edit</button>
+              <button onClick={startEdit} className="bx-btn bx-btn--primary bx-btn--md">Edit</button>
             ) : (
               <>
-                <button form="org-edit-form" type="submit" disabled={isPending} style={{ background: isPending ? "var(--bx-slate)" : "var(--bx-sage)", color: "#fff", border: "none", borderRadius: 8, padding: "8px 18px", fontWeight: 600, fontSize: 14, cursor: isPending ? "not-allowed" : "pointer" }}>{isPending ? "Saving…" : "Save"}</button>
-                <button onClick={() => { setEditing(false); setSaveError(null); }} style={{ background: "transparent", border: "1px solid color-mix(in srgb, var(--bx-parchment) 20%, transparent)", borderRadius: 8, padding: "8px 18px", fontWeight: 600, fontSize: 14, cursor: "pointer", color: "var(--bx-slate)" }}>Cancel</button>
+                <button form="org-edit-form" type="submit" disabled={isPending} className="bx-btn bx-btn--confirm bx-btn--md">{isPending ? "Saving…" : "Save"}</button>
+                <button onClick={() => { setEditing(false); setSaveError(null); }} className="bx-btn bx-btn--secondary bx-btn--md">Cancel</button>
               </>
             )}
           </div>
         </div>
-        <div style={{ display: "flex", gap: 0 }}>
-          {tabs.map((t) => (
-            <button key={t.key} onClick={() => setActiveTab(t.key)} style={{ background: "none", border: "none", borderBottom: activeTab === t.key ? "2px solid var(--bx-brass)" : "2px solid transparent", padding: "10px 18px", fontWeight: activeTab === t.key ? 700 : 500, fontSize: 14, cursor: "pointer", color: activeTab === t.key ? "var(--bx-accent-text)" : "var(--bx-slate)", transition: "all 0.15s", marginBottom: -1 }}>{t.label}</button>
-          ))}
-        </div>
+        <Tabs
+          group="org"
+          label="Organization sections"
+          className="mb-3"
+          items={[
+            { key: "info", label: "Contact info" },
+            { key: "users", label: "Users", count: linkedUsers.length },
+            { key: "bookings", label: "Bookings", count: reservations.length },
+            { key: "discounts", label: "Discounts", count: discounts.length },
+          ]}
+          value={activeTab}
+          onChange={setActiveTab}
+        />
       </div>
 
       {saveError && (
         <div style={{ margin: "16px 32px 0", padding: "10px 14px", background: "color-mix(in srgb, var(--bx-clay) 10%, transparent)", border: "1px solid var(--bx-clay)", borderRadius: 8, color: "var(--bx-clay)", fontSize: 13 }}>{saveError}</div>
       )}
 
-      <div style={{ padding: "28px clamp(16px, 4vw, 32px)" }}>
+      <div role="tabpanel" id={panelId("org", activeTab)} aria-labelledby={tabId("org", activeTab)} tabIndex={0} style={{ padding: "28px clamp(16px, 4vw, 32px)" }}>
         {/* ── Info tab ── */}
         {activeTab === "info" && (
           editing ? (
             <form id="org-edit-form" onSubmit={handleSave}>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: 20 }}>
-                <EditField label="Organization Name *" value={editForm.name ?? ""} onChange={(v) => setEditForm((f) => ({ ...f, name: v }))} required />
+                <EditField label="Organization Name" value={editForm.name ?? ""} onChange={(v) => setEditForm((f) => ({ ...f, name: v }))} required />
                 <EditField label="Canonical Name (slug)" value={editForm.canonical_name ?? ""} onChange={(v) => setEditForm((f) => ({ ...f, canonical_name: v }))} hint="Lowercase identifier used for dedup matching" />
                 <EditSelectField label="Tier" value={editForm.tier ?? "external"} onChange={(v) => setEditForm((f) => ({ ...f, tier: v as OrgDetail["tier"] }))} options={[{ value: "external", label: "External" }, { value: "internal", label: "Internal (BBC Ministry)" }, { value: "bbs", label: "BBS" }]} />
                 <EditField label="Primary Contact Name" value={editForm.primary_contact_name ?? ""} onChange={(v) => setEditForm((f) => ({ ...f, primary_contact_name: v }))} />
@@ -489,7 +481,7 @@ export default function OrgDetailClient({ org: initialOrg, linkedUsers, reservat
               </div>
               <button
                 onClick={() => { setEditingDiscount(null); setShowDiscountModal(true); }}
-                style={{ background: "var(--bx-action-bg)", color: "var(--bx-action-fg)", border: "none", borderRadius: 8, padding: "9px 18px", fontWeight: 600, fontSize: 14, cursor: "pointer", whiteSpace: "nowrap" }}
+                className="bx-btn bx-btn--primary bx-btn--md"
               >
                 + Add Rule
               </button>
@@ -506,7 +498,7 @@ export default function OrgDetailClient({ org: initialOrg, linkedUsers, reservat
                 <p style={{ margin: "0 0 12px" }}>No discount rules for this organization.</p>
                 <button
                   onClick={() => { setEditingDiscount(null); setShowDiscountModal(true); }}
-                  style={{ background: "var(--bx-action-bg)", color: "var(--bx-action-fg)", border: "none", borderRadius: 8, padding: "8px 18px", fontWeight: 600, fontSize: 14, cursor: "pointer" }}
+                  className="bx-btn bx-btn--primary bx-btn--md"
                 >
                   Add the first rule
                 </button>
@@ -537,14 +529,14 @@ export default function OrgDetailClient({ org: initialOrg, linkedUsers, reservat
                         <div style={{ display: "flex", gap: 6 }}>
                           <button
                             onClick={() => { setEditingDiscount(d); setShowDiscountModal(true); }}
-                            style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 6, padding: "4px 10px", fontSize: 12, cursor: "pointer", color: "var(--bx-parchment)", fontWeight: 600 }}
+                            className="bx-btn bx-btn--secondary bx-btn--sm"
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => { if (confirm("Delete this discount rule?")) handleDeleteDiscount(d.id); }}
                             disabled={deletingDiscountId === d.id}
-                            style={{ background: "transparent", border: "1px solid rgba(220,38,38,0.3)", borderRadius: 6, padding: "4px 10px", fontSize: 12, cursor: deletingDiscountId === d.id ? "not-allowed" : "pointer", color: "var(--bx-clay)", fontWeight: 600 }}
+                            className="bx-btn bx-btn--danger-outline bx-btn--sm"
                           >
                             {deletingDiscountId === d.id ? "…" : "Delete"}
                           </button>
@@ -582,24 +574,22 @@ function InfoField({ label, value }: { label: string; value: string | null | und
 }
 
 function EditField({ label, value, onChange, type = "text", required, hint, multiline }: { label: string; value: string; onChange: (v: string) => void; type?: string; required?: boolean; hint?: string; multiline?: boolean }) {
-  const inputStyle: React.CSSProperties = { width: "100%", background: "var(--bx-ink-soft)", border: "1px solid color-mix(in srgb, var(--bx-parchment) 15%, transparent)", borderRadius: 8, padding: "9px 12px", fontSize: 14, color: "var(--bx-parchment)", fontFamily: "inherit", boxSizing: "border-box", outline: "none" };
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-      <label style={{ fontSize: 11, fontWeight: 700, color: "var(--bx-slate)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</label>
-      {multiline ? <textarea rows={3} value={value} onChange={(e) => onChange(e.target.value)} style={{ ...inputStyle, resize: "vertical" }} /> : <input type={type} value={value} onChange={(e) => onChange(e.target.value)} required={required} style={inputStyle} />}
-      {hint && <p style={{ margin: 0, fontSize: 11, color: "var(--bx-slate)" }}>{hint}</p>}
-    </div>
+    <Field label={label} hint={hint} required={required}>
+      {multiline
+        ? <Textarea rows={3} value={value} onChange={(e) => onChange(e.target.value)} />
+        : <Input type={type} value={value} onChange={(e) => onChange(e.target.value)} required={required} />}
+    </Field>
   );
 }
 
 function EditSelectField({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-      <label style={{ fontSize: 11, fontWeight: 700, color: "var(--bx-slate)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</label>
-      <select value={value} onChange={(e) => onChange(e.target.value)} style={{ background: "var(--bx-ink-soft)", border: "1px solid color-mix(in srgb, var(--bx-parchment) 15%, transparent)", borderRadius: 8, padding: "9px 12px", fontSize: 14, color: "var(--bx-parchment)", fontFamily: "inherit", outline: "none" }}>
+    <Field label={label}>
+      <Select value={value} onChange={(e) => onChange(e.target.value)}>
         {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-      </select>
-    </div>
+      </Select>
+    </Field>
   );
 }
 

@@ -88,18 +88,18 @@ const ADMIN_SETTABLE_STATUSES: Status[] = [
 // Emerald=approved/forward, Stone=completed(filed), Red=declined/cancel-BX,
 // Gray=neutral cancels
 const STATUS_COLORS: Record<Status, string> = {
-  Requested:             "bg-amber-100 text-amber-800 border-amber-200",      // sticky note
-  "Proposal Sent":       "bg-indigo-100 text-indigo-800 border-indigo-200",   // in-tray stamp
-  "Needs Info":          "bg-orange-100 text-orange-800 border-orange-200",   // warning label
-  "Pending Documents":   "bg-orange-100 text-orange-800 border-orange-200",   // warning label
-  "Pending Payment":     "bg-orange-100 text-orange-800 border-orange-200",   // warning label
-  "Deposit Received":    "bg-emerald-100 text-emerald-800 border-emerald-200",// approval stamp
-  Confirmed:             "bg-emerald-100 text-emerald-800 border-emerald-200",// approval stamp
-  Completed:             "bg-stone-100 text-stone-600 border-stone-200",      // filed document
-  Declined:              "bg-red-100 text-red-800 border-red-200",            // red stamp
-  "Cancelled by BX":     "bg-red-100 text-red-800 border-red-200",            // red stamp
-  "Cancelled by User":   "bg-gray-100 text-gray-600 border-gray-200",         // voided paper
-  Expired:               "bg-gray-100 text-gray-500 border-gray-200",         // voided paper
+  Requested:             "bx-tone-amber",      // sticky note
+  "Proposal Sent":       "bx-tone-indigo",   // in-tray stamp
+  "Needs Info":          "bx-tone-orange",   // warning label
+  "Pending Documents":   "bx-tone-orange",   // warning label
+  "Pending Payment":     "bx-tone-orange",   // warning label
+  "Deposit Received":    "bx-tone-green",// approval stamp
+  Confirmed:             "bx-tone-green",// approval stamp
+  Completed:             "bx-tone-stone",      // filed document
+  Declined:              "bx-tone-red",            // red stamp
+  "Cancelled by BX":     "bx-tone-red",            // red stamp
+  "Cancelled by User":   "bx-tone-stone",         // voided paper
+  Expired:               "bx-tone-stone",         // voided paper
 };
 
 export default function BxReservationsAdmin() {
@@ -622,7 +622,7 @@ export default function BxReservationsAdmin() {
             <KPI label="Pending Review" value={String(pending)} color="text-amber-600" />
             <KPI label="Awaiting Deposit" value={String(awaitingDeposit)} color="text-blue-600" />
             <KPI label={`Confirmed (${monthLabel})`} value={String(confirmedThisMonth)} color="text-emerald-600" />
-            <KPI label="Revenue Pipeline" value={`$${revenue.toLocaleString()}`} color="text-[var(--bbc-blue)]" />
+            <KPI label="Revenue Pipeline" value={`$${revenue.toLocaleString()}`} color="text-[var(--bx-accent-text)]" />
           </div>
 
           {/* Search bar */}
@@ -632,7 +632,7 @@ export default function BxReservationsAdmin() {
               placeholder="Search by name, org, email, event, booking #…"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl border border-parchment/20 bg-ink-soft text-parchment text-sm px-4 py-2.5 placeholder-slate focus:outline-none focus:ring-2 focus:ring-[var(--bbc-blue)] pr-10"
+              className="w-full rounded-xl border border-parchment/20 bg-ink-soft text-parchment text-sm px-4 py-2.5 placeholder-slate focus:outline-none focus:ring-2 focus:ring-[var(--bx-focus)] pr-10"
             />
             {searchQuery && (
               <button
@@ -689,7 +689,7 @@ export default function BxReservationsAdmin() {
               <div
                 key={req.id}
                 className={`bx-row bx-glass-flat rounded-xl p-4 cursor-pointer ${
-                  selected?.id === req.id ? "ring-2 ring-[var(--bbc-blue)]" : ""
+                  selected?.id === req.id ? "ring-2 ring-[var(--bx-accent-text)]" : ""
                 }`}
                 onClick={() => setSelected(selected?.id === req.id ? null : req)}
               >
@@ -718,7 +718,7 @@ export default function BxReservationsAdmin() {
                     </span>
                     <span className="font-bold text-sm text-parchment">${req.estimate.toLocaleString()}</span>
                     <span
-                      className={`px-2 py-0.5 rounded-full text-xs font-semibold tracking-wide border ${STATUS_COLORS[req.status]}`}
+                      className={`bx-status bx-status--sm border ${STATUS_COLORS[req.status]}`}
                     >
                       {req.status}
                     </span>
@@ -744,20 +744,20 @@ export default function BxReservationsAdmin() {
                         <div className="flex flex-col gap-2">
                           <a
                             href={`/reservations/${req.dbId}/event-map`}
-                            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-parchment/15 text-parchment hover:border-[var(--bbc-blue)]"
+                            className="bx-btn bx-btn--secondary bx-btn--sm"
                           >
                             Open event map →
                           </a>
-                          <a href={`/api/event-map/${req.dbId}/signs?inline=1`} target="_blank" rel="noopener" className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-parchment/15 text-parchment hover:border-[var(--bbc-blue)]">
+                          <a href={`/api/event-map/${req.dbId}/signs?inline=1`} target="_blank" rel="noopener" className="bx-btn bx-btn--secondary bx-btn--sm">
                             Door signs
                           </a>
-                          <a href={`/api/event-map/${req.dbId}/signs?variant=staff&inline=1`} target="_blank" rel="noopener" className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-parchment/15 text-parchment hover:border-[var(--bbc-blue)]">
+                          <a href={`/api/event-map/${req.dbId}/signs?variant=staff&inline=1`} target="_blank" rel="noopener" className="bx-btn bx-btn--secondary bx-btn--sm">
                             Staff signs
                           </a>
-                          <a href={`/api/event-map/${req.dbId}/setup-sheet?inline=1`} target="_blank" rel="noopener" className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-parchment/15 text-parchment hover:border-[var(--bbc-blue)]">
+                          <a href={`/api/event-map/${req.dbId}/setup-sheet?inline=1`} target="_blank" rel="noopener" className="bx-btn bx-btn--secondary bx-btn--sm">
                             Setup sheet
                           </a>
-                          <a href={`/api/event-map/${req.dbId}/packet?inline=1`} target="_blank" rel="noopener" className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold border border-parchment/15 text-parchment hover:border-[var(--bbc-blue)]">
+                          <a href={`/api/event-map/${req.dbId}/packet?inline=1`} target="_blank" rel="noopener" className="bx-btn bx-btn--secondary bx-btn--sm">
                             Attendee packet
                           </a>
                         </div>
@@ -775,7 +775,7 @@ export default function BxReservationsAdmin() {
                         <div className="space-y-3 bx-well rounded-xl p-4" onClick={e => e.stopPropagation()}>
                           <p className="text-xs font-semibold text-slate uppercase tracking-widest">Update Status</p>
                           <select
-                            className="w-full rounded-lg border border-parchment/20 bg-ink text-parchment text-sm px-3 py-2"
+                            className="bx-input w-full"
                             value={draft}
                             onChange={e => setStatusDraft(prev => ({ ...prev, [req.id]: e.target.value }))}
                           >
@@ -786,7 +786,7 @@ export default function BxReservationsAdmin() {
                           </select>
                           {draft && !isCancelFlow && (
                             <textarea
-                              className="w-full rounded-lg border border-parchment/20 bg-ink text-parchment text-sm px-3 py-2 placeholder-slate resize-none"
+                              className="bx-input w-full placeholder-slate resize-none"
                               placeholder="Internal note (optional)"
                               rows={2}
                               value={note}
@@ -795,7 +795,7 @@ export default function BxReservationsAdmin() {
                           )}
                           {isCancelFlow && (
                             <textarea
-                              className="w-full rounded-lg border border-red-300/30 bg-ink text-parchment text-sm px-3 py-2 placeholder-slate resize-none"
+                              className="bx-input w-full placeholder-slate resize-none"
                               placeholder="Cancellation reason (required)"
                               rows={2}
                               value={reason}
@@ -805,14 +805,14 @@ export default function BxReservationsAdmin() {
                           {draft && (
                             <div className="flex gap-2">
                               <button
-                                className={`btn-primary text-sm ${isCancelFlow ? "bg-red-600 hover:bg-red-700" : ""}`}
+                                className={`bx-btn bx-btn--md ${isCancelFlow ? "bx-btn--danger" : "bx-btn--primary"}`}
                                 disabled={busy || (isCancelFlow && !reason.trim())}
                                 onClick={() => changeStatus(req, draft as Status, note || undefined, reason || undefined)}
                               >
                                 {busy ? "Saving…" : isCancelFlow ? "Cancel Reservation" : `Set → ${draft}`}
                               </button>
                               <button
-                                className="btn-outline text-sm"
+                                className="bx-btn bx-btn--secondary bx-btn--md"
                                 onClick={() => {
                                   setStatusDraft(prev => { const n = { ...prev }; delete n[req.id]; return n; });
                                   setStatusNote(prev => { const n = { ...prev }; delete n[req.id]; return n; });
@@ -872,7 +872,7 @@ export default function BxReservationsAdmin() {
                               <p className="text-xs font-semibold text-parchment/70">Facility Use Agreement</p>
                               {!ds.agreement_sent_at && (
                                 <button
-                                  className="btn-outline text-xs"
+                                  className="bx-btn bx-btn--secondary bx-btn--sm"
                                   disabled={sendingAgreementV2[req.id]}
                                   onClick={() => handleSendAgreementV2(req)}
                                 >
@@ -885,7 +885,7 @@ export default function BxReservationsAdmin() {
                                     ⏳ Sent {new Date(ds.agreement_sent_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })} — awaiting signature
                                   </p>
                                   <button
-                                    className="btn-outline text-xs"
+                                    className="bx-btn bx-btn--secondary bx-btn--sm"
                                     disabled={sendingAgreementV2[req.id]}
                                     onClick={() => handleSendAgreementV2(req)}
                                   >
@@ -930,45 +930,45 @@ export default function BxReservationsAdmin() {
                                     </div>
                                     {!act && (
                                       <div className="flex gap-2">
-                                        <button className="btn-primary text-xs bg-emerald-600 hover:bg-emerald-700" onClick={() => setCoiAction(prev => ({ ...prev, [req.id]: "accept" }))}>
+                                        <button className="bx-btn bx-btn--confirm bx-btn--sm" onClick={() => setCoiAction(prev => ({ ...prev, [req.id]: "accept" }))}>
                                           <span className="flex items-center gap-1"><span>✓</span> Accept COI</span>
                                         </button>
-                                        <button className="btn-outline text-xs border-red-300/40 text-red-400 hover:text-red-300" onClick={() => setCoiAction(prev => ({ ...prev, [req.id]: "flag" }))}>
+                                        <button className="bx-btn bx-btn--danger-outline bx-btn--sm" onClick={() => setCoiAction(prev => ({ ...prev, [req.id]: "flag" }))}>
                                           <span className="flex items-center gap-1"><AlertTriangle size={12} />Flag Issue</span>
                                         </button>
                                       </div>
                                     )}
                                     {act === "accept" && (
                                       <div className="space-y-2">
-                                        <label className="text-xs text-slate">Expiry date (optional)</label>
-                                        <input
+                                        <label htmlFor="bx-reserva-expiry-date-optional-1" className="text-xs text-slate">Expiry date (optional)</label>
+                                        <input id="bx-reserva-expiry-date-optional-1"
                                           type="date"
-                                          className="rounded-lg border border-parchment/20 bg-ink text-parchment text-xs px-2 py-1"
+                                          className="bx-input bx-input--sm"
                                           value={coiExpiry[req.id] ?? ""}
                                           onChange={e => setCoiExpiry(prev => ({ ...prev, [req.id]: e.target.value }))}
                                         />
                                         <div className="flex gap-2">
-                                          <button className="btn-primary text-xs bg-emerald-600 hover:bg-emerald-700" disabled={busy} onClick={() => handleCoiAction(req, "accept")}>
+                                          <button className="bx-btn bx-btn--confirm bx-btn--sm" disabled={busy} onClick={() => handleCoiAction(req, "accept")}>
                                             {busy ? "Saving…" : "Confirm Accept"}
                                           </button>
-                                          <button className="btn-outline text-xs" onClick={() => setCoiAction(prev => ({ ...prev, [req.id]: null }))}>Cancel</button>
+                                          <button className="bx-btn bx-btn--secondary bx-btn--sm" onClick={() => setCoiAction(prev => ({ ...prev, [req.id]: null }))}>Cancel</button>
                                         </div>
                                       </div>
                                     )}
                                     {act === "flag" && (
                                       <div className="space-y-2">
                                         <textarea
-                                          className="w-full rounded-lg border border-red-300/30 bg-ink text-parchment text-xs px-2 py-1 placeholder-slate resize-none"
+                                          className="bx-input bx-input--sm w-full placeholder-slate resize-none"
                                           rows={2}
                                           placeholder="Describe the issue (sent as a message to the customer)"
                                           value={coiFlagNote[req.id] ?? ""}
                                           onChange={e => setCoiFlagNote(prev => ({ ...prev, [req.id]: e.target.value }))}
                                         />
                                         <div className="flex gap-2">
-                                          <button className="btn-outline text-xs border-red-300/40 text-red-400 hover:text-red-300" disabled={busy} onClick={() => handleCoiAction(req, "flag")}>
+                                          <button className="bx-btn bx-btn--danger-outline bx-btn--sm" disabled={busy} onClick={() => handleCoiAction(req, "flag")}>
                                             {busy ? "Sending…" : "Send Flag to Customer"}
                                           </button>
-                                          <button className="btn-outline text-xs" onClick={() => setCoiAction(prev => ({ ...prev, [req.id]: null }))}>Cancel</button>
+                                          <button className="bx-btn bx-btn--secondary bx-btn--sm" onClick={() => setCoiAction(prev => ({ ...prev, [req.id]: null }))}>Cancel</button>
                                         </div>
                                       </div>
                                     )}
@@ -1006,33 +1006,33 @@ export default function BxReservationsAdmin() {
                                   <div className="space-y-2">
                                     <div className="grid grid-cols-2 gap-2">
                                       <div>
-                                        <label className="text-xs text-slate">Amount ($)</label>
-                                        <input type="number" min="0" step="0.01" placeholder="0.00"
-                                          className="w-full rounded-lg border border-parchment/20 bg-ink text-parchment text-xs px-2 py-1 mt-0.5"
+                                        <label htmlFor="bx-reserva-amount-2" className="text-xs text-slate">Amount ($)</label>
+                                        <input id="bx-reserva-amount-2" type="number" min="0" step="0.01" placeholder="0.00"
+                                          className="bx-input bx-input--sm w-full mt-0.5"
                                           value={pf.amount} onChange={e => updPay("amount", e.target.value)} />
                                       </div>
                                       <div>
-                                        <label className="text-xs text-slate">Method</label>
-                                        <input type="text" placeholder="check, card, cash…"
-                                          className="w-full rounded-lg border border-parchment/20 bg-ink text-parchment text-xs px-2 py-1 mt-0.5"
+                                        <label htmlFor="bx-reserva-method-3" className="text-xs text-slate">Method</label>
+                                        <input id="bx-reserva-method-3" type="text" placeholder="check, card, cash…"
+                                          className="bx-input bx-input--sm w-full mt-0.5"
                                           value={pf.method} onChange={e => updPay("method", e.target.value)} />
                                       </div>
                                     </div>
                                     <div className="grid grid-cols-2 gap-2">
                                       <div>
-                                        <label className="text-xs text-slate">Date received</label>
-                                        <input type="date"
-                                          className="w-full rounded-lg border border-parchment/20 bg-ink text-parchment text-xs px-2 py-1 mt-0.5"
+                                        <label htmlFor="bx-reserva-date-received-4" className="text-xs text-slate">Date received</label>
+                                        <input id="bx-reserva-date-received-4" type="date"
+                                          className="bx-input bx-input--sm w-full mt-0.5"
                                           value={pf.received_at} onChange={e => updPay("received_at", e.target.value)} />
                                       </div>
                                       <div>
-                                        <label className="text-xs text-slate">Receipt URL (optional)</label>
-                                        <input type="url" placeholder="https://…"
-                                          className="w-full rounded-lg border border-parchment/20 bg-ink text-parchment text-xs px-2 py-1 mt-0.5"
+                                        <label htmlFor="bx-reserva-receipt-url-optional-5" className="text-xs text-slate">Receipt URL (optional)</label>
+                                        <input id="bx-reserva-receipt-url-optional-5" type="url" placeholder="https://…"
+                                          className="bx-input bx-input--sm w-full mt-0.5"
                                           value={pf.receipt_url} onChange={e => updPay("receipt_url", e.target.value)} />
                                       </div>
                                     </div>
-                                    <button className="btn-primary text-xs" disabled={busy} onClick={() => handlePayment(req)}>
+                                    <button className="bx-btn bx-btn--primary bx-btn--sm" disabled={busy} onClick={() => handlePayment(req)}>
                                       {busy ? "Saving…" : "Record Payment"}
                                     </button>
                                   </div>
@@ -1139,7 +1139,7 @@ export default function BxReservationsAdmin() {
                                         <button
                                           onClick={() => handleLinkOrg(req, s.id)}
                                           disabled={busy}
-                                          className="btn-outline text-xs shrink-0"
+                                          className="bx-btn bx-btn--secondary bx-btn--sm shrink-0"
                                         >
                                           {busy ? "Linking…" : "Link"}
                                         </button>
@@ -1260,7 +1260,7 @@ export default function BxReservationsAdmin() {
                                 <p className="text-xs font-medium text-gray-600">Add booking discount override</p>
                                 <div className="grid grid-cols-2 gap-1.5">
                                   <select
-                                    className="border border-parchment/20 rounded px-1.5 py-1 text-xs bg-ink text-parchment col-span-2"
+                                    className="bx-input bx-input--sm col-span-2"
                                     value={bdf.type}
                                     onChange={e => setBookingDiscountForm(prev => ({ ...prev, [req.id]: { ...prev[req.id], type: e.target.value } }))}
                                   >
@@ -1273,12 +1273,12 @@ export default function BxReservationsAdmin() {
                                     min="0"
                                     step="0.01"
                                     placeholder={bdf.type === "percent" ? "%" : "$"}
-                                    className="border border-gray-300 rounded px-1.5 py-1 text-xs"
+                                    className="bx-input bx-input--sm"
                                     value={bdf.value}
                                     onChange={e => setBookingDiscountForm(prev => ({ ...prev, [req.id]: { ...prev[req.id], value: e.target.value } }))}
                                   />
                                   <select
-                                    className="border border-parchment/20 rounded px-1.5 py-1 text-xs bg-ink text-parchment"
+                                    className="bx-input bx-input--sm"
                                     value={bdf.reason}
                                     onChange={e => setBookingDiscountForm(prev => ({ ...prev, [req.id]: { ...prev[req.id], reason: e.target.value } }))}
                                   >
@@ -1293,14 +1293,14 @@ export default function BxReservationsAdmin() {
                                 <input
                                   type="text"
                                   placeholder="Note (optional)"
-                                  className="border border-gray-300 rounded px-1.5 py-1 text-xs w-full"
+                                  className="bx-input bx-input--sm w-full"
                                   value={bdf.note}
                                   onChange={e => setBookingDiscountForm(prev => ({ ...prev, [req.id]: { ...prev[req.id], note: e.target.value } }))}
                                 />
                                 <div className="flex gap-2">
                                   <button
                                     disabled={bdf.busy || !bdf.value}
-                                    className="btn-primary text-xs"
+                                    className="bx-btn bx-btn--primary bx-btn--sm"
                                     onClick={async e => {
                                       e.stopPropagation();
                                       if (!req.dbId || !bdf.value) return;
@@ -1364,19 +1364,19 @@ export default function BxReservationsAdmin() {
                               <div className="flex gap-2 items-center" onClick={(e) => e.stopPropagation()}>
                                 <input
                                   type="text"
-                                  className="border border-parchment/20 rounded px-2 py-1 text-xs w-44 bg-ink text-parchment"
+                                  className="bx-input bx-input--sm w-44"
                                   placeholder="Your full name"
                                   value={countersignName}
                                   onChange={(e) => setCountersignName(e.target.value)}
                                   onKeyDown={(e) => { if (e.key === "Enter") doCountersign(req); }}
                                   autoFocus
                                 />
-                                <button className="btn-primary text-xs" onClick={() => doCountersign(req)}>Sign</button>
+                                <button className="bx-btn bx-btn--primary bx-btn--sm" onClick={() => doCountersign(req)}>Sign</button>
                                 <button className="text-xs text-slate hover:text-parchment" onClick={() => { setCountersigning(null); setCountersignName(""); }}>Cancel</button>
                               </div>
                             ) : (
                               <button
-                                className="btn-primary text-xs bg-emerald-600 hover:bg-emerald-700"
+                                className="bx-btn bx-btn--confirm bx-btn--sm"
                                 onClick={(e) => { e.stopPropagation(); setCountersigning(req.id); setCountersignName(""); }}
                               >
                                 <span className="flex items-center gap-1.5"><span>✍</span>Countersign Agreement</span>
@@ -1635,7 +1635,7 @@ function AutomationSettings({
           <button
             onClick={onSave}
             disabled={saving}
-            className="btn-primary text-xs"
+            className="bx-btn bx-btn--primary bx-btn--sm"
           >
             {saving ? "Saving…" : "Save Changes"}
           </button>
@@ -1658,7 +1658,8 @@ function AutomationSettings({
                   max={365}
                   value={draft[key] ?? settings[key] ?? ""}
                   onChange={e => onChange(key, e.target.value)}
-                  className="w-16 rounded-lg border border-parchment/20 bg-ink text-parchment text-sm px-2 py-1 text-center focus:outline-none focus:ring-2 focus:ring-[var(--bbc-blue)]"
+                  aria-label={`${label} (${unit})`}
+                  className="bx-input bx-input--sm w-16 text-center"
                 />
                 <span className="text-xs text-slate">{unit}</span>
               </div>
@@ -1762,8 +1763,8 @@ function BlackoutSettings({
           {/* Day of week picker */}
           {(newRuleType === "dow" || newRuleType === "dow_slot") && (
             <div>
-              <label className="block text-xs font-semibold text-slate mb-1">Day of week</label>
-              <select
+              <label htmlFor="bx-reserva-day-of-week-6" className="block text-xs font-semibold text-slate mb-1">Day of week</label>
+              <select id="bx-reserva-day-of-week-6"
                 value={newDow}
                 onChange={e => setNewDow(Number(e.target.value))}
                 className="border border-parchment/20 rounded-lg px-3 py-2 text-sm bg-ink text-parchment"
@@ -1778,8 +1779,8 @@ function BlackoutSettings({
           {/* Slot picker */}
           {newRuleType === "dow_slot" && (
             <div>
-              <label className="block text-xs font-semibold text-slate mb-1">Time slot</label>
-              <select
+              <label htmlFor="bx-reserva-time-slot-7" className="block text-xs font-semibold text-slate mb-1">Time slot</label>
+              <select id="bx-reserva-time-slot-7"
                 value={newSlot}
                 onChange={e => setNewSlot(e.target.value)}
                 className="border border-parchment/20 rounded-lg px-3 py-2 text-sm bg-ink text-parchment"
@@ -1794,8 +1795,8 @@ function BlackoutSettings({
           {/* Date picker */}
           {newRuleType === "date" && (
             <div>
-              <label className="block text-xs font-semibold text-slate mb-1">Date</label>
-              <input
+              <label htmlFor="bx-reserva-date-8" className="block text-xs font-semibold text-slate mb-1">Date</label>
+              <input id="bx-reserva-date-8"
                 type="date"
                 value={newDate}
                 onChange={e => setNewDate(e.target.value)}
@@ -1806,10 +1807,10 @@ function BlackoutSettings({
 
           {/* Label */}
           <div className="flex-1 min-w-[160px]">
-            <label className="block text-xs font-semibold text-slate mb-1">
+            <label htmlFor="bx-reserva-label-optional-9" className="block text-xs font-semibold text-slate mb-1">
               Label <span className="font-normal opacity-60">(optional)</span>
             </label>
-            <input
+            <input id="bx-reserva-label-optional-9"
               type="text"
               placeholder="e.g. Christmas, Church Night…"
               value={newLabel}
@@ -1821,7 +1822,7 @@ function BlackoutSettings({
           <button
             onClick={onAdd}
             disabled={saving || (newRuleType === "date" && !newDate)}
-            className="btn-primary text-sm disabled:opacity-40"
+            className="bx-btn bx-btn--primary bx-btn--md"
           >
             {saving ? "Adding…" : "Add rule"}
           </button>

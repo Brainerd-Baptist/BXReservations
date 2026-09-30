@@ -651,11 +651,11 @@ function DayCard({
         <div className="border-t border-parchment/10 px-5 py-4 space-y-5">
           {/* Headcount */}
           <div>
-            <label className="block text-xs font-medium text-slate mb-1">Headcount</label>
+            <label htmlFor={`headcount-${day.date}`} className="block text-xs font-medium text-slate mb-1">Headcount</label>
             <div className="flex items-center gap-2">
-              <button onClick={() => onHeadcount(Math.max(1, day.headcount - 10))}
+              <button type="button" aria-label="10 fewer people" onClick={() => onHeadcount(Math.max(1, day.headcount - 10))}
                 className="w-7 h-7 rounded-lg border border-parchment/15 text-slate hover:bg-parchment/5 font-bold">−</button>
-              <input type="text" inputMode="numeric" pattern="[0-9]*"
+              <input id={`headcount-${day.date}`} type="text" inputMode="numeric" pattern="[0-9]*"
                 value={rawHeadcount}
                 onChange={e => {
                   const raw = e.target.value.replace(/[^0-9]/g, "");
@@ -668,7 +668,7 @@ function DayCard({
                   setRawHeadcount(String(n));
                 }}
                 className="w-16 text-center border border-parchment/15 rounded-lg py-1 text-sm bg-ink text-parchment" />
-              <button onClick={() => onHeadcount(day.headcount + 10)}
+              <button type="button" aria-label="10 more people" onClick={() => onHeadcount(day.headcount + 10)}
                 className="w-7 h-7 rounded-lg border border-parchment/15 text-slate hover:bg-parchment/5 font-bold">+</button>
             </div>
           </div>
@@ -718,13 +718,15 @@ function DayCard({
                 <p className="text-xs font-semibold text-parchment uppercase tracking-wide mb-2">Breakout calculator</p>
                 <div className="flex items-center gap-3">
                   <div className="flex-1">
-                    <label className="text-xs text-slate block mb-1">People per breakout group</label>
+                    <p id={`breakout-size-${day.date}`} className="text-xs text-slate block mb-1">People per breakout group</p>
                     <div className="flex items-center gap-2">
                       <button type="button"
+                        aria-label="5 fewer per group"
                         onClick={() => onBreakoutGroupSize(Math.max(5, breakoutGroupSize - 5))}
                         className="w-7 h-7 rounded-full bg-ink border border-parchment/15 text-slate text-sm font-bold hover:bg-parchment/5 flex items-center justify-center">−</button>
-                      <span className="text-base font-semibold text-parchment w-8 text-center">{breakoutGroupSize}</span>
+                      <span aria-live="polite" aria-labelledby={`breakout-size-${day.date}`} className="text-base font-semibold text-parchment w-8 text-center">{breakoutGroupSize}</span>
                       <button type="button"
+                        aria-label="5 more per group"
                         onClick={() => onBreakoutGroupSize(Math.min(200, breakoutGroupSize + 5))}
                         className="w-7 h-7 rounded-full bg-ink border border-parchment/15 text-slate text-sm font-bold hover:bg-parchment/5 flex items-center justify-center">+</button>
                     </div>

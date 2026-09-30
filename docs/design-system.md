@@ -1,4 +1,4 @@
-# BX Reservations — Surface & Ambient System (v1.38.0)
+# BX Reservations — Surface & Ambient System (v1.43.0)
 
 ## The layer stack (every page)
 
@@ -89,3 +89,16 @@ tile sizes so nothing pulses in unison). Dots only; off under reduced motion.
 `.bg-brass`, `.text-brass` and `.bg-brass.text-white` are remapped to these, so older markup is correct until it moves to the components.
 
 **Components** (`app/components/ui/`): `Button` / `ButtonLink` (primary · secondary · danger · ghost; sm/md/lg; 44px targets on touch; `loading`), `Field` + `Input`/`Textarea`/`Select` (label, hint and error wired with ids and aria), `Tabs` (APG keyboard pattern), `StatusBadge`, `EmptyState`, plus `LoadError`. Route-level `app/error.tsx` and `app/not-found.tsx`. One `<main id="main-content">` with a "Skip to content" link.
+
+## v1.43.0 — every page on the shared components
+
+All pages — admin dashboard, Users, user detail, Organizations, organization detail, Account, venue settings,
+room rates and documents — now use `bx-btn`, `bx-input` and the shared `Field`/`Tabs`. The legacy
+`.btn-primary`/`.btn-outline` classes and the old `--bbc-blue` token have been removed.
+
+New variants: `bx-btn--confirm` (green, for "mark received / confirm"), `bx-btn--danger-outline` (flag, delete
+in a row) and `bx-input--sm` (compact admin inputs; still 16px text on phones). Admin status pills use
+`bx-status bx-status--sm` with the `bx-tone-*` classes, so they read correctly in Dark.
+
+Every input, select and textarea has a programmatic label (label/htmlFor, `Field`, or `aria-label` for
+table-cell inputs). Contrast measured: primary 5.65 (Light) / 9.05 (Dark), confirm 7.68 / 8.91, danger 5.74 / 6.95.

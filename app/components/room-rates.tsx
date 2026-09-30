@@ -129,7 +129,7 @@ export default function RoomRates() {
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && dirty) save(room.id);
                     }}
-                    className="flex-1 rounded-lg border border-parchment/20 bg-ink text-parchment text-sm px-3 py-1.5 min-w-0"
+                    className="bx-input bx-input--sm flex-1 min-w-0"
                     aria-label={`${room.name} rate per hour`}
                   />
                   <span className="text-xs text-slate whitespace-nowrap">/hr</span>
@@ -140,7 +140,7 @@ export default function RoomRates() {
                     type="button"
                     disabled={!dirty || isSaving}
                     onClick={() => save(room.id)}
-                    className="px-3 py-1 rounded-md text-xs font-semibold bg-[var(--bbc-blue)] text-white disabled:opacity-40"
+                    className="bx-btn bx-btn--primary bx-btn--sm"
                   >
                     {isSaving ? "Saving…" : "Save"}
                   </button>

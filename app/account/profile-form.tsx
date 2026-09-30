@@ -52,90 +52,70 @@ export default function ProfileForm({ displayName, phone, organization, email }:
 
         {/* Email (read-only) */}
         <div>
-          <label style={labelStyle}>Email</label>
-          <input
+          <label htmlFor="profile-fo-email-1" style={labelStyle}>Email</label>
+          <input id="profile-fo-email-1" aria-describedby="profile-fo-email-1-hint"
             type="email"
             value={email}
             readOnly
-            style={{
-              ...inputStyle,
-              background: "color-mix(in srgb, var(--bx-parchment) 6%, transparent)",
-              color: "var(--bx-slate)",
-              cursor: "not-allowed",
-            }}
+            className="bx-input" style={{ background: "color-mix(in srgb, var(--bx-parchment) 6%, transparent)", color: "var(--bx-slate)", cursor: "not-allowed" }}
           />
-          <p style={hintStyle}>Managed by Google sign-in</p>
+          <p id="profile-fo-email-1-hint" style={hintStyle}>Managed by Google sign-in</p>
         </div>
 
         {/* Display name */}
         <div>
-          <label style={labelStyle}>Full name</label>
-          <input
+          <label htmlFor="profile-fo-full-name-2" style={labelStyle}>Full name</label>
+          <input id="profile-fo-full-name-2"
             type="text"
             name="display_name"
             defaultValue={displayName ?? ""}
             placeholder="Your full name"
-            style={inputStyle}
+            className="bx-input"
             maxLength={100}
           />
         </div>
 
         {/* Phone — live-formatted */}
         <div>
-          <label style={labelStyle}>Phone number</label>
-          <input
+          <label htmlFor="profile-fo-phone-number-3" style={labelStyle}>Phone number</label>
+          <input id="profile-fo-phone-number-3"
             type="tel"
             name="phone"
             value={phoneValue}
             onChange={handlePhoneChange}
             placeholder="(555) 555-5555"
-            style={inputStyle}
+            className="bx-input"
             maxLength={14}
           />
         </div>
 
         {/* Organization */}
         <div>
-          <label style={labelStyle}>Organization / Group</label>
-          <input
+          <label htmlFor="profile-fo-organization-group-4" style={labelStyle}>Organization / Group</label>
+          <input id="profile-fo-organization-group-4" aria-describedby="profile-fo-organization-group-4-hint"
             type="text"
             name="organization"
             defaultValue={organization ?? ""}
             placeholder="e.g. Youth Group, Community Partner"
-            style={inputStyle}
+            className="bx-input"
             maxLength={120}
           />
-          <p style={hintStyle}>Used to pre-fill reservation requests</p>
+          <p id="profile-fo-organization-group-4-hint" style={hintStyle}>Used to pre-fill reservation requests</p>
         </div>
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-        <button
-          type="submit"
-          disabled={isPending}
-          style={{
-            padding: "0.5rem 1.25rem",
-            background: "var(--bx-brass)",
-            color: "#fff",
-            border: "none",
-            borderRadius: "6px",
-            fontWeight: 600,
-            fontSize: "0.875rem",
-            cursor: isPending ? "not-allowed" : "pointer",
-            opacity: isPending ? 0.7 : 1,
-            transition: "opacity 0.15s",
-          }}
-        >
+        <button type="submit" disabled={isPending} className="bx-btn bx-btn--primary bx-btn--md">
           {isPending ? "Saving…" : "Save profile"}
         </button>
 
         {saved && (
-          <span style={{ fontSize: "0.875rem", color: "var(--bx-sage)", fontWeight: 500 }}>
+          <span role="status" style={{ fontSize: "0.875rem", color: "var(--bx-sage)", fontWeight: 500 }}>
             ✓ Saved
           </span>
         )}
         {error && (
-          <span style={{ fontSize: "0.875rem", color: "var(--bx-clay)" }}>
+          <span role="alert" style={{ fontSize: "0.875rem", color: "var(--bx-clay)" }}>
             {error}
           </span>
         )}
@@ -154,18 +134,6 @@ const labelStyle: React.CSSProperties = {
   marginBottom: "0.35rem",
 };
 
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "0.5rem 0.75rem",
-  border: "1px solid color-mix(in srgb, var(--bx-parchment) 18%, transparent)",
-  borderRadius: "6px",
-  fontSize: "0.9375rem",
-  color: "var(--bx-parchment)",
-  background: "var(--bx-ink)",
-  boxSizing: "border-box" as const,
-  outline: "none",
-  transition: "border-color 0.15s",
-};
 
 const hintStyle: React.CSSProperties = {
   fontSize: "0.75rem",

@@ -87,8 +87,17 @@ function TierBadge({ tier }: { tier: string }) {
   return <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: s.bg, color: s.text, letterSpacing: "0.03em" }}>{s.label}</span>;
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div><div className="text-xs font-semibold text-slate mb-1">{label}</div>{children}</div>;
+function Field({ label, htmlFor, children }: { label: string; htmlFor?: string; children: React.ReactNode }) {
+  return (
+    <div>
+      {htmlFor ? (
+        <label htmlFor={htmlFor} className="block text-xs font-semibold text-slate mb-1">{label}</label>
+      ) : (
+        <div className="text-xs font-semibold text-slate mb-1">{label}</div>
+      )}
+      {children}
+    </div>
+  );
 }
 
 function ReadValue({ value }: { value: string | null }) {
@@ -126,7 +135,7 @@ function RolePicker({ userId, current, callerRole, onSaved }: {
   return (
     <div className="relative inline-block">
       <button onClick={() => setOpen((o) => !o)}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-[var(--bbc-blue)] border-parchment/20"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-[var(--bx-focus)] border-parchment/20"
         style={display ? { background: ROLE_COLORS[display].bg, color: ROLE_COLORS[display].text } : { background: "rgba(100,116,139,0.12)", color: "var(--bx-slate)" }}>
         {saving ? <><Loader2 size={12} className="animate-spin" />{display ? ROLE_LABELS[display] : "Assigning"}</> : <>{current ? ROLE_LABELS[current] : "Assign role"}<ChevronDown size={12} /></>}
       </button>
@@ -134,7 +143,7 @@ function RolePicker({ userId, current, callerRole, onSaved }: {
         <div className="absolute z-[500] left-0 mt-1 w-56 bx-glass-strong rounded-xl py-1">
           {assignable.map((r) => (
             <button key={r} onClick={() => pick(r)} className="w-full text-left px-3 py-2 text-xs hover:bg-parchment/5 flex items-start gap-2 group">
-              <Check size={12} className={`mt-0.5 flex-shrink-0 ${current === r ? "text-[var(--bbc-blue)]" : "opacity-0 group-hover:opacity-30"}`} />
+              <Check size={12} className={`mt-0.5 flex-shrink-0 ${current === r ? "text-[var(--bx-accent-text)]" : "opacity-0 group-hover:opacity-30"}`} />
               <div>
                 <div className="font-semibold text-parchment">{ROLE_LABELS[r]}</div>
                 <div className="text-slate text-[11px] leading-tight mt-0.5">{ROLE_DESCRIPTIONS[r]}</div>
@@ -236,7 +245,7 @@ export default function UserDetailClient({ authUser, profile: initialProfile, us
                     <button onClick={cancelEdit} disabled={saving} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate hover:text-parchment rounded-lg border border-parchment/15 transition-colors">
                       <X size={13} /> Cancel
                     </button>
-                    <button onClick={saveEdit} disabled={saving} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-[var(--bbc-blue)] text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50">
+                    <button onClick={saveEdit} disabled={saving} className="bx-btn bx-btn--primary bx-btn--sm">
                       {saving ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />} Save
                     </button>
                   </>
@@ -272,7 +281,7 @@ export default function UserDetailClient({ authUser, profile: initialProfile, us
         <div className="flex gap-1 mb-4 border-b border-parchment/10">
           {tabs.map((t) => (
             <button key={t.key} onClick={() => setTab(t.key)}
-              className={`px-4 py-2 text-sm font-semibold rounded-t-xl border-b-2 transition-all -mb-px ${tab === t.key ? "border-[var(--bbc-blue)] text-[var(--bbc-blue)]" : "border-transparent text-slate hover:text-parchment"}`}>
+              className={`px-4 py-2 text-sm font-semibold rounded-t-xl border-b-2 transition-all -mb-px ${tab === t.key ? "border-[var(--bx-accent-text)] text-[var(--bx-accent-text)]" : "border-transparent text-slate hover:text-parchment"}`}>
               {t.label}{t.count != null && t.count > 0 && <span className="ml-1.5 text-xs opacity-60">({t.count})</span>}
             </button>
           ))}
@@ -282,15 +291,15 @@ export default function UserDetailClient({ authUser, profile: initialProfile, us
           <div className="bx-glass rounded-2xl p-6">
             <div className="flex items-center gap-2 mb-5"><User size={15} className="text-slate" /><h2 className="text-parchment font-semibold text-sm">Profile information</h2></div>
             <div className="grid sm:grid-cols-2 gap-5">
-              <Field label="Display name">
-                {editing ? <input value={editForm.display_name ?? ""} onChange={(e) => setEditForm((f) => ({ ...f, display_name: e.target.value }))} placeholder="Full name" className="w-full bg-[var(--bx-ink)] border border-parchment/15 text-parchment text-sm rounded-lg px-3 py-2 placeholder-slate/50 focus:outline-none focus:ring-2 focus:ring-[var(--bbc-blue)]" /> : <ReadValue value={profile?.display_name ?? null} />}
+              <Field label="Display name" htmlFor={editing ? "ud-display-name" : undefined}>
+                {editing ? <input id="ud-display-name" value={editForm.display_name ?? ""} onChange={(e) => setEditForm((f) => ({ ...f, display_name: e.target.value }))} placeholder="Full name" className="bx-input" /> : <ReadValue value={profile?.display_name ?? null} />}
               </Field>
               <Field label="Email"><span className="text-parchment text-sm">{authUser.email}</span></Field>
-              <Field label="Phone">
-                {editing ? <input value={editForm.phone ?? ""} onChange={(e) => setEditForm((f) => ({ ...f, phone: e.target.value }))} placeholder="(555) 000-0000" className="w-full bg-[var(--bx-ink)] border border-parchment/15 text-parchment text-sm rounded-lg px-3 py-2 placeholder-slate/50 focus:outline-none focus:ring-2 focus:ring-[var(--bbc-blue)]" /> : <ReadValue value={profile?.phone ?? null} />}
+              <Field label="Phone" htmlFor={editing ? "ud-phone" : undefined}>
+                {editing ? <input id="ud-phone" value={editForm.phone ?? ""} onChange={(e) => setEditForm((f) => ({ ...f, phone: e.target.value }))} placeholder="(555) 000-0000" className="bx-input" /> : <ReadValue value={profile?.phone ?? null} />}
               </Field>
-              <Field label="Organization (text)">
-                {editing ? <input value={editForm.organization ?? ""} onChange={(e) => setEditForm((f) => ({ ...f, organization: e.target.value }))} placeholder="e.g. First Baptist, Blank" className="w-full bg-[var(--bx-ink)] border border-parchment/15 text-parchment text-sm rounded-lg px-3 py-2 placeholder-slate/50 focus:outline-none focus:ring-2 focus:ring-[var(--bbc-blue)]" /> : <ReadValue value={profile?.organization ?? null} />}
+              <Field label="Organization (text)" htmlFor={editing ? "ud-organization" : undefined}>
+                {editing ? <input id="ud-organization" value={editForm.organization ?? ""} onChange={(e) => setEditForm((f) => ({ ...f, organization: e.target.value }))} placeholder="e.g. First Baptist, Blank" className="bx-input" /> : <ReadValue value={profile?.organization ?? null} />}
               </Field>
               <Field label="Role"><RoleBadge role={userRole} /></Field>
               <Field label="Account status">
@@ -360,7 +369,7 @@ export default function UserDetailClient({ authUser, profile: initialProfile, us
                         <Building2 size={14} className="text-slate" />
                       </div>
                       <div>
-                        <Link href={`/admin/bx-reservations/organizations/${o.org_id}`} className="text-parchment font-semibold text-sm hover:text-[var(--bbc-blue)] transition-colors">{o.name}</Link>
+                        <Link href={`/admin/bx-reservations/organizations/${o.org_id}`} className="text-parchment font-semibold text-sm hover:text-[var(--bx-accent-text)] transition-colors">{o.name}</Link>
                         <div className="text-xs text-slate mt-0.5">Linked {fmt(o.linked_at)}</div>
                       </div>
                     </div>

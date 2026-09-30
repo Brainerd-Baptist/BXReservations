@@ -57,10 +57,10 @@ export default function AgreementSignForm({ reservationId, token, contactName }:
   return (
     <form onSubmit={handleSubmit}>
       <div style={{ marginBottom: "1.5rem" }}>
-        <label style={{ display: "block", fontSize: "0.875rem", fontWeight: 600, marginBottom: "0.5rem", color: "var(--bx-parchment)" }}>
+        <label htmlFor="AgreementS-type-your-full-legal-nam-1" style={{ display: "block", fontSize: "0.875rem", fontWeight: 600, marginBottom: "0.5rem", color: "var(--bx-parchment)" }}>
           Type your full legal name to sign
         </label>
-        <input
+        <input id="AgreementS-type-your-full-legal-nam-1"
           type="text"
           value={name}
           onChange={e => setName(e.target.value)}

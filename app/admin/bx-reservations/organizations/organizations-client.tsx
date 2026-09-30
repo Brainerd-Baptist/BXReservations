@@ -4,6 +4,7 @@ import BodyPortal from "@/app/components/body-portal";
 import { useState, useMemo, useTransition, useRef, useCallback } from "react";
 import { useModalDialog } from "@/app/components/use-modal-dialog";
 import Link from "next/link";
+import { Field, Input, Select, Textarea } from "@/app/components/ui/field";
 import { useRouter } from "next/navigation";
 import type { OrgSummary } from "./page";
 
@@ -152,7 +153,7 @@ export default function OrganizationsClient({
         </div>
         <button
           onClick={() => setSlideOpen(true)}
-          style={{ background: "var(--bx-action-bg)", color: "var(--bx-action-fg)", border: "none", borderRadius: 8, padding: "10px 20px", fontWeight: 600, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
+          className="bx-btn bx-btn--primary bx-btn--md"
         >
           <span style={{ fontSize: 18, lineHeight: 1 }}>+</span> New Organization
         </button>
@@ -164,13 +165,16 @@ export default function OrganizationsClient({
           placeholder="Search organizations…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={{ background: "var(--bx-ink-soft)", border: "1px solid color-mix(in srgb, var(--bx-parchment) 15%, transparent)", borderRadius: 8, padding: "8px 14px", fontSize: 14, color: "var(--bx-parchment)", width: "min(260px, 100%)", outline: "none" }}
+          aria-label="Search organizations"
+          className="bx-input"
+          style={{ width: "min(260px, 100%)" }}
         />
         <div style={{ display: "flex", gap: 6 }}>
           {TIERS.map((t) => (
             <button
               key={t.value}
               onClick={() => setTierFilter(t.value)}
+              aria-pressed={tierFilter === t.value}
               style={{ padding: "6px 14px", borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: "pointer", border: tierFilter === t.value ? "2px solid var(--bx-brass)" : "2px solid color-mix(in srgb, var(--bx-parchment) 15%, transparent)", background: tierFilter === t.value ? "color-mix(in srgb, var(--bx-brass) 12%, transparent)" : "transparent", color: tierFilter === t.value ? "var(--bx-accent-text)" : "var(--bx-slate)", transition: "all 0.15s" }}
             >
               {t.label}
@@ -210,36 +214,36 @@ export default function OrganizationsClient({
               {formError && (
                 <div style={{ padding: "10px 14px", background: "color-mix(in srgb, var(--bx-clay) 10%, transparent)", border: "1px solid var(--bx-clay)", borderRadius: 8, color: "var(--bx-clay)", fontSize: 13 }}>{formError}</div>
               )}
-              <Field label="Organization Name *">
-                <input required value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Brainerd Christian School" />
+              <Field label="Organization name" required>
+                <Input required value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Brainerd Christian School" />
               </Field>
               <Field label="Tier">
-                <select value={form.tier} onChange={(e) => setForm((f) => ({ ...f, tier: e.target.value as NewOrgForm["tier"] }))}>
+                <Select value={form.tier} onChange={(e) => setForm((f) => ({ ...f, tier: e.target.value as NewOrgForm["tier"] }))}>
                   <option value="external">External</option>
                   <option value="internal">Internal (BBC Ministry)</option>
                   <option value="bbs">BBS</option>
-                </select>
+                </Select>
               </Field>
               <Field label="Primary Contact Name">
-                <input value={form.primary_contact_name} onChange={(e) => setForm((f) => ({ ...f, primary_contact_name: e.target.value }))} placeholder="Jane Smith" />
+                <Input value={form.primary_contact_name} onChange={(e) => setForm((f) => ({ ...f, primary_contact_name: e.target.value }))} placeholder="Jane Smith" />
               </Field>
               <Field label="Contact Email">
-                <input type="email" value={form.primary_contact_email} onChange={(e) => setForm((f) => ({ ...f, primary_contact_email: e.target.value }))} placeholder="jane@example.org" />
+                <Input type="email" value={form.primary_contact_email} onChange={(e) => setForm((f) => ({ ...f, primary_contact_email: e.target.value }))} placeholder="jane@example.org" />
               </Field>
               <Field label="Phone">
-                <input type="tel" value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} placeholder="(423) 555-0100" />
+                <Input type="tel" value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} placeholder="(423) 555-0100" />
               </Field>
               <Field label="Address">
-                <input value={form.address} onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))} placeholder="123 Main St, Chattanooga, TN" />
+                <Input value={form.address} onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))} placeholder="123 Main St, Chattanooga, TN" />
               </Field>
               <Field label="Notes">
-                <textarea rows={3} value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Internal notes about this organization…" />
+                <Textarea rows={3} value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Internal notes about this organization…" />
               </Field>
               <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
-                <button type="submit" disabled={isPending} style={{ flex: 1, background: isPending ? "var(--bx-slate)" : "var(--bx-action-bg)", color: "var(--bx-action-fg)", border: "none", borderRadius: 8, padding: "11px 0", fontWeight: 600, fontSize: 15, cursor: isPending ? "not-allowed" : "pointer" }}>
+                <button type="submit" disabled={isPending} className="bx-btn bx-btn--primary bx-btn--md flex-1">
                   {isPending ? "Creating…" : "Create Organization"}
                 </button>
-                <button type="button" onClick={() => { setSlideOpen(false); setForm(EMPTY_FORM); setFormError(null); }} style={{ background: "transparent", border: "1px solid color-mix(in srgb, var(--bx-parchment) 20%, transparent)", borderRadius: 8, padding: "11px 20px", fontWeight: 600, fontSize: 15, cursor: "pointer", color: "var(--bx-slate)" }}>
+                <button type="button" onClick={() => { setSlideOpen(false); setForm(EMPTY_FORM); setFormError(null); }} className="bx-btn bx-btn--secondary bx-btn--md">
                   Cancel
                 </button>
               </div>
@@ -288,20 +292,3 @@ function Stat({ label, value }: { label: string; value: number }) {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-      <label style={{ fontSize: 12, fontWeight: 600, color: "var(--bx-slate)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</label>
-      <style>{`
-        .bx-field input, .bx-field select, .bx-field textarea {
-          width: 100%; background: var(--bx-ink); border: 1px solid color-mix(in srgb, var(--bx-parchment) 15%, transparent);
-          border-radius: 8px; padding: 9px 12px; font-size: 14px; color: var(--bx-parchment);
-          outline: none; font-family: inherit; box-sizing: border-box;
-        }
-        .bx-field input:focus, .bx-field select:focus, .bx-field textarea:focus { border-color: var(--bx-brass); }
-        .bx-field textarea { resize: vertical; }
-      `}</style>
-      <div className="bx-field">{children}</div>
-    </div>
-  );
-}

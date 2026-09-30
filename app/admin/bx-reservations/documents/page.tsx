@@ -237,7 +237,8 @@ export default function DocumentsHub() {
                 placeholder="Search by name, org, event…"
                 value={coiSearch}
                 onChange={e => setCoiSearch(e.target.value)}
-                className="rounded-lg border border-parchment/20 bg-ink-soft text-parchment text-sm px-3 py-2 placeholder-slate focus:outline-none focus:ring-1 focus:ring-[var(--bbc-blue)]"
+                aria-label="Search insurance certificates"
+                className="bx-input w-auto min-w-[16rem]"
               />
               <div className="flex gap-1">
                 {(["all", "pending", "accepted", "expired"] as const).map(f => (

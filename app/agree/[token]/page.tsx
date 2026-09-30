@@ -146,10 +146,10 @@ export default function AgreePage() {
             <h2 className="font-semibold text-parchment mb-4">Sign this agreement</h2>
             <form onSubmit={handleSign} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-parchment mb-1">
+                <label htmlFor="-token--full-name-1" className="block text-sm font-medium text-parchment mb-1">
                   Full name <span className="text-red-500">*</span>
                 </label>
-                <input
+                <input id="-token--full-name-1"
                   type="text"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}

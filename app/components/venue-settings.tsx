@@ -54,14 +54,14 @@ export default function VenueSettings() {
                   value={draft[f.key]}
                   placeholder={f.hint}
                   onChange={(e) => setDraft({ ...draft, [f.key as VenueKey]: e.target.value })}
-                  className="w-full rounded-lg border border-parchment/20 bg-ink text-parchment text-sm px-3 py-2"
+                  className="bx-input"
                 />
               ) : (
                 <input
                   value={draft[f.key]}
                   placeholder={f.hint}
                   onChange={(e) => setDraft({ ...draft, [f.key as VenueKey]: e.target.value })}
-                  className="w-full rounded-lg border border-parchment/20 bg-ink text-parchment text-sm px-3 py-2"
+                  className="bx-input"
                 />
               )}
               <span className="block text-[11px] text-slate mt-1">{f.hint}</span>
@@ -74,7 +74,7 @@ export default function VenueSettings() {
           type="button"
           disabled={!dirty || saving}
           onClick={save}
-          className="px-4 py-2 rounded-lg text-sm font-semibold bg-[var(--bbc-blue)] text-white disabled:opacity-40"
+          className="bx-btn bx-btn--primary bx-btn--md"
         >
           {saving ? "Saving…" : "Save venue info"}
         </button>

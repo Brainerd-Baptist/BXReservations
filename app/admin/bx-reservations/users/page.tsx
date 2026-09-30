@@ -120,7 +120,7 @@ function RolePicker({
     <div className="relative inline-block">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold border transition-all hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-[var(--bbc-blue)] bg-ink-soft border-parchment/20 text-parchment"
+        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold border transition-all hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-[var(--bx-focus)] bg-ink-soft border-parchment/20 text-parchment"
       >
         {saving ? (
           <><Loader2 size={12} className="animate-spin" />{ROLE_LABELS[pending ?? (current ?? "member")]}</>
@@ -136,7 +136,7 @@ function RolePicker({
               onClick={() => save(r)}
               className="w-full text-left px-3 py-2 text-xs hover:bg-parchment/5 flex items-start gap-2 group"
             >
-              <Check size={12} className={`mt-0.5 flex-shrink-0 ${current === r ? "text-[var(--bbc-blue)]" : "opacity-0 group-hover:opacity-30"}`} />
+              <Check size={12} className={`mt-0.5 flex-shrink-0 ${current === r ? "text-[var(--bx-accent-text)]" : "opacity-0 group-hover:opacity-30"}`} />
               <div>
                 <div className="font-semibold text-parchment">{ROLE_LABELS[r]}</div>
                 <div className="text-slate text-[11px] leading-tight mt-0.5">{ROLE_DESCRIPTIONS[r]}</div>
@@ -206,58 +206,58 @@ function InviteModal({
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate mb-1.5">First name <span className="text-red-400">*</span></label>
-              <input
+              <label htmlFor="users-first-name-1" className="block text-xs font-semibold text-slate mb-1.5">First name <span className="text-red-400">*</span></label>
+              <input id="users-first-name-1"
                 type="text"
                 required
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 placeholder="Jane"
-                className="w-full bg-ink border border-parchment/15 text-parchment text-sm rounded-lg px-3 py-2.5 placeholder-slate/50 focus:outline-none focus:ring-2 focus:ring-[var(--bbc-blue)]"
+                className="bx-input"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate mb-1.5">Last name <span className="text-red-400">*</span></label>
-              <input
+              <label htmlFor="users-last-name-2" className="block text-xs font-semibold text-slate mb-1.5">Last name <span className="text-red-400">*</span></label>
+              <input id="users-last-name-2"
                 type="text"
                 required
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="Smith"
-                className="w-full bg-ink border border-parchment/15 text-parchment text-sm rounded-lg px-3 py-2.5 placeholder-slate/50 focus:outline-none focus:ring-2 focus:ring-[var(--bbc-blue)]"
+                className="bx-input"
               />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate mb-1.5">Organization <span className="font-normal text-slate/60">(optional)</span></label>
-              <input
+              <label htmlFor="users-organization-optional-3" className="block text-xs font-semibold text-slate mb-1.5">Organization <span className="font-normal text-slate/60">(optional)</span></label>
+              <input id="users-organization-optional-3"
                 type="text"
                 value={org}
                 onChange={(e) => setOrg(e.target.value)}
                 placeholder="Organization name"
-                className="w-full bg-ink border border-parchment/15 text-parchment text-sm rounded-lg px-3 py-2.5 placeholder-slate/50 focus:outline-none focus:ring-2 focus:ring-[var(--bbc-blue)]"
+                className="bx-input"
               />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate mb-1.5">Email address <span className="text-red-400">*</span></label>
-            <input
+            <label htmlFor="users-email-address-4" className="block text-xs font-semibold text-slate mb-1.5">Email address <span className="text-red-400">*</span></label>
+            <input id="users-email-address-4"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && send()}
               placeholder="name@example.com"
-              className="w-full bg-ink border border-parchment/15 text-parchment text-sm rounded-lg px-3 py-2.5 placeholder-slate/50 focus:outline-none focus:ring-2 focus:ring-[var(--bbc-blue)]"
+              className="bx-input"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate mb-1.5">Role</label>
-            <div className="space-y-2">
+            <p id="invite-role-label" className="block text-xs font-semibold text-slate mb-1.5">Role</p>
+            <div role="radiogroup" aria-labelledby="invite-role-label" className="space-y-2">
               {(["booking_admin", "ministry_coordinator", "brainerd_staff", "member"] as BxRole[]).map((r) => (
-                <label key={r} className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${role === r ? "border-[var(--bbc-blue)] bg-[var(--bbc-blue)]/5" : "border-parchment/10 hover:border-parchment/25"}`}>
-                  <input type="radio" name="role" value={r} checked={role === r} onChange={() => setRole(r)} className="mt-0.5 accent-[var(--bbc-blue)]" />
+                <label key={r} className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${role === r ? "border-[var(--bx-accent-text)] bg-[var(--bx-accent-text)]/5" : "border-parchment/10 hover:border-parchment/25"}`}>
+                  <input type="radio" name="role" value={r} checked={role === r} onChange={() => setRole(r)} className="mt-0.5 accent-[var(--bx-accent-text)]" />
                   <div>
                     <div className="text-parchment text-sm font-semibold">{ROLE_LABELS[r]}</div>
                     <div className="text-slate text-xs mt-0.5">{ROLE_DESCRIPTIONS[r]}</div>
@@ -273,7 +273,7 @@ function InviteModal({
           <button
             onClick={send}
             disabled={!email.trim() || !firstName.trim() || !lastName.trim() || sending || sent}
-            className="px-4 py-2 text-sm font-semibold bg-[var(--bbc-blue)] text-white rounded-lg disabled:opacity-50 flex items-center gap-2 hover:opacity-90 transition-opacity"
+            className="bx-btn bx-btn--primary bx-btn--md"
           >
             {sent ? <><Check size={14} /> Sent!</> : sending ? <><Loader2 size={14} className="animate-spin" /> Sending…</> : <><Mail size={14} /> Send invite</>}
           </button>
@@ -333,8 +333,8 @@ export default function UsersPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-[var(--bbc-blue)]/10 rounded-xl flex items-center justify-center">
-              <Shield size={18} className="text-[var(--bbc-blue)]" />
+            <div className="w-9 h-9 bg-[var(--bx-accent-text)]/10 rounded-xl flex items-center justify-center">
+              <Shield size={18} className="text-[var(--bx-accent-text)]" />
             </div>
             <div>
               <h1 className="text-parchment font-bold text-xl">Users</h1>
@@ -343,7 +343,7 @@ export default function UsersPage() {
           </div>
           <button
             onClick={() => setShowInvite(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-[var(--bbc-blue)] text-white rounded-xl hover:opacity-90 transition-opacity"
+            className="bx-btn bx-btn--primary bx-btn--md"
           >
             <UserPlus size={15} />
             Invite user
@@ -358,7 +358,7 @@ export default function UsersPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by name, email, or org…"
-              className="w-full bg-[var(--bx-surface)] border border-parchment/15 text-parchment text-sm rounded-xl pl-9 pr-3 py-2.5 placeholder-slate/50 focus:outline-none focus:ring-2 focus:ring-[var(--bbc-blue)]"
+              className="bx-input pl-9"
             />
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -408,7 +408,7 @@ export default function UsersPage() {
                       <Link href={`/admin/bx-reservations/users/${u.id}`} className="flex items-center gap-2.5 group">
                         <Initials name={u.display_name} email={u.email} />
                         <div>
-                          <div className="font-semibold text-parchment leading-tight group-hover:text-[var(--bbc-blue)] transition-colors">{u.display_name ?? "—"}</div>
+                          <div className="font-semibold text-parchment leading-tight group-hover:text-[var(--bx-accent-text)] transition-colors">{u.display_name ?? "—"}</div>
                           <div className="text-xs text-slate mt-0.5">{u.email}</div>
                         </div>
                       </Link>
@@ -428,7 +428,7 @@ export default function UsersPage() {
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell">
                       {(u.reservation_count ?? 0) > 0 ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: "color-mix(in srgb, var(--bbc-blue) 12%, transparent)", color: "var(--bbc-blue)" }}>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: "color-mix(in srgb, var(--bx-accent-text) 12%, transparent)", color: "var(--bx-accent-text)" }}>
                           {u.reservation_count}
                         </span>
                       ) : (
