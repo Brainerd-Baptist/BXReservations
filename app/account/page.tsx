@@ -147,7 +147,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           >
             {initials}
           </div>
-          <div>
+          <div style={{ minWidth: 0, overflowWrap: "anywhere" }}>
             <div style={{ fontWeight: 600, fontSize: "1rem", color: "var(--bx-parchment)" }}>
               {profile?.display_name || user.email}
             </div>

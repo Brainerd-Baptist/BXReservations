@@ -310,7 +310,7 @@ export default function LoginPage() {
               </p>
               <p className="text-center text-xs text-slate">
                 Already have an account?{" "}
-                <button type="button" onClick={() => switchMode("signin")} className="text-brass hover:underline font-semibold">
+                <button type="button" onClick={() => switchMode("signin")} className="text-brass hover:underline font-semibold inline-flex items-center min-h-10 px-1">
                   Sign in
                 </button>
               </p>
@@ -352,7 +352,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => { setForgotMode(true); setResetEmail(email); setError(""); }}
-                  className="text-xs text-slate hover:text-brass transition-colors"
+                  className="text-xs text-slate hover:text-brass transition-colors inline-flex items-center min-h-10 px-1"
                 >
                   Forgot password?
                 </button>
@@ -381,7 +381,7 @@ export default function LoginPage() {
 
               <p className="text-center text-xs text-slate">
                 Don&apos;t have an account?{" "}
-                <button type="button" onClick={() => switchMode("signup")} className="text-brass hover:underline font-semibold">
+                <button type="button" onClick={() => switchMode("signup")} className="text-brass hover:underline font-semibold inline-flex items-center min-h-10 px-1">
                   Create one
                 </button>
               </p>

@@ -7,7 +7,7 @@ import { useToast } from "./Toast";
 import LoadError from "./load-error";
 import { CHARGE_KIND_LABEL, UNIT_LABEL, usd, type Addon, type Billing, type ChargeKind } from "@/lib/billing";
 
-type BillingResponse = Billing & { staff: boolean; canAddAddons: boolean; userId: string };
+type BillingResponse = Billing & { staff: boolean; canAddAddons: boolean; userId: string; howToPay?: string | null; paymentWaived?: boolean };
 
 const METHODS = ["Check", "Cash", "Card", "ACH / transfer", "Other"];
 const today = () => new Date().toISOString().slice(0, 10);
@@ -156,6 +156,18 @@ export default function BillingCard({ reservationId, compact = false }: { reserv
           <dd className="text-base font-bold tabular">{usd(Math.abs(totals.balance))}</dd>
         </div>
       </dl>
+
+      {/* How to pay (C3) — only when something is owed */}
+      {!data.staff && totals.balance > 0 && data.howToPay && (
+        <div className="bx-well rounded-xl px-4 py-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate mb-1">How to pay</p>
+          <p className="text-sm text-parchment whitespace-pre-line">{data.howToPay}</p>
+          <p className="text-xs text-slate mt-1.5">You&apos;ll get a receipt by email when your payment is recorded.</p>
+        </div>
+      )}
+      {data.paymentWaived && totals.charges <= 0 && (
+        <p className="text-xs text-slate">No payment is needed for this booking.</p>
+      )}
 
       {/* Payments */}
       {payments.length > 0 && (

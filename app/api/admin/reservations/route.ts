@@ -58,14 +58,14 @@ const DB_TO_ADMIN: Record<string, string> = {
   pending:            "Requested",
   under_review:       "Proposal Sent",
   needs_info:         "Needs Info",
-  pending_documents:  "Pending Documents",
-  pending_payment:    "Pending Payment",
+  pending_documents:  "Documents Needed",
+  pending_payment:    "Payment Due",
   approved:           "Deposit Received",
   confirmed:          "Confirmed",
   completed:          "Completed",
   cancelled:          "Declined",
   cancelled_by_admin: "Cancelled by BX",
-  cancelled_by_user:  "Cancelled by User",
+  cancelled_by_user:  "Cancelled by Organizer",
   auto_cancelled:     "Expired",
 };
 
@@ -73,14 +73,14 @@ const ADMIN_TO_DB: Record<string, string> = {
   "Requested":          "pending",
   "Proposal Sent":      "under_review",
   "Needs Info":         "needs_info",
-  "Pending Documents":  "pending_documents",
-  "Pending Payment":    "pending_payment",
+  "Documents Needed":  "pending_documents",
+  "Payment Due":    "pending_payment",
   "Deposit Received":   "approved",
   "Confirmed":          "confirmed",
   "Completed":          "completed",
   "Declined":           "cancelled",
   "Cancelled by BX":    "cancelled_by_admin",
-  "Cancelled by User":  "cancelled_by_user",
+  "Cancelled by Organizer":  "cancelled_by_user",
   "Expired":            "auto_cancelled",
 };
 
@@ -269,14 +269,14 @@ export async function PATCH(req: NextRequest) {
   const EMAIL_TRIGGERS: Partial<Record<string, "approved" | "declined" | "needs_info" | "cancelled" | "proposal_sent" | "pending_documents" | "pending_payment">> = {
     "Proposal Sent":     "proposal_sent",
     "Needs Info":        "needs_info",
-    "Pending Documents": "pending_documents",
-    "Pending Payment":   "pending_payment",
+    "Documents Needed": "pending_documents",
+    "Payment Due":   "pending_payment",
     "Deposit Received":  "approved",
     Confirmed:           "approved",
     Declined:            "declined",
     "Cancelled by BX":   "cancelled",
     "Completed":         undefined,
-    "Cancelled by User": undefined, // user-initiated — no email back to user
+    "Cancelled by Organizer": undefined, // user-initiated — no email back to user
     Expired:             undefined,
   };
 
@@ -329,10 +329,10 @@ export async function PATCH(req: NextRequest) {
 
   // ── In-app bell notification for the reservation owner ───────────────────
   const NOTIF_LABEL: Partial<Record<string, { title: string; body: string }>> = {
-    "Proposal Sent":    { title: "Proposal ready for your reservation", body: `A proposal has been prepared for ${row.event_name as string} (${row.booking_number as string}). Please review and sign.` },
-    "Needs Info":       { title: "Your BX reservation needs attention", body: `The BX team has a follow-up question about ${row.event_name as string} (${row.booking_number as string}).` },
-    "Pending Documents":{ title: "Documents required", body: `Please upload the required documents for ${row.event_name as string} (${row.booking_number as string}) to proceed.` },
-    "Pending Payment":  { title: "Payment required", body: `Your reservation for ${row.event_name as string} (${row.booking_number as string}) is pending payment.` },
+    "Proposal Sent":    { title: "Proposal Sent for your reservation", body: `A proposal has been prepared for ${row.event_name as string} (${row.booking_number as string}). Please review and sign.` },
+    "Needs Info":       { title: "Needs Info: the BX team has a question", body: `The BX team has a follow-up question about ${row.event_name as string} (${row.booking_number as string}).` },
+    "Documents Needed":{ title: "Documents Needed", body: `Please upload the required documents for ${row.event_name as string} (${row.booking_number as string}) to proceed.` },
+    "Payment Due":  { title: "Payment Due", body: `Your reservation for ${row.event_name as string} (${row.booking_number as string}) is pending payment.` },
     "Deposit Received": { title: "Deposit received — almost there!", body: `We received your deposit for ${row.event_name as string} (${row.booking_number as string}).` },
     Confirmed:          { title: "Your reservation is confirmed!", body: `${row.event_name as string} (${row.booking_number as string}) has been confirmed.` },
     Declined:           { title: "Reservation update", body: `Your request for ${row.event_name as string} (${row.booking_number as string}) could not be accommodated.` },

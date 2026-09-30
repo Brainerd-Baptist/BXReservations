@@ -304,7 +304,7 @@ export async function GET(req: NextRequest) {
               name: res.contact_name,
               bookingNumber: res.booking_number,
               reservationId: res.id,
-              status: res.status === "needs_info" ? "Needs Information" : "Pending Documents",
+              status: res.status === "needs_info" ? "Needs Info" : "Documents Needed",
               reminderNum: 1,
             }),
           });
@@ -325,7 +325,7 @@ export async function GET(req: NextRequest) {
               name: res.contact_name,
               bookingNumber: res.booking_number,
               reservationId: res.id,
-              status: res.status === "needs_info" ? "Needs Information" : "Pending Documents",
+              status: res.status === "needs_info" ? "Needs Info" : "Documents Needed",
               reminderNum: 2,
             }),
           });

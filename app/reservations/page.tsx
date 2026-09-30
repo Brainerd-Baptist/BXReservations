@@ -179,8 +179,8 @@ export default async function ReservationsPage() {
                         borderRadius: "0.5rem",
                         fontSize: "0.8125rem",
                         fontWeight: 600,
-                        background: "var(--bx-brass)",
-                        color: "white",
+                        background: "var(--bx-action-bg)",
+                        color: "var(--bx-action-fg)",
                         textDecoration: "none",
                         whiteSpace: "nowrap",
                         flexShrink: 0,
@@ -236,8 +236,8 @@ export default async function ReservationsPage() {
               borderRadius: "0.5rem",
               fontSize: "0.875rem",
               fontWeight: 600,
-              background: "var(--bx-brass)",
-              color: "#fff",
+              background: "var(--bx-action-bg)",
+              color: "var(--bx-action-fg)",
               textDecoration: "none",
             }}
           >

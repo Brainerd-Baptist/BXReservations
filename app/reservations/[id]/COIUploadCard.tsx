@@ -63,6 +63,10 @@ export default function COIUploadCard({ reservationId }: Props) {
         <li>Be valid through your event date(s)</li>
         <li>Be a PDF, JPG, or PNG file (max 20 MB)</li>
       </ul>
+      <p style={{ margin: "-0.5rem 0 1.25rem", fontSize: "0.8125rem", color: "var(--bx-slate)", lineHeight: 1.55 }}>
+        <strong style={{ color: "var(--bx-parchment)" }}>Where to get one:</strong> ask the insurance agent for your organization (or your home or renter&apos;s insurance) for a
+        &ldquo;certificate of insurance for an event.&rdquo; It&apos;s usually free and takes a day or two. Give them the event date and the church&apos;s name above.
+      </p>
 
       <div
         onClick={() => fileRef.current?.click()}

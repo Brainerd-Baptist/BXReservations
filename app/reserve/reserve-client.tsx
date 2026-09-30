@@ -147,7 +147,7 @@ function StepBar({ step }: { step: number }) {
           <div key={i} className="flex items-center flex-1 last:flex-none">
             <div className="flex flex-col items-center min-w-0">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all shrink-0 ${
-                i < step  ? "bg-brass border-brass text-white" :
+                i < step  ? "bg-brass border-brass text-[var(--bx-action-fg)]" :
                 i === step ? "bg-ink-soft border-brass text-brass" :
                              "bg-ink border-parchment/20 text-slate"
               }`}>
@@ -273,16 +273,19 @@ function ContactStep({
           </div>
         </div>
 
-        <div className="flex items-center gap-3 pt-2">
-          <button
-            type="button"
-            onClick={() => onChange({ isNonProfit: !contact.isNonProfit })}
-            className={`w-10 h-6 rounded-full relative transition-colors ${contact.isNonProfit ? "bg-brass" : "bg-parchment/20"}`}
-          >
+        {/* The whole row is the switch: a 44px target with a name screen readers announce (C3) */}
+        <button
+          type="button"
+          role="switch"
+          aria-checked={contact.isNonProfit}
+          onClick={() => onChange({ isNonProfit: !contact.isNonProfit })}
+          className="flex items-center gap-3 pt-2 min-h-11 text-left"
+        >
+          <span aria-hidden="true" className={`w-10 h-6 rounded-full relative transition-colors flex-none ${contact.isNonProfit ? "bg-brass" : "bg-parchment/20"}`}>
             <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-ink-soft rounded-full shadow transition-transform ${contact.isNonProfit ? "translate-x-4" : ""}`} />
-          </button>
+          </span>
           <span className="text-sm text-parchment">We are a non-profit organization</span>
-        </div>
+        </button>
         {contact.isNonProfit && (
           <p className="text-xs text-brass -mt-2 pl-14">Non-profit rates will be applied to your estimate.</p>
         )}
@@ -624,7 +627,7 @@ function DayCard({
             onClick={e => { e.stopPropagation(); onToggleInclude(); }}
             title={day.included ? "Remove this day" : "Include this day"}
             className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-              day.included ? "bg-brass border-brass text-white" : "border-parchment/20 bg-ink"
+              day.included ? "bg-brass border-brass text-[var(--bx-action-fg)]" : "border-parchment/20 bg-ink"
             }`}
           >
             {day.included && <span className="text-xs font-bold">✓</span>}
@@ -986,9 +989,15 @@ function ReviewStep({
           <ShareSection reservationId={reservationId} />
         )}
 
-        <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl text-left">
-          <p className="text-sm font-semibold text-amber-800 mb-1">What&apos;s next?</p>
-          <p className="text-sm text-amber-700">To complete your booking, we&apos;ll reach out via email with next steps and any required documentation. Keep an eye on your inbox!</p>
+        <div className="mt-4 p-4 bx-well rounded-xl text-left">
+          <p className="text-sm font-semibold text-parchment mb-2">What happens next</p>
+          <ol className="text-sm text-slate space-y-1.5 list-decimal pl-5">
+            <li>The BX team reviews your request and emails you.</li>
+            <li>Unless it isn&apos;t needed, you&apos;ll sign the Facility Use Agreement and upload proof of insurance.</li>
+            <li>Pay any balance — the amount and how to pay are on your booking page.</li>
+            <li>Plan your rooms on the event map (optional), and you&apos;re set.</li>
+          </ol>
+          <p className="text-xs text-slate mt-2">Track every step{reservationId ? <> on <a href={`/reservations/${reservationId}`} className="underline underline-offset-2" style={{ color: "var(--bx-accent-text)" }}>your booking page</a></> : " under My Reservations"}.</p>
         </div>
       </div>
     );

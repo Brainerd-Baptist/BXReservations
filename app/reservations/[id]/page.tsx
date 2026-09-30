@@ -21,6 +21,8 @@ import EditBooking from "@/app/components/edit-booking";
 import COIUploadCard from "./COIUploadCard";
 import { ButtonLink } from "@/app/components/ui/button";
 import { readWaived, WAIVER_LABEL } from "@/lib/waivers";
+import BookingChecklist, { type ChecklistStep } from "./booking-checklist";
+import { getBilling } from "@/lib/billing";
 
 const STATUS_META: Record<string, { dot: string }> = {
   pending:            { dot: "#FBBF24" },
@@ -38,21 +40,58 @@ const STATUS_META: Record<string, { dot: string }> = {
   auto_cancelled:     { dot: "#9CA3AF" },
 };
 
+// Headlines use the same status names staff choose in Admin (C3)
 const STATUS_EXPLANATION: Record<string, { headline: string; detail?: string }> = {
-  pending:            { headline: "Awaiting Review",           detail: "Your reservation request has been received and is waiting for staff review." },
-  under_review:       { headline: "Under Review",              detail: "Staff is reviewing your request and will notify you of any updates." },
-  needs_info:         { headline: "More Information Needed",   detail: "Staff needs additional information from you before this reservation can move forward. Please reply to the message in the thread below." },
-  pending_documents:  { headline: "Documents Required",        detail: "Your reservation requires additional documents before it can be confirmed. Please upload the requested items below." },
-  pending_payment:    { headline: "Payment Required",          detail: "A payment is required to confirm your reservation. Please follow the instructions from staff." },
-  approved:           { headline: "Approved",                  detail: "Your reservation has been approved." },
-  confirmed:          { headline: "Confirmed",                 detail: "Your reservation is confirmed — see you there!" },
-  completed:          { headline: "Completed",                 detail: "This reservation has concluded. Thank you for using BX Reservations." },
-  rejected:           { headline: "Not Approved",              detail: "This reservation was not approved. Please contact us if you have questions." },
-  cancelled:          { headline: "Cancelled",                 detail: "This reservation has been cancelled." },
-  cancelled_by_admin: { headline: "Cancelled by Staff",        detail: "Staff has cancelled this reservation. Please contact us if you have questions." },
-  cancelled_by_user:  { headline: "Cancelled",                 detail: "You cancelled this reservation. Submit a new request if you'd like to rebook." },
-  auto_cancelled:     { headline: "Automatically Cancelled",   detail: "This reservation was automatically cancelled due to inactivity. Submit a new request if you'd still like to book." },
+  pending:            { headline: "Requested",              detail: "We received your request. The BX team will review it and email you with next steps." },
+  under_review:       { headline: "Proposal Sent",          detail: "We reviewed your request and sent you a proposal. Check your email, or look below for anything waiting on you." },
+  needs_info:         { headline: "Needs Info",             detail: "The BX team has a question before this can move forward. Reply in Messages below." },
+  pending_documents:  { headline: "Documents Needed",       detail: "Please finish the items below (agreement and insurance) so we can confirm your booking." },
+  pending_payment:    { headline: "Payment Due",            detail: "Your booking is almost confirmed. See Charges & payments below for the amount and how to pay." },
+  approved:           { headline: "Deposit Received",       detail: "Thank you — your deposit is in. We'll confirm the booking shortly." },
+  confirmed:          { headline: "Confirmed",              detail: "Your booking is confirmed — see you there! Plan your rooms on the event map any time." },
+  completed:          { headline: "Completed",              detail: "This event is over. Thank you for gathering at the BX." },
+  rejected:           { headline: "Declined",               detail: "We couldn't approve this request. Message us if you have questions." },
+  cancelled:          { headline: "Declined",               detail: "We couldn't approve this request. Message us if you have questions." },
+  cancelled_by_admin: { headline: "Cancelled by BX",        detail: "The BX team cancelled this booking. The reason is in your email and in the history. Message us with any questions." },
+  cancelled_by_user:  { headline: "Cancelled by Organizer", detail: "This booking was cancelled. Use Book again below to start a new request with the same setup." },
+  auto_cancelled:     { headline: "Expired",                detail: "This request expired after no activity. Use Book again to start a new one." },
 };
+
+const CLOSED_FOR_CHECKLIST = new Set(["completed", "rejected", "cancelled", "cancelled_by_admin", "cancelled_by_user", "auto_cancelled"]);
+
+/** The renter's steps, from what we know about the booking (C3). */
+function checklistSteps(
+  r: { id: string; status: string; coi_accepted_at?: string | null; coi_uploaded_at?: string | null; waived?: unknown },
+  v: { labelCount: number; agreement?: { customer_signed_at: string | null; token: string } | null; totals?: { charges: number; balance: number } | null },
+): ChecklistStep[] {
+  const w = readWaived(r.waived);
+  const reviewed = r.status !== "pending";
+  const confirmed = r.status === "confirmed";
+  const steps: ChecklistStep[] = [
+    { label: "Send your request", state: "done" },
+    { label: "BX team reviews it", state: reviewed ? "done" : "waiting", note: reviewed ? undefined : "We'll email you when it's reviewed." },
+  ];
+  if (!w.agreement) {
+    const signed = !!v.agreement?.customer_signed_at;
+    steps.push(signed ? { label: "Sign the Facility Use Agreement", state: "done" }
+      : v.agreement ? { label: "Sign the Facility Use Agreement", state: "todo", href: `/reservations/${r.id}/agreement?token=${v.agreement.token}` }
+      : { label: "Sign the Facility Use Agreement", state: "waiting", note: "We'll send it once your request is reviewed." });
+  }
+  if (!w.coi) {
+    steps.push(r.coi_accepted_at ? { label: "Upload proof of insurance", state: "done" }
+      : r.coi_uploaded_at ? { label: "Upload proof of insurance", state: "waiting", note: "Uploaded — the BX team is checking it." }
+      : { label: "Upload proof of insurance", state: reviewed ? "todo" : "waiting", note: "A Certificate of Insurance (COI) from your insurer, naming Brainerd Baptist Church as additionally insured." });
+  }
+  if (!w.payment) {
+    const t = v.totals;
+    steps.push(t && t.charges > 0 && t.balance <= 0 ? { label: "Pay the balance", state: "done" }
+      : t && t.balance > 0 ? { label: "Pay the balance", state: "todo", href: "#billing", note: "See Charges & payments below for the amount and how to pay." }
+      : { label: "Pay the balance", state: "waiting", note: "Charges appear here once the BX team adds them." });
+  }
+  steps.push({ label: "Plan your rooms on the event map", state: v.labelCount > 0 ? "done" : "optional", href: v.labelCount > 0 ? undefined : `/reservations/${r.id}/event-map`, note: "Optional — names and setup for each room, for your signs." });
+  steps.push({ label: "Booking confirmed", state: confirmed ? "done" : "waiting" });
+  return steps;
+}
 
 const SELF_CANCEL_STATUSES = new Set(["pending", "under_review", "approved", "pending_documents"]);
 
@@ -90,7 +129,7 @@ interface PayloadDay { date?: string; included?: boolean; customStart?: string; 
 interface Payload { days?: PayloadDay[]; spaceMode?: string }
 
 const COLS =
-  "id, booking_number, created_at, status, event_name, space_mode, notes, contact_name, contact_email, contact_phone, contact_org, user_id, payload, sign_options, coi_accepted_at, church_use, waived";
+  "id, booking_number, created_at, status, event_name, space_mode, notes, contact_name, contact_email, contact_phone, contact_org, user_id, payload, sign_options, coi_accepted_at, coi_uploaded_at, church_use, waived";
 
 const SETUP_NAMES: Record<string, string> = {
   theater: "Theater", banquet: "Banquet", reception: "Reception", cocktail: "Cocktail",
@@ -162,6 +201,7 @@ export default async function ReservationDetailPage({
       .maybeSingle(),
   ]);
   const logo = logoRow ? await logoState(db, logoRow) : null;
+  const totals = (await getBilling(db, id).catch(() => null))?.totals ?? null;
   const share = shareState(shareRow);
 
   return renderPage(reservation, {
@@ -170,6 +210,7 @@ export default async function ReservationDetailPage({
     staff,
     canEdit: isOwner || staff, // accepted co-owners edit through the event map API; viewers only look
     canCancel: isOwner || isCoOwner, // co-organizers may cancel too (C4); staff use Admin
+    totals,
     labelCount: labelCount ?? 0,
     logo,
     share,
@@ -196,10 +237,11 @@ function renderPage(
     payload?: unknown;
     sign_options?: { qr?: boolean } | null;
     coi_accepted_at?: string | null;
+    coi_uploaded_at?: string | null;
     church_use?: boolean | null;
     waived?: unknown;
   },
-  view: { isCollab: boolean; staffView: boolean; staff: boolean; canEdit: boolean; canCancel?: boolean; labelCount: number; logo: LogoState | null; share: { enabled: boolean; token: string | null; path: string | null }; agreement?: { customer_signed_at: string | null; token: string } | null }
+  view: { isCollab: boolean; staffView: boolean; staff: boolean; canEdit: boolean; canCancel?: boolean; totals?: { charges: number; paid: number; balance: number } | null; labelCount: number; logo: LogoState | null; share: { enabled: boolean; token: string | null; path: string | null }; agreement?: { customer_signed_at: string | null; token: string } | null }
 ) {
   const submittedDate = new Date(reservation.created_at).toLocaleDateString("en-US", {
     month: "long",
@@ -344,6 +386,11 @@ function renderPage(
           </div>
         );
       })()}
+
+      {/* Next steps checklist (C3) */}
+      {!CLOSED_FOR_CHECKLIST.has(reservation.status) && (
+        <BookingChecklist steps={checklistSteps(reservation, view)} />
+      )}
 
       {/* Event map */}
       <Link
@@ -734,8 +781,8 @@ function renderPage(
             borderRadius: "0.5rem",
             fontSize: "0.875rem",
             fontWeight: 600,
-            background: "var(--bx-brass)",
-            color: "#fff",
+            background: "var(--bx-action-bg)",
+            color: "var(--bx-action-fg)",
             textDecoration: "none",
           }}
         >

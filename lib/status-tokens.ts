@@ -36,34 +36,35 @@ export const LOGO_STATUS: Record<string, BadgeToken> = {
   rejected: { label: "Needs a different file", bg: "var(--tone-red-bg)", color: "var(--tone-red-fg)", border: "var(--tone-red-bd)" },
 };
 
-/** Reservation workflow status chips — physical-metaphor palette */
+/** Reservation workflow status chips — physical-metaphor palette.
+ *  Labels are the SAME words staff pick in Admin (one vocabulary, C3). */
 export const RESERVATION_STATUS: Record<string, BadgeToken> = {
   // ── Amber: waiting / initial state (sticky note on a desk)
   pending:            { label: "Requested",    bg: "var(--tone-amber-bg)", color: "var(--tone-amber-fg)", border: "var(--tone-amber-bd)" },
   pending_insurance:  { label: "Requested",    bg: "var(--tone-amber-bg)", color: "var(--tone-amber-fg)", border: "var(--tone-amber-bd)" },
 
   // ── Indigo: active staff review (official stamp / in-tray)
-  under_review:       { label: "In Review",    bg: "var(--tone-indigo-bg)", color: "var(--tone-indigo-fg)", border: "var(--tone-indigo-bd)" },
+  under_review:       { label: "Proposal Sent",    bg: "var(--tone-indigo-bg)", color: "var(--tone-indigo-fg)", border: "var(--tone-indigo-bd)" },
 
   // ── Orange: action required from requester (warning label)
-  needs_info:         { label: "Info Needed",  bg: "var(--tone-orange-bg)", color: "var(--tone-orange-fg)", border: "var(--tone-orange-bd)" },
-  pending_documents:  { label: "Docs Needed",  bg: "var(--tone-orange-bg)", color: "var(--tone-orange-fg)", border: "var(--tone-orange-bd)" },
+  needs_info:         { label: "Needs Info",  bg: "var(--tone-orange-bg)", color: "var(--tone-orange-fg)", border: "var(--tone-orange-bd)" },
+  pending_documents:  { label: "Documents Needed",  bg: "var(--tone-orange-bg)", color: "var(--tone-orange-fg)", border: "var(--tone-orange-bd)" },
   pending_payment:    { label: "Payment Due",  bg: "var(--tone-orange-bg)", color: "var(--tone-orange-fg)", border: "var(--tone-orange-bd)" },
 
   // ── Green: approved / on track (approval stamp)
-  approved:           { label: "Approved",     bg: "var(--tone-green-bg)", color: "var(--tone-green-fg)", border: "var(--tone-green-bd)" },
+  approved:           { label: "Deposit Received",     bg: "var(--tone-green-bg)", color: "var(--tone-green-fg)", border: "var(--tone-green-bd)" },
   confirmed:          { label: "Confirmed",    bg: "var(--tone-green-bg)", color: "var(--tone-green-fg)", border: "var(--tone-green-bd)" },
 
   // ── Parchment: successfully concluded (filed document)
   completed:          { label: "Completed",    bg: "var(--tone-stone-bg)", color: "var(--tone-stone-fg)", border: "var(--tone-stone-bd)" },
 
   // ── Red: rejected / hard staff cancel (red stamp)
-  rejected:           { label: "Not Approved", bg: "var(--tone-red-bg)", color: "var(--tone-red-fg)", border: "var(--tone-red-bd)" },
-  cancelled_by_admin: { label: "Cancelled",    bg: "var(--tone-red-bg)", color: "var(--tone-red-fg)", border: "var(--tone-red-bd)" },
+  rejected:           { label: "Declined", bg: "var(--tone-red-bg)", color: "var(--tone-red-fg)", border: "var(--tone-red-bd)" },
+  cancelled_by_admin: { label: "Cancelled by BX",    bg: "var(--tone-red-bg)", color: "var(--tone-red-fg)", border: "var(--tone-red-bd)" },
 
   // ── Neutral gray: user or auto cancel (voided paper)
-  cancelled:          { label: "Cancelled",    bg: "var(--tone-gray-bg)", color: "var(--tone-gray-fg)", border: "var(--tone-gray-bd)" },
-  cancelled_by_user:  { label: "Cancelled",    bg: "var(--tone-gray-bg)", color: "var(--tone-gray-fg)", border: "var(--tone-gray-bd)" },
+  cancelled:          { label: "Declined",    bg: "var(--tone-gray-bg)", color: "var(--tone-gray-fg)", border: "var(--tone-gray-bd)" },
+  cancelled_by_user:  { label: "Cancelled by Organizer",    bg: "var(--tone-gray-bg)", color: "var(--tone-gray-fg)", border: "var(--tone-gray-bd)" },
   auto_cancelled:     { label: "Expired",      bg: "var(--tone-gray-bg)", color: "var(--tone-gray-fg)", border: "var(--tone-gray-bd)" },
 };
 

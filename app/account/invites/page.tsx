@@ -148,7 +148,7 @@ export default async function InvitesPage({ searchParams }: PageProps) {
       <p style={{ fontSize: "0.875rem", color: "var(--bx-slate)", marginBottom: "1.5rem" }}>
         You&apos;ve joined this reservation as a {roleLabel}. It now appears under My Reservations.
       </p>
-      <Link href={`/reservations/${invite.reservation_id}`} className="bx-cta inline-flex items-center justify-center rounded-xl bg-brass px-6 py-3 text-sm font-semibold text-white">
+      <Link href={`/reservations/${invite.reservation_id}`} className="bx-cta inline-flex items-center justify-center rounded-xl bg-brass px-6 py-3 text-sm font-semibold text-[var(--bx-action-fg)]">
         Open the reservation →
       </Link>
     </div>

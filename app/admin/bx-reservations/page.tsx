@@ -39,7 +39,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { BlackoutRule, ruleDescription } from "@/lib/blackouts";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
-type Status = "Requested" | "Proposal Sent" | "Needs Info" | "Pending Documents" | "Pending Payment" | "Deposit Received" | "Confirmed" | "Completed" | "Declined" | "Cancelled by BX" | "Cancelled by User" | "Expired";
+type Status = "Requested" | "Proposal Sent" | "Needs Info" | "Documents Needed" | "Payment Due" | "Deposit Received" | "Confirmed" | "Completed" | "Declined" | "Cancelled by BX" | "Cancelled by Organizer" | "Expired";
 
 interface Request {
   id: string;
@@ -68,19 +68,34 @@ interface Request {
   waived?: { agreement: boolean; coi: boolean; payment: boolean };
 }
 
+// What each status means, shown under the status menu (C3). The organizer is
+// emailed for the ones in STATUS_EMAILS.
+const STATUS_HELP: Partial<Record<Status, string>> = {
+  "Proposal Sent":     "Pricing is ready. Emails the organizer with the Facility Use Agreement to sign (unless it isn't needed).",
+  "Needs Info":        "You have a question. Emails the organizer; add your question in the note or in Messages.",
+  "Documents Needed":  "Emails the organizer to sign the agreement and upload insurance.",
+  "Payment Due":       "Emails the organizer that payment is the last step.",
+  "Deposit Received":  "Records that the deposit came in. Emails the organizer.",
+  "Confirmed":         "The booking is final. Emails the organizer.",
+  "Completed":         "The event is over. No email.",
+  "Declined":          "You can't host this request. Emails the organizer.",
+  "Cancelled by BX":   "Cancels the booking. A reason is required; everyone on the booking is told who, when and why.",
+};
+const STATUS_EMAILS = new Set<Status>(["Proposal Sent", "Needs Info", "Documents Needed", "Payment Due", "Deposit Received", "Confirmed", "Declined", "Cancelled by BX"]);
+
 // All statuses in display order (used for filter tabs)
 const ALL_STATUSES: Status[] = [
   "Requested",
   "Proposal Sent",
   "Needs Info",
-  "Pending Documents",
-  "Pending Payment",
+  "Documents Needed",
+  "Payment Due",
   "Deposit Received",
   "Confirmed",
   "Completed",
   "Declined",
   "Cancelled by BX",
-  "Cancelled by User",
+  "Cancelled by Organizer",
   "Expired",
 ];
 
@@ -88,8 +103,8 @@ const ALL_STATUSES: Status[] = [
 const ADMIN_SETTABLE_STATUSES: Status[] = [
   "Proposal Sent",
   "Needs Info",
-  "Pending Documents",
-  "Pending Payment",
+  "Documents Needed",
+  "Payment Due",
   "Deposit Received",
   "Confirmed",
   "Completed",
@@ -105,14 +120,14 @@ const STATUS_COLORS: Record<Status, string> = {
   Requested:             "bx-tone-amber",      // sticky note
   "Proposal Sent":       "bx-tone-indigo",   // in-tray stamp
   "Needs Info":          "bx-tone-orange",   // warning label
-  "Pending Documents":   "bx-tone-orange",   // warning label
-  "Pending Payment":     "bx-tone-orange",   // warning label
+  "Documents Needed":   "bx-tone-orange",   // warning label
+  "Payment Due":     "bx-tone-orange",   // warning label
   "Deposit Received":    "bx-tone-green",// approval stamp
   Confirmed:             "bx-tone-green",// approval stamp
   Completed:             "bx-tone-stone",      // filed document
   Declined:              "bx-tone-red",            // red stamp
   "Cancelled by BX":     "bx-tone-red",            // red stamp
-  "Cancelled by User":   "bx-tone-stone",         // voided paper
+  "Cancelled by Organizer":   "bx-tone-stone",         // voided paper
   Expired:               "bx-tone-stone",         // voided paper
 };
 
@@ -125,7 +140,7 @@ export default function BxReservationsAdmin() {
   const [reservationsError, setReservationsError] = useState<string | null>(null);
   const rawStatus = searchParams.get("status") ?? "";
   const statusFromUrl = (raw: string): Status | "All" => {
-    const ALL_S: (Status | "All")[] = ["All","Requested","Proposal Sent","Needs Info","Pending Documents","Pending Payment","Deposit Received","Confirmed","Completed","Declined","Cancelled by BX","Cancelled by User","Expired"];
+    const ALL_S: (Status | "All")[] = ["All","Requested","Proposal Sent","Needs Info","Documents Needed","Payment Due","Deposit Received","Confirmed","Completed","Declined","Cancelled by BX","Cancelled by Organizer","Expired"];
     return ALL_S.includes(raw as Status) ? (raw as Status) : "All";
   };
   const [filter, setFilter] = useState<Status | "All">(() => statusFromUrl(rawStatus));
@@ -427,6 +442,8 @@ export default function BxReservationsAdmin() {
         setStatusNote(prev => { const n = { ...prev }; delete n[req.id]; return n; });
         setCancelReason(prev => { const n = { ...prev }; delete n[req.id]; return n; });
         fetchHistory(req.id, req.dbId);
+        const emailed = STATUS_EMAILS.has(newStatus);
+        toast(`Status set to ${newStatus}${emailed ? ` — ${req.name || "the organizer"} was emailed` : ""}.`, "success");
       } else {
         const err = await res.json().catch(() => ({}));
         toast("Status update failed: " + (err.error ?? res.status), "error");
@@ -722,6 +739,14 @@ export default function BxReservationsAdmin() {
                 </div>
               </div>
             )}
+            {filtered.length > 0 && (
+              <p className="text-xs text-slate flex flex-wrap items-center gap-x-3 gap-y-1 px-1">
+                <span className="inline-flex items-center gap-1"><FileText size={12} aria-hidden="true" /> Agreement</span>
+                <span className="inline-flex items-center gap-1"><Shield size={12} aria-hidden="true" /> Insurance</span>
+                <span className="inline-flex items-center gap-1"><DollarSign size={12} aria-hidden="true" /> Payment</span>
+                <span>· green = done, crossed out = not needed</span>
+              </p>
+            )}
             {filtered.map((req) => (
               <div
                 key={req.id}
@@ -741,7 +766,7 @@ export default function BxReservationsAdmin() {
                       )}
                       {req.flexible && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                          <AlertTriangle size={10} className="inline mr-0.5" />Soft block
+                          <AlertTriangle size={10} className="inline mr-0.5" aria-hidden="true" /><abbr title="Held for a standing ministry use — it can often move. Check before confirming." className="no-underline">Soft block</abbr>
                         </span>
                       )}
                     </div>
@@ -833,7 +858,7 @@ export default function BxReservationsAdmin() {
                     )}
 
                     {/* ── Status control panel */}
-                    {req.status !== "Cancelled by User" && req.status !== "Expired" && req.status !== "Completed" && req.status !== "Cancelled by BX" && (() => {
+                    {req.status !== "Cancelled by Organizer" && req.status !== "Expired" && req.status !== "Completed" && req.status !== "Cancelled by BX" && (() => {
                       const draft = statusDraft[req.id] ?? "";
                       const note = statusNote[req.id] ?? "";
                       const isCancelFlow = draft === "Cancelled by BX";
@@ -844,6 +869,7 @@ export default function BxReservationsAdmin() {
                           <p className="text-xs font-semibold text-slate uppercase tracking-widest">Update Status</p>
                           <select
                             className="bx-input w-full"
+                            aria-label="New status"
                             value={draft}
                             onChange={e => setStatusDraft(prev => ({ ...prev, [req.id]: e.target.value }))}
                           >
@@ -852,10 +878,14 @@ export default function BxReservationsAdmin() {
                               <option key={s} value={s}>{s}</option>
                             ))}
                           </select>
+                          {draft && STATUS_HELP[draft as Status] && (
+                            <p className="text-xs text-slate">{STATUS_HELP[draft as Status]}</p>
+                          )}
                           {draft && !isCancelFlow && (
                             <textarea
                               className="bx-input w-full placeholder-slate resize-none"
-                              placeholder="Internal note (optional)"
+                              aria-label="Note (optional — included in the email)"
+                              placeholder="Note (optional — included in the email)"
                               rows={2}
                               value={note}
                               onChange={e => setStatusNote(prev => ({ ...prev, [req.id]: e.target.value }))}
@@ -864,7 +894,8 @@ export default function BxReservationsAdmin() {
                           {isCancelFlow && (
                             <textarea
                               className="bx-input w-full placeholder-slate resize-none"
-                              placeholder="Cancellation reason (required)"
+                              aria-label="Reason for cancelling (required)"
+                              placeholder="Reason for cancelling (required — everyone on the booking sees it)"
                               rows={2}
                               value={reason}
                               onChange={e => setCancelReason(prev => ({ ...prev, [req.id]: e.target.value }))}
@@ -1197,7 +1228,7 @@ export default function BxReservationsAdmin() {
                         <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 space-y-1.5">
                           {/* Rate rows */}
                           <div className="flex justify-between text-xs">
-                            <span className="text-gray-500">Rack Rate</span>
+                            <span className="text-gray-500" title="The standard price before any discount">Rack Rate <span className="text-[10px]">(standard price)</span></span>
                             <span className="font-medium text-parchment/80">
                               {docStatus[req.id].rack_rate_total != null
                                 ? `$${Number(docStatus[req.id].rack_rate_total).toFixed(2)}`
@@ -1237,15 +1268,17 @@ export default function BxReservationsAdmin() {
                                             {d.discount_reason ? ` (${d.discount_reason.replace(/_/g, " ")})` : ""}
                                           </span>
                                           <button
-                                            className="text-red-400 hover:text-red-600 ml-2"
+                                            aria-label="Remove discount"
+                                            className="text-red-400 hover:text-red-600 ml-2 min-w-8 min-h-8"
                                             onClick={async (e) => {
                                               e.stopPropagation();
                                               if (!req.dbId) return;
-                                              await fetch(`/api/admin/reservations/${req.dbId}/discount`, {
+                                              const del = await fetch(`/api/admin/reservations/${req.dbId}/discount`, {
                                                 method: "DELETE",
                                                 headers: { "Content-Type": "application/json" },
                                                 body: JSON.stringify({ discountId: d.id }),
-                                              });
+                                              }).catch(() => null);
+                                              if (!del?.ok) { toast("Couldn't remove that discount.", "error"); return; }
                                               setBookingDiscounts(prev => ({
                                                 ...prev,
                                                 [req.id]: (prev[req.id] ?? []).filter(x => x.id !== d.id),
@@ -1305,7 +1338,7 @@ export default function BxReservationsAdmin() {
                                     onChange={e => setBookingDiscountForm(prev => ({ ...prev, [req.id]: { ...prev[req.id], reason: e.target.value } }))}
                                   >
                                     <option value="">Reason (optional)</option>
-                                    <option value="bbs_default">BBS Default</option>
+                                    <option value="bbs_default">BBS Default (Brainerd Baptist School pricing)</option>
                                     <option value="bx_ministry_initiative">Ministry Initiative</option>
                                     <option value="nonprofit_partner">Nonprofit Partner</option>
                                     <option value="staff_courtesy">Staff Courtesy</option>
@@ -1346,9 +1379,14 @@ export default function BxReservationsAdmin() {
                                             [req.id]: [data.discount, ...(prev[req.id] ?? [])],
                                           }));
                                           setBookingDiscountForm(prev => ({ ...prev, [req.id]: { ...prev[req.id], open: false, busy: false } }));
+                                          toast("Discount saved.", "success");
+                                        } else {
+                                          setBookingDiscountForm(prev => ({ ...prev, [req.id]: { ...prev[req.id], busy: false } }));
+                                          toast(`Discount not saved: ${data.error ?? `error ${r.status}`}`, "error");
                                         }
                                       } catch {
                                         setBookingDiscountForm(prev => ({ ...prev, [req.id]: { ...prev[req.id], busy: false } }));
+                                        toast("Discount not saved — check your connection.", "error");
                                       }
                                     }}
                                   >{bdf.busy ? "Saving…" : "Save"}</button>
@@ -1475,7 +1513,7 @@ export default function BxReservationsAdmin() {
               </p>
               <Link
                 href="/admin/bx-reservations/users"
-                className="bx-cta px-4 py-2 rounded-lg text-sm font-semibold bg-brass text-white"
+                className="bx-cta px-4 py-2 rounded-lg text-sm font-semibold bg-brass text-[var(--bx-action-fg)]"
               >
                 Go to Users →
               </Link>
@@ -1490,7 +1528,7 @@ export default function BxReservationsAdmin() {
               </p>
               <Link
                 href="/admin/bx-reservations/organizations"
-                className="bx-cta px-4 py-2 rounded-lg text-sm font-semibold bg-brass text-white"
+                className="bx-cta px-4 py-2 rounded-lg text-sm font-semibold bg-brass text-[var(--bx-action-fg)]"
               >
                 Go to Organizations →
               </Link>
@@ -1591,9 +1629,9 @@ function KPI({ label, value, color }: { label: string; value: string; color: str
 
 function Detail({ label, value }: { label: string; value: string }) {
   return (
-    <div>
+    <div className="min-w-0">
       <p className="text-xs text-slate font-semibold uppercase tracking-wider">{label}</p>
-      <p className="font-medium text-parchment">{value}</p>
+      <p className="font-medium text-parchment break-words">{value}</p>
     </div>
   );
 }
@@ -1733,7 +1771,7 @@ function BlackoutSettings({
           <div className="px-5 py-4"><CardSkeleton lines={2} height="80px" /></div>
         )}
         {!loading && rules.length === 0 && (
-          <p className="px-5 py-4 text-sm text-slate">No blackout rules yet.</p>
+          <p className="px-5 py-4 text-sm text-slate">No blackout rules yet. Add days or times the BX is closed to the public (for example, Sunday mornings) and the booking form will block them.</p>
         )}
         {rules.map(rule => (
           <div key={rule.id} className="flex items-center justify-between gap-4 px-5 py-3">
@@ -1920,7 +1958,7 @@ function ReportsTab() {
 
   const tierLabel: Record<string, string> = {
     internal: "Internal",
-    bbs:      "BBS School",
+    bbs:      "BBS School (Brainerd Baptist School)",
     external: "External",
   };
   const tierColor: Record<string, string> = {

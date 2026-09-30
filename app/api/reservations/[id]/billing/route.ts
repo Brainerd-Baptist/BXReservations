@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { adminClient, getEventMapContext } from "@/lib/event-map";
 import { getBilling, money, requesterCanEditAddons, type ChargeKind } from "@/lib/billing";
+import { readVenue } from "@/lib/venue";
+import { readWaived } from "@/lib/waivers";
 
 type Params = { params: Promise<{ id: string }> };
 const KINDS: ChargeKind[] = ["rental", "addon", "fee", "discount"];
@@ -23,9 +25,16 @@ export async function GET(_req: NextRequest, { params }: Params) {
   const { id } = await params;
   const c = await context(id);
   if ("error" in c) return c.error;
-  const billing = await getBilling(c.db, c.ctx.reservation.id, c.ctx.staff);
+  const [billing, venue, { data: w }] = await Promise.all([
+    getBilling(c.db, c.ctx.reservation.id, c.ctx.staff),
+    readVenue(c.db),
+    c.db.from("reservations").select("waived").eq("id", c.ctx.reservation.id).maybeSingle(),
+  ]);
   return NextResponse.json({
     ...billing,
+    // How to pay, from Admin → Settings (C3); none when payment isn't needed
+    howToPay: readWaived(w?.waived).payment ? null : venue.venue_payment,
+    paymentWaived: readWaived(w?.waived).payment,
     staff: c.ctx.staff,
     canAddAddons: c.ctx.staff || (c.ctx.access === "edit" && requesterCanEditAddons(c.ctx.reservation.status)),
     userId: c.user.id,

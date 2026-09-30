@@ -115,8 +115,8 @@ export default async function EventMapPage({ params }: { params: Promise<{ id: s
             borderRadius: "999px",
             fontSize: "0.8125rem",
             fontWeight: 700,
-            background: "var(--bx-brass)",
-            color: "#fff",
+            background: "var(--bx-action-bg)",
+            color: "var(--bx-action-fg)",
             textDecoration: "none",
           }}
         >

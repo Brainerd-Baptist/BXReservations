@@ -418,7 +418,7 @@ export async function sendStatusUpdateEmail(opts: {
 
   const configs = {
     proposal_sent: {
-      subject:     `Your BX Reservation — Proposal Ready · ${bookingNumber}`,
+      subject:     `Proposal Sent — ${bookingNumber}`,
       headline:    "We've reviewed your request.",
       body:        `<p style="margin:0 0 16px 0;">Hi <strong style="color:${NAVY};">${name}</strong>,</p><p style="margin:0 0 16px 0;">We've reviewed your space reservation for <strong>${eventName}</strong> (${bookingNumber}). Our team has prepared a proposal and will be reaching out shortly to confirm the next steps.</p>${noteBlock}<p style="margin:0;">Use the button below to ${agreementUrl ? "review and sign the Facility Use Agreement" : "view your reservation details and current status"}.</p>`,
       cta:         agreementUrl ? "Sign Facility Use Agreement" : "View Your Request",

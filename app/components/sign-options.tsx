@@ -26,7 +26,7 @@ export default function SignOptions({ reservationId, initialQr, canEdit }: { res
         <input type="checkbox" checked={qr} disabled={!canEdit || busy} onChange={(e) => toggle(e.target.checked)} style={{ width: 16, height: 16, accentColor: "var(--bx-brass)" }} />
         <span>Include a QR code on each sign <span style={{ opacity: 0.8 }}>(opens the shared event map on that room)</span></span>
       </label>
-      {error && <p role="alert" style={{ margin: "0.25rem 0 0", color: "#dc2626" }}>{error}</p>}
+      {error && <p role="alert" style={{ margin: "0.25rem 0 0", color: "var(--bx-clay)" }}>{error}</p>}
     </div>
   );
 }

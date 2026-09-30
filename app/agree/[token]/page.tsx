@@ -183,7 +183,7 @@ export default function AgreePage() {
               <button
                 type="submit"
                 disabled={!customerName.trim() || !agreed || submitting}
-                className="w-full bg-brass text-white rounded-lg py-2.5 text-sm font-medium
+                className="w-full bg-brass text-[var(--bx-action-fg)] rounded-lg py-2.5 text-sm font-medium
                            disabled:opacity-40 disabled:cursor-not-allowed hover:bg-brass/90 transition-colors"
               >
                 {submitting ? "Submitting…" : "Sign Agreement"}

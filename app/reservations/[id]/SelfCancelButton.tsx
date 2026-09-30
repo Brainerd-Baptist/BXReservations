@@ -60,8 +60,8 @@ export default function SelfCancelButton({ reservationId }: Props) {
         marginTop: "0.5rem",
         padding: "0.875rem 1rem",
         borderRadius: "8px",
-        border: "1px solid color-mix(in srgb, #EF4444 30%, transparent)",
-        background: "color-mix(in srgb, #EF4444 6%, transparent)",
+        border: "1px solid color-mix(in srgb, var(--bx-clay) 30%, transparent)",
+        background: "color-mix(in srgb, var(--bx-clay) 6%, transparent)",
       }}
     >
       <p style={{ margin: "0 0 0.625rem", fontSize: "0.875rem", fontWeight: 600, color: "var(--bx-parchment)" }}>
@@ -101,7 +101,7 @@ export default function SelfCancelButton({ reservationId }: Props) {
             padding: "0.4375rem 0.875rem",
             borderRadius: "6px",
             border: "none",
-            background: "#EF4444",
+            background: "var(--bx-clay)",
             color: "#fff",
             fontWeight: 600,
             fontSize: "0.875rem",

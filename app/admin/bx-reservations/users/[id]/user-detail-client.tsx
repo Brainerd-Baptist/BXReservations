@@ -50,13 +50,15 @@ function Initials({ name, email }: { name: string | null; email: string }) {
   );
 }
 
+// Theme tones, readable in Light and Dark (C3 — the old hex colors faded to ~2:1 in Light)
+const T = (t: string) => ({ bg: `var(--tone-${t}-bg)`, text: `var(--tone-${t}-fg)` });
 const ROLE_COLORS: Record<BxRole, { bg: string; text: string }> = {
-  owner:                { bg: "rgba(217,119,6,0.15)",   text: "#f59e0b" },
-  system_admin:         { bg: "rgba(124,58,237,0.15)",  text: "#a78bfa" },
-  booking_admin:        { bg: "rgba(59,130,246,0.15)",  text: "#60a5fa" },
-  ministry_coordinator: { bg: "rgba(20,184,166,0.15)",  text: "#2dd4bf" },
-  brainerd_staff:       { bg: "rgba(34,197,94,0.15)",   text: "#4ade80" },
-  member:               { bg: "rgba(100,116,139,0.12)", text: "var(--bx-slate)" },
+  owner:                T("amber"),
+  system_admin:         T("indigo"),
+  booking_admin:        T("orange"),
+  ministry_coordinator: T("green"),
+  brainerd_staff:       T("stone"),
+  member:               T("gray"),
 };
 
 function RoleBadge({ role }: { role: BxRole | null }) {
@@ -66,10 +68,10 @@ function RoleBadge({ role }: { role: BxRole | null }) {
 }
 
 const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
-  confirmed:  { bg: "rgba(5,150,105,0.12)",  text: "var(--bx-sage)" },
-  pending:    { bg: "rgba(217,119,6,0.12)",   text: "#f59e0b" },
-  cancelled:  { bg: "rgba(239,68,68,0.12)",   text: "var(--bx-clay)" },
-  completed:  { bg: "rgba(100,116,139,0.12)", text: "var(--bx-slate)" },
+  confirmed:  T("green"),
+  pending:    T("amber"),
+  cancelled:  T("red"),
+  completed:  T("stone"),
 };
 
 function StatusBadge({ status }: { status: string | null }) {
@@ -266,7 +268,7 @@ export default function UserDetailClient({ authUser, profile: initialProfile, us
                 <p className="text-slate text-xs mt-1">This user has not made any bookings yet.</p>
               </div>
             ) : (
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto"><table className="w-full text-sm min-w-[34rem]">
                 <thead><tr className="border-b border-parchment/8 text-left">
                   <th className="px-4 py-3 text-xs font-semibold text-slate">Event</th>
                   <th className="px-4 py-3 text-xs font-semibold text-slate hidden sm:table-cell">Status</th>
@@ -290,7 +292,7 @@ export default function UserDetailClient({ authUser, profile: initialProfile, us
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </table></div>
             )}
           </div>
         )}

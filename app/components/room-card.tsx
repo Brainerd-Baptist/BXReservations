@@ -158,7 +158,7 @@ export function RoomCard({ room, signal, isSelected, isDisabled, isNP, tag, onTo
           <a
             href="/reserve"
             onClick={e => e.stopPropagation()}
-            className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-90 active:scale-95"
+            className="shrink-0 inline-flex items-center min-h-10 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-90 active:scale-95"
             style={{ background: "var(--bx-action-bg)", color: "var(--bx-action-fg)" }}
           >
             Reserve →
@@ -167,7 +167,7 @@ export function RoomCard({ room, signal, isSelected, isDisabled, isNP, tag, onTo
           <button
             type="button"
             onClick={e => { e.stopPropagation(); onToggle(); }}
-            className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-90 active:scale-95"
+            className="shrink-0 inline-flex items-center min-h-10 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:opacity-90 active:scale-95"
             style={isSelected
               ? { background: "var(--bx-action-bg)", color: "var(--bx-action-fg)" }
               : unavailable

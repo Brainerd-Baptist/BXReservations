@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
     `)
     .gte("created_at", bounds.from)
     .lt("created_at", bounds.to)
-    .not("status", "in", '("Declined","Cancelled by BX","Cancelled by User","Expired")');
+    .not("status", "in", '(cancelled,cancelled_by_admin,cancelled_by_user,auto_cancelled,rejected)');
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

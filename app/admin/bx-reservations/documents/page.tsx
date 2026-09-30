@@ -159,10 +159,10 @@ export default function DocumentsHub() {
             {agreementsLoading && <p className="p-8 text-center text-slate text-sm animate-pulse">Loading…</p>}
             {loadErr.agreements && <div className="p-4"><LoadError what="agreements" message={loadErr.agreements} onRetry={() => retry("agreements")} /></div>}
             {!agreementsLoading && agreements.length === 0 && agreementsLoaded && (
-              <p className="p-8 text-center text-slate text-sm">No signed agreements yet.</p>
+              <p className="p-8 text-center text-slate text-sm">No signed agreements yet. Agreements are sent automatically when you set a booking to Proposal Sent.</p>
             )}
             {!agreementsLoading && agreements.length > 0 && (
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto"><table className="w-full text-sm min-w-[34rem]">
                 <thead>
                   <tr className="border-b border-parchment/10 text-xs text-slate uppercase tracking-widest">
                     <th className="text-left px-4 py-3">Booking</th>
@@ -200,7 +200,7 @@ export default function DocumentsHub() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </table></div>
             )}
           </div>
         )}
@@ -241,7 +241,7 @@ export default function DocumentsHub() {
                 <p className="p-8 text-center text-slate text-sm">No COIs match this filter.</p>
               )}
               {!coisLoading && filteredCois.length > 0 && (
-                <table className="w-full text-sm">
+                <div className="overflow-x-auto"><table className="w-full text-sm min-w-[34rem]">
                   <thead>
                     <tr className="border-b border-parchment/10 text-xs text-slate uppercase tracking-widest">
                       <th className="text-left px-4 py-3">Booking</th>
@@ -287,7 +287,7 @@ export default function DocumentsHub() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table></div>
               )}
             </div>
           </div>

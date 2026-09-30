@@ -311,7 +311,7 @@ export default function UsersPage() {
               <p className="text-slate text-xs mt-1">Try adjusting the search or filter</p>
             </div>
           ) : (
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto"><table className="w-full text-sm min-w-[34rem]">
               <thead>
                 <tr className="border-b border-parchment/10 text-left">
                   <th className="px-4 py-3 text-xs font-semibold text-slate">User</th>
@@ -409,7 +409,7 @@ export default function UsersPage() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           )}
         </div>
 
