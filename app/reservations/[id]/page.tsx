@@ -3,6 +3,7 @@ import StatusBadge from "@/app/components/ui/status-badge";
 import { loginHref } from "@/lib/return-path";
 import Link from "next/link";
 import { getUserAndRole } from "@/lib/get-user-role";
+import { markReservationNotificationsRead } from "@/lib/notifications";
 import { adminClient, isStaffRole } from "@/lib/event-map";
 import { ROOMS } from "@/lib/rooms";
 import { logoState, readLogoRow } from "@/lib/event-logo";
@@ -118,6 +119,8 @@ export default async function ReservationDetailPage({
 
   // Access is decided here, then the row is read with the service role so staff can see any reservation.
   const db = adminClient();
+  // Opening a booking (from anywhere) counts as reading its notifications.
+  if (user) await markReservationNotificationsRead(db, user.id, id).catch(() => {});
   const { data: reservation } = await db.from("reservations").select(COLS).eq("id", id).maybeSingle();
   if (!reservation) notFound();
 

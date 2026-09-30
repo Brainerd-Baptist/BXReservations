@@ -6,6 +6,7 @@ import { ReservationListSkeleton, CardSkeleton, InlineSkeleton } from "@/app/com
 import { useToast } from "@/app/components/Toast";
 import LoadError from "@/app/components/load-error";
 import { fetchArray } from "@/lib/fetch-list";
+import { NOTIFICATIONS_CHANGED } from "@/lib/notifications";
 import { venueToday, formatYmd } from "@/lib/dates";
 
 /** The calendar API returns 14 days back → 90 days ahead; label that window. */
@@ -139,6 +140,16 @@ export default function BxReservationsAdmin() {
       setSelected(match);
     }
   }
+  // Opening a request counts as reading its notifications (clears the bell)
+  const selectedDbId = selected?.dbId;
+  useEffect(() => {
+    if (!selectedDbId) return;
+    fetch("/api/notifications/list", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reservationId: selectedDbId }),
+    }).then(() => window.dispatchEvent(new Event(NOTIFICATIONS_CHANGED))).catch(() => {});
+  }, [selectedDbId]);
+
   useEffect(() => {
     if (openedId && selected?.dbId === openedId) {
       document.getElementById(`req-${openedId}`)?.scrollIntoView({ block: "start", behavior: "smooth" });

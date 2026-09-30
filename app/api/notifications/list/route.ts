@@ -41,6 +41,7 @@ export async function POST(req: Request) {
 
   const body = await req.json().catch(() => ({}));
   const ids: string[] | undefined = body.ids; // if omitted, mark all read
+  const reservationId: string | undefined = typeof body.reservationId === "string" ? body.reservationId : undefined;
 
   const now = new Date().toISOString();
   let query = supabase
@@ -49,7 +50,9 @@ export async function POST(req: Request) {
     .eq("user_id", user.id)
     .is("read_at", null);
 
-  if (ids && ids.length > 0) {
+  if (reservationId) {
+    query = query.eq("reservation_id", reservationId);   // opened this booking
+  } else if (ids && ids.length > 0) {
     query = query.in("id", ids);
   }
 
