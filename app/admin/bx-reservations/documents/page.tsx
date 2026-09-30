@@ -87,7 +87,7 @@ export default function DocumentsHub() {
   }
 
   // ── Fetch on tab open (lazy) ──────────────────────────────────────────────────
-  useEffect(() => {
+  useEffect(() => { queueMicrotask(() => {
     if (activeTab === "agreements" && !agreementsLoaded && !agreementsLoading && !loadErr.agreements) {
       setAgreementsLoading(true);
       fetchArray<AgreementRow>("/api/admin/documents?type=agreements")
@@ -102,6 +102,7 @@ export default function DocumentsHub() {
         .catch(e => setLoadErr(prev => ({ ...prev, cois: errMsg(e) })))
         .finally(() => setCoisLoading(false));
     }
+  });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, reloadKey]);
 

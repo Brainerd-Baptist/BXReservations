@@ -24,8 +24,12 @@ const SETUP_LABELS: Record<string, string> = {
 export function RoomLightbox({ room, isSelected, isNP, onClose, onToggle, galleryMode = false }: Props) {
   const [photoIdx, setPhotoIdx] = useState(0);
 
-  // Reset photo index when room changes
-  useEffect(() => { setPhotoIdx(0); }, [room?.id]);
+  // Reset photo index when room changes ("adjust state when a prop changes")
+  const [shownRoomId, setShownRoomId] = useState(room?.id);
+  if (shownRoomId !== room?.id) {
+    setShownRoomId(room?.id);
+    setPhotoIdx(0);
+  }
 
   const prev = useCallback(() => {
     if (!room) return;

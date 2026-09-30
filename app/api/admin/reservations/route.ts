@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { sendStatusUpdateEmail } from "@/lib/email";
 import { getUserAndRole } from "@/lib/get-user-role";
 import { isStaffRole } from "@/lib/event-map";
+import { SITE_URL } from "@/lib/site";
 
 /** 401/403 unless the signed-in user holds a staff role — this route lists every reservation and changes statuses. */
 async function requireStaff(): Promise<NextResponse | null> {
@@ -271,7 +272,7 @@ export async function PATCH(req: NextRequest) {
       const firstDay = (days[0] ?? {}) as Record<string, unknown>;
       const dateStr  = (firstDay.date as string) ?? "";
       const summary  = `${row.event_name as string}${dateStr ? " — " + dateStr : ""}`;
-      const svcUrl   = process.env.NEXT_PUBLIC_SITE_URL ?? "https://bx.brainerdhq.app";
+      const svcUrl   = SITE_URL;
       const agmtRes  = await fetch(`${svcUrl}/api/agreements`, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },

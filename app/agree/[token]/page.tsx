@@ -5,6 +5,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { AgreementRecord, agreementStatus } from "@/lib/agreements";
+import { SUPPORT_EMAIL } from "@/lib/site";
 
 export default function AgreePage() {
   const { token } = useParams<{ token: string }>();
@@ -193,8 +194,8 @@ export default function AgreePage() {
 
         <p className="text-center text-slate text-xs mt-6">
           Questions? Contact the BX team at{" "}
-          <a href="mailto:bx@brainerdbaptist.org" className="underline">
-            bx@brainerdbaptist.org
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="underline">
+            {SUPPORT_EMAIL}
           </a>
         </p>
 

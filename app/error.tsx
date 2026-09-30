@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
+import { SUPPORT_EMAIL } from "@/lib/site";
 
 /** Page-level error screen: a calm message and two ways forward, never a blank page. */
 export default function RouteError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
@@ -15,7 +16,7 @@ export default function RouteError({ error, reset }: { error: Error & { digest?:
         <h1 className="text-3xl font-semibold text-parchment mb-2">This page didn&apos;t load</h1>
         <p className="text-sm text-slate mb-6">
           It&apos;s on our side, not yours. Try again, or head back home. If it keeps happening, email{" "}
-          <a className="text-brass font-semibold underline" href="mailto:barb@brainerdbaptist.org">barb@brainerdbaptist.org</a>.
+          <a className="text-brass font-semibold underline" href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button type="button" onClick={reset} className="bx-btn bx-btn--primary bx-btn--md">Try again</button>

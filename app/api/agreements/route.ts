@@ -1,6 +1,7 @@
 // app/api/agreements/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { generateToken, buildAgreementText, AgreementRecord } from "@/lib/agreements";
+import { buildAgreementText, AgreementRecord } from "@/lib/agreements";
+import { generateToken } from "@/lib/agreement-token";
 import { createClient } from "@supabase/supabase-js";
 import { requireStaff } from "@/lib/api-auth";
 

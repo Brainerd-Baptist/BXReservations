@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { brandedEmailHtml, sendEmail, escHtml } from "@/lib/email";
 import { runAutoReminders } from "@/lib/payment-reminders";
+import { SITE_URL, ADMIN_EMAIL as SITE_ADMIN_EMAIL } from "@/lib/site";
 
 // ─── Auth ──────────────────────────────────────────────────────────────────────
 // Vercel invokes this with: Authorization: Bearer <CRON_SECRET>
@@ -54,8 +55,8 @@ function daysUntil(ts: string): number {
 }
 
 // ─── Email templates ──────────────────────────────────────────────────────────
-const SITE = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://bx.brainerdhq.app").replace(/\/$/, "");
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "jking@brainerdbaptist.org";
+const SITE = SITE_URL;
+const ADMIN_EMAIL = SITE_ADMIN_EMAIL;
 
 function userReminderHtml(opts: {
   name: string;

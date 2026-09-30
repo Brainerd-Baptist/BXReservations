@@ -88,7 +88,7 @@ tile sizes so nothing pulses in unison). Dots only; off under reduced motion.
 
 `.bg-brass`, `.text-brass` and `.bg-brass.text-white` are remapped to these, so older markup is correct until it moves to the components.
 
-**Components** (`app/components/ui/`): `Button` / `ButtonLink` (primary · secondary · danger · ghost; sm/md/lg; 44px targets on touch; `loading`), `Field` + `Input`/`Textarea`/`Select` (label, hint and error wired with ids and aria), `Tabs` (APG keyboard pattern), `StatusBadge`, `EmptyState`, plus `LoadError`. Route-level `app/error.tsx` and `app/not-found.tsx`. One `<main id="main-content">` with a "Skip to content" link.
+**Components** (`app/components/ui/`): `Button` / `ButtonLink` (primary · secondary · danger · ghost; sm/md/lg; 44px targets on touch; `loading`), `Field` + `Input`/`Textarea`/`Select` (label, hint and error wired with ids and aria), `Tabs` (APG keyboard pattern), `StatusBadge`, plus `LoadError`. Route-level `app/error.tsx` and `app/not-found.tsx`. One `<main id="main-content">` with a "Skip to content" link.
 
 ## v1.43.0 — every page on the shared components
 

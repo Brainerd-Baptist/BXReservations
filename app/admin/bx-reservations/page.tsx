@@ -28,6 +28,8 @@ import PeopleCard from "@/app/components/people-card";
 import RoomRates from "@/app/components/room-rates";
 import { ROOMS } from "@/lib/rooms";
 import BookingInsights from "./booking-insights";
+import { useAdminRole } from "./admin-role";
+import { can } from "@/lib/roles";
 import AddonCatalog from "@/app/components/addon-catalog";
 import GridToggle from "@/app/components/grid-toggle";
 import { useState, useEffect, useCallback } from "react";
@@ -111,6 +113,7 @@ const STATUS_COLORS: Record<Status, string> = {
 };
 
 export default function BxReservationsAdmin() {
+  const myRole = useAdminRole();
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const [requests, setRequests] = useState<Request[]>([]);
@@ -621,10 +624,16 @@ export default function BxReservationsAdmin() {
               }}
             />
             <VenueSettings />
-            <RoomRates />
-            <AddonCatalog />
-            <GridToggle />
-            <BlackoutSettings
+            {/* Rates, add-ons and blackout rules are System Admin settings; the
+                background grid is the Owner's. Booking Admins don't see controls
+                they can't save (C2). */}
+            {can.configureSystem(myRole) ? <RoomRates /> : null}
+            {can.configureSystem(myRole) ? <AddonCatalog /> : null}
+            {myRole === "owner" && <GridToggle />}
+            {!can.configureSystem(myRole) && (
+              <p className="text-xs text-slate bx-well rounded-xl p-4">Room rates, add-ons and blackout dates are managed by a System Admin.</p>
+            )}
+            {can.configureSystem(myRole) && <BlackoutSettings
               rules={blackouts}
               loading={blackoutsLoading}
               newRuleType={newRuleType} setNewRuleType={setNewRuleType}
@@ -635,7 +644,7 @@ export default function BxReservationsAdmin() {
               saving={saving}
               onAdd={addBlackout}
               onRemove={removeBlackout}
-            />
+            />}
             </>
           )}
           {tab === "requests" && (<>

@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+
+const noopSubscribe = () => () => {};
 import { can, type BxRole } from "@/lib/roles";
 import { createPortal } from "react-dom";
 import { useModalDialog } from "./use-modal-dialog";
@@ -35,7 +37,7 @@ const adminQueueItems = [
 ];
 
 const adminManageItems = [
-  { label: "Users",          href: "/admin/bx-reservations/users",          icon: "users" },
+  { label: "Users",          href: "/admin/bx-reservations/users",          icon: "users", sysadmin: true },
   { label: "Organizations",  href: "/admin/bx-reservations/organizations",  icon: "building" },
   { label: "Ministries",     href: "/admin/bx-reservations?tab=ministries", icon: "church" },
   { label: "Reports",        href: "/admin/bx-reservations?tab=reports",    icon: "chart" },
@@ -236,14 +238,10 @@ export default function NavSidebar({
   displayName,
   email,
 }: NavSidebarProps) {
-  const [mounted, setMounted] = useState(false);
+  // True once hydrated (the portal needs document.body)
+  const mounted = useSyncExternalStore(noopSubscribe, () => true, () => false);
   const [vpHeight, setVpHeight] = useState<number | null>(null);
   const isAdmin = can.viewAdminPanel(role);
-
-  // Only render portal after hydration
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Measure viewport height via visualViewport (in-app WebKit fix)
   useEffect(() => {
@@ -450,7 +448,7 @@ export default function NavSidebar({
                   Manage
                 </p>
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.125rem" }}>
-                  {adminManageItems.map((item) => (
+                  {adminManageItems.filter((item) => !item.sysadmin || can.manageUsers(role)).map(({ sysadmin: _s, ...item }) => (
                     <NavLink key={item.href} {...item} onClose={onClose} />
                   ))}
                 </div>

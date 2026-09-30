@@ -1,4 +1,5 @@
 import { safeNext } from "@/lib/return-path";
+import { SITE_URL } from "@/lib/site";
 
 /**
  * Links in our own auth emails (confirm, reset, invite).
@@ -16,10 +17,21 @@ export function authEmailLink(
   fallbackType: "signup" | "recovery" | "invite" | "magiclink" | "email",
 ): string | null {
   if (!props?.hashed_token) return null;
-  const site = process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? "https://bx.brainerdhq.app";
+  const site = SITE_URL;
   const u = new URL("/auth/confirm", site);
   u.searchParams.set("token_hash", props.hashed_token);
   u.searchParams.set("type", props.verification_type || fallbackType);
   u.searchParams.set("next", safeNext(next) ?? "/reservations");
   return u.toString();
+}
+
+/** The same-site page a sign-up was headed to, taken from the callback URL the
+ *  sign-in page sends (?next=…); validated so it can't point elsewhere. */
+export function nextFromRedirect(redirectTo: unknown, fallback = "/reservations"): string {
+  try {
+    const u = new URL(String(redirectTo ?? ""), "https://x.invalid");
+    return safeNext(u.searchParams.get("next")) ?? fallback;
+  } catch {
+    return fallback;
+  }
 }

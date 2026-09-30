@@ -115,7 +115,7 @@ function InviteModal({
         <div className="flex items-center justify-between mb-5">
           <div>
             <h2 id="invite-user-title" className="text-parchment font-bold text-lg">Invite a user</h2>
-            <p className="text-slate text-sm mt-0.5">They'll receive a sign-in link with this role pre-assigned.</p>
+            <p className="text-slate text-sm mt-0.5">They&apos;ll receive a sign-in link with this role pre-assigned.</p>
           </div>
           <button onClick={onClose} aria-label="Close" className="text-slate hover:text-parchment p-1 rounded-lg">
             <X size={18} />
@@ -237,7 +237,8 @@ export default function UsersPage() {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  // Start the load after this render commits (no synchronous setState in an effect)
+  useEffect(() => { queueMicrotask(load); }, [load]);
 
   const filtered = users.filter((u) => {
     const q = search.toLowerCase();

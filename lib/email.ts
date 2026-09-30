@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { SITE_URL, SUPPORT_EMAIL, SUPPORT_PHONE, ADMIN_EMAIL } from "@/lib/site";
 
 // Lazy-initialize so the build succeeds even before RESEND_API_KEY is set in Vercel
 let _resend: Resend | null = null;
@@ -10,7 +11,8 @@ function getResend(): Resend {
 /** Send through Resend and throw on failure — Resend reports errors in the
  *  result instead of throwing, so failures used to be logged as "sent OK". */
 async function deliver(payload: Parameters<ReturnType<typeof getResend>["emails"]["send"]>[0]) {
-  const { error } = await getResend().emails.send(payload);
+  // Replies go to the BX inbox, not the no-reply sender (also helps deliverability)
+  const { error } = await getResend().emails.send({ replyTo: SUPPORT_EMAIL, ...payload } as typeof payload);
   if (error) throw new Error(`Resend: ${error.name ?? "error"} — ${error.message}`);
 }
 
@@ -22,8 +24,6 @@ export const escHtml = (t: unknown) =>
 export const escMultiline = (t: unknown) => escHtml(t).replace(/\r?\n/g, "<br>");
 
 const FROM        = process.env.EMAIL_FROM ?? "BX Reservations <noreply@brainerdhq.app>";
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "jking@brainerdbaptist.org";
-const SITE_URL    = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://bx.brainerdhq.app").replace(/\/$/, "");
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 // Update these if Brainerd's brand colors ever change.
@@ -32,11 +32,10 @@ const TEAL  = "#00abc9";   // primary button background, inline links
 const WHITE = "#ffffff";   // primary button text
 
 const FONT     = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
-const LOGO_URL = "https://bbc-team-dashboard.vercel.app/brainerd-logo.png";
+// Hosted on this site (it used to load from another project's site) — C2
+const LOGO_URL = `${SITE_URL}/email/brainerd-logo.png`;
 
 // Footer contact shown in the security line
-const SUPPORT_PHONE = "(423) 643-4978";
-const SUPPORT_EMAIL = "BXreservations@brainerdbaptist.org";
 const SENDER_NAME   = "The BX Team";
 const ORG_NAME      = "Brainerd Baptist Church";
 
@@ -692,9 +691,9 @@ export async function sendPaymentReminder(opts: {
       </p>`,
     ctaText: "View your reservation",
     ctaUrl: `${SITE_URL}/reservations/${opts.reservationId}`,
-    footnoteHtml: `<p style="margin:0;">Questions? Email <a href="mailto:BXreservations@brainerdbaptist.org" style="color:#00abc9;">BXreservations@brainerdbaptist.org</a>.</p>`,
+    footnoteHtml: `<p style="margin:0;">Questions? Email <a href="mailto:${SUPPORT_EMAIL}" style="color:#00abc9;">${SUPPORT_EMAIL}</a>.</p>`,
   });
-  await deliver({ from: FROM, to: opts.to, subject: `Payment reminder — ${opts.bookingNumber}`, html, replyTo: "BXreservations@brainerdbaptist.org" });
+  await deliver({ from: FROM, to: opts.to, subject: `Payment reminder — ${opts.bookingNumber}`, html, replyTo: SUPPORT_EMAIL });
 }
 
 // ─── Invoice / payment receipt (PDF attached) ─────────────────────────────────
@@ -734,14 +733,14 @@ export async function sendInvoiceEmail(opts: {
       <p style="margin:0; color:#6b7280; font-size:13px;">The ${opts.kind === "receipt" ? "receipt" : "invoice"} is attached as a PDF for your records.</p>`,
     ctaText: "View your reservation",
     ctaUrl: `${SITE_URL}/reservations/${opts.reservationId}`,
-    footnoteHtml: `<p style="margin:0;">Questions? Email <a href="mailto:BXreservations@brainerdbaptist.org" style="color:#00abc9;">BXreservations@brainerdbaptist.org</a>.</p>`,
+    footnoteHtml: `<p style="margin:0;">Questions? Email <a href="mailto:${SUPPORT_EMAIL}" style="color:#00abc9;">${SUPPORT_EMAIL}</a>.</p>`,
   });
   await deliver({
     from: FROM,
     to: opts.to,
     subject: opts.justPaid ? `Payment received — ${opts.bookingNumber}` : `${opts.kind === "receipt" ? "Receipt" : "Invoice"} — ${opts.bookingNumber} · ${opts.eventName}`,
     html,
-    replyTo: "BXreservations@brainerdbaptist.org",
+    replyTo: SUPPORT_EMAIL,
     attachments: [{ filename: opts.filename, content: Buffer.from(opts.pdf) }],
   });
 }

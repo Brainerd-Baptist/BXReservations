@@ -1,6 +1,5 @@
 // lib/agreements.ts — Agreement text, types, and token utilities
 
-import { randomBytes } from "crypto";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -26,12 +25,6 @@ export function agreementStatus(a: AgreementRecord): AgreementStatus {
   if (!a.customer_signed_at) return "pending_customer";
   if (!a.staff_signed_at)    return "pending_staff";
   return "complete";
-}
-
-// ─── Token ───────────────────────────────────────────────────────────────────
-
-export function generateToken(): string {
-  return randomBytes(24).toString("hex"); // 48-char hex, URL-safe
 }
 
 // ─── Agreement text ──────────────────────────────────────────────────────────

@@ -8,6 +8,9 @@ import {
 import { ROOMS } from "@/lib/rooms";
 import { pcoCreateEvent } from "@/lib/pco";
 import { rateLimit, clientIp, HOUR } from "@/lib/rate-limit";
+import { type BlackoutRule } from "@/lib/blackouts";
+import { checkDays } from "@/lib/booking-checks";
+import { isStaffRole } from "@/lib/event-map";
 
 // ─── Types mirrored from reserve/page.tsx ─────────────────────────────────────
 interface ContactInfo {
@@ -41,13 +44,6 @@ interface SubmitBody {
   spaceMode: "single" | "main-plus" | "multiple";
   notes: string;
   addons?: { addon_id: string; quantity: number }[];
-}
-
-// ─── Booking number generator ─────────────────────────────────────────────────
-function generateFallbackBookingNumber(): string {
-  const year = new Date().getFullYear();
-  const suffix = String(Date.now()).slice(-4);
-  return `BX-${year}-${suffix}`;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -127,6 +123,17 @@ export async function POST(req: NextRequest) {
         { cookies: { getAll: () => cookieStore.getAll(), setAll: () => {} } }
       );
       const { data: { user: authUser } } = await ssrClient.auth.getUser();
+
+      // ── Re-check the dates on the server (C2) — the browser checks too, but a
+      // request can skip it. Staff may still book around the rules.
+      const { data: roleRow } = authUser
+        ? await supabase.from("bx_user_roles").select("role").eq("user_id", authUser.id).maybeSingle()
+        : { data: null };
+      if (!isStaffRole(roleRow?.role as string | undefined)) {
+        const { data: rules } = await supabase.from("blackout_rules").select("id, rule_type, data, label, active").eq("active", true);
+        const problem = checkDays(days, (rules ?? []) as BlackoutRule[]);
+        if (problem) return NextResponse.json({ error: problem }, { status: 400 });
+      }
 
       const { data: numData, error: numErr } = await supabase.rpc("next_booking_number");
       if (numErr || !numData) {
@@ -271,28 +278,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // ── Path B: Supabase not yet configured ───────────────────────────────────
-  console.log("BX RESERVATION SUBMISSION (no DB):", JSON.stringify({
-    contact,
-    spaceMode,
-    notes,
-    days: days.filter(d => d.included).map(d => ({
-      date:      d.date,
-      headcount: d.headcount,
-      timeSlot: d.timeSlot,
-      rooms:     d.rooms.filter(r => r.requested).map(r => r.roomId),
-    })),
-  }, null, 2));
-
-  const bookingNumber = generateFallbackBookingNumber();
-
-  // Still attempt emails in dev/fallback mode
-  const dates = extractDates(days);
-  const rooms = extractRooms(days);
-  after(() => Promise.allSettled([
-    sendReservationConfirmation({ to: contact.email, name: contact.name, bookingNumber, reservationId: "", eventName: contact.eventName, dates, rooms }),
-    sendAdminNewReservationAlert({ bookingNumber, submitterName: contact.name, submitterEmail: contact.email, eventName: contact.eventName, dates, rooms, notes: notes || undefined }),
-  ]).then(() => {}));
-
-  return NextResponse.json({ bookingNumber }, { status: 201 });
+  // ── No database configured: say so instead of pretending it worked (C2).
+  console.error("[submit-reservation] Supabase is not configured");
+  return NextResponse.json({ error: "Reservations are temporarily unavailable. Please call the BX office." }, { status: 503 });
 }

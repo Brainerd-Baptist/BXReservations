@@ -4,6 +4,7 @@ import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { getUserAndRole } from "@/lib/get-user-role";
 import { can } from "@/lib/roles";
 import { brandedEmailHtml, sendEmail } from "@/lib/email";
+import { SITE_URL } from "@/lib/site";
 
 function adminClient() {
   return createServiceClient(
@@ -30,7 +31,7 @@ export async function POST(
   }
 
   const targetEmail = userData.user.email;
-  const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? "https://bx.brainerdhq.app";
+  const siteUrl = SITE_URL;
   const redirectTo = `${siteUrl}/auth/callback?next=/auth/reset-password`;
 
   // Generate recovery link without sending Supabase's generic email

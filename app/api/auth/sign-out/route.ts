@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { safeNext, loginHref } from "@/lib/return-path";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { SITE_URL } from "@/lib/site";
 
 export async function POST(request: Request) {
   // Optional `next` (e.g. "Switch account" on an invite): sign out, then go to
@@ -30,7 +31,7 @@ export async function POST(request: Request) {
 
   await supabase.auth.signOut();
 
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? "https://bx.brainerdhq.app";
+  const base = SITE_URL;
   return NextResponse.redirect(new URL(next ? loginHref(next) : "/", base), {
     status: 303,
   });

@@ -9,17 +9,16 @@ import { getSiteLook } from "@/lib/site-look";
 import { ToastProvider } from "./components/Toast";
 import SiteMetrics from "./components/site-metrics";
 
+// Inter is a variable font: one file covers every weight (C2 font trim).
 const inter = Inter({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
   variable: "--font-inter",
   display: "swap",
 });
 
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  style: ["normal", "italic"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-cormorant",
   display: "swap",
 });
@@ -37,7 +36,7 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-const APP_VERSION = "1.53.0";
+const APP_VERSION = "1.54.0";
 
 export default async function RootLayout({
   children,
@@ -56,7 +55,6 @@ export default async function RootLayout({
     >
       <head>
         {/* Blocking theme-init script — must run before first paint to prevent flash */}
-        {/* eslint-disable-next-line @next/next/no-before-interactive-script-component */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body className="flex flex-col min-h-screen">

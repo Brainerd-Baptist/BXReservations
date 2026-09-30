@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { type BxRole, can, ROLE_RANK } from "@/lib/roles";
 import { brandedEmailHtml, sendEmail, escHtml } from "@/lib/email";
+import { SITE_URL } from "@/lib/site";
 
 const ASSIGNABLE_ROLES: BxRole[] = ["booking_admin", "ministry_coordinator", "brainerd_staff", "member"];
 
@@ -62,7 +63,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Cannot assign a role equal to or above your own" }, { status: 403 });
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://bx.brainerdhq.app";
+  const appUrl = SITE_URL;
 
   // Generate an invite link via Supabase Admin — this creates the user and returns
   // an action link WITHOUT sending Supabase's generic "You've been invited" email,

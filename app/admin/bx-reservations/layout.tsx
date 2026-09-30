@@ -2,6 +2,7 @@
 import { redirect } from "next/navigation";
 import { getUserAndRole } from "@/lib/get-user-role";
 import { can } from "@/lib/roles";
+import { AdminRoleProvider } from "./admin-role";
 
 export default async function AdminLayout({
   children,
@@ -13,5 +14,5 @@ export default async function AdminLayout({
   if (!user) redirect("/login");
   if (!can.viewAdminPanel(role)) redirect("/account");
 
-  return <>{children}</>;
+  return <AdminRoleProvider role={role}>{children}</AdminRoleProvider>;
 }

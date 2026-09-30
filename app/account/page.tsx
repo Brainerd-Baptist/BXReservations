@@ -86,7 +86,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           <span style={{ lineHeight: 1, marginTop: "0.1rem", color: "var(--bx-accent-text)" }}><svg width="1.25rem" height="1.25rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" style={{display:"inline",verticalAlign:"-0.2em"}}><path d="M7.5 5.5C7.5 4.1 8.6 3 10 3s2.5 1.1 2.5 2.5v5.5c0 1.4 1.1 2.5 2.5 2.5s2.5-1.1 2.5-2.5V5.5"/><path d="M4.5 8C4.5 6.6 5.6 5.5 7 5.5"/><path d="M3 12.5C3 11.1 4.1 10 5.5 10"/><path d="M20.5 12.5C20.5 14.9 18.5 20 12 21 6 21 3.5 16.5 3.5 13.5"/></svg></span>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, fontSize: "0.9375rem", color: "var(--bx-parchment)", marginBottom: "0.2rem" }}>
-              You're in{profile?.display_name ? `, ${profile.display_name.split(" ")[0]}` : ""}!
+              You&apos;re in{profile?.display_name ? `, ${profile.display_name.split(" ")[0]}` : ""}!
             </div>
             <div style={{ fontSize: "0.8125rem", color: "var(--bx-slate)", lineHeight: 1.5 }}>
               Add your phone number below so our team can reach you about your reservation requests.

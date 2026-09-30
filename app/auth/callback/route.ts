@@ -17,6 +17,14 @@ export async function GET(request: Request) {
   const explicitNext = safeNext(requestUrl.searchParams.get("next"));
   const next = explicitNext ?? "/reservations";
 
+  // Google (or the provider) sent back an error instead of a code
+  if (!code && requestUrl.searchParams.get("error")) {
+    const u = new URL("/login", requestUrl.origin);
+    u.searchParams.set("error", "oauth");
+    if (explicitNext) u.searchParams.set("next", explicitNext);
+    return NextResponse.redirect(u);
+  }
+
   if (code) {
     const cookieStore = await cookies();
     const supabase = createServerClient(
@@ -36,7 +44,17 @@ export async function GET(request: Request) {
       }
     );
 
-    const { data: sessionData } = await supabase.auth.exchangeCodeForSession(code);
+    const { data: sessionData, error: exchangeErr } = await supabase.auth.exchangeCodeForSession(code);
+    // A second tap on an already-used link: they're signed in, so carry on.
+    const alreadyIn = exchangeErr ? (await supabase.auth.getUser()).data.user : null;
+    if (alreadyIn) return NextResponse.redirect(new URL(next, requestUrl.origin));
+    if (exchangeErr || !sessionData?.user) {
+      console.error("[auth/callback] sign-in didn't finish:", exchangeErr?.message);
+      const u = new URL("/login", requestUrl.origin);
+      u.searchParams.set("error", "oauth");
+      if (explicitNext) u.searchParams.set("next", explicitNext);
+      return NextResponse.redirect(u);
+    }
 
     // First sign-in setup: Member role + the name from Google or the sign-up
     // form (lib/account-setup.ts — the same step the email links run).

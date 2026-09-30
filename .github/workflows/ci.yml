@@ -1,9 +1,7 @@
 name: CI
 
-# Runs on every push and pull request. Build, type check and the smoke test
-# must pass. Lint is reported but doesn't block yet: ~19 older lint errors
-# are scheduled for cleanup in Phase 5 of the improvement plan, after which
-# `continue-on-error` below should be removed.
+# Runs on every push and pull request. Type check, lint, build and the smoke
+# test must all pass (lint blocks since the C2 cleanup brought errors to zero).
 
 on:
   push:
@@ -37,15 +35,15 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
-      - name: Unit tests (dates in Eastern time, sign-in return paths)
+      - name: Unit tests (dates in Eastern time, sign-in return paths, booking checks)
         run: |
           TZ=America/New_York node --experimental-strip-types scripts/test-dates.mts
           TZ=UTC node --experimental-strip-types scripts/test-dates.mts
           node --experimental-strip-types scripts/test-return-path.mts
+          npx --yes tsx scripts/test-booking-checks.cts
 
-      - name: Lint (not blocking yet)
+      - name: Lint
         run: npm run lint
-        continue-on-error: true
 
       - name: Build
         run: npx next build

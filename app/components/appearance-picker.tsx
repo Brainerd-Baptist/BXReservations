@@ -8,7 +8,6 @@ import {
   currentAppearance,
   type Appearance,
 } from "@/lib/theme";
-import { createClient } from "@/lib/supabase/client";
 import { useToast } from "./Toast";
 
 /* Every picker on the page reads the same source of truth — the
@@ -60,6 +59,8 @@ export default function AppearancePicker({ userId, size = "sm" }: Props) {
     if (!userId) return;
     setSaving(true);
     try {
+      // Loaded on demand so the header doesn't carry the database client (C2)
+      const { createClient } = await import("@/lib/supabase/client");
       const { error } = await createClient()
         .from("bx_user_prefs")
         .upsert({ user_id: userId, theme: a, updated_at: new Date().toISOString() });

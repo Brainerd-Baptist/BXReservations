@@ -3,6 +3,7 @@ import { authEmailLink } from "@/lib/auth-links";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { brandedEmailHtml, sendEmail } from "@/lib/email";
 import { rateLimit, clientIp, HOUR } from "@/lib/rate-limit";
+import { SITE_URL } from "@/lib/site";
 
 function svc() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest) {
   const client = svc();
   if (!client) return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
 
-  const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://bx.brainerdhq.app";
+  const siteUrl = SITE_URL;
   const finalRedirect = redirectTo ?? `${siteUrl}/auth/callback?next=/auth/reset-password`;
 
   // Generate recovery link without sending Supabase's generic email

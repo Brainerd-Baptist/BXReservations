@@ -8,7 +8,14 @@ import { loginHref } from "@/lib/return-path";
 import Image from "next/image";
 import NavSidebar from "./nav-sidebar";
 import ProfileMenu from "./profile-menu";
-import NotificationBell from "./notification-bell";
+import dynamic from "next/dynamic";
+
+// Loaded only for signed-in people, so visitors don't download the live
+// notification library (~235 KB) on every page (C2).
+const NotificationBell = dynamic(() => import("./notification-bell"), {
+  ssr: false,
+  loading: () => <span aria-hidden="true" style={{ display: "inline-block", width: 40, height: 40 }} />,
+});
 
 interface HeaderShellProps {
   initials: string;

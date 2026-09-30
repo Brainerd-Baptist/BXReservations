@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { adminClient, isStaffRole } from "@/lib/event-map";
+import { can, type BxRole } from "@/lib/roles";
 
 // ─── Auth (matches /api/admin/reports/bx pattern) ────────────────────────────
 
@@ -78,6 +79,8 @@ export async function PATCH(request: NextRequest) {
   const sb = await sbServer();
   const auth = await requireAdmin(sb);
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // Changing prices is a System Admin setting (C2); Booking Admins can still read rates.
+  if (!can.configureSystem(auth.role as BxRole)) return NextResponse.json({ error: "Owner or System Admin only" }, { status: 403 });
 
   const body = await request.json();
   const { room_id, rate_per_hour, effective_date } = body;

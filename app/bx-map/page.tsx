@@ -9,6 +9,7 @@ import { getUserAndRole } from "@/lib/get-user-role";
 import { adminClient } from "@/lib/event-map";
 import { resolveShareToken } from "@/lib/event-share";
 import BxMapEmbed from "./bx-map-embed";
+import { loginHref } from "@/lib/return-path";
 
 export const metadata: Metadata = {
   title: "BX Building Map",
@@ -21,7 +22,7 @@ export default async function BxMapPage({ searchParams }: { searchParams: Promis
   const { user } = await getUserAndRole();
   const actions = user
     ? [{ label: "Plan an event on this map", href: "/bx-map/plan" }]
-    : [{ label: "Sign in to plan an event", href: "/login" }];
+    : [{ label: "Sign in to plan an event", href: loginHref("/bx-map/plan") }];
 
   return (
     <div style={{ height: "calc(100dvh - var(--bx-header-h))", overflow: "hidden", display: "flex", flexDirection: "column" }}>

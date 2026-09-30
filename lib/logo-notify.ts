@@ -5,10 +5,11 @@ import { Resend } from "resend";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { brandedEmailHtml } from "@/lib/email";
 import type { ReservationLogoRow } from "@/lib/event-logo";
+import { SITE_URL as SITE, ADMIN_EMAIL as SITE_ADMIN_EMAIL } from "@/lib/site";
 
 const FROM = process.env.EMAIL_FROM ?? "BX Reservations <noreply@brainerdhq.app>";
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "jking@brainerdbaptist.org";
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://bx-reservations.vercel.app").replace(/\/$/, "");
+const ADMIN_EMAIL = SITE_ADMIN_EMAIL;
+const SITE_URL = SITE;
 const STAFF_ROLES = ["owner", "system_admin", "booking_admin"];
 
 function resend(): Resend | null {

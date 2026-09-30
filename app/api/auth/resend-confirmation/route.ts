@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { authEmailLink } from "@/lib/auth-links";
+import { authEmailLink, nextFromRedirect } from "@/lib/auth-links";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { brandedEmailHtml, sendEmail } from "@/lib/email";
 import { rateLimit, clientIp, HOUR } from "@/lib/rate-limit";
+import { SITE_URL } from "@/lib/site";
 
 function svc() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest) {
   const client = svc();
   if (!client) return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
 
-  const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://bx.brainerdhq.app";
+  const siteUrl = SITE_URL;
   const finalRedirect = redirectTo ?? `${siteUrl}/auth/callback`;
 
   // Use a magic link to confirm + log in the user without touching their password
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest) {
   });
 
   // Always return 200 to prevent enumeration
-  const confirmUrl = authEmailLink(linkData?.properties, "/reservations", "magiclink");
+  const confirmUrl = authEmailLink(linkData?.properties, nextFromRedirect(redirectTo), "magiclink");
   if (linkErr || !confirmUrl) {
     console.warn("[resend-confirmation] generateLink issue:", linkErr?.message);
     return NextResponse.json({ ok: true });

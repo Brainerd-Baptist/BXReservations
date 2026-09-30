@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { authEmailLink } from "@/lib/auth-links";
+import { authEmailLink, nextFromRedirect } from "@/lib/auth-links";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { brandedEmailHtml, sendEmail, escHtml } from "@/lib/email";
 import { rateLimit, clientIp, HOUR } from "@/lib/rate-limit";
+import { SITE_URL } from "@/lib/site";
 
 function svc() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
   const client = svc();
   if (!client) return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
 
-  const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://bx.brainerdhq.app";
+  const siteUrl = SITE_URL;
   const finalRedirect = redirectTo ?? `${siteUrl}/auth/callback`;
 
   // generateLink for signup: creates user (or regenerates link if unconfirmed) without sending Supabase's email
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 
-  const confirmUrl = authEmailLink(linkData?.properties, "/reservations", "signup");
+  const confirmUrl = authEmailLink(linkData?.properties, nextFromRedirect(redirectTo), "signup");
   if (!confirmUrl) {
     return NextResponse.json({ error: "Failed to generate confirmation link" }, { status: 500 });
   }

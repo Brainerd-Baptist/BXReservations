@@ -1,7 +1,7 @@
 "use client";
 
 import { safeNext } from "@/lib/return-path";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useSyncExternalStore } from "react";
 import BodyPortal from "@/app/components/body-portal";
 import { useModalDialog } from "@/app/components/use-modal-dialog";
 import { useRouter } from "next/navigation";
@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import BxMark from "@/app/components/bx-mark";
 
 type Mode = "signin" | "signup" | "confirm_sent";
+const noopSubscribe = () => () => {};
 
 export default function LoginPage() {
   const router = useRouter();
@@ -21,7 +22,14 @@ export default function LoginPage() {
   const [lastName, setLastName] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [errorState, setError] = useState("");
+  // Sent back here after a Google sign-in that didn't finish (?error=oauth)
+  const oauthFailed = useSyncExternalStore(
+    noopSubscribe,
+    () => new URLSearchParams(window.location.search).get("error") === "oauth",
+    () => false,
+  );
+  const error = errorState || (oauthFailed ? "Google sign-in didn't finish. Please try again, or sign in with your email and password." : "");
   const [confirmEmail, setConfirmEmail] = useState("");
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSent, setResendSent] = useState(false);

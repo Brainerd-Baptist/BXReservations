@@ -10,12 +10,13 @@
  * authorized staff should be visiting it, and it only needs to run once.
  */
 import { requireSysadmin } from "@/lib/api-auth";
+import { SITE_URL } from "@/lib/site";
 export async function GET() {
   // C1: only an Owner or System Admin may start the Planning Center link.
   const denied = await requireSysadmin();
   if (denied) return denied;
   const clientId   = process.env.PCO_APP_ID ?? "";
-  const siteUrl    = process.env.NEXT_PUBLIC_SITE_URL ?? "https://bx.brainerdhq.app";
+  const siteUrl    = SITE_URL;
   const redirectUri = `${siteUrl}/api/pco-auth/callback`;
 
   const params = new URLSearchParams({

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { getUserAndRole } from "@/lib/get-user-role";
 import { adminClient } from "@/lib/event-map";
-import { getSiteLook } from "@/lib/site-look";
+import { getSiteLook, SITE_LOOK_TAG } from "@/lib/site-look";
 
 async function requireOwner() {
   const { user, role } = await getUserAndRole();
@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
   if (!rows.length) return NextResponse.json({ error: "Nothing to change" }, { status: 400 });
   const { error } = await adminClient().from("bx_settings").upsert(rows, { onConflict: "key" });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  revalidateTag(SITE_LOOK_TAG, { expire: 0 });
   revalidatePath("/", "layout");
   return NextResponse.json(await getSiteLook());
 }

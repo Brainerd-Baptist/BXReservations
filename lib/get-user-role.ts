@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { cache } from "react";
 import type { BxRole } from "@/lib/roles";
 import { ensureAccountSetup, nameFromAuth } from "@/lib/account-setup";
 
@@ -11,10 +12,14 @@ export interface UserProfile {
   organization: string | null;
 }
 
-export async function getUserAndRole(): Promise<{
+/** Once per request: the header, layout and page all ask, so share the answer (C2). */
+export const getUserAndRole = cache(readUserAndRole);
+
+async function readUserAndRole(): Promise<{
   user: { id: string; email: string } | null;
   role: BxRole | null;
   profile: UserProfile | null;
+  theme?: string | null;
 }> {
   const cookieStore = await cookies();
   const supabase = createServerClient(
@@ -47,7 +52,7 @@ export async function getUserAndRole(): Promise<{
     { cookies: { getAll: () => [], setAll: () => {} } }
   );
 
-  const [roleResult, profileResult] = await Promise.all([
+  const [roleResult, profileResult, prefsResult] = await Promise.all([
     adminClient
       .from("bx_user_roles")
       .select("role")
@@ -58,7 +63,10 @@ export async function getUserAndRole(): Promise<{
       .select("display_name, phone, organization")
       .eq("user_id", user.id)
       .maybeSingle(),
+    // Saved theme, fetched alongside instead of after (C2)
+    adminClient.from("bx_user_prefs").select("theme").eq("user_id", user.id).maybeSingle(),
   ]);
+  const theme = (prefsResult.data?.theme as string | undefined) ?? null;
 
   // Safety net: an account that somehow skipped first sign-in setup (older
   // accounts, a link opened in another browser) is set up now.
@@ -72,6 +80,7 @@ export async function getUserAndRole(): Promise<{
         phone: profileResult.data?.phone ?? null,
         organization: profileResult.data?.organization ?? null,
       },
+      theme,
     };
   }
 
@@ -79,5 +88,6 @@ export async function getUserAndRole(): Promise<{
     user: { id: user.id, email: user.email ?? "" },
     role: (roleResult.data?.role as BxRole) ?? null,
     profile: profileResult.data ?? null,
+    theme,
   };
 }

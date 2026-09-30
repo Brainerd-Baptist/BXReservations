@@ -1,7 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendCollaboratorInvite } from "@/lib/email";
+import { SITE_URL } from "@/lib/site";
 
-const SITE = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://bx.brainerdhq.app").replace(/\/$/, "");
+const SITE = SITE_URL;
 
 /** Send (or re-send) one invitation email and record whether it went out. */
 export async function deliverInvite(db: SupabaseClient, collabId: string, inviterName: string): Promise<{ ok: boolean; error?: string }> {

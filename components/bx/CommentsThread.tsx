@@ -70,7 +70,7 @@ export default function CommentsThread({ reservationId, fetchUrl, postUrl, canIn
   }, [fetchUrl]);
 
   useEffect(() => {
-    if (autoLoad) load();
+    if (autoLoad) queueMicrotask(load);
   }, [autoLoad, load]);
 
   async function post() {

@@ -1,11 +1,9 @@
 import Link from "next/link";
 import { getUserAndRole } from "@/lib/get-user-role";
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
 import HeaderShell from "./components/header-shell";
 
 export default async function SiteHeader() {
-  const { user, role, profile } = await getUserAndRole();
+  const { user, role, profile, theme } = await getUserAndRole();
 
   const initials = profile?.display_name
     ? profile.display_name
@@ -23,35 +21,7 @@ export default async function SiteHeader() {
         .join("")
     : "";
 
-  // Fetch saved theme preference if user is logged in
-  let savedTheme: string | null = null;
-  if (user) {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll: () => cookieStore.getAll(),
-          setAll: (cs) => {
-            try {
-              cs.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options)
-              );
-            } catch {
-              // Server Component — cookies are read-only here; middleware refreshes the session.
-            }
-          },
-        },
-      }
-    );
-    const { data } = await supabase
-      .from("bx_user_prefs")
-      .select("theme")
-      .eq("user_id", user.id)
-      .single();
-    savedTheme = data?.theme ?? null;
-  }
+  const savedTheme: string | null = theme ?? null;
 
   // Every account needs a name (bookings and agreements use it). Google
   // usually provides one; if not, nudge until they add it.

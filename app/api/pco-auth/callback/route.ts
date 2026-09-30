@@ -9,6 +9,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { requireSysadmin } from "@/lib/api-auth";
+import { SITE_URL } from "@/lib/site";
 
 export async function GET(req: NextRequest) {
   // C1: the token page is for an Owner or System Admin only.
@@ -16,7 +17,7 @@ export async function GET(req: NextRequest) {
   if (denied) return denied;
   const code        = req.nextUrl.searchParams.get("code");
   const error       = req.nextUrl.searchParams.get("error");
-  const siteUrl     = process.env.NEXT_PUBLIC_SITE_URL ?? "https://bx.brainerdhq.app";
+  const siteUrl     = SITE_URL;
   const redirectUri = `${siteUrl}/api/pco-auth/callback`;
 
   if (error || !code) {

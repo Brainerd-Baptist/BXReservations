@@ -10,6 +10,7 @@ import { ROOMS, type Room } from "@/lib/rooms";
 import { RoomCard } from "@/app/components/room-card";
 import { RoomLightbox } from "@/app/components/room-lightbox";
 import { trackFunnel } from "@/lib/funnel";
+import { SUPPORT_EMAIL } from "@/lib/site";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -197,7 +198,7 @@ function ContactStep({
   return (
     <div className="max-w-lg mx-auto">
       <div className="animate-in bx-glass rounded-2xl p-6 mb-6">
-      <h2 className="text-2xl font-bold text-parchment mb-1">Let's get started</h2>
+      <h2 className="text-2xl font-bold text-parchment mb-1">Let&apos;s get started</h2>
       <p className="text-slate mb-4">Tell us a bit about you and your event.</p>
 
       {/* Returning-user nudge — only shown when signed out */}
@@ -584,10 +585,11 @@ function DayCard({
   const [expanded, setExpanded] = useState(true);
   const [previewRoom, setPreviewRoom] = useState<Room | null>(null);
   const [rawHeadcount, setRawHeadcount] = useState(String(day.headcount));
-  // Sync display value when parent changes headcount (e.g. +/- buttons)
-  const prevHeadcountRef = useRef(day.headcount);
-  if (prevHeadcountRef.current !== day.headcount) {
-    prevHeadcountRef.current = day.headcount;
+  // Sync display value when parent changes headcount (e.g. +/- buttons) —
+  // React's "adjust state when a prop changes" pattern (no refs during render)
+  const [prevHeadcount, setPrevHeadcount] = useState(day.headcount);
+  if (prevHeadcount !== day.headcount) {
+    setPrevHeadcount(day.headcount);
     // Only override raw if the user isn't mid-edit (raw matches a valid number)
     if (parseInt(rawHeadcount, 10) !== day.headcount) {
       setRawHeadcount(String(day.headcount));
@@ -1111,7 +1113,7 @@ function ReviewStep({
             )}
             <p className="mt-1.5 opacity-90">
               Everything you entered is still here. Try again, or email{" "}
-              <a href="mailto:barb@brainerdbaptist.org" className="underline font-semibold">barb@brainerdbaptist.org</a>{" "}
+              <a href={`mailto:${SUPPORT_EMAIL}`} className="underline font-semibold">{SUPPORT_EMAIL}</a>{" "}
               and we&apos;ll help you finish it.
             </p>
           </div>
