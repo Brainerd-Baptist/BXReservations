@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
-import { LinkOff, PenLine, Upload, UploadCloud } from "lucide-react";
+import { Link2Off, PenLine, Upload, UploadCloud } from "lucide-react";
 
 type PageState = "loading" | "ready" | "already_uploaded" | "not_found" | "uploading" | "success" | "error";
 type Mode = "upload" | "build";
@@ -209,7 +209,7 @@ export default function ScheduleUploadPage() {
           {/* ── Not found ── */}
           {state === "not_found" && (
             <div className="py-8 text-center">
-              <div className="flex justify-center mb-3"><LinkOff size={36} className="text-gray-400" /></div>
+              <div className="flex justify-center mb-3"><Link2Off size={36} className="text-gray-400" /></div>
               <h2 className="text-base font-semibold text-gray-800 mb-2">Link not found or expired</h2>
               <p className="text-sm text-gray-500">
                 This upload link is invalid or has already been used.
