@@ -13,6 +13,7 @@ import { checkDays } from "@/lib/booking-checks";
 import { can, reservationFlagsForRole, type BxRole } from "@/lib/roles";
 import { attachRewardAtSubmit } from "@/lib/survey";
 import { addAddons, syncRoomCharges } from "@/lib/room-prices";
+import { matchOrCreateOrg, createOrgFlag } from "@/lib/org-match";
 
 // ─── Types mirrored from reserve/page.tsx ─────────────────────────────────────
 interface ContactInfo {
@@ -169,6 +170,40 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Failed to save reservation" }, { status: 500 });
       }
       const reservationId = insertData.id as string;
+
+      // ── Org fuzzy-match: link contact_org → organization_id ──────────────
+      if (contact.org?.trim()) {
+        try {
+          const { createClient: createAdminClient } = await import("@supabase/supabase-js");
+          const adminDb = createAdminClient(supabaseUrl!, supabaseServiceKey!);
+          const orgResult = await matchOrCreateOrg(adminDb as never, contact.org.trim());
+
+          // Write match result back to the reservation row
+          if (orgResult.organization_id || orgResult.org_match_method !== "none") {
+            await adminDb.from("reservations").update({
+              organization_id:       orgResult.organization_id,
+              org_match_confidence:  orgResult.org_match_confidence,
+              org_match_method:      orgResult.org_match_method,
+            }).eq("id", reservationId);
+          }
+
+          // Create admin flag if needed
+          if (orgResult.flag_type) {
+            await createOrgFlag(adminDb as never, {
+              reservationId,
+              rawText:        contact.org.trim(),
+              flagType:       orgResult.flag_type,
+              suggestedOrgId: orgResult.organization_id,
+              confidence:     orgResult.org_match_confidence,
+              candidates:     orgResult.candidates,
+            });
+          }
+        } catch (orgErr) {
+          // Non-fatal: log and move on — the reservation is already saved
+          console.error("[org-match] pipeline error:", orgErr);
+        }
+      }
+      // ─────────────────────────────────────────────────────────────────────
 
       // ── Add-ons chosen on the form → charge lines at catalog price, following
       // each add-on's room and hour rules (lib/addon-pricing)

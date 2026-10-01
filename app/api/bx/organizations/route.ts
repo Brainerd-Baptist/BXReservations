@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 import { getUserAndRole } from "@/lib/get-user-role";
 import { can } from "@/lib/roles";
+import { normalizeOrgName, canonicalOrgName } from "@/lib/org-name";
 
 // ─── Admin service-role client ──────────────────────────────────────────────
 function adminClient() {
@@ -95,11 +96,12 @@ export async function POST(request: NextRequest) {
   }
 
   const db = adminClient();
+  const normalizedName = normalizeOrgName(name.trim());
   const { data, error } = await db
     .from("bx_organizations")
     .insert({
-      name: name.trim(),
-      canonical_name: (canonical_name ?? name).trim().toLowerCase(),
+      name: normalizedName,
+      canonical_name: canonicalOrgName(canonical_name ?? name),
       primary_contact_name: primary_contact_name ?? null,
       primary_contact_email: primary_contact_email ?? null,
       phone: phone ?? null,

@@ -3,6 +3,7 @@ import { getUserAndRole } from "@/lib/get-user-role";
 import { can } from "@/lib/roles";
 import { createServerClient } from "@supabase/ssr";
 import OrganizationsClient from "./organizations-client";
+import OrgFlagQueue, { type OrgFlag } from "./org-flag-queue";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 export interface OrgSummary {
@@ -31,17 +32,37 @@ export default async function OrganizationsPage() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { cookies: { getAll: () => [], setAll: () => {} } }
   );
-  const { data: rawOrgs, error } = await supabase
-    .from("bx_organizations")
-    .select(
-      `id, name, canonical_name, primary_contact_name, primary_contact_email,
-       phone, address, tier, notes, created_at,
-       bx_org_users(user_id),
-       reservations!organization_id(id)`
-    )
-    .order("name");
 
-  const organizations: OrgSummary[] = (rawOrgs ?? []).map((o) => ({
+  // Fetch orgs + flags in parallel
+  const [orgsResult, flagsResult] = await Promise.all([
+    supabase
+      .from("bx_organizations")
+      .select(
+        `id, name, canonical_name, primary_contact_name, primary_contact_email,
+         phone, address, tier, notes, created_at,
+         bx_org_users(user_id),
+         reservations!organization_id(id)`
+      )
+      .order("name"),
+    supabase
+      .from("bx_org_flags")
+      .select(`
+        id, created_at, raw_text, flag_type, confidence, candidates,
+        resolved_at, resolution, reservation_id,
+        reservations!reservation_id (
+          id, booking_number, contact_name, event_name, status
+        ),
+        suggested_org_id,
+        bx_organizations!suggested_org_id (
+          id, name, tier, status
+        )
+      `)
+      .is("resolved_at", null)
+      .order("created_at", { ascending: false })
+      .limit(100),
+  ]);
+
+  const organizations: OrgSummary[] = (orgsResult.data ?? []).map((o) => ({
     id: o.id,
     name: o.name,
     canonical_name: o.canonical_name,
@@ -56,14 +77,27 @@ export default async function OrganizationsPage() {
     reservation_count: (o.reservations as unknown[])?.length ?? 0,
   }));
 
-  if (error) {
-    console.error("orgs fetch error", error);
+  const flags = (flagsResult.data ?? []) as unknown as OrgFlag[];
+
+  if (orgsResult.error) {
+    console.error("orgs fetch error", orgsResult.error);
   }
 
   return (
-    <OrganizationsClient
-      initialOrganizations={organizations}
-      fetchError={error?.message ?? null}
-    />
+    <>
+      <OrganizationsClient
+        initialOrganizations={organizations}
+        fetchError={orgsResult.error?.message ?? null}
+      />
+      <div
+        style={{
+          maxWidth: 900,
+          margin: "0 auto",
+          padding: "0 16px 64px",
+        }}
+      >
+        <OrgFlagQueue initialFlags={flags} />
+      </div>
+    </>
   );
 }
