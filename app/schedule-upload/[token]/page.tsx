@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
+import { LinkOff, PenLine, Upload, UploadCloud } from "lucide-react";
 
 type PageState = "loading" | "ready" | "already_uploaded" | "not_found" | "uploading" | "success" | "error";
 type Mode = "upload" | "build";
@@ -208,7 +209,7 @@ export default function ScheduleUploadPage() {
           {/* ── Not found ── */}
           {state === "not_found" && (
             <div className="py-8 text-center">
-              <div className="text-4xl mb-3">🔗</div>
+              <div className="flex justify-center mb-3"><LinkOff size={36} className="text-gray-400" /></div>
               <h2 className="text-base font-semibold text-gray-800 mb-2">Link not found or expired</h2>
               <p className="text-sm text-gray-500">
                 This upload link is invalid or has already been used.
@@ -261,14 +262,14 @@ export default function ScheduleUploadPage() {
                   className={`flex-1 py-2.5 text-sm font-medium transition-colors
                     ${mode === "build" ? "bg-[#00205b] text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
                 >
-                  ✏️ Build a schedule
+                  <span className="flex items-center justify-center gap-1.5"><PenLine size={14} />Build a schedule</span>
                 </button>
                 <button
                   onClick={() => { setMode("upload"); setErrorMsg(""); }}
                   className={`flex-1 py-2.5 text-sm font-medium transition-colors border-l border-gray-200
                     ${mode === "upload" ? "bg-[#00205b] text-white" : "bg-white text-gray-600 hover:bg-gray-50"}`}
                 >
-                  📁 Upload a file
+                  <span className="flex items-center justify-center gap-1.5"><Upload size={14} />Upload a file</span>
                 </button>
               </div>
 
@@ -351,7 +352,7 @@ export default function ScheduleUploadPage() {
                       </div>
                     ) : (
                       <div>
-                        <p className="text-3xl mb-2">📁</p>
+                        <div className="flex justify-center mb-2"><UploadCloud size={32} className="text-gray-400" /></div>
                         <p className="text-sm font-medium text-gray-700">Drag & drop or tap to browse</p>
                         <p className="text-xs text-gray-400 mt-1">PDF, Word, JPG, PNG — up to {MAX_MB} MB</p>
                       </div>

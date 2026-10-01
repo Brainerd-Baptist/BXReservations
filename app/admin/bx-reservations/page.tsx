@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FileText, Shield, DollarSign, AlertTriangle, FolderOpen } from "lucide-react";
+import { FileText, Shield, DollarSign, AlertTriangle, FolderOpen, Clock, Check } from "lucide-react";
 import { ReservationListSkeleton, CardSkeleton, InlineSkeleton } from "@/app/components/Skeleton";
 import { useToast } from "@/app/components/Toast";
 import LoadError from "@/app/components/load-error";
@@ -996,7 +996,7 @@ export default function BxReservationsAdmin() {
                               {ds.agreement_sent_at && !ds.agreement_signed_at && (
                                 <div className="space-y-1">
                                   <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-1">
-                                    ⏳ Sent {new Date(ds.agreement_sent_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })} — awaiting signature
+                                    <Clock size={11} className="inline mr-1 shrink-0" />Sent {new Date(ds.agreement_sent_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })} — awaiting signature
                                   </p>
                                   <button
                                     className="bx-btn bx-btn--secondary bx-btn--sm"
@@ -1034,7 +1034,7 @@ export default function BxReservationsAdmin() {
                                   <div className="space-y-2">
                                     <div className="flex items-center gap-3 flex-wrap">
                                       <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
-                                        ⏳ Uploaded {new Date(ds.coi_uploaded_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })} — pending review
+                                        <Clock size={11} className="inline mr-1 shrink-0" />Uploaded {new Date(ds.coi_uploaded_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })} — pending review
                                       </p>
                                       {ds.coi_file_url && (
                                         <a href={ds.coi_file_url} target="_blank" rel="noreferrer" className="text-xs text-[var(--bx-brass)] underline">
@@ -1120,7 +1120,7 @@ export default function BxReservationsAdmin() {
                               ) : ds.schedule_requested_at ? (
                                 <div className="space-y-1.5">
                                   <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-1">
-                                    ⏳ Requested {new Date(ds.schedule_requested_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })} — awaiting upload
+                                    <Clock size={11} className="inline mr-1 shrink-0" />Requested {new Date(ds.schedule_requested_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })} — awaiting upload
                                   </p>
                                   <button
                                     className="btn-outline text-xs"
@@ -1464,7 +1464,7 @@ export default function BxReservationsAdmin() {
 
                           {ag && !customerSigned && (
                             <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-1">
-                              ⏳ Agreement sent — awaiting customer signature
+                              <span className="inline-flex items-center gap-1"><Clock size={11} className="shrink-0" />Agreement sent — awaiting customer signature</span>
                             </p>
                           )}
                           {ag && customerSigned && !staffSigned && (
@@ -1543,7 +1543,7 @@ export default function BxReservationsAdmin() {
                       {deleteConfirm === req.id ? (
                         <div className="rounded-xl p-4 space-y-3" style={{ background: "color-mix(in srgb, var(--bx-parchment) 4%, transparent)", border: "1px solid color-mix(in srgb, var(--bx-clay) 35%, transparent)" }}>
                           <div className="flex gap-2.5 items-start">
-                            <span className="text-base leading-none mt-0.5">⚠️</span>
+                            <AlertTriangle size={16} className="shrink-0 text-amber-400 mt-0.5" />
                             <div>
                               <p className="text-xs font-bold mb-0.5" style={{ color: "var(--bx-parchment)" }}>
                                 Permanently delete {req.id}?
