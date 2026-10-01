@@ -219,6 +219,10 @@ export default function BxReservationsAdmin() {
     payment_method: string | null;
     payment_receipt_url: string | null;
     payment_recorded_by: string | null;
+    schedule_requested_at: string | null;
+    schedule_uploaded_at: string | null;
+    schedule_filename: string | null;
+    schedule_url: string | null;
     agreement_sent_at: string | null;
     agreement_signed_at: string | null;
     agreement_id: string | null;
@@ -237,6 +241,7 @@ export default function BxReservationsAdmin() {
   const [bookingDiscounts, setBookingDiscounts] = useState<Record<string, Array<{ id: string; type: string; value: number; scope: string; discount_reason: string | null; note: string | null }>>>({});
   const [bookingDiscountForm, setBookingDiscountForm] = useState<Record<string, { open: boolean; type: string; value: string; reason: string; note: string; busy: boolean }>>({});
   const [sendingAgreementV2, setSendingAgreementV2] = useState<Record<string, boolean>>({});
+  const [requestingSchedule, setRequestingSchedule] = useState<Record<string, boolean>>({});
   const [countersigning, setCountersigning] = useState<string | null>(null);
   const [countersignName, setCountersignName] = useState("");
 
@@ -499,8 +504,12 @@ export default function BxReservationsAdmin() {
           payment_amount:      r.payment_amount ?? null,
           payment_method:      r.payment_method ?? null,
           payment_receipt_url: r.payment_receipt_url ?? null,
-          payment_recorded_by: r.payment_recorded_by ?? null,
-          agreement_sent_at:   ag?.sent_at ?? null,
+          payment_recorded_by:  r.payment_recorded_by ?? null,
+          schedule_requested_at: r.schedule_requested_at ?? null,
+          schedule_uploaded_at:  r.schedule_uploaded_at ?? null,
+          schedule_filename:     r.schedule_filename ?? null,
+          schedule_url:          r.schedule_url ?? null,
+          agreement_sent_at:     ag?.sent_at ?? null,
           agreement_signed_at: ag?.customer_signed_at ?? null,
           agreement_id:        ag?.id ?? null,
           agreement_pdf_url:   ag?.pdf_url ?? null,
@@ -558,6 +567,38 @@ export default function BxReservationsAdmin() {
   // KPIs
   const pending = requests.filter((r) => r.status === "Requested").length;
   const awaitingDeposit = requests.filter((r) => r.status === "Proposal Sent").length;
+
+  async function handleRequestSchedule(req: Request) {
+    if (!req.dbId) return;
+    setRequestingSchedule(prev => ({ ...prev, [req.id]: true }));
+    try {
+      const res = await fetch("/api/admin/request-schedule", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reservationId: req.dbId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast("Failed to send schedule request: " + (data.error ?? "Unknown"), "error");
+        return;
+      }
+      if (data.skipped === "already_uploaded") {
+        toast("Schedule already uploaded — no email sent.", "info");
+        return;
+      }
+      toast("Schedule request email sent to " + (data.to ?? "organizer") + "!");
+      // Optimistically update docStatus so the UI shows "Requested"
+      setDocStatus(prev => {
+        const existing = prev[req.id];
+        if (!existing) return prev;
+        return { ...prev, [req.id]: { ...existing, schedule_requested_at: data.requestedAt } };
+      });
+    } catch {
+      toast("Network error — couldn't send schedule request.", "error");
+    } finally {
+      setRequestingSchedule(prev => ({ ...prev, [req.id]: false }));
+    }
+  }
 
   async function doCountersign(req: Request) {
     const name = countersignName.trim();
@@ -1059,6 +1100,45 @@ export default function BxReservationsAdmin() {
                             <div className="space-y-2">
                               <p className="text-xs font-semibold text-parchment/70">Charges &amp; payments</p>
                               <BillingCard reservationId={req.dbId!} compact />
+                            </div>
+
+                            {/* Event Schedule */}
+                            <div className="space-y-2">
+                              <p className="text-xs font-semibold text-parchment/70">Event Schedule</p>
+                              {ds.schedule_uploaded_at ? (
+                                <div className="space-y-1">
+                                  <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-2 py-1">
+                                    ✓ Uploaded {new Date(ds.schedule_uploaded_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                                    {ds.schedule_filename ? ` — ${ds.schedule_filename}` : ""}
+                                  </p>
+                                  {ds.schedule_url && (
+                                    <a href={ds.schedule_url} target="_blank" rel="noreferrer" className="text-xs text-[var(--bx-brass)] underline">
+                                      Download schedule
+                                    </a>
+                                  )}
+                                </div>
+                              ) : ds.schedule_requested_at ? (
+                                <div className="space-y-1.5">
+                                  <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                                    ⏳ Requested {new Date(ds.schedule_requested_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })} — awaiting upload
+                                  </p>
+                                  <button
+                                    className="btn-outline text-xs"
+                                    disabled={requestingSchedule[req.id]}
+                                    onClick={() => handleRequestSchedule(req)}
+                                  >
+                                    {requestingSchedule[req.id] ? "Sending…" : "Resend Request →"}
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  className="btn-outline text-xs"
+                                  disabled={requestingSchedule[req.id]}
+                                  onClick={() => handleRequestSchedule(req)}
+                                >
+                                  {requestingSchedule[req.id] ? "Sending…" : "Request Event Schedule →"}
+                                </button>
+                              )}
                             </div>
                           </>)}
                         </div>

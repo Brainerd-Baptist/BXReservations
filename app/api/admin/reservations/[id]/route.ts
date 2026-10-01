@@ -37,6 +37,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
       id, booking_number, status, organization_id,
       coi_uploaded_at, coi_file_url, coi_expiry_date, coi_accepted_at, coi_accepted_by,
       payment_received_at, payment_amount, payment_method, payment_receipt_url, payment_recorded_by,
+      schedule_requested_at, schedule_uploaded_at, schedule_filename, schedule_url,
       rack_rate_total, discount_applied, net_amount
     `)
     .eq(isUuid(id) ? "id" : "booking_number", id)

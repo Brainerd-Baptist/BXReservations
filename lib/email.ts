@@ -871,3 +871,60 @@ export async function sendQuoteApprovedEmails(opts: {
     attachments: [{ filename: opts.filename, content: Buffer.from(opts.pdf) }],
   });
 }
+
+/** Sent to the organizer by admin — asks them to upload their event schedule */
+export async function sendScheduleRequest(opts: {
+  to:            string;
+  name:          string;
+  bookingNumber: string;
+  eventName:     string;
+  uploadToken:   string;
+}) {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn("[email] RESEND_API_KEY not set — skipping schedule request");
+    return;
+  }
+  const { to, name, bookingNumber, eventName, uploadToken } = opts;
+  const uploadUrl = `${SITE_URL}/schedule-upload/${uploadToken}`;
+
+  const html = brandedEmailHtml({
+    preheader: `Please upload your event schedule for ${bookingNumber} to help us finalize your booking.`,
+    headline:  "One more thing — your event schedule.",
+    body: `
+      <p style="margin:0 0 16px 0;">Hi <strong style="color:${NAVY};">${name}</strong>,</p>
+      <p style="margin:0 0 16px 0;">
+        Thank you for your reservation request for <strong>${eventName}</strong> (${bookingNumber}).
+        To help us finalize your booking, we need your event schedule — a document that outlines
+        the timeline and activities planned for your event.
+      </p>
+      <p style="margin:0 0 16px 0;">
+        Your schedule helps our events team prepare the space, coordinate A/V, and ensure everything
+        runs smoothly on your day.
+      </p>
+      <table border="0" cellpadding="0" cellspacing="0" role="presentation"
+        style="width:100%; border-collapse:collapse; margin:0 0 20px; background:#f9fafb; border-radius:8px; border:1px solid #e5e7eb;">
+        <tr>
+          <td style="padding:14px 16px; font-size:13px; color:#6b7280;">
+            <strong style="color:#111827; display:block; margin-bottom:4px;">What to include:</strong>
+            Start &amp; end times, session titles, any breaks, and any special setup changes during the event.
+            A Word doc, PDF, or even a clear photo of a handwritten schedule works fine.
+          </td>
+        </tr>
+      </table>`,
+    ctaText:     "Upload Your Schedule",
+    ctaUrl:      uploadUrl,
+    footnoteHtml: `
+      <p style="margin:0 0 10px 0; font-size:13px; color:#6b7280;">
+        This link is unique to your booking and expires after upload. If you have questions,
+        reply to this email or contact us at <a href="mailto:${SUPPORT_EMAIL}" style="color:${TEAL};">${SUPPORT_EMAIL}</a>.
+      </p>
+      <p style="margin:0; font-size:13px; color:#6b7280;">Reference: <strong>${bookingNumber}</strong></p>`,
+  });
+
+  await getResend().emails.send({
+    from:    FROM,
+    to,
+    subject: `Event Schedule Needed — ${bookingNumber}`,
+    html,
+  });
+}
