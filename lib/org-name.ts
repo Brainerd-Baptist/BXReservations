@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 // ─── Org name normalization ─────────────────────────────────────────────
+=======
+// ─── Org name normalization ──────────────────────────────────────────────────
+>>>>>>> 753ffd8 (feat(orgs): fuzzy-match pipeline + admin flag queue)
 // Applied on save to bx_organizations.name and bx_organizations.canonical_name.
 // Rules:
 //  - Title Case: first letter of every word capitalized

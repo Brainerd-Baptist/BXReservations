@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
 import { getUserAndRole } from "@/lib/get-user-role";
 import { can } from "@/lib/roles";
-import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import OrganizationsClient from "./organizations-client";
 import OrgFlagQueue, { type OrgFlag } from "./org-flag-queue";
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+// ─── Types ───────────────────────────────────────────────────────────────────
 export interface OrgSummary {
   id: string;
   name: string;
@@ -21,16 +21,15 @@ export interface OrgSummary {
   reservation_count: number;
 }
 
-// ─── Page ───────────────────────────────────────────────────────────────────
+// ─── Page ────────────────────────────────────────────────────────────────────
 export default async function OrganizationsPage() {
   const { user, role } = await getUserAndRole();
   if (!user) redirect("/login");
   if (!can.viewAdminPanel(role)) redirect("/account");
 
-  const supabase = createServerClient(
+  const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { cookies: { getAll: () => [], setAll: () => {} } }
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
   // Fetch orgs + flags in parallel
@@ -89,6 +88,7 @@ export default async function OrganizationsPage() {
         initialOrganizations={organizations}
         fetchError={orgsResult.error?.message ?? null}
       />
+<<<<<<< HEAD
       <div
         style={{
           maxWidth: 900,
@@ -96,6 +96,9 @@ export default async function OrganizationsPage() {
           padding: "0 16px 64px",
         }}
       >
+=======
+      <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 16px 64px" }}>
+>>>>>>> 753ffd8 (feat(orgs): fuzzy-match pipeline + admin flag queue)
         <OrgFlagQueue initialFlags={flags} />
       </div>
     </>
