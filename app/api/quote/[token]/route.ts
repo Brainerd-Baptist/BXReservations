@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { adminClient } from "@/lib/event-map";
 import { rateLimit, clientIp, HOUR } from "@/lib/rate-limit";
-import { acceptQuote, loadQuote, quotePdf, QuoteError } from "@/lib/quotes";
+import { acceptQuote, isStaffPreview, loadQuote, quotePdf, QuoteError } from "@/lib/quotes";
 import { sendQuoteApprovedEmails } from "@/lib/email";
 import { readWaived } from "@/lib/waivers";
 
@@ -20,6 +20,11 @@ export async function POST(req: NextRequest, { params }: Params) {
   const body = (await req.json().catch(() => ({}))) as { name?: unknown; agree?: unknown };
   if (body.agree !== true) return NextResponse.json({ error: "Check the box to approve." }, { status: 400 });
   const db = adminClient();
+  // Staff can preview a quote they sent, but only the organizer approves it
+  const pre = await loadQuote(db, token);
+  if (pre && await isStaffPreview(db, pre.reservation)) {
+    return NextResponse.json({ error: "Only the organizer or a co-organizer can approve this quote. This is your staff preview." }, { status: 403 });
+  }
   try {
     const q = await acceptQuote(db, token, {
       name: typeof body.name === "string" ? body.name : "",

@@ -16,7 +16,11 @@ const SLOT: Record<string, string> = { morning: "Morning (8am–12pm)", afternoo
 type Res = { id: string; booking_number: string | null; event_name: string | null; contact_name: string | null; contact_org: string | null; payload: unknown };
 
 /** The itemized quote, the agreement (if included) and the approval form. */
-export default function QuoteView({ quote: q, reservation: r, state }: { quote: QuoteRow; reservation: Res; state: QuoteState }) {
+export default function QuoteView({ quote: q, reservation: r, state, staffPreview = false }: {
+  quote: QuoteRow; reservation: Res; state: QuoteState & { closed?: boolean };
+  /** BX staff viewing a quote they sent: no approval form */
+  staffPreview?: boolean;
+}) {
   type Day = { date: string; included?: boolean; timeSlot?: string; customStart?: string; customEnd?: string; rooms?: { roomId: string }[] };
   // The schedule as quoted (older quotes fall back to the booking's current one)
   const days = ((q.schedule as Day[] | null) ?? ((r.payload as { days?: Day[] } | null)?.days) ?? []).filter((d) => d.included !== false && d.date);
@@ -33,6 +37,13 @@ export default function QuoteView({ quote: q, reservation: r, state }: { quote: 
           <h1 className="text-3xl font-bold text-parchment mt-1">{q.version > 1 ? "Your updated quote" : "Your quote"}</h1>
           <p className="text-slate mt-1">{r.event_name || "Your event"} · {r.booking_number ?? ""} · Version {q.version}</p>
         </header>
+
+        {staffPreview && (
+          <div className="bx-tone-indigo border rounded-xl px-4 py-3 text-sm" role="note">
+            <p className="font-semibold">Staff preview</p>
+            <p className="text-xs mt-0.5">This is exactly what the organizer sees. Only they (or a co-organizer) can approve it — staff can&apos;t sign on their behalf.</p>
+          </div>
+        )}
 
         {q.superseded_at && (
           <div className="bx-tone-amber border rounded-xl px-4 py-3 text-sm" role="status">
@@ -128,6 +139,10 @@ export default function QuoteView({ quote: q, reservation: r, state }: { quote: 
                 : "The charges on your booking changed after it was sent."}
               {" "}{blocked === "closed" ? "Questions? Email" : "The BX team will send an updated quote — or email"} <a className="underline" href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
             </p>
+          </section>
+        ) : staffPreview ? (
+          <section className="bx-well rounded-2xl p-5 text-sm text-slate" role="status">
+            Waiting for {r.contact_name || "the organizer"} to approve{q.agreement_text ? " and sign" : ""}. You&apos;ll get an email and a notification when they do.
           </section>
         ) : (
           <QuoteApproveForm token={q.token} contactName={r.contact_name ?? ""} total={usd(Number(q.total))} includesAgreement={!!q.agreement_text} />

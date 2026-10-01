@@ -273,3 +273,20 @@ export async function acceptQuote(
 export class QuoteError extends Error {
   constructor(message: string, public status: number) { super(message); }
 }
+
+/**
+ * Staff looking at a quote they sent see a preview, not the approval form —
+ * only the organizer or a co-organizer may approve. (Someone who isn't signed
+ * in is treated as the organizer: the private emailed link is their key.)
+ */
+export async function isStaffPreview(db: SupabaseClient, r: { id: string; user_id: string | null; contact_email: string | null }): Promise<boolean> {
+  const { getUserAndRole } = await import("@/lib/get-user-role");
+  const { can } = await import("@/lib/roles");
+  const { user, role } = await getUserAndRole();
+  if (!user || !can.approveReservations(role)) return false;
+  const email = (user.email ?? "").toLowerCase();
+  if (r.user_id === user.id || (!!email && (r.contact_email ?? "").toLowerCase() === email)) return false;
+  const { data: collab } = await db.from("reservation_collaborators").select("collab_role")
+    .eq("reservation_id", r.id).eq("user_id", user.id).not("accepted_at", "is", null).maybeSingle();
+  return collab?.collab_role !== "co_owner";
+}
