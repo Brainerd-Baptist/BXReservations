@@ -927,41 +927,6 @@ export default function BxReservationsAdmin() {
                       );
                     })()}
 
-                    {/* ── History log */}
-                    {(() => {
-                      const entries = history[req.id];
-                      const loading = historyLoading[req.id];
-                      if (!entries && !loading && req.dbId) {
-                        setTimeout(() => fetchHistory(req.id, req.dbId!), 0);
-                      }
-                      return (
-                        <div className="space-y-2" onClick={e => e.stopPropagation()}>
-                          <p className="text-xs font-semibold text-slate uppercase tracking-widest">History</p>
-                          {loading && <InlineSkeleton width="60px" />}
-                          {!loading && historyError[req.id] && (
-                            <p className="text-xs" style={{ color: "var(--bx-clay)" }}>
-                              Couldn&apos;t load history ({historyError[req.id]}).{" "}
-                              <button type="button" className="underline font-semibold" onClick={() => fetchHistory(req.id, req.dbId!)}>Retry</button>
-                            </p>
-                          )}
-                          {!loading && !historyError[req.id] && entries && entries.length === 0 && <p className="text-xs text-slate">No history yet.</p>}
-                          {!loading && entries && entries.length > 0 && (
-                            <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                              {entries.map(h => (
-                                <div key={h.id} className="flex gap-3 text-xs">
-                                  <span className="text-slate/60 flex-shrink-0 pt-0.5">{new Date(h.created_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "America/New_York" })}</span>
-                                  <div className="flex-1">
-                                    <span className="text-parchment font-medium">{h.actor_name || h.actor_role}</span>
-                                    {h.to_status && <span className="text-slate"> → <span className="font-semibold text-parchment/80">{h.to_status.replace(/_/g, " ")}</span></span>}
-                                    {h.note && <p className="text-slate/80 mt-0.5 italic">{h.note}</p>}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })()}
                     {/* ── Phase 3: Documents & Payment ──────────────────── */}
                     {req.dbId && (() => {
                       const ds = docStatus[req.id];
@@ -1458,6 +1423,41 @@ export default function BxReservationsAdmin() {
                       <p className="text-xs text-slate">This request was declined.</p>
                     )}
 
+                    {/* ── History log — every status change, quote, signature, invoice, payment and reminder (bottom of the booking) */}
+                    {(() => {
+                      const entries = history[req.id];
+                      const loading = historyLoading[req.id];
+                      if (!entries && !loading && req.dbId) {
+                        setTimeout(() => fetchHistory(req.id, req.dbId!), 0);
+                      }
+                      return (
+                        <div className="space-y-2 pt-3 border-t border-parchment/10" onClick={e => e.stopPropagation()}>
+                          <p className="text-xs font-semibold text-slate uppercase tracking-widest">History</p>
+                          {loading && <InlineSkeleton width="60px" />}
+                          {!loading && historyError[req.id] && (
+                            <p className="text-xs" style={{ color: "var(--bx-clay)" }}>
+                              Couldn&apos;t load history ({historyError[req.id]}).{" "}
+                              <button type="button" className="underline font-semibold" onClick={() => fetchHistory(req.id, req.dbId!)}>Retry</button>
+                            </p>
+                          )}
+                          {!loading && !historyError[req.id] && entries && entries.length === 0 && <p className="text-xs text-slate">No history yet.</p>}
+                          {!loading && entries && entries.length > 0 && (
+                            <div className="space-y-1.5 max-h-72 overflow-y-auto">
+                              {entries.map(h => (
+                                <div key={h.id} className="flex gap-3 text-xs">
+                                  <span className="text-slate/60 flex-shrink-0 pt-0.5">{new Date(h.created_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "America/New_York" })}</span>
+                                  <div className="flex-1">
+                                    <span className="text-parchment font-medium">{h.actor_name || h.actor_role}</span>
+                                    {h.to_status && h.to_status !== h.from_status && <span className="text-slate"> → <span className="font-semibold text-parchment/80">{h.to_status.replace(/_/g, " ")}</span></span>}
+                                    {h.note && <p className="text-slate/80 mt-0.5 italic">{h.note}</p>}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                     {/* ── Delete reservation (admin only) */}
                     <div className="pt-2 border-t border-red-900/20">
                       {deleteConfirm === req.id ? (

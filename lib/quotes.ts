@@ -149,11 +149,6 @@ export async function sendQuote(
   // Proposal Sent — the quote is the proposal
   const moved = ["pending", "pending_insurance", "needs_info"].includes(r.status);
   if (moved) await db.from("reservations").update({ status: "under_review", updated_at: now }).eq("id", r.id);
-  await db.from("reservation_history").insert({
-    reservation_id: r.id, actor_id: actor.id || null, actor_name: actor.name, actor_role: "admin", action: "quote_sent",
-    from_status: r.status, to_status: moved ? "under_review" : r.status,
-    note: `Quote v${version} sent for approval — ${usd(billing.totals.charges)}${row.agreement_text ? " (with the Facility Use Agreement)" : ""}.`,
-  });
   if (r.user_id && opts.notify !== false) {
     await db.from("bx_notifications").insert({
       user_id: r.user_id, reservation_id: r.id, type: "quote_sent",
@@ -174,6 +169,11 @@ export async function sendQuote(
       console.error("[quote] email failed:", (e as Error).message);
     }
   }
+  await db.from("reservation_history").insert({
+    reservation_id: r.id, actor_id: actor.id || null, actor_name: actor.name, actor_role: "admin", action: "quote_sent",
+    from_status: r.status, to_status: moved ? "under_review" : r.status,
+    note: `Quote v${version} sent for approval to ${r.contact_email} — ${usd(billing.totals.charges)}${row.agreement_text ? " (with the Facility Use Agreement)" : ""}${opts.email === false ? "" : emailed ? "." : ". The email didn't send — the organizer can approve it from their booking page."}`,
+  });
   return { quote: q, emailed };
 }
 
