@@ -75,7 +75,7 @@ export default function EditBooking({ reservationId, onSaved, compact = false }:
       const body: Record<string, unknown> = {
         event_name: f.event_name ?? "", contact_name: f.contact_name ?? "", contact_phone: f.contact_phone ?? "",
         contact_org: f.contact_org ?? "", notes: f.notes ?? "",
-        days: f.days.map((d) => ({ ...d, rooms: (d.rooms ?? []).filter((r) => r.requested !== false) })),
+        days: f.days.map((d) => ({ ...d, rooms: d.rooms ?? [] })),
       };
       if (staff) { body.contact_email = f.contact_email ?? ""; body.is_non_profit = !!f.is_non_profit; }
       if (acknowledge) { body.acknowledge_conflicts = true; body.conflict_note = ackNote; }
@@ -274,7 +274,8 @@ export default function EditBooking({ reservationId, onSaved, compact = false }:
 }
 
 function RoomsEditor({ rooms, onChange }: { rooms: Room[]; onChange: (r: Room[]) => void }) {
-  const chosen = rooms.filter((r) => r.requested !== false);
+  // Every room in the list is booked (`requested` only marks one that had a conflict)
+  const chosen = rooms;
   const has = (id: string) => chosen.find((r) => r.roomId === id);
   return (
     <fieldset>
@@ -287,7 +288,7 @@ function RoomsEditor({ rooms, onChange }: { rooms: Room[]; onChange: (r: Room[])
               <label className="flex items-center gap-2 flex-1 min-w-0 text-parchment">
                 <input type="checkbox" className="w-4 h-4" checked={!!r}
                   onChange={(e) => onChange(e.target.checked
-                    ? [...chosen, { roomId: room.id, setup: "", customSetup: "", requested: true, role: chosen.length ? "extra" : "main" }]
+                    ? [...chosen, { roomId: room.id, setup: "", customSetup: "", requested: false, role: chosen.length ? "extra" : "main" }]
                     : chosen.filter((x) => x.roomId !== room.id))} />
                 <span className="truncate">{room.name}</span>
               </label>

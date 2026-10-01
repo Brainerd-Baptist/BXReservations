@@ -1,12 +1,15 @@
 
 "use client";
-import AddonPicker, { type AddonSelection } from "@/app/components/addon-picker";
+import AddonPicker, { addonsSubtotal, type AddonSelection } from "@/app/components/addon-picker";
 import { Button } from "@/app/components/ui/button";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { BlackoutRule, isDateBlackedOut, isSlotBlackedOut, blackoutReason } from "@/lib/blackouts";
 import { COLLAB_ROLE_LABELS, COLLAB_ROLE_DESCRIPTIONS, type CollabRole } from "@/lib/roles";
 import { ROOMS, type Room } from "@/lib/rooms";
+import { DEFAULT_PRICES, SLOT_TIMES, usdShort, dayHours, dayTotal, fmtHours, quoteRoom, type PriceList } from "@/lib/pricing";
+import { RoomPriceProvider, useAddonCatalog, useNoCharge, useRoomPrices } from "@/lib/room-price-context";
+import type { AddonWithRules } from "@/lib/addon-pricing";
 import { RoomCard } from "@/app/components/room-card";
 import { RoomLightbox } from "@/app/components/room-lightbox";
 import { trackFunnel } from "@/lib/funnel";
@@ -95,17 +98,15 @@ function fmtShortDate(iso: string) {
   });
 }
 
-function dayEstimate(day: DayConfig, isNP: boolean): number {
-  return day.rooms
-    .filter(r => !r.requested)
-    .reduce((sum, r) => {
-      const room = ROOMS.find(ro => ro.id === r.roomId);
-      return sum + (room ? (isNP ? room.baseNP : room.basePro) : 0);
-    }, 0);
+// Same math the server uses for the booking's charges (lib/pricing): every
+// room on the day, 4-hour block + extra hours. Rooms still waiting on
+// availability are included — they're billed if approved.
+function dayEstimate(day: DayConfig, isNP: boolean, prices: PriceList): number {
+  return dayTotal(day, prices, isNP);
 }
 
-function totalEstimate(days: DayConfig[], isNP: boolean): number {
-  return days.filter(d => d.included).reduce((sum, d) => sum + dayEstimate(d, isNP), 0);
+function totalEstimate(days: DayConfig[], isNP: boolean, prices: PriceList): number {
+  return days.filter(d => d.included !== false).reduce((sum, d) => sum + dayEstimate(d, isNP, prices), 0);
 }
 
 /** Returns a recommendation tag (label + color) based on headcount vs. room capacity. */
@@ -418,7 +419,9 @@ function BuilderStep({
 
   const activeDays = days.filter(d => d.included);
   const canContinue = activeDays.length > 0 && activeDays.some(d => d.rooms.length > 0);
-  const total = totalEstimate(days, isNP);
+  const prices = useRoomPrices();
+  const noCharge = useNoCharge();
+  const total = noCharge ? 0 : totalEstimate(days, isNP, prices);
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -529,7 +532,7 @@ function BuilderStep({
               onBreakoutGroupSize={setBreakoutGroupSize}
               onToggleInclude={() => updateDay(day.date, { included: !day.included })}
               onHeadcount={n => updateDay(day.date, { headcount: n })}
-              onTimeSlot={slot => updateDay(day.date, { timeSlot: slot, availabilityFetched: false, availability: Object.fromEntries(ROOMS.map(r => [r.id, "loading" as Signal])) })}
+              onTimeSlot={slot => updateDay(day.date, { timeSlot: slot, customStart: "", customEnd: "", availabilityFetched: false, availability: Object.fromEntries(ROOMS.map(r => [r.id, "loading" as Signal])) })}
               onCustomTime={(s, e2) => updateDay(day.date, { customStart: s, customEnd: e2 })}
               onToggleRoom={(roomId, role) => toggleRoom(day, roomId, role)}
               onUpdateRoom={(roomId, patch) => updateRoomSelection(day, roomId, patch)}
@@ -552,9 +555,9 @@ function BuilderStep({
         <div className="mt-6 bg-[var(--bbc-navy)] text-white rounded-2xl p-4 flex items-center justify-between">
           <div>
             <p className="text-xs text-white/60 uppercase tracking-wide">Estimated total</p>
-            <p className="text-2xl font-bold">${total.toLocaleString()}</p>
+            <p className="text-2xl font-bold">{usdShort(total)}</p>
             <p className="text-xs text-white/60 mt-0.5">
-              {isNP ? "Non-profit" : "Standard"} rates · Final pricing confirmed by our team
+              {isNP ? "Non-profit" : "Standard"} rates · {activeDays.length > 0 && activeDays.every(d => dayHours(d) <= 4) ? "4-hour rate per room" : "includes additional hours past 4"}
             </p>
           </div>
           <div className="text-right">
@@ -570,6 +573,46 @@ function BuilderStep({
         <Button variant="ghost" size="lg" onClick={onBack}>← Back</Button>
         <Button size="lg" onClick={onNext} disabled={!canContinue}>Review &amp; Request →</Button>
       </div>
+    </div>
+  );
+}
+
+// ─── Exact start / end (pricing is by the hour past 4) ────────────────────────
+
+const fmtClock = (t: string) => {
+  const [h, m] = t.split(":").map(Number);
+  return `${h % 12 || 12}${m ? `:${String(m).padStart(2, "0")}` : ""}${h >= 12 ? "pm" : "am"}`;
+};
+
+/** Times inside the chosen part of the day, every 30 minutes. Empty = the whole window. */
+function ExactTimes({ day, onChange }: { day: DayConfig; onChange: (start: string, end: string) => void }) {
+  const [from, to] = SLOT_TIMES[day.timeSlot] ?? SLOT_TIMES.any;
+  const toMin = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
+  const opts: string[] = [];
+  for (let m = toMin(from); m <= toMin(to); m += 30) opts.push(`${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`);
+  const start = day.customStart && opts.includes(day.customStart) ? day.customStart : from;
+  const end = day.customEnd && opts.includes(day.customEnd) ? day.customEnd : to;
+  const set = (s: string, e: string) => (s === from && e === to ? onChange("", "") : onChange(s, e));
+  const hours = Math.max(0, (toMin(end) - toMin(start)) / 60);
+  return (
+    <div className="mt-3 flex flex-wrap items-end gap-2">
+      <label className="text-xs text-slate">
+        <span className="block mb-1">Start</span>
+        <select className="bx-input bx-input--sm" value={start} aria-label={`Start time, ${day.date}`}
+          onChange={(e) => { const s = e.target.value; set(s, toMin(end) > toMin(s) ? end : opts[opts.indexOf(s) + 1] ?? to); }}>
+          {opts.slice(0, -1).map((t) => <option key={t} value={t}>{fmtClock(t)}</option>)}
+        </select>
+      </label>
+      <label className="text-xs text-slate">
+        <span className="block mb-1">End</span>
+        <select className="bx-input bx-input--sm" value={end} aria-label={`End time, ${day.date}`}
+          onChange={(e) => set(start, e.target.value)}>
+          {opts.filter((t) => toMin(t) > toMin(start)).map((t) => <option key={t} value={t}>{fmtClock(t)}</option>)}
+        </select>
+      </label>
+      <p className="text-xs text-slate pb-1.5">
+        {fmtHours(hours)} · the room rate covers up to 4 hours; each additional hour is added after that.
+      </p>
     </div>
   );
 }
@@ -609,7 +652,9 @@ function DayCard({
     }
   }
   const isDayBlocked = !!(blackoutRules && isDateBlackedOut(day.date, blackoutRules));
-  const est = dayEstimate(day, isNP);
+  const prices = useRoomPrices();
+  const noCharge = useNoCharge();
+  const est = noCharge ? 0 : dayEstimate(day, isNP, prices);
 
   return (
     <div className={`rounded-2xl border transition-all ${isDayBlocked ? "bx-tone-red" : day.included ? "bx-glass-flat border-parchment/15" : "bx-well border-dashed border-parchment/15 opacity-70"}`}>
@@ -638,7 +683,7 @@ function DayCard({
           {day.included && (
             <p className="text-xs text-slate mt-0.5">
               {day.rooms.filter(r => !r.requested).length > 0
-                ? `${day.rooms.filter(r => !r.requested).length} room${day.rooms.filter(r => !r.requested).length !== 1 ? "s" : ""} selected${est ? ` · est. $${est.toLocaleString()}` : ""}`
+                ? `${day.rooms.filter(r => !r.requested).length} room${day.rooms.filter(r => !r.requested).length !== 1 ? "s" : ""} selected${est ? ` · est. ${usdShort(est)} · ${fmtHours(dayHours(day))}` : ""}`
                 : "No rooms selected yet"}
               {day.rooms.some(r => r.requested) ? ` · ${day.rooms.filter(r => r.requested).length} requested` : ""}
             </p>
@@ -726,6 +771,7 @@ function DayCard({
                 );
               })}
             </div>
+            <ExactTimes day={day} onChange={onCustomTime} />
           </div>
 
           {/* Room grid — space-mode-aware */}
@@ -927,7 +973,12 @@ function ReviewStep({
   userId?: string | null;
 }) {
   const activeDays = days.filter(d => d.included);
-  const total = totalEstimate(days, isNP);
+  const prices = useRoomPrices();
+  const noCharge = useNoCharge();
+  const catalog = useAddonCatalog() ?? [];
+  const roomsTotal = noCharge ? 0 : totalEstimate(days, isNP, prices);
+  const addonsTotal = noCharge ? 0 : addonsSubtotal(catalog, addons, days);
+  const total = roomsTotal + addonsTotal;
 
   // When a send fails, move focus to the message so it's seen and announced.
   const errorRef = useRef<HTMLDivElement>(null);
@@ -1031,14 +1082,14 @@ function ReviewStep({
       {/* Days breakdown */}
       <div className="space-y-3 mb-4">
         {activeDays.map(day => {
-          const slotLabel: Record<string, string> = { any: "Any time", morning: "Morning", afternoon: "Afternoon", evening: "Evening" };
+          const slotLabel: Record<string, string> = { any: "All day", morning: "Morning", afternoon: "Afternoon", evening: "Evening" };
           const confirmed = day.rooms.filter(r => !r.requested);
           const requested = day.rooms.filter(r => r.requested);
           return (
             <div key={day.date} className="bx-glass-flat border-parchment/15 rounded-2xl p-4">
               <div className="flex items-center justify-between mb-2">
                 <p className="font-semibold text-parchment text-sm">{fmtDate(day.date)}</p>
-                <span className="text-xs text-slate">{slotLabel[day.timeSlot] ?? "Any time"} · {day.headcount} people</span>
+                <span className="text-xs text-slate">{day.customStart && day.customEnd ? `${fmtClock(day.customStart)}–${fmtClock(day.customEnd)}` : slotLabel[day.timeSlot] ?? "All day"} · {day.headcount} people</span>
               </div>
               {confirmed.length > 0 && (
                 <div className="space-y-1 mb-2">
@@ -1054,7 +1105,7 @@ function ReviewStep({
                           <span className="text-xs text-slate italic">— {r.customSetup}</span>
                         )}
                         <span className="ml-auto text-xs font-medium text-slate">
-                          ${(isNP ? room?.baseNP : room?.basePro)?.toLocaleString() ?? "—"} / 4 hrs
+                          {noCharge ? "No charge" : `${usdShort(quoteRoom(prices[r.roomId], isNP, dayHours(day)).amount)} · ${fmtHours(dayHours(day))}`}
                         </span>
                       </div>
                     );
@@ -1070,6 +1121,11 @@ function ReviewStep({
                         <span>⚠</span>
                         <span>{room?.name}</span>
                         <span className="text-xs ml-1">(conflict — requesting review)</span>
+                        {!noCharge && (
+                          <span className="ml-auto text-xs font-medium">
+                            {usdShort(quoteRoom(prices[r.roomId], isNP, dayHours(day)).amount)} if approved
+                          </span>
+                        )}
                       </div>
                     );
                   })}
@@ -1085,15 +1141,18 @@ function ReviewStep({
         <div className="bg-[var(--bbc-navy)] text-white rounded-2xl p-4 mb-4 flex items-center justify-between">
           <div>
             <p className="text-xs text-white/60 uppercase tracking-wide">Estimated total</p>
-            <p className="text-2xl font-bold">${total.toLocaleString()}</p>
+            <p className="text-2xl font-bold">{usdShort(total)}</p>
+            {addonsTotal > 0 && (
+              <p className="text-xs text-white/70 mt-0.5">Rooms {usdShort(roomsTotal)} · Add-ons {usdShort(addonsTotal)}</p>
+            )}
           </div>
           <p className="text-xs text-white/70 text-right max-w-[180px] leading-relaxed">
-            Estimate only. Final pricing confirmed by our events team.
+            4-hour rate per room, plus each additional hour. Includes table/chair set-up, tear-down and trash removal.
           </p>
         </div>
       )}
 
-      <AddonPicker value={addons} onChange={setAddons} days={days.filter((d) => d.included !== false).length} />
+      <AddonPicker value={addons} onChange={setAddons} days={days} />
 
       {/* Notes */}
       <Field label="Anything else we should know?" htmlFor="bx-notes">
@@ -1416,9 +1475,21 @@ interface ReserveClientProps {
   templates?: TemplateOption[];
   /** Ministry Coordinators, Brainerd Staff, staff: any day, no documents by default */
   churchUse?: boolean;
+  /** Room price list from Admin → Settings */
+  prices?: PriceList;
+  /** Active add-on catalog */
+  addons?: AddonWithRules[];
 }
 
-export default function ReserveClient({ initialContact, userId, start = null, templates = [], churchUse = false }: ReserveClientProps) {
+export default function ReserveClient(props: ReserveClientProps) {
+  return (
+    <RoomPriceProvider prices={props.prices ?? DEFAULT_PRICES} free={!!props.churchUse} addons={props.addons ?? []}>
+      <ReserveForm {...props} />
+    </RoomPriceProvider>
+  );
+}
+
+function ReserveForm({ initialContact, userId, start = null, templates = [], churchUse = false }: ReserveClientProps) {
   const pattern = start?.pattern ?? null;
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);

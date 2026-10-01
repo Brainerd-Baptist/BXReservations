@@ -25,7 +25,7 @@ import VenueSettings from "@/app/components/venue-settings";
 import BillingCard from "@/app/components/billing-card";
 import EditBooking from "@/app/components/edit-booking";
 import PeopleCard from "@/app/components/people-card";
-import RoomRates from "@/app/components/room-rates";
+import RoomPrices from "@/app/components/room-prices";
 import { ROOMS } from "@/lib/rooms";
 import BookingInsights from "./booking-insights";
 import { useAdminRole } from "./admin-role";
@@ -653,7 +653,7 @@ export default function BxReservationsAdmin() {
             {/* Rates, add-ons and blackout rules are System Admin settings; the
                 background grid is the Owner's. Booking Admins don't see controls
                 they can't save (C2). */}
-            {can.configureSystem(myRole) ? <RoomRates /> : null}
+            {can.configureSystem(myRole) ? <RoomPrices /> : null}
             {can.configureSystem(myRole) ? <AddonCatalog /> : null}
             {myRole === "owner" && <GridToggle />}
             {!can.configureSystem(myRole) && (

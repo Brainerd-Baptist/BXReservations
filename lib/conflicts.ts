@@ -34,7 +34,8 @@ export function windowOf(d: ScheduleDay): [number, number] {
   return [a * 60, b * 60];
 }
 const overlaps = (a: [number, number], b: [number, number]) => a[0] < b[1] && b[0] < a[1];
-const roomsOf = (d: ScheduleDay) => (d.rooms ?? []).filter((r) => r.requested !== false).map((r) => r.roomId);
+// Every room on the day counts — `requested` only marks one that had a conflict when booked
+const roomsOf = (d: ScheduleDay) => (d.rooms ?? []).map((r) => r.roomId);
 const slotsTouched = (w: [number, number]): TimeSlot[] =>
   (["morning", "afternoon", "evening"] as TimeSlot[]).filter((s) => overlaps(w, [SLOT_HOURS[s][0] * 60, SLOT_HOURS[s][1] * 60]));
 

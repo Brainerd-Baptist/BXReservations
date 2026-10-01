@@ -41,6 +41,8 @@ jobs:
           TZ=UTC node --experimental-strip-types scripts/test-dates.mts
           node --experimental-strip-types scripts/test-return-path.mts
           npx --yes tsx scripts/test-booking-checks.cts
+          npx --yes tsx scripts/test-pricing.cts
+          npx --yes tsx scripts/test-addon-pricing.cts
 
       - name: Lint
         run: npm run lint

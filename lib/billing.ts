@@ -25,6 +25,10 @@ export interface Addon {
   price: number;
   active: boolean;
   sort: number;
+  /** Only for bookings with one of these rooms (null = any room) */
+  rooms?: string[] | null;
+  /** Hour-tiered price (Complete AV package); see lib/addon-pricing */
+  pricing?: { type: "hours_tier"; tiers: [number, number][]; extra_hour: number } | null;
 }
 export const UNIT_LABEL: Record<Addon["unit"], string> = { each: "each", per_day: "per day", flat: "flat" };
 
@@ -39,6 +43,7 @@ export interface Charge {
   note: string | null;
   added_by: string | null;
   added_by_staff: boolean;
+  auto_key?: string | null;
   created_at: string;
 }
 

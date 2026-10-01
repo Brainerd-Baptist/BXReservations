@@ -16,7 +16,21 @@ export interface InvoiceInput {
   venue: { name: string; address?: string };
   issuedYmd: string;      // venue-local date
   paymentNote?: string;   // how to pay
+  /** Quote for approval (v1.59) instead of an invoice */
+  quote?: {
+    version: number;
+    validUntil?: string | null;
+    approveUrl?: string;
+    accepted?: { name: string; at: string; ip?: string | null } | null;
+    /** Facility Use Agreement signed with the quote */
+    agreementText?: string | null;
+  } | null;
+  /** e.g. "Prices include table/chair set-up…" */
+  includesNote?: string;
 }
+
+const etStamp = (iso: string) =>
+  new Date(iso).toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "long", timeStyle: "short" }) + " ET";
 
 const INK = rgb(0.07, 0.09, 0.15);
 const W = 612, H = 792, M = 48;
@@ -32,8 +46,9 @@ const time12 = (t?: string) => {
 const roomName = (id: string) => ROOMS.find((r) => r.id === id)?.name ?? id;
 
 export async function renderInvoice(inv: InvoiceInput): Promise<Uint8Array> {
-  const paid = inv.billing.totals.balance <= 0 && inv.billing.totals.charges > 0;
-  const title = paid ? "Receipt" : "Invoice";
+  const q = inv.quote ?? null;
+  const paid = !q && inv.billing.totals.balance <= 0 && inv.billing.totals.charges > 0;
+  const title = q ? "Quote" : paid ? "Receipt" : "Invoice";
   const { pdf, fonts, wordmark } = await newDoc(`${title} ${inv.bookingNumber} — ${inv.eventName}`, "BX Reservations invoices");
   const { medium, bold, xbold } = fonts;
 
@@ -44,7 +59,7 @@ export async function renderInvoice(inv: InvoiceInput): Promise<Uint8Array> {
   const right = (t: string, xr: number, yy: number, size: number, font = medium, color = INK) =>
     page.drawText(t, { x: xr - font.widthOfTextAtSize(t, size), y: yy, size, font, color });
   const newPage = () => { page = pdf.addPage([W, H]); pages.push(page); y = H - M; };
-  const need = (h: number) => { if (y - h < M + 40) { newPage(); tableHeader(); } };
+  const need = (h: number, header = true, floor = M + 40) => { if (y - h < floor) { newPage(); if (header) tableHeader(); } };
 
   // ── Header band
   page.drawRectangle({ x: 0, y: H - 108, width: W, height: 108, color: NAVY });
@@ -55,7 +70,7 @@ export async function renderInvoice(inv: InvoiceInput): Promise<Uint8Array> {
   page.drawText("Brainerd Baptist Church", { x: M + wmW + 18, y: H - 54, size: 10, font: bold, color: rgb(1, 1, 1) });
   page.drawText(inv.venue.name, { x: M + wmW + 18, y: H - 68, size: 8.5, font: medium, color: rgb(0.8, 0.86, 0.94) });
   page.drawText(title.toUpperCase(), { x: W - M - xbold.widthOfTextAtSize(title.toUpperCase(), 26), y: H - 60, size: 26, font: xbold, color: rgb(1, 1, 1) });
-  const invNo = `${inv.bookingNumber}${paid ? "-R" : "-INV"}`;
+  const invNo = `${inv.bookingNumber}${q ? `-Q${q.version}` : paid ? "-R" : "-INV"}`;
   page.drawText(invNo, { x: W - M - medium.widthOfTextAtSize(invNo, 9.5), y: H - 78, size: 9.5, font: medium, color: rgb(0.8, 0.86, 0.94) });
   y = H - 140;
 
@@ -69,9 +84,11 @@ export async function renderInvoice(inv: InvoiceInput): Promise<Uint8Array> {
     }
     return yy;
   };
-  const b1 = block(M, "Bill to", [inv.contact.name, inv.contact.org ?? "", inv.contact.email ?? "", inv.contact.phone ?? ""]);
+  const b1 = block(M, q ? "Prepared for" : "Bill to", [inv.contact.name, inv.contact.org ?? "", inv.contact.email ?? "", inv.contact.phone ?? ""]);
   const b2 = block(M + colW + 12, "From", [inv.venue.name, ...(inv.venue.address ? (() => { const i = inv.venue.address!.indexOf(","); return i > 0 ? [inv.venue.address!.slice(0, i), inv.venue.address!.slice(i + 1).trim()] : [inv.venue.address!]; })() : []), "BXreservations@brainerdbaptist.org"]);
-  const b3 = block(M + 2 * (colW + 12), "Details", [`Issued ${longDate(inv.issuedYmd)}`, `Booking ${inv.bookingNumber}`, inv.status ? `Status: ${inv.status.replace(/_/g, " ")}` : ""]);
+  const b3 = block(M + 2 * (colW + 12), "Details", q
+    ? [`Issued ${longDate(inv.issuedYmd)}`, `Booking ${inv.bookingNumber}`, `Quote version ${q.version}`, q.validUntil ? `Valid until ${longDate(q.validUntil)}` : ""]
+    : [`Issued ${longDate(inv.issuedYmd)}`, `Booking ${inv.bookingNumber}`, inv.status ? `Status: ${inv.status.replace(/_/g, " ")}` : ""]);
   y = Math.min(b1, b2, b3) - 10;
 
   // ── Event
@@ -129,18 +146,29 @@ export async function renderInvoice(inv: InvoiceInput): Promise<Uint8Array> {
   };
   row("Subtotal", money(pos));
   if (neg) row("Discounts", money(neg));
-  row("Total", money(total), true);
-  row("Paid", money(-paidAmt));
+  if (!q) {
+    row("Total", money(total), true);
+    row("Paid", money(-paidAmt));
+  }
   y -= 10;
   need(34);
-  page.drawRectangle({ x: tx - 10, y: y - 10, width: cAmt - tx + 20, height: 28, color: balance > 0 ? TEAL : rgb(0.13, 0.55, 0.3) });
-  page.drawText(balance > 0 ? "BALANCE DUE" : balance < 0 ? "CREDIT" : "PAID IN FULL", { x: tx, y: y, size: 10, font: xbold, color: rgb(1, 1, 1) });
-  const bv = money(Math.abs(balance));
+  const boxColor = q ? NAVY : balance > 0 ? TEAL : rgb(0.13, 0.55, 0.3);
+  page.drawRectangle({ x: tx - 10, y: y - 10, width: cAmt - tx + 20, height: 28, color: boxColor });
+  page.drawText(q ? "QUOTE TOTAL" : balance > 0 ? "BALANCE DUE" : balance < 0 ? "CREDIT" : "PAID IN FULL", { x: tx, y: y, size: 10, font: xbold, color: rgb(1, 1, 1) });
+  const bv = money(q ? total : Math.abs(balance));
   page.drawText(bv, { x: cAmt - xbold.widthOfTextAtSize(bv, 12), y: y - 1, size: 12, font: xbold, color: rgb(1, 1, 1) });
   y -= 36;
 
+  // ── What's included (rate sheet)
+  if (inv.includesNote) {
+    const lines = wrap(medium, inv.includesNote, 9, W - 2 * M);
+    need(lines.length * 12 + 8, false);
+    for (const l of lines) { text(l, M, y, 9, bold, NAVY); y -= 12; }
+    y -= 8;
+  }
+
   // ── Payments received
-  if (inv.billing.payments.length) {
+  if (!q && inv.billing.payments.length) {
     need(40);
     text("PAYMENTS RECEIVED", M, y, 7.5, bold, SLATE);
     y -= 15;
@@ -163,6 +191,43 @@ export async function renderInvoice(inv: InvoiceInput): Promise<Uint8Array> {
     let yy = y - 16;
     for (const l of lines) { text(l, M + 12, yy, 9, medium, INK); yy -= 12; }
     y -= bh + 6;
+  }
+
+  // ── Approval (quote)
+  const approvalBlock = (heading: string) => {
+    if (!q) return;
+    const a = q.accepted;
+    const lines = a
+      ? [`Approved electronically by ${a.name}`, `${etStamp(a.at)}${a.ip ? ` · IP ${a.ip}` : ""}`]
+      : [q.approveUrl ? `Review and approve online: ${q.approveUrl}` : "Approve this quote online from your booking page."];
+    const wrapped = lines.flatMap((l) => wrap(medium, l, 9, W - 2 * M - 24));
+    const bh = wrapped.length * 12 + 28;
+    need(bh, false, 50);  // may sit just above the page footer
+    page.drawRectangle({ x: M, y: y - bh + 12, width: W - 2 * M, height: bh, borderColor: a ? rgb(0.13, 0.55, 0.3) : RULE, borderWidth: 1, color: rgb(1, 1, 1) });
+    text(a ? `${heading} — APPROVED` : `${heading} — AWAITING APPROVAL`, M + 12, y - 2, 7.5, bold, a ? rgb(0.13, 0.55, 0.3) : NAVY);
+    let yy = y - 16;
+    for (const l of wrapped) { text(l, M + 12, yy, 9, medium, INK); yy -= 12; }
+    y -= bh + 6;
+  };
+  approvalBlock("QUOTE");
+
+  // ── Facility Use Agreement, signed with the quote
+  if (q?.agreementText) {
+    newPage();
+    text("FACILITY USE AGREEMENT", M, y, 13, xbold, NAVY);
+    y -= 22;
+    for (const raw of q.agreementText.split("\n")) {
+      const t = raw.replace(/\s+$/, "");
+      if (!t.trim()) { y -= 6; continue; }
+      const head = t.trim() === t.trim().toUpperCase() && /[A-Z]/.test(t) && t.trim().length > 3;
+      for (const l of wrap(head ? bold : medium, t.trim(), 9, W - 2 * M)) {
+        if (y < M + 50) newPage();
+        text(l, M, y, 9, head ? bold : medium, head ? NAVY : INK);
+        y -= 12;
+      }
+    }
+    y -= 10;
+    approvalBlock("AGREEMENT");
   }
 
   // ── Footer on every page

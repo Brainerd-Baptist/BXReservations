@@ -12,6 +12,7 @@ import { type BlackoutRule } from "@/lib/blackouts";
 import { checkDays } from "@/lib/booking-checks";
 import { can, reservationFlagsForRole, type BxRole } from "@/lib/roles";
 import { attachRewardAtSubmit } from "@/lib/survey";
+import { addAddons, syncRoomCharges } from "@/lib/room-prices";
 
 // ─── Types mirrored from reserve/page.tsx ─────────────────────────────────────
 interface ContactInfo {
@@ -169,23 +170,19 @@ export async function POST(req: NextRequest) {
       }
       const reservationId = insertData.id as string;
 
-      // ── Add-ons chosen on the form → charge lines at catalog price ─────────
+      // ── Add-ons chosen on the form → charge lines at catalog price, following
+      // each add-on's room and hour rules (lib/addon-pricing)
       const picked = (Array.isArray(body.addons) ? body.addons : [])
         .map((a) => ({ id: String(a?.addon_id ?? ""), qty: Math.min(500, Math.max(0, Math.floor(Number(a?.quantity) || 0))) }))
         .filter((a) => a.id && a.qty > 0)
         .slice(0, 30);
-      if (picked.length) {
-        const { data: catalog } = await supabase
-          .from("bx_addons").select("id, name, price").eq("active", true).in("id", picked.map((a) => a.id));
-        const rows = picked.flatMap((a) => {
-          const item = (catalog ?? []).find((c: { id: string }) => c.id === a.id) as { id: string; name: string; price: number } | undefined;
-          return item ? [{ reservation_id: reservationId, kind: "addon", addon_id: item.id, label: item.name, unit_price: item.price, quantity: a.qty, added_by: authUser?.id ?? null, added_by_staff: false }] : [];
-        });
-        if (rows.length) {
-          const { error: aErr } = await supabase.from("reservation_charges").insert(rows);
-          if (aErr) console.error("[submit] add-ons insert failed:", aErr);
-        }
-      }
+      await addAddons(supabase, reservationId, picked, { actorId: authUser?.id ?? null, staff: false })
+        .catch((e) => console.error("[submit] add-ons insert failed:", (e as Error).message));
+
+      // ── Room rental lines from the schedule and the price list — the same
+      // numbers the booking page showed (skipped when payment isn't needed)
+      await syncRoomCharges(supabase, reservationId, { actorId: authUser?.id ?? null })
+        .catch((e) => console.error("[submit] room charges failed:", (e as Error).message));
 
       // ── Survey thank-you: an earned discount comes off this booking automatically
       if (!flags.waived.payment) {

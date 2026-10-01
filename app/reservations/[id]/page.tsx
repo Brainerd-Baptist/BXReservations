@@ -24,6 +24,7 @@ import { readWaived, WAIVER_LABEL } from "@/lib/waivers";
 import BookingChecklist, { type ChecklistStep } from "./booking-checklist";
 import { getBilling } from "@/lib/billing";
 import { ensureSurvey } from "@/lib/survey";
+import { currentQuote, quoteState, type QuoteState } from "@/lib/quotes";
 
 const STATUS_META: Record<string, { dot: string }> = {
   pending:            { dot: "#FBBF24" },
@@ -63,7 +64,7 @@ const CLOSED_FOR_CHECKLIST = new Set(["completed", "rejected", "cancelled", "can
 /** The renter's steps, from what we know about the booking (C3). */
 function checklistSteps(
   r: { id: string; status: string; coi_accepted_at?: string | null; coi_uploaded_at?: string | null; waived?: unknown },
-  v: { labelCount: number; agreement?: { customer_signed_at: string | null; token: string } | null; totals?: { charges: number; balance: number } | null },
+  v: { labelCount: number; agreement?: { customer_signed_at: string | null; token: string } | null; totals?: { charges: number; balance: number } | null; quote?: QuoteState | null },
 ): ChecklistStep[] {
   const w = readWaived(r.waived);
   const reviewed = r.status !== "pending";
@@ -72,9 +73,19 @@ function checklistSteps(
     { label: "Send your request", state: "done" },
     { label: "BX team reviews it", state: reviewed ? "done" : "waiting", note: reviewed ? undefined : "We'll email you when it's reviewed." },
   ];
+  const q = v.quote ?? null;
+  const quoteOpen = !!q && !q.acceptedAt && !q.stale && !q.expired && !!q.token;
+  // Older bookings (before quotes) that are already past review skip this step
+  const quoteStage = ["pending", "pending_insurance", "needs_info", "under_review"].includes(r.status);
+  if (!w.payment && (q || quoteStage)) {
+    steps.push(q?.acceptedAt && !q.stale ? { label: "Approve your quote", state: "done" }
+      : quoteOpen ? { label: "Approve your quote", state: "todo", href: `/quote/${q!.token}`, note: q!.includesAgreement ? "One signature approves the quote and signs the Facility Use Agreement." : undefined }
+      : { label: "Approve your quote", state: "waiting", note: q ? "The BX team is updating your quote." : "We'll email your itemized quote once your request is reviewed." });
+  }
   if (!w.agreement) {
     const signed = !!v.agreement?.customer_signed_at;
-    steps.push(signed ? { label: "Sign the Facility Use Agreement", state: "done" }
+    if (!signed && quoteOpen && q!.includesAgreement) steps.push({ label: "Sign the Facility Use Agreement", state: "todo", href: `/quote/${q!.token}`, note: "Signed together with your quote." });
+    else steps.push(signed ? { label: "Sign the Facility Use Agreement", state: "done" }
       : v.agreement ? { label: "Sign the Facility Use Agreement", state: "todo", href: `/reservations/${r.id}/agreement?token=${v.agreement.token}` }
       : { label: "Sign the Facility Use Agreement", state: "waiting", note: "We'll send it once your request is reviewed." });
   }
@@ -202,7 +213,11 @@ export default async function ReservationDetailPage({
       .maybeSingle(),
   ]);
   const logo = logoRow ? await logoState(db, logoRow) : null;
-  const totals = (await getBilling(db, id).catch(() => null))?.totals ?? null;
+  const billingFull = await getBilling(db, id).catch(() => null);
+  const totals = billingFull?.totals ?? null;
+  // The quote to approve — for the organizer and co-organizers
+  const quoteRow = isOwner || isCoOwner ? await currentQuote(db, id).catch(() => null) : null;
+  const quote = quoteRow && billingFull ? quoteState(quoteRow, billingFull.charges) : null;
   // After the event: the organizer's survey link (created on first view)
   const survey = reservation.status === "completed" && (isOwner || isCoOwner)
     ? await ensureSurvey(db, id, reservation.contact_email ?? null).catch(() => null)
@@ -224,6 +239,7 @@ export default async function ReservationDetailPage({
     agreement: isOwner && agreementRow
       ? { token: agreementRow.token as string, customer_signed_at: (agreementRow.customer_signed_at as string | null) ?? null }
       : null,
+    quote,
   });
 }
 
@@ -247,7 +263,7 @@ function renderPage(
     church_use?: boolean | null;
     waived?: unknown;
   },
-  view: { isCollab: boolean; staffView: boolean; staff: boolean; canEdit: boolean; canCancel?: boolean; survey?: { token: string; done: boolean } | null; totals?: { charges: number; paid: number; balance: number } | null; labelCount: number; logo: LogoState | null; share: { enabled: boolean; token: string | null; path: string | null }; agreement?: { customer_signed_at: string | null; token: string } | null }
+  view: { isCollab: boolean; staffView: boolean; staff: boolean; canEdit: boolean; canCancel?: boolean; survey?: { token: string; done: boolean } | null; totals?: { charges: number; paid: number; balance: number } | null; labelCount: number; logo: LogoState | null; share: { enabled: boolean; token: string | null; path: string | null }; agreement?: { customer_signed_at: string | null; token: string } | null; quote?: QuoteState | null }
 ) {
   const submittedDate = new Date(reservation.created_at).toLocaleDateString("en-US", {
     month: "long",
@@ -688,7 +704,8 @@ function renderPage(
       })()}
 
       {/* Agreement signing card — show if there's an unsent/unsigned agreement */}
-      {!view.staffView && !readWaived(reservation.waived).agreement && view.agreement && !view.agreement.customer_signed_at && (
+      {!view.staffView && !readWaived(reservation.waived).agreement && view.agreement && !view.agreement.customer_signed_at
+        && !(view.quote && view.quote.includesAgreement && !view.quote.acceptedAt && !view.quote.stale && !view.quote.expired) && (
         <div style={{ border: "1px solid color-mix(in srgb, var(--bx-brass) 35%, transparent)", borderRadius: "12px", padding: "1.25rem 1.5rem", marginBottom: "1rem", background: "color-mix(in srgb, var(--bx-brass) 6%, transparent)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.625rem", marginBottom: "0.75rem" }}>
             <span style={{ width: 10, height: 10, borderRadius: "50%", background: "var(--bx-brass)", display: "inline-block" }} />

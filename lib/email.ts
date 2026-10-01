@@ -773,3 +773,101 @@ export async function sendCancellationNotice(opts: {
   });
   await deliver({ from: FROM, to: opts.to, subject: `Cancelled: ${opts.eventName} — ${opts.bookingNumber}`, html });
 }
+
+// ─── Quote for approval (v1.59) ───────────────────────────────────────────────
+type QuoteEmailLine = { label: string; note: string | null; unit_price: number; quantity: number; amount: number };
+const usdFmt = (n: number) => (n < 0 ? "-" : "") + Math.abs(n).toLocaleString("en-US", { style: "currency", currency: "USD" });
+const longYmd = (ymd: string) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
+
+/** Itemized table that reads well in Gmail, Apple Mail and Outlook. */
+function quoteTableHtml(lines: QuoteEmailLine[], subtotal: number, discounts: number, total: number): string {
+  const rows = lines.map((l) => `
+    <tr>
+      <td style="padding:10px 0;border-bottom:1px solid #eef0f3;vertical-align:top;">
+        <div style="color:#111827;font-size:14px;">${escHtml(l.label)}</div>
+        ${l.quantity !== 1 || l.note ? `<div style="color:#6b7280;font-size:12px;margin-top:2px;">${l.quantity !== 1 ? `${l.quantity} × ${usdFmt(l.unit_price)}` : ""}${l.quantity !== 1 && l.note ? " · " : ""}${l.note ? escHtml(l.note) : ""}</div>` : ""}
+      </td>
+      <td style="padding:10px 0 10px 12px;border-bottom:1px solid #eef0f3;text-align:right;vertical-align:top;white-space:nowrap;color:${l.amount < 0 ? "#15803d" : "#111827"};font-size:14px;">${usdFmt(l.amount)}</td>
+    </tr>`).join("");
+  const sumRow = (label: string, v: string, strong = false) =>
+    `<tr><td style="padding:6px 0;color:${strong ? NAVY : "#4b5563"};${strong ? "font-weight:700;font-size:16px;" : "font-size:14px;"}">${label}</td><td style="padding:6px 0;text-align:right;color:${strong ? NAVY : "#111827"};${strong ? "font-weight:700;font-size:16px;" : "font-size:14px;"}">${v}</td></tr>`;
+  return `
+    <table role="presentation" style="width:100%;border-collapse:collapse;margin:0 0 8px 0;border-top:2px solid ${NAVY};">${rows}</table>
+    <table role="presentation" style="width:100%;border-collapse:collapse;margin:0 0 20px 0;">
+      ${sumRow("Subtotal", usdFmt(subtotal))}
+      ${discounts ? sumRow("Discounts", usdFmt(discounts)) : ""}
+      ${sumRow("Quote total", usdFmt(total), true)}
+    </table>`;
+}
+
+export async function sendQuoteEmail(opts: {
+  to: string; name: string; bookingNumber: string; eventName: string; version: number;
+  lines: QuoteEmailLine[]; subtotal: number; discounts: number; total: number;
+  validUntil: string | null; url: string; includesAgreement: boolean; note: string | null;
+}): Promise<boolean> {
+  if (!process.env.RESEND_API_KEY) { console.warn("[email] RESEND_API_KEY not set — skipping quote"); return false; }
+  const first = escHtml(opts.name.split(" ")[0] || opts.name);
+  const html = brandedEmailHtml({
+    preheader: `Your quote for ${opts.eventName}: ${usdFmt(opts.total)}. Review and approve online.`,
+    headline: opts.version > 1 ? "Your updated quote" : "Your quote is ready",
+    body: `
+      <p style="margin:0 0 16px 0;">Hi <strong style="color:${NAVY};">${first}</strong>,</p>
+      <p style="margin:0 0 16px 0;">Here's the itemized quote for <strong>${escHtml(opts.eventName)}</strong> (${escHtml(opts.bookingNumber)}).
+      Please look it over and approve it online${opts.includesAgreement ? " — the same signature signs your Facility Use Agreement" : ""}.</p>
+      ${opts.note ? `<p style="background:#f8fafc;border-left:3px solid ${TEAL};padding:12px 16px;margin:0 0 16px 0;border-radius:0 6px 6px 0;color:#374151;font-size:14px;"><strong>Note from the BX team:</strong> ${escMultiline(opts.note)}</p>` : ""}
+      ${quoteTableHtml(opts.lines, opts.subtotal, opts.discounts, opts.total)}
+      <p style="margin:0 0 4px 0;color:#4b5563;font-size:13px;">Prices include table/chair set-up and tear-down and trash removal at the close of the event.</p>
+      ${opts.validUntil ? `<p style="margin:0;color:#4b5563;font-size:13px;">This quote is good until <strong>${longYmd(opts.validUntil)}</strong>.</p>` : ""}`,
+    ctaText: "Review & approve quote",
+    ctaUrl: opts.url,
+    footnoteHtml: `<p style="margin:0;">Questions or changes? Reply to this email or call ${SUPPORT_PHONE}.</p>`,
+  });
+  await deliver({
+    from: FROM, to: opts.to, replyTo: SUPPORT_EMAIL, html,
+    subject: `${opts.version > 1 ? "Updated quote" : "Your quote"} — ${opts.bookingNumber} · ${opts.eventName}`,
+  });
+  return true;
+}
+
+/** After approval: a copy for the organizer (PDF attached) and an alert for the BX inbox. */
+export async function sendQuoteApprovedEmails(opts: {
+  to: string | null; name: string; signer: string; bookingNumber: string; reservationId: string; eventName: string;
+  version: number; total: number; signedAt: string; includesAgreement: boolean; nextStep: string;
+  pdf: Uint8Array; filename: string;
+}): Promise<void> {
+  if (!process.env.RESEND_API_KEY) { console.warn("[email] RESEND_API_KEY not set — skipping quote approval"); return; }
+  const when = new Date(opts.signedAt).toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "long", timeStyle: "short" }) + " ET";
+  const what = `quote${opts.includesAgreement ? " and Facility Use Agreement" : ""}`;
+  if (opts.to) {
+    await deliver({
+      from: FROM, to: opts.to, replyTo: SUPPORT_EMAIL,
+      subject: `Quote approved — ${opts.bookingNumber} · ${opts.eventName}`,
+      html: brandedEmailHtml({
+        preheader: `You approved ${usdFmt(opts.total)} for ${opts.eventName}.`,
+        headline: "Thank you — quote approved",
+        body: `
+          <p style="margin:0 0 16px 0;">Hi <strong style="color:${NAVY};">${escHtml(opts.name.split(" ")[0] || opts.name)}</strong>,</p>
+          <p style="margin:0 0 16px 0;"><strong>${escHtml(opts.signer)}</strong> approved the ${what} for <strong>${escHtml(opts.eventName)}</strong> (${escHtml(opts.bookingNumber)}) on ${when}.
+          The signed copy is attached for your records.</p>
+          <p style="margin:0 0 16px 0;font-size:16px;color:${NAVY};"><strong>Approved total: ${usdFmt(opts.total)}</strong></p>
+          <p style="margin:0;"><strong>Next:</strong> ${escHtml(opts.nextStep)}</p>`,
+        ctaText: "View your booking",
+        ctaUrl: `${SITE_URL}/reservations/${opts.reservationId}`,
+        footnoteHtml: `<p style="margin:0;">Questions? Email <a href="mailto:${SUPPORT_EMAIL}" style="color:${TEAL};">${SUPPORT_EMAIL}</a>.</p>`,
+      }),
+      attachments: [{ filename: opts.filename, content: Buffer.from(opts.pdf) }],
+    });
+  }
+  await deliver({
+    from: FROM, to: ADMIN_EMAIL,
+    subject: `Quote approved — ${opts.bookingNumber} (${opts.eventName}) ${usdFmt(opts.total)}`,
+    html: brandedEmailHtml({
+      headline: "Quote approved",
+      body: `<p style="margin:0 0 12px 0;"><strong style="color:${NAVY};">${escHtml(opts.signer)}</strong> approved quote v${opts.version} (${usdFmt(opts.total)})${opts.includesAgreement ? " and signed the Facility Use Agreement" : ""} for <strong>${escHtml(opts.eventName)}</strong> (${escHtml(opts.bookingNumber)}) on ${when}.</p><p style="margin:0;">Next for the guest: ${escHtml(opts.nextStep)}</p>`,
+      ctaText: "Open the booking",
+      ctaUrl: `${SITE_URL}/reservations/${opts.reservationId}`,
+      footnoteHtml: null,
+    }),
+    attachments: [{ filename: opts.filename, content: Buffer.from(opts.pdf) }],
+  });
+}

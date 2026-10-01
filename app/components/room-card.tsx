@@ -2,6 +2,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import { Room } from "@/lib/rooms";
+import { useBlockPrice, useNoCharge } from "@/lib/room-price-context";
 
 type Signal = "available" | "ask" | "unavailable" | "loading";
 
@@ -48,7 +49,9 @@ function signalLabel(signal: Signal) {
 
 export function RoomCard({ room, signal, isSelected, isDisabled, isNP, tag, onToggle, onPreview, role, galleryMode = false }: Props) {
   const unavailable = signal === "unavailable";
-  const price = isNP ? room.baseNP : room.basePro;
+  const blockPrice = useBlockPrice(room.id, isNP);
+  const noCharge = useNoCharge();
+  const price = blockPrice;
   const [imgError, setImgError] = useState(false);
 
   return (
@@ -150,7 +153,7 @@ export function RoomCard({ room, signal, isSelected, isDisabled, isNP, tag, onTo
           </div>
           <div className="w-px h-3" style={{ background: "color-mix(in srgb, var(--bx-parchment) 15%, transparent)" }} />
           <p className="text-xs font-semibold truncate" style={{ color: "var(--bx-parchment)" }}>
-            from ${price.toLocaleString()}<span className="font-normal" style={{ color: "var(--bx-slate)" }}>/4 hrs</span>
+            {noCharge ? "No charge · church use" : <>from ${price.toLocaleString()}<span className="font-normal" style={{ color: "var(--bx-slate)" }}>/4 hrs</span></>}
           </p>
         </div>
 

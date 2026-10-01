@@ -5,7 +5,7 @@ import { adminClient } from "@/lib/event-map";
 export async function GET() {
   const { data, error } = await adminClient()
     .from("bx_addons")
-    .select("id, name, description, unit, price, sort")
+    .select("id, name, description, unit, price, sort, rooms, pricing")
     .eq("active", true)
     .order("sort")
     .order("name");

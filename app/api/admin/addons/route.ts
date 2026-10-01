@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminClient } from "@/lib/event-map";
 import { requireStaff, requireSysadmin } from "@/lib/api-auth";
+import { revalidateTag } from "next/cache";
+import { ADDONS_TAG } from "@/lib/room-prices";
+import { ROOMS } from "@/lib/rooms";
 
 const UNITS = ["each", "per_day", "flat"];
+const ROOM_IDS = new Set(ROOMS.map((r) => r.id));
 
 function clean(body: Record<string, unknown>) {
   const out: Record<string, unknown> = {};
@@ -15,6 +19,22 @@ function clean(body: Record<string, unknown>) {
     out.price = Math.round(p * 100) / 100;
   }
   if (typeof body.active === "boolean") out.active = body.active;
+  if (Array.isArray(body.rooms)) {
+    const ids = body.rooms.map(String).filter((id) => ROOM_IDS.has(id));
+    out.rooms = ids.length ? [...new Set(ids)] : null;
+  }
+  if (body.pricing === null) out.pricing = null;
+  else if (body.pricing && typeof body.pricing === "object") {
+    const p = body.pricing as { tiers?: unknown; extra_hour?: unknown };
+    const tiers = (Array.isArray(p.tiers) ? p.tiers : [])
+      .map((t) => (Array.isArray(t) ? [Number(t[0]), Number(t[1])] : [NaN, NaN]))
+      .filter(([h, pr]) => Number.isFinite(h) && h > 0 && h <= 24 && Number.isFinite(pr) && pr >= 0)
+      .sort((x, y) => x[0] - y[0]);
+    const extra = Number(p.extra_hour ?? 0);
+    if (!tiers.length) throw new Error("Add at least one hour tier with a price.");
+    if (!Number.isFinite(extra) || extra < 0) throw new Error("The hourly rate after the last tier must be zero or more.");
+    out.pricing = { type: "hours_tier", tiers, extra_hour: Math.round(extra * 100) / 100 };
+  }
   if (body.sort !== undefined && Number.isFinite(Number(body.sort))) out.sort = Math.trunc(Number(body.sort));
   return out;
 }
@@ -37,6 +57,7 @@ export async function POST(req: NextRequest) {
     if (!row.name) return NextResponse.json({ error: "Name is required." }, { status: 400 });
     const { data, error } = await adminClient().from("bx_addons").insert(row).select().single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    revalidateTag(ADDONS_TAG, { expire: 0 });
     return NextResponse.json(data, { status: 201 });
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 400 });
@@ -53,6 +74,7 @@ export async function PATCH(req: NextRequest) {
     const row = { ...clean(body), updated_at: new Date().toISOString() };
     const { data, error } = await adminClient().from("bx_addons").update(row).eq("id", body.id).select().single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    revalidateTag(ADDONS_TAG, { expire: 0 });
     return NextResponse.json(data);
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 400 });

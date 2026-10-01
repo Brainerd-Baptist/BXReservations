@@ -6,6 +6,7 @@ import { isClosedStatus } from "@/lib/dates";
 import { ROOMS } from "@/lib/rooms";
 import { sendEmail, brandedEmailHtml } from "@/lib/email";
 import { findConflicts, type Conflict } from "@/lib/conflicts";
+import { syncRoomCharges } from "@/lib/room-prices";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -131,11 +132,17 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         const start = String(x.customStart ?? ""), end = String(x.customEnd ?? "");
         if ((start && !HM.test(start)) || (end && !HM.test(end))) return NextResponse.json({ error: "Times must look like 09:00." }, { status: 400 });
         if (start && end && end <= start) return NextResponse.json({ error: `End time must be after start on ${x.date}.` }, { status: 400 });
-        const rooms = (Array.isArray(x.rooms) ? x.rooms : []).filter((rm) => rm && ROOM_IDS.has(String(rm.roomId))).map((rm, i) => ({
-          roomId: String(rm.roomId), setup: String(rm.setup ?? ""), customSetup: String(rm.customSetup ?? "").slice(0, 200),
-          requested: true, role: i === 0 ? "main" : (rm.role === "main" ? "main" : "extra"),
-        }));
         const prev = oldDays.find((d) => d.date === x.date) ?? {};
+        const prevRooms = ((prev as Partial<Day>).rooms ?? []);
+        const seenRooms = new Set<string>();
+        const rooms = (Array.isArray(x.rooms) ? x.rooms : [])
+          .filter((rm) => rm && ROOM_IDS.has(String(rm.roomId)) && !seenRooms.has(String(rm.roomId)) && !!seenRooms.add(String(rm.roomId)))
+          .map((rm, i) => ({
+            roomId: String(rm.roomId), setup: String(rm.setup ?? ""), customSetup: String(rm.customSetup ?? "").slice(0, 200),
+            // Every listed room is booked; keep the "had a conflict" mark from the original request
+            requested: prevRooms.some((p) => p.roomId === String(rm.roomId) && p.requested === true),
+            role: i === 0 ? "main" : (rm.role === "main" ? "main" : "extra"),
+          }));
         next.push({
           ...prev, date: x.date, included: x.included !== false,
           headcount: Math.max(1, Math.min(5000, Math.floor(Number(x.headcount) || 1))),
@@ -146,7 +153,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       }
       if (!next.length) return NextResponse.json({ error: "A booking needs at least one day." }, { status: 400 });
       next.sort((a, b) => a.date.localeCompare(b.date));
-      const sig = (ds: Day[]) => JSON.stringify(ds.map((d) => [d.date, d.included !== false, d.headcount, d.customStart, d.customEnd, d.timeSlot, (d.rooms ?? []).filter((rm) => rm.requested !== false).map((rm) => [rm.roomId, rm.setup])]));
+      const sig = (ds: Day[]) => JSON.stringify(ds.map((d) => [d.date, d.included !== false, d.headcount, d.customStart, d.customEnd, d.timeSlot, (d.rooms ?? []).map((rm) => [rm.roomId, rm.setup])]));
       if (sig(next) !== sig(oldDays)) {
         // Calendar check on what changed. Staff see the clashes and either
         // go back or confirm the overlap is OK ("acknowledge_conflicts").
@@ -174,6 +181,11 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   payload.contact = contact;
   const { error } = await db.from("reservations").update({ ...cols, payload, updated_at: new Date().toISOString() }).eq("id", r.id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // New schedule or rate type → room charges follow (unless staff set them by hand)
+  if (changes.includes("schedule") || changes.includes("non-profit status")) {
+    await syncRoomCharges(db, r.id, { actorId: user.id }).catch((e) => console.error("[details] room charges failed:", (e as Error).message));
+  }
 
   const { data: prof } = await db.from("bx_user_profiles").select("display_name").eq("user_id", user.id).maybeSingle();
   const who = (prof?.display_name as string | undefined) ?? user.email ?? "Someone";

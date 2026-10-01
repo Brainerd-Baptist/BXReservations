@@ -16,7 +16,7 @@ export async function buildInvoice(db: SupabaseClient, reservationId: string) {
   const [billing, venue] = await Promise.all([getBilling(db, r.id), readVenue(db)]);
   const days = (((r.payload as { days?: Day[] } | null)?.days ?? []) as Day[])
     .filter((d) => d.included !== false && includedDates({ days: [d] }).length)
-    .map((d) => ({ date: d.date, start: d.customStart, end: d.customEnd, rooms: (d.rooms ?? []).filter((x) => x.requested !== false).map((x) => x.roomId) }));
+    .map((d) => ({ date: d.date, start: d.customStart, end: d.customEnd, rooms: (d.rooms ?? []).map((x) => x.roomId) }));
   const bytes = await renderInvoice({
     bookingNumber: r.booking_number ?? r.id.slice(0, 8),
     eventName: r.event_name || "Your event",

@@ -3,6 +3,8 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Room } from "@/lib/rooms";
+import { useBlockPrice, useNoCharge, useRoomPrice } from "@/lib/room-price-context";
+import { usdShort } from "@/lib/pricing";
 import BodyPortal from "./body-portal";
 import { useModalDialog } from "./use-modal-dialog";
 
@@ -68,10 +70,13 @@ export function RoomLightbox({ room, isSelected, isNP, onClose, onToggle, galler
   const overlayRef = useRef<HTMLDivElement>(null);
   useModalDialog(!!room, onClose, overlayRef);
 
+  const blockPrice = useBlockPrice(room?.id ?? "", !!isNP);
+  const noCharge = useNoCharge();
+  const extraHour = useRoomPrice(room?.id ?? "")?.extra ?? 0;
   if (!room) return null;
 
   const photo = room.photos[photoIdx];
-  const price = isNP ? room.baseNP : room.basePro;
+  const price = blockPrice;
 
   return (
     <BodyPortal>
@@ -243,11 +248,11 @@ export function RoomLightbox({ room, isSelected, isNP, onClose, onToggle, galler
               Starting Rate
             </p>
             <p className="text-3xl font-bold" style={{ color: "var(--bx-parchment)" }}>
-              ${price.toLocaleString()}
-              <span className="text-sm font-normal ml-1" style={{ color: "var(--bx-slate)" }}>/ 4 hrs</span>
+              {noCharge ? "No charge" : usdShort(price)}
+              {!noCharge && <span className="text-sm font-normal ml-1" style={{ color: "var(--bx-slate)" }}>/ 4 hrs</span>}
             </p>
             <p className="text-xs mt-1" style={{ color: "var(--bx-slate)" }}>
-              {isNP ? "Non-profit rate" : "Standard rate"} · Final pricing confirmed by our team
+              {noCharge ? "Church use" : <>{isNP ? "Non-profit rate" : "Standard rate"} · then {usdShort(extraHour)} each additional hour</>}
             </p>
           </div>
 

@@ -6,6 +6,8 @@ import { getUserAndRole } from "@/lib/get-user-role";
 import { isStaffRole } from "@/lib/event-map";
 import { SITE_URL } from "@/lib/site";
 import { createAgreement } from "@/lib/agreement-token";
+import { currentQuote, quoteState, sendQuote } from "@/lib/quotes";
+import { getBilling } from "@/lib/billing";
 import { readWaived } from "@/lib/waivers";
 import { notifyCancellation } from "@/lib/cancellation";
 import { releaseReward } from "@/lib/survey";
@@ -104,6 +106,19 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // Each booking's charges total (room lines + add-ons − discounts) for the queue
+  // (paged — the API returns at most 1000 rows at a time)
+  const chargeTotal = new Map<string, number>();
+  for (let from = 0; from < 100_000; from += 1000) {
+    const { data: page, error: cErr } = await supabase.from("reservation_charges")
+      .select("id, reservation_id, amount").order("id").range(from, from + 999);
+    if (cErr) { console.error("[admin/reservations] charges:", cErr.message); break; }
+    for (const c of (page ?? []) as { reservation_id: string; amount: unknown }[]) {
+      chargeTotal.set(c.reservation_id, (chargeTotal.get(c.reservation_id) ?? 0) + (Number(c.amount) || 0));
+    }
+    if (!page || page.length < 1000) break;
+  }
+
   // Fetch signed agreements to build a lookup map
   const { data: agmtData } = await supabase
     .from("reservation_agreements")
@@ -134,7 +149,7 @@ export async function GET() {
       event:      (row.event_name  as string) ?? "",
       guests:     (firstDay.headcount as number) ?? 0,
       setup:      SETUP_LABELS[setup] ?? setup,
-      estimate:   (payload.estimate    as number)  ?? (firstDay.estimate    as number)  ?? 0,
+      estimate:   Math.round((chargeTotal.get(row.id as string) ?? 0) * 100) / 100,
       status:     DB_TO_ADMIN[row.status as string] ?? "Requested",
       submitted:  (row.created_at as string).split("T")[0],
       nonProfit:  (row.is_non_profit as boolean) ?? false,
@@ -291,6 +306,23 @@ export async function PATCH(req: NextRequest) {
   let emailType = EMAIL_TRIGGERS[status] as typeof EMAIL_TRIGGERS[string];
   if (emailType === "declined" && activeStatuses.includes(prevDbStatus)) {
     emailType = "cancelled";
+  }
+
+  // For Proposal Sent with charges to pay — send the itemized quote for approval
+  // instead (v1.59). One signature approves the quote and signs the agreement,
+  // and the quote email replaces the plain status email.
+  if (emailType === "proposal_sent" && !readWaived(row.waived).payment) {
+    const [{ totals, charges }, current] = await Promise.all([getBilling(supabase, row.id as string), currentQuote(supabase, row.id as string)]);
+    if (current?.accepted_at && quoteState(current, charges).stale === false) {
+      emailType = undefined;   // already approved for these charges — nothing new to send
+    } else if (totals.charges > 0) {
+      try {
+        const { emailed } = await sendQuote(supabase, row.id as string, { id: actorId ?? "", name: actorName ?? "BX staff" }, { notify: false });
+        if (emailed) emailType = undefined;   // the quote email replaces the status email
+      } catch (err) {
+        console.warn("[quote] couldn't send with Proposal Sent:", (err as Error).message);
+      }
+    }
   }
 
   // For Proposal Sent — auto-create a facility use agreement and include the link

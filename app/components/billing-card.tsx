@@ -6,8 +6,23 @@ import { Field, Input, Select } from "./ui/field";
 import { useToast } from "./Toast";
 import LoadError from "./load-error";
 import { CHARGE_KIND_LABEL, UNIT_LABEL, usd, type Addon, type Billing, type ChargeKind } from "@/lib/billing";
+import { isTiered, tierSummary } from "@/lib/addon-pricing";
+import { ROOMS } from "@/lib/rooms";
 
-type BillingResponse = Billing & { staff: boolean; canAddAddons: boolean; userId: string; howToPay?: string | null; paymentWaived?: boolean };
+const roomsNote = (ids?: string[] | null) => (ids?.length ? ` · ${ids.map((id) => ROOMS.find((r) => r.id === id)?.name ?? id).join(", ")} only` : "");
+
+type BillingResponse = Billing & {
+  staff: boolean; canAddAddons: boolean; userId: string; howToPay?: string | null; paymentWaived?: boolean;
+  /** Room lines are still the booking page estimate (before approval) */
+  estimate?: boolean;
+  /** Staff took the room lines over by hand — schedule edits leave them alone */
+  rentalManual?: boolean;
+  /** The current quote for approval, if one was sent */
+  quote?: {
+    version: number; token: string | null; total: number; sentAt: string; validUntil: string | null;
+    acceptedAt: string | null; acceptedName: string | null; stale: boolean; expired: boolean; includesAgreement: boolean;
+  } | null;
+};
 
 const METHODS = ["Check", "Cash", "Card", "ACH / transfer", "Other"];
 const today = () => new Date().toISOString().slice(0, 10);
@@ -30,7 +45,7 @@ export default function BillingCard({ reservationId, compact = false }: { reserv
   const [data, setData] = useState<BillingResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  const [panel, setPanel] = useState<null | "addon" | "line" | "payment">(null);
+  const [panel, setPanel] = useState<null | "addon" | "line" | "payment" | "quote">(null);
   const [catalog, setCatalog] = useState<Addon[] | null>(null);
 
   const load = useCallback(async () => {
@@ -89,6 +104,25 @@ export default function BillingCard({ reservationId, compact = false }: { reserv
     }, "Payment removed.");
   };
 
+  const recalc = () => {
+    if (!confirm("Replace every room rental line with the price list's numbers for this booking's schedule? Room lines typed in by hand are removed. Add-ons and other charges stay.")) return;
+    return act("recalc", async () => {
+      await jsonOrThrow(await fetch(`/api/reservations/${reservationId}/billing`, {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ recalculate: true }),
+      }));
+      await load();
+    }, "Room charges updated from the schedule.");
+  };
+
+  const sendQuote = (note: string) =>
+    act("quote", async () => {
+      await jsonOrThrow(await fetch(`/api/admin/reservations/${reservationId}/quote`, {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ note }),
+      }));
+      setPanel(null);
+      await load();
+    }, "Quote sent for approval.");
+
   const remind = () =>
     act("remind", async () => {
       await jsonOrThrow(await fetch(`/api/admin/reservations/${reservationId}/remind`, { method: "POST" }));
@@ -100,14 +134,68 @@ export default function BillingCard({ reservationId, compact = false }: { reserv
 
   const { charges, payments, totals, staff } = data;
   const balanceTone = totals.balance > 0 ? "bx-tone-amber" : totals.balance < 0 ? "bx-tone-indigo" : "bx-tone-green";
+  const hasRental = charges.some((c) => c.kind === "rental");
+  const q = data.quote ?? null;
+  const approved = !!q?.acceptedAt && !q.stale;
+  const isEstimate = !!data.estimate && hasRental && !approved;
+  const quoteOpen = !!q && !q.acceptedAt && !q.stale && !q.expired;
 
   return (
     <div className="space-y-4">
+      {/* Quote for approval */}
+      {q && (
+        approved ? (
+          <div className="bx-tone-green border rounded-xl px-4 py-3 text-sm" role="status">
+            <p className="font-semibold">✓ Quote approved</p>
+            <p className="text-xs mt-0.5">
+              {q.acceptedName} approved version {q.version} ({usd(q.total)}){q.includesAgreement ? " and signed the Facility Use Agreement" : ""} on {fmtDate(q.acceptedAt!)}.
+              {q.token && <> <a className="underline" href={`/api/quote/${q.token}/pdf`} target="_blank" rel="noopener">Signed copy (PDF)</a></>}
+            </p>
+          </div>
+        ) : quoteOpen ? (
+          <div className="bx-tone-indigo border rounded-xl px-4 py-3 text-sm" role="status">
+            <p className="font-semibold">{staff ? `Quote v${q.version} sent — waiting for approval` : "Your quote is ready"}</p>
+            <p className="text-xs mt-0.5">
+              {staff
+                ? `Sent ${fmtDate(q.sentAt)} for ${usd(q.total)}${q.validUntil ? ` · good until ${fmtDate(q.validUntil)}` : ""}${q.includesAgreement ? " · includes the agreement" : ""}.`
+                : `Review every line and approve it online${q.includesAgreement ? " — the same signature signs your Facility Use Agreement" : ""}.`}
+            </p>
+            {q.token && (
+              <a className={`bx-btn ${staff ? "bx-btn--secondary" : "bx-btn--primary"} bx-btn--sm mt-2`} href={`/quote/${q.token}`}>
+                {staff ? "View quote" : "Review & approve quote →"}
+              </a>
+            )}
+          </div>
+        ) : (
+          <div className="bx-tone-amber border rounded-xl px-4 py-3 text-sm" role="status">
+            <p className="font-semibold">{staff ? (q.stale ? "Charges changed since the last quote" : "The last quote expired") : "Your quote is being updated"}</p>
+            <p className="text-xs mt-0.5">{staff ? "Send an updated quote so the organizer can approve the current total." : "The BX team will send you an updated quote to approve."}</p>
+          </div>
+        )
+      )}
+      {isEstimate && (
+        <div className="bx-tone-amber border rounded-xl px-4 py-3 text-sm" role="note">
+          <p className="font-semibold">Estimate</p>
+          <p className="text-xs mt-0.5">
+            {staff
+              ? "These room charges were figured from the rooms and times on the booking page, and follow any schedule change until you approve. To set your own price, remove a line or add one by hand."
+              : "Figured from your rooms and times — the same price the booking page showed. The BX team confirms the final total when they approve your request."}
+          </p>
+        </div>
+      )}
+      {staff && !data.paymentWaived && (data.rentalManual || !data.estimate) && (
+        <p className="text-xs text-slate">
+          {data.rentalManual ? "Room charges were set by hand" : "This booking is approved, so its price is locked"}
+          {" "}— schedule changes won&apos;t update them. Changed the rooms or times? Press <strong>Recalculate room charges</strong>.
+        </p>
+      )}
       {/* Line items */}
       <div className="bx-well rounded-xl overflow-hidden">
         {charges.length === 0 ? (
           <p className="p-4 text-sm text-slate">
-            {staff ? "No charges yet. Add the room rental and any add-ons." : "No charges yet. The BX team will add your total after reviewing your request."}
+            {data.paymentWaived
+              ? "No charges — payment isn't needed for this booking."
+              : staff ? "No charges yet. Recalculate room charges, or add lines by hand." : "No charges yet. The BX team will add your total after reviewing your request."}
           </p>
         ) : (
           <table className="w-full text-sm">
@@ -144,7 +232,7 @@ export default function BillingCard({ reservationId, compact = false }: { reserv
       {/* Totals */}
       <dl className="grid grid-cols-3 gap-2 text-center">
         <div className="bx-well rounded-xl px-2 py-3">
-          <dt className="text-[11px] uppercase tracking-wide text-slate">Total</dt>
+          <dt className="text-[11px] uppercase tracking-wide text-slate">{isEstimate ? "Est. total" : "Total"}</dt>
           <dd className="text-base font-bold text-parchment tabular">{usd(totals.charges)}</dd>
         </div>
         <div className="bx-well rounded-xl px-2 py-3">
@@ -165,7 +253,7 @@ export default function BillingCard({ reservationId, compact = false }: { reserv
           <p className="text-xs text-slate mt-1.5">You&apos;ll get a receipt by email when your payment is recorded.</p>
         </div>
       )}
-      {data.paymentWaived && totals.charges <= 0 && (
+      {data.paymentWaived && charges.length > 0 && totals.charges <= 0 && (
         <p className="text-xs text-slate">No payment is needed for this booking.</p>
       )}
 
@@ -196,6 +284,12 @@ export default function BillingCard({ reservationId, compact = false }: { reserv
         {data.canAddAddons && <Button size="sm" variant="secondary" onClick={openAddon}>+ Add-on</Button>}
         {staff && <Button size="sm" variant="secondary" onClick={() => setPanel("line")}>+ Charge or discount</Button>}
         {staff && <Button size="sm" onClick={() => setPanel("payment")}>Record payment</Button>}
+        {staff && !data.paymentWaived && (
+          <Button size="sm" variant="secondary" onClick={recalc} loading={busy === "recalc"}>Recalculate room charges</Button>
+        )}
+        {staff && !data.paymentWaived && totals.charges > 0 && !approved && (
+          <Button size="sm" onClick={() => setPanel("quote")}>{q ? "Send updated quote" : "Send quote for approval"}</Button>
+        )}
         {staff && (
           <Button size="sm" variant="secondary" onClick={remind} loading={busy === "remind"} disabled={totals.balance <= 0}>
             Send reminder
@@ -227,6 +321,9 @@ export default function BillingCard({ reservationId, compact = false }: { reserv
       {panel === "line" && (
         <LineForm busy={busy === "add"} onCancel={() => setPanel(null)} onAdd={(b) => post(b)} />
       )}
+      {panel === "quote" && (
+        <QuoteForm total={totals.charges} busy={busy === "quote"} onCancel={() => setPanel(null)} onSend={sendQuote} />
+      )}
       {panel === "payment" && (
         <PaymentForm balance={totals.balance} busy={busy === "pay"} onCancel={() => setPanel(null)}
           onSave={(b) => act("pay", async () => {
@@ -238,6 +335,27 @@ export default function BillingCard({ reservationId, compact = false }: { reserv
           }, "Payment recorded.")} />
       )}
     </div>
+  );
+}
+
+function QuoteForm({ total, busy, onSend, onCancel }: {
+  total: number; busy: boolean; onSend: (note: string) => void; onCancel: () => void;
+}) {
+  const [note, setNote] = useState("");
+  return (
+    <form className="bx-well rounded-xl p-4 space-y-3" onSubmit={(e) => { e.preventDefault(); onSend(note); }}>
+      <p className="text-sm text-parchment">
+        Email the organizer an itemized quote for <strong>{usd(total)}</strong> to approve online. If the booking needs the
+        Facility Use Agreement, the same signature signs it. The booking moves to <strong>Proposal Sent</strong>.
+      </p>
+      <Field label="Note to the organizer (optional)">
+        <Input value={note} onChange={(e) => setNote(e.target.value)} maxLength={1000} placeholder="e.g. We added the AV package you asked about." />
+      </Field>
+      <div className="flex gap-2">
+        <Button type="submit" size="sm" loading={busy}>Send quote</Button>
+        <Button type="button" size="sm" variant="ghost" onClick={onCancel}>Cancel</Button>
+      </div>
+    </form>
   );
 }
 
@@ -254,11 +372,16 @@ function AddonForm({ catalog, busy, onAdd, onCancel }: {
       <Field label="Add-on">
         <Select value={id} onChange={(e) => setId(e.target.value)} required>
           <option value="">Choose…</option>
-          {catalog.map((a) => <option key={a.id} value={a.id}>{a.name} — {usd(Number(a.price))} {UNIT_LABEL[a.unit]}</option>)}
+          {catalog.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.name} — {isTiered(a) ? tierSummary(a.pricing!) : `${usd(Number(a.price))} ${a.unit === "flat" ? "per event" : UNIT_LABEL[a.unit]}`}{roomsNote(a.rooms)}
+            </option>
+          ))}
         </Select>
       </Field>
       {pick?.description && <p className="text-xs text-slate">{pick.description}</p>}
-      {pick && pick.unit !== "flat" && (
+      {pick && isTiered(pick) && <p className="text-xs text-slate">Priced from each event day&apos;s hours — one line per day with the room booked.</p>}
+      {pick && pick.unit !== "flat" && !isTiered(pick) && (
         <Field label={pick.unit === "per_day" ? "Days" : "Quantity"}>
           <Input type="number" min="1" step="1" inputMode="numeric" value={qty} onChange={(e) => setQty(e.target.value)} />
         </Field>
