@@ -21,6 +21,7 @@ type BillingResponse = Billing & {
   quote?: {
     version: number; token: string | null; total: number; sentAt: string; validUntil: string | null;
     acceptedAt: string | null; acceptedName: string | null; stale: boolean; expired: boolean; includesAgreement: boolean;
+    declinedAt?: string | null; declineReason?: string | null;
   } | null;
 };
 
@@ -138,7 +139,8 @@ export default function BillingCard({ reservationId, compact = false }: { reserv
   const q = data.quote ?? null;
   const approved = !!q?.acceptedAt && !q.stale;
   const isEstimate = !!data.estimate && hasRental && !approved;
-  const quoteOpen = !!q && !q.acceptedAt && !q.stale && !q.expired;
+  const declined = !!q?.declinedAt && !q.acceptedAt;
+  const quoteOpen = !!q && !q.acceptedAt && !declined && !q.stale && !q.expired;
 
   return (
     <div className="space-y-4">
@@ -150,6 +152,16 @@ export default function BillingCard({ reservationId, compact = false }: { reserv
             <p className="text-xs mt-0.5">
               {q.acceptedName} approved version {q.version} ({usd(q.total)}){q.includesAgreement ? " and signed the Facility Use Agreement" : ""} on {fmtDate(q.acceptedAt!)}.
               {q.token && <> <a className="underline" href={`/api/quote/${q.token}/pdf`} target="_blank" rel="noopener">Signed copy (PDF)</a></>}
+            </p>
+          </div>
+        ) : declined ? (
+          <div className="bx-tone-amber border rounded-xl px-4 py-3 text-sm" role="status">
+            <p className="font-semibold">{staff ? `Changes requested on quote v${q.version}` : "You asked for changes"}</p>
+            {q.declineReason && <p className="text-xs mt-0.5 whitespace-pre-line italic">“{q.declineReason}”</p>}
+            <p className="text-xs mt-1">
+              {staff
+                ? `Asked ${fmtDate(q.declinedAt!)}. Update the charges, then send an updated quote. Reply in Messages.`
+                : "The BX team is updating your quote and will email the new one. You can add details in Messages below."}
             </p>
           </div>
         ) : quoteOpen ? (

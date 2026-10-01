@@ -15,6 +15,13 @@ export default async function QuotePage({ params }: Props) {
   const db = adminClient();
   const loaded = await loadQuote(db, token);
   if (!loaded) notFound();
-  const staffPreview = await isStaffPreview(db, loaded.reservation);
-  return <QuoteView quote={loaded.quote} reservation={loaded.reservation} state={loaded.state} staffPreview={staffPreview} />;
+  const [staffPreview, { data: messages }] = await Promise.all([
+    isStaffPreview(db, loaded.reservation),
+    // The booking's Messages thread (what the organizer can see)
+    db.from("reservation_comments").select("id, author_name, author_role, body, created_at")
+      .eq("reservation_id", loaded.reservation.id).eq("internal_only", false)
+      .order("created_at", { ascending: false }).limit(30),
+  ]);
+  return <QuoteView quote={loaded.quote} reservation={loaded.reservation} state={loaded.state} staffPreview={staffPreview}
+    messages={(messages ?? []).reverse()} />;
 }

@@ -91,3 +91,8 @@ create table if not exists public.bx_quotes (
 );
 alter table public.bx_quotes enable row level security;
 create index if not exists bx_quotes_reservation_idx on public.bx_quotes (reservation_id, version desc);
+
+-- The organizer can ask for changes instead of approving (reason required)
+alter table public.bx_quotes add column if not exists declined_at timestamptz;
+alter table public.bx_quotes add column if not exists decline_reason text;
+alter table public.bx_quotes add column if not exists declined_name text;

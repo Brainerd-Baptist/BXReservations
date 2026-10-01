@@ -2,6 +2,7 @@ import { INCLUDES_NOTE, type QuoteRow, type QuoteState } from "@/lib/quotes";
 import { ROOMS } from "@/lib/rooms";
 import { SUPPORT_EMAIL, SUPPORT_PHONE } from "@/lib/site";
 import QuoteApproveForm from "./quote-approve-form";
+import QuoteConversation, { type QuoteMessage } from "./quote-conversation";
 
 const usd = (n: number) => (n < 0 ? "-" : "") + Math.abs(n).toLocaleString("en-US", { style: "currency", currency: "USD" });
 const longDate = (ymd: string) =>
@@ -16,10 +17,12 @@ const SLOT: Record<string, string> = { morning: "Morning (8am–12pm)", afternoo
 type Res = { id: string; booking_number: string | null; event_name: string | null; contact_name: string | null; contact_org: string | null; payload: unknown };
 
 /** The itemized quote, the agreement (if included) and the approval form. */
-export default function QuoteView({ quote: q, reservation: r, state, staffPreview = false }: {
+export default function QuoteView({ quote: q, reservation: r, state, staffPreview = false, messages = [] }: {
   quote: QuoteRow; reservation: Res; state: QuoteState & { closed?: boolean };
   /** BX staff viewing a quote they sent: no approval form */
   staffPreview?: boolean;
+  /** the booking's Messages thread */
+  messages?: QuoteMessage[];
 }) {
   type Day = { date: string; included?: boolean; timeSlot?: string; customStart?: string; customEnd?: string; rooms?: { roomId: string }[] };
   // The schedule as quoted (older quotes fall back to the booking's current one)
@@ -118,7 +121,17 @@ export default function QuoteView({ quote: q, reservation: r, state, staffPrevie
         )}
 
         {/* Approve */}
-        {q.accepted_at ? (
+        {q.declined_at && !q.accepted_at ? (
+          <section className="bx-tone-amber border rounded-2xl p-5" role="status">
+            <p className="font-semibold">Changes requested</p>
+            <p className="text-sm mt-1">
+              {q.declined_name || "The organizer"} asked for changes on{" "}
+              {new Date(q.declined_at).toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "long", timeStyle: "short" })} ET.
+              {" "}The BX team will send an updated quote.
+            </p>
+            {q.decline_reason && <p className="text-sm mt-2 whitespace-pre-line italic">“{q.decline_reason}”</p>}
+          </section>
+        ) : q.accepted_at ? (
           <section className="bx-tone-green border rounded-2xl p-5" role="status">
             <p className="font-semibold text-lg">✓ Approved</p>
             <p className="text-sm mt-1">
@@ -146,6 +159,10 @@ export default function QuoteView({ quote: q, reservation: r, state, staffPrevie
           </section>
         ) : (
           <QuoteApproveForm token={q.token} contactName={r.contact_name ?? ""} total={usd(Number(q.total))} includesAgreement={!!q.agreement_text} />
+        )}
+
+        {!state.closed && (
+          <QuoteConversation token={q.token} messages={messages} bookingId={r.id} canPost={!staffPreview} />
         )}
 
         <p className="text-center text-xs text-slate">

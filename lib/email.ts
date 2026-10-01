@@ -820,7 +820,7 @@ export async function sendQuoteEmail(opts: {
       ${opts.validUntil ? `<p style="margin:0;color:#4b5563;font-size:13px;">This quote is good until <strong>${longYmd(opts.validUntil)}</strong>.</p>` : ""}`,
     ctaText: "Review & approve quote",
     ctaUrl: opts.url,
-    footnoteHtml: `<p style="margin:0;">Questions or changes? Reply to this email or call ${SUPPORT_PHONE}.</p>`,
+    footnoteHtml: `<p style="margin:0;">Questions or changes? Ask or request changes right on the quote page, reply to this email, or call ${SUPPORT_PHONE}.</p>`,
   });
   await deliver({
     from: FROM, to: opts.to, replyTo: SUPPORT_EMAIL, html,

@@ -74,13 +74,13 @@ function checklistSteps(
     { label: "BX team reviews it", state: reviewed ? "done" : "waiting", note: reviewed ? undefined : "We'll email you when it's reviewed." },
   ];
   const q = v.quote ?? null;
-  const quoteOpen = !!q && !q.acceptedAt && !q.stale && !q.expired && !!q.token;
+  const quoteOpen = !!q && !q.acceptedAt && !q.declinedAt && !q.stale && !q.expired && !!q.token;
   // Older bookings (before quotes) that are already past review skip this step
   const quoteStage = ["pending", "pending_insurance", "needs_info", "under_review"].includes(r.status);
   if (!w.payment && (q || quoteStage)) {
     steps.push(q?.acceptedAt && !q.stale ? { label: "Approve your quote", state: "done" }
       : quoteOpen ? { label: "Approve your quote", state: "todo", href: `/quote/${q!.token}`, note: q!.includesAgreement ? "One signature approves the quote and signs the Facility Use Agreement." : undefined }
-      : { label: "Approve your quote", state: "waiting", note: q ? "The BX team is updating your quote." : "We'll email your itemized quote once your request is reviewed." });
+      : { label: "Approve your quote", state: "waiting", note: q?.declinedAt ? "You asked for changes — the BX team is updating your quote." : q ? "The BX team is updating your quote." : "We'll email your itemized quote once your request is reviewed." });
   }
   if (!w.agreement) {
     const signed = !!v.agreement?.customer_signed_at;
@@ -705,7 +705,7 @@ function renderPage(
 
       {/* Agreement signing card — show if there's an unsent/unsigned agreement */}
       {!view.staffView && !readWaived(reservation.waived).agreement && view.agreement && !view.agreement.customer_signed_at
-        && !(view.quote && view.quote.includesAgreement && !view.quote.acceptedAt && !view.quote.stale && !view.quote.expired) && (
+        && !(view.quote && view.quote.includesAgreement && !view.quote.acceptedAt && !view.quote.declinedAt && !view.quote.stale && !view.quote.expired) && (
         <div style={{ border: "1px solid color-mix(in srgb, var(--bx-brass) 35%, transparent)", borderRadius: "12px", padding: "1.25rem 1.5rem", marginBottom: "1rem", background: "color-mix(in srgb, var(--bx-brass) 6%, transparent)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.625rem", marginBottom: "0.75rem" }}>
             <span style={{ width: 10, height: 10, borderRadius: "50%", background: "var(--bx-brass)", display: "inline-block" }} />

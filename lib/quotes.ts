@@ -28,6 +28,7 @@ export interface QuoteRow {
   agreement_text: string | null; valid_until: string | null;
   sent_at: string; sent_by: string | null; sent_to: string | null; note: string | null;
   accepted_at: string | null; accepted_name: string | null; accepted_ip: string | null; accepted_ua: string | null;
+  declined_at?: string | null; decline_reason?: string | null; declined_name?: string | null;
   superseded_at: string | null;
   /** the booking's days when the quote was sent */
   schedule?: unknown[] | null;
@@ -52,6 +53,8 @@ export async function currentQuote(db: SupabaseClient, reservationId: string): P
 export interface QuoteState {
   version: number; token: string; total: number; sentAt: string; validUntil: string | null;
   acceptedAt: string | null; acceptedName: string | null;
+  /** the organizer asked for changes instead of approving */
+  declinedAt: string | null; declineReason: string | null;
   /** charges changed since it was sent */
   stale: boolean;
   /** the booking was cancelled, declined or finished */
@@ -64,6 +67,7 @@ export function quoteState(q: QuoteRow, charges: { label: string; unit_price: un
   return {
     version: q.version, token: q.token, total: money(q.total), sentAt: q.sent_at, validUntil: q.valid_until,
     acceptedAt: q.accepted_at, acceptedName: q.accepted_name,
+    declinedAt: q.declined_at ?? null, declineReason: q.decline_reason ?? null,
     stale: fingerprint(charges) !== q.fingerprint,
     expired: !q.accepted_at && !!q.valid_until && q.valid_until < venueToday(),
     includesAgreement: !!q.agreement_text,
@@ -233,6 +237,7 @@ export async function acceptQuote(
   if (!loaded) throw new QuoteError("This quote link isn't valid.", 404);
   const { quote: q, reservation: r, state } = loaded;
   if (q.accepted_at) throw new QuoteError("This quote was already approved.", 409);
+  if (q.declined_at) throw new QuoteError("You asked for changes to this quote. The BX team will send an updated one.", 409);
   if (state.closed) throw new QuoteError("This booking was cancelled or closed, so the quote can't be approved.", 410);
   if (q.superseded_at) throw new QuoteError("A newer quote replaced this one — check your email or your booking page for the latest.", 410);
   if (state.expired) throw new QuoteError("This quote has expired. Ask the BX team to send a fresh one.", 410);
@@ -243,7 +248,7 @@ export async function acceptQuote(
   const at = new Date().toISOString();
   const { data: done, error } = await db.from("bx_quotes")
     .update({ accepted_at: at, accepted_name: name, accepted_ip: signer.ip, accepted_ua: signer.ua.slice(0, 400) })
-    .eq("id", q.id).is("accepted_at", null).is("superseded_at", null).select("*").maybeSingle<QuoteRow>();
+    .eq("id", q.id).is("accepted_at", null).is("superseded_at", null).is("declined_at", null).select("*").maybeSingle<QuoteRow>();
   if (error) throw new QuoteError(error.message, 500);
   if (!done) throw new QuoteError("This quote was already approved or replaced.", 409);
 
@@ -289,4 +294,71 @@ export async function isStaffPreview(db: SupabaseClient, r: { id: string; user_i
   const { data: collab } = await db.from("reservation_collaborators").select("collab_role")
     .eq("reservation_id", r.id).eq("user_id", user.id).not("accepted_at", "is", null).maybeSingle();
   return collab?.collab_role !== "co_owner";
+}
+
+// ─── Request changes / questions from the quote page ──────────────────────────
+
+/** Post into the booking's Messages thread as the organizer, and tell the BX team. */
+export async function postGuestMessage(
+  db: SupabaseClient, r: { id: string; user_id: string | null; booking_number: string | null; event_name: string | null; contact_name: string | null; contact_email: string | null },
+  text: string, opts: { headline?: string } = {},
+): Promise<void> {
+  const author = r.contact_name || r.contact_email || "Organizer";
+  const { error } = await db.from("reservation_comments").insert({
+    reservation_id: r.id, author_id: r.user_id, author_name: author, author_role: "user", body: text, internal_only: false,
+  });
+  if (error) throw new QuoteError(error.message, 500);
+  await db.from("reservation_history").insert({
+    reservation_id: r.id, actor_id: r.user_id, actor_name: author, actor_role: "user", action: "comment", note: text.slice(0, 500),
+  });
+  const ref = r.booking_number ?? r.id.slice(0, 8);
+  const { data: admins } = await db.from("bx_user_roles").select("user_id").in("role", ["owner", "system_admin", "booking_admin"]);
+  if (admins?.length) {
+    await db.from("bx_notifications").insert(admins.map((a: { user_id: string }) => ({
+      user_id: a.user_id, reservation_id: r.id, type: "comment",
+      title: opts.headline ?? "New message", body: `${author} on ${r.event_name ?? "a booking"} (${ref}): ${text.slice(0, 140)}`,
+    })));
+  }
+  try {
+    const { sendEmail, brandedEmailHtml, escHtml, escMultiline } = await import("@/lib/email");
+    const { ADMIN_EMAIL } = await import("@/lib/site");
+    await sendEmail({
+      to: ADMIN_EMAIL, replyTo: r.contact_email ?? undefined,
+      subject: `${opts.headline ?? "New message"} — ${ref}${r.event_name ? ` · ${r.event_name}` : ""}`,
+      html: brandedEmailHtml({
+        headline: opts.headline ?? "New message",
+        body: `<p style="margin:0 0 8px 0;"><strong style="color:#00205b;">${escHtml(author)}</strong> wrote about <strong>${escHtml(ref)}</strong>${r.event_name ? ` — ${escHtml(r.event_name)}` : ""}:</p>
+          <p style="margin:0 0 20px 0;padding:12px 16px;background-color:#f3f4f6;border-radius:8px;color:#374151;">${escMultiline(text)}</p>`,
+        ctaText: "Open the booking", ctaUrl: `${SITE_URL}/reservations/${r.id}`, footnoteHtml: null,
+      }),
+    });
+  } catch (e) { console.error("[quote] staff email failed:", (e as Error).message); }
+}
+
+/** The organizer asks for changes instead of approving (reason required). */
+export async function declineQuote(db: SupabaseClient, token: string, reason: string): Promise<QuoteRow> {
+  const loaded = await loadQuote(db, token);
+  if (!loaded) throw new QuoteError("This quote link isn't valid.", 404);
+  const { quote: q, reservation: r, state } = loaded;
+  if (q.accepted_at) throw new QuoteError("This quote was already approved — message the BX team to make a change.", 409);
+  if (q.declined_at) throw new QuoteError("You already asked for changes to this quote.", 409);
+  if (q.superseded_at) throw new QuoteError("A newer quote replaced this one.", 410);
+  if (state.closed) throw new QuoteError("This booking was cancelled or closed.", 410);
+  const why = reason.trim().replace(/\s+\n/g, "\n").slice(0, 2000);
+  if (why.length < 10) throw new QuoteError("Tell us what you'd like changed (a sentence or two).", 400);
+
+  const at = new Date().toISOString();
+  const name = r.contact_name || r.contact_email || "Organizer";
+  const { data: done, error } = await db.from("bx_quotes")
+    .update({ declined_at: at, decline_reason: why, declined_name: name })
+    .eq("id", q.id).is("accepted_at", null).is("declined_at", null).is("superseded_at", null).select("*").maybeSingle<QuoteRow>();
+  if (error) throw new QuoteError(error.message, 500);
+  if (!done) throw new QuoteError("This quote was already approved, changed or replaced.", 409);
+  await db.from("reservation_history").insert({
+    reservation_id: r.id, actor_id: r.user_id, actor_name: name, actor_role: "user", action: "quote_changes_requested",
+    from_status: r.status, to_status: r.status, note: `Asked for changes to quote v${q.version} (${usd(money(q.total))}): ${why.slice(0, 400)}`,
+  });
+  // Into the booking's Messages, so the conversation stays in one place
+  await postGuestMessage(db, r, `Requested changes to quote v${q.version} (${usd(money(q.total))}):\n${why}`, { headline: "Quote changes requested" });
+  return done;
 }
