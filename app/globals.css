@@ -678,15 +678,15 @@ select:focus {
 html[data-grid-dots="on"] {
   --bx-active-dots: radial-gradient(
     circle at center,
-    color-mix(in srgb, var(--bx-parchment) var(--bx-grid-opacity, 10%), transparent) 1px,
+    color-mix(in srgb, var(--bx-grid-ink, var(--bx-parchment)) var(--bx-grid-opacity, 10%), transparent) 1px,
     transparent 1.5px
   );
   --bx-lamp-dots: radial-gradient(circle at center, var(--bx-lamp-dot) 1.25px, transparent 2px);
 }
 html[data-grid-lines="on"] {
   --bx-active-lines:
-    linear-gradient(color-mix(in srgb, var(--bx-parchment) var(--bx-grid-opacity, 7%), transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in srgb, var(--bx-parchment) var(--bx-grid-opacity, 7%), transparent) 1px, transparent 1px);
+    linear-gradient(color-mix(in srgb, var(--bx-grid-ink, var(--bx-parchment)) var(--bx-grid-opacity, 7%), transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--bx-grid-ink, var(--bx-parchment)) var(--bx-grid-opacity, 7%), transparent) 1px, transparent 1px);
   --bx-lamp-lines:
     linear-gradient(var(--bx-lamp-line) 1px, transparent 1px),
     linear-gradient(90deg, var(--bx-lamp-line) 1px, transparent 1px);

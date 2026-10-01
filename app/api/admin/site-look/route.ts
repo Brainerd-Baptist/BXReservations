@@ -3,6 +3,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { getUserAndRole } from "@/lib/get-user-role";
 import { adminClient } from "@/lib/event-map";
 import { getSiteLook, SITE_LOOK_TAG } from "@/lib/site-look";
+import { cleanTheme } from "@/lib/site-theme";
 
 async function requireOwner() {
   const { user, role } = await getUserAndRole();
@@ -22,10 +23,11 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const denied = await requireOwner();
   if (denied) return denied;
-  const body = await req.json().catch(() => ({})) as { gridDots?: boolean; gridLines?: boolean };
+  const body = await req.json().catch(() => ({})) as { gridDots?: boolean; gridLines?: boolean; theme?: unknown };
   const rows: { key: string; value: string }[] = [];
   if (typeof body.gridDots === "boolean") rows.push({ key: "grid_dots", value: body.gridDots ? "on" : "off" });
   if (typeof body.gridLines === "boolean") rows.push({ key: "grid_lines", value: body.gridLines ? "on" : "off" });
+  if (body.theme !== undefined) rows.push({ key: "site_theme", value: JSON.stringify(cleanTheme(body.theme)) });
   if (!rows.length) return NextResponse.json({ error: "Nothing to change" }, { status: 400 });
   const { error } = await adminClient().from("bx_settings").upsert(rows, { onConflict: "key" });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

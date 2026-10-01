@@ -6,6 +6,7 @@ import AmbientBackground from "./components/ambient-background";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 import { getSiteLook } from "@/lib/site-look";
+import { themeCss } from "@/lib/site-theme";
 import { ToastProvider } from "./components/Toast";
 import SiteMetrics from "./components/site-metrics";
 
@@ -36,7 +37,7 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-const APP_VERSION = "1.59.2";
+const APP_VERSION = "1.60.0";
 
 export default async function RootLayout({
   children,
@@ -56,6 +57,8 @@ export default async function RootLayout({
       <head>
         {/* Blocking theme-init script — must run before first paint to prevent flash */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        {/* Background colors (Owner, Admin → Settings) — only hex colors and numbers reach here */}
+        <style id="bx-look" dangerouslySetInnerHTML={{ __html: themeCss(look.theme) }} />
       </head>
       <body className="flex flex-col min-h-screen">
         <a href="#main-content" className="bx-skip">Skip to content</a>
