@@ -119,7 +119,21 @@ export default function LoginPage() {
     else setResendError(ok === "fail" ? "We couldn't send another email just now. Please try again in a minute." : ok);
   }
 
+  // Direct Google sign-in on our own address (so Google's picker doesn't show the Supabase address).
+  // Off until NEXT_PUBLIC_DIRECT_GOOGLE=1; the old path stays as a fallback link.
+  const direct = process.env.NEXT_PUBLIC_DIRECT_GOOGLE === "1";
+
   async function handleGoogleSignIn() {
+    if (direct) {
+      setError("");
+      setGoogleLoading(true);
+      window.location.href = `/auth/google/start?next=${encodeURIComponent(destination())}`;
+      return;
+    }
+    await classicGoogleSignIn();
+  }
+
+  async function classicGoogleSignIn() {
     setError("");
     setGoogleLoading(true);
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
@@ -215,6 +229,11 @@ export default function LoginPage() {
             <GoogleIcon size={16} />
             {googleLoading ? "Redirecting…" : mode === "signup" ? "Sign up with Google" : "Continue with Google"}
           </button>
+          {direct && (
+            <button type="button" onClick={classicGoogleSignIn} className="block w-full text-center text-xs text-slate hover:text-parchment">
+              Trouble signing in? Use the standard Google sign-in
+            </button>
+          )}
 
           {/* Google hint — sign-in mode only */}
           {mode === "signin" && (
