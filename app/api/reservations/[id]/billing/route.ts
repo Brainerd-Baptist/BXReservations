@@ -47,6 +47,8 @@ export async function GET(_req: NextRequest, { params }: Params) {
     quote: qs && (c.ctx.access === "edit") ? qs : qs ? { ...qs, token: null } : null,
     staff: c.ctx.staff,
     canAddAddons: c.ctx.staff || (c.ctx.access === "edit" && requesterCanEditAddons(c.ctx.reservation.status)),
+    // true when the current user is the booking's primary organizer (user_id match) OR a non-staff co-organizer
+    canPayOnline: (c.ctx.reservation.user_id === c.user.id) || (!c.ctx.staff && c.ctx.access === "edit"),
     userId: c.user.id,
   });
 }

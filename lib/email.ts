@@ -833,26 +833,37 @@ export async function sendQuoteEmail(opts: {
 export async function sendQuoteApprovedEmails(opts: {
   to: string | null; name: string; signer: string; bookingNumber: string; reservationId: string; eventName: string;
   version: number; total: number; signedAt: string; includesAgreement: boolean; nextStep: string;
+  hasStripe?: boolean;
   pdf: Uint8Array; filename: string;
 }): Promise<void> {
   if (!process.env.RESEND_API_KEY) { console.warn("[email] RESEND_API_KEY not set — skipping quote approval"); return; }
   const when = new Date(opts.signedAt).toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "long", timeStyle: "short" }) + " ET";
   const what = `quote${opts.includesAgreement ? " and Facility Use Agreement" : ""}`;
+  const bookingUrl = `${SITE_URL}/reservations/${opts.reservationId}`;
+  // When a balance is owed and Stripe is set up, add a pay-now section before the next-step line
+  const paySection = opts.hasStripe && opts.total > 0
+    ? `<p style="margin:0 0 16px 0;"><strong>Balance due: ${usdFmt(opts.total)}</strong> — you can pay securely by card on your booking page.</p>
+      <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 16px 0;">
+        <tr><td style="border-radius:6px;background:${TEAL};">
+          <a href="${bookingUrl}" style="display:inline-block;padding:12px 24px;font-size:14px;font-weight:700;color:#ffffff;text-decoration:none;">Pay ${usdFmt(opts.total)} now →</a>
+        </td></tr>
+      </table>`
+    : `<p style="margin:0 0 16px 0;font-size:16px;color:${NAVY};"><strong>Approved total: ${usdFmt(opts.total)}</strong></p>`;
   if (opts.to) {
     await deliver({
       from: FROM, to: opts.to, replyTo: SUPPORT_EMAIL,
       subject: `Quote approved — ${opts.bookingNumber} · ${opts.eventName}`,
       html: brandedEmailHtml({
-        preheader: `You approved ${usdFmt(opts.total)} for ${opts.eventName}.`,
+        preheader: `You approved ${usdFmt(opts.total)} for ${opts.eventName}.${opts.hasStripe && opts.total > 0 ? " Pay your balance by card on your booking page." : ""}`,
         headline: "Thank you — quote approved",
         body: `
           <p style="margin:0 0 16px 0;">Hi <strong style="color:${NAVY};">${escHtml(opts.name.split(" ")[0] || opts.name)}</strong>,</p>
           <p style="margin:0 0 16px 0;"><strong>${escHtml(opts.signer)}</strong> approved the ${what} for <strong>${escHtml(opts.eventName)}</strong> (${escHtml(opts.bookingNumber)}) on ${when}.
           The signed copy is attached for your records.</p>
-          <p style="margin:0 0 16px 0;font-size:16px;color:${NAVY};"><strong>Approved total: ${usdFmt(opts.total)}</strong></p>
+          ${paySection}
           <p style="margin:0;"><strong>Next:</strong> ${escHtml(opts.nextStep)}</p>`,
         ctaText: "View your booking",
-        ctaUrl: `${SITE_URL}/reservations/${opts.reservationId}`,
+        ctaUrl: bookingUrl,
         footnoteHtml: `<p style="margin:0;">Questions? Email <a href="mailto:${SUPPORT_EMAIL}" style="color:${TEAL};">${SUPPORT_EMAIL}</a>.</p>`,
       }),
       attachments: [{ filename: opts.filename, content: Buffer.from(opts.pdf) }],

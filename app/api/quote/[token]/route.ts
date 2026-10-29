@@ -49,7 +49,7 @@ export async function POST(req: NextRequest, { params }: Params) {
           to: r.contact_email, name: r.contact_name || r.contact_email || "there", signer: q.accepted_name ?? "",
           bookingNumber: r.booking_number ?? r.id.slice(0, 8), reservationId: r.id, eventName: r.event_name ?? "your event",
           version: q.version, total: Number(q.total), signedAt: q.accepted_at!, includesAgreement: !!q.agreement_text,
-          nextStep: next, pdf: pdf.bytes, filename: pdf.filename,
+          nextStep: next, hasStripe: !!process.env.STRIPE_SECRET_KEY, pdf: pdf.bytes, filename: pdf.filename,
         });
       } catch (e) { console.error("[quote] after-approval failed:", (e as Error).message); }
     });

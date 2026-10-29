@@ -13,7 +13,7 @@ import PayOnlineForm from "./pay-online-form";
 const roomsNote = (ids?: string[] | null) => (ids?.length ? ` · ${ids.map((id) => ROOMS.find((r) => r.id === id)?.name ?? id).join(", ")} only` : "");
 
 type BillingResponse = Billing & {
-  staff: boolean; canAddAddons: boolean; userId: string; howToPay?: string | null; paymentWaived?: boolean;
+  staff: boolean; canAddAddons: boolean; canPayOnline?: boolean; userId: string; howToPay?: string | null; paymentWaived?: boolean;
   /** Room lines are still the booking page estimate (before approval) */
   estimate?: boolean;
   /** Staff took the room lines over by hand — schedule edits leave them alone */
@@ -154,6 +154,15 @@ export default function BillingCard({ reservationId, compact = false }: { reserv
               {q.acceptedName} approved version {q.version} ({usd(q.total)}){q.includesAgreement ? " and signed the Facility Use Agreement" : ""} on {fmtDate(q.acceptedAt!)}.
               {q.token && <> <a className="underline" href={`/api/quote/${q.token}/pdf`} target="_blank" rel="noopener">Signed copy (PDF)</a></>}
             </p>
+            {data.canPayOnline && totals.balance > 0 && process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY && (
+              <button
+                type="button"
+                className="bx-btn bx-btn--primary bx-btn--sm mt-3"
+                onClick={() => setPanel(panel === "pay-online" ? null : "pay-online")}
+              >
+                {panel === "pay-online" ? "Cancel" : `Pay ${usd(totals.balance)} now →`}
+              </button>
+            )}
           </div>
         ) : declined ? (
           <div className="bx-tone-amber border rounded-xl px-4 py-3 text-sm" role="status">
@@ -259,14 +268,14 @@ export default function BillingCard({ reservationId, compact = false }: { reserv
       </dl>
 
       {/* How to pay (C3) — only when something is owed */}
-      {!data.staff && totals.balance > 0 && data.howToPay && (
+      {(data.canPayOnline || !data.staff) && totals.balance > 0 && data.howToPay && (
         <div className="bx-well rounded-xl px-4 py-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-slate mb-1">How to pay</p>
           <p className="text-sm text-parchment whitespace-pre-line">{data.howToPay}</p>
           <p className="text-xs text-slate mt-1.5">You&apos;ll get a receipt by email when your payment is recorded.</p>
         </div>
       )}
-      {!data.staff && totals.balance > 0 && process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY && (
+      {data.canPayOnline && totals.balance > 0 && process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY && (
         <div>
           <button
             type="button"
