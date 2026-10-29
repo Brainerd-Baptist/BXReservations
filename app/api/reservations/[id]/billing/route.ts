@@ -48,7 +48,10 @@ export async function GET(_req: NextRequest, { params }: Params) {
     staff: c.ctx.staff,
     canAddAddons: c.ctx.staff || (c.ctx.access === "edit" && requesterCanEditAddons(c.ctx.reservation.status)),
     // true when the current user is the booking's primary organizer (user_id match) OR a non-staff co-organizer
-    canPayOnline: (c.ctx.reservation.user_id === c.user.id) || (!c.ctx.staff && c.ctx.access === "edit"),
+    // Show Pay online to organizers & co-organizers; hide from staff viewing other people's bookings.
+    // Logic: edit access grants it unless the viewer is staff AND the reservation's user_id
+    // is explicitly set to a different person (not this user and not null/unknown).
+    canPayOnline: c.ctx.access === "edit" && !(c.ctx.staff && c.ctx.reservation.user_id !== null && c.ctx.reservation.user_id !== c.user.id),
     userId: c.user.id,
   });
 }
