@@ -132,7 +132,7 @@ export default function PeopleCard({ reservationId }: { reservationId: string })
       </ul>
 
       {data.canManage && (
-        <form onSubmit={invite} className="bx-well rounded-xl p-4 grid gap-3 sm:grid-cols-[1fr_auto_auto] sm:items-end">
+        <form onSubmit={invite} className="bx-well rounded-xl p-4 space-y-3">
           <Field label="Invite by email">
             <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@example.com" required autoComplete="email" />
           </Field>
@@ -142,7 +142,7 @@ export default function PeopleCard({ reservationId }: { reservationId: string })
               <option value="co_owner">Co-organizer</option>
             </Select>
           </Field>
-          <Button type="submit" size="md" loading={busy === "invite"} className="sm:mb-[1.4rem]">Send invite</Button>
+          <Button type="submit" size="md" loading={busy === "invite"} className="w-full">Send invite</Button>
         </form>
       )}
     </div>
