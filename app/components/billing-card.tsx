@@ -8,6 +8,7 @@ import LoadError from "./load-error";
 import { CHARGE_KIND_LABEL, UNIT_LABEL, usd, type Addon, type Billing, type ChargeKind } from "@/lib/billing";
 import { isTiered, tierSummary } from "@/lib/addon-pricing";
 import { ROOMS } from "@/lib/rooms";
+import PayOnlineForm from "./pay-online-form";
 
 const roomsNote = (ids?: string[] | null) => (ids?.length ? ` · ${ids.map((id) => ROOMS.find((r) => r.id === id)?.name ?? id).join(", ")} only` : "");
 
@@ -46,7 +47,7 @@ export default function BillingCard({ reservationId, compact = false }: { reserv
   const [data, setData] = useState<BillingResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  const [panel, setPanel] = useState<null | "addon" | "line" | "payment" | "quote">(null);
+  const [panel, setPanel] = useState<null | "addon" | "line" | "payment" | "quote" | "pay-online">(null);
   const [catalog, setCatalog] = useState<Addon[] | null>(null);
 
   const load = useCallback(async () => {
@@ -265,6 +266,17 @@ export default function BillingCard({ reservationId, compact = false }: { reserv
           <p className="text-xs text-slate mt-1.5">You&apos;ll get a receipt by email when your payment is recorded.</p>
         </div>
       )}
+      {!data.staff && totals.balance > 0 && process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY && (
+        <div>
+          <button
+            type="button"
+            className="bx-btn bx-btn--sm"
+            onClick={() => setPanel(panel === "pay-online" ? null : "pay-online")}
+          >
+            {panel === "pay-online" ? "Cancel" : "Pay online"}
+          </button>
+        </div>
+      )}
       {data.paymentWaived && charges.length > 0 && totals.charges <= 0 && (
         <p className="text-xs text-slate">No payment is needed for this booking.</p>
       )}
@@ -345,6 +357,14 @@ export default function BillingCard({ reservationId, compact = false }: { reserv
             setPanel(null);
             await load();
           }, "Payment recorded.")} />
+      )}
+      {panel === "pay-online" && (
+        <PayOnlineForm
+          reservationId={reservationId}
+          balance={totals.balance}
+          onSuccess={() => { setPanel(null); load(); }}
+          onCancel={() => setPanel(null)}
+        />
       )}
     </div>
   );
