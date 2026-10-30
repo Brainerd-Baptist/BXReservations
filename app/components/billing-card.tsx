@@ -371,7 +371,7 @@ export default function BillingCard({ reservationId, compact = false }: { reserv
         <PayOnlineForm
           reservationId={reservationId}
           balance={totals.balance}
-          onSuccess={() => { setPanel(null); load(); }}
+          onSuccess={() => { toast("Payment received — thank you! You'll get a receipt by email.", "success"); setPanel(null); load(); }}
           onCancel={() => setPanel(null)}
         />
       )}
