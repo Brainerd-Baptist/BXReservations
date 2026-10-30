@@ -31,19 +31,11 @@ export interface OrgFlag {
 
 // ─── Flag type labels ─────────────────────────────────────────────────────────
 const FLAG_LABELS: Record<OrgFlag["flag_type"], { label: string; color: string }> = {
-<<<<<<< HEAD
-  new_org:        { label: "New Org Created",  color: "#2563eb" },
-  fuzzy_match:    { label: "Fuzzy Match",       color: "#d97706" },
-  duplicate:      { label: "Possible Duplicate",color: "#dc2626" },
-  user_mismatch:  { label: "User Mismatch",     color: "#7c3aed" },
-  name_typo:      { label: "Name Typo",         color: "#0891b2" },
-=======
   new_org:        { label: "New Org Created",   color: "#2563eb" },
   fuzzy_match:    { label: "Fuzzy Match",        color: "#d97706" },
   duplicate:      { label: "Possible Duplicate", color: "#dc2626" },
   user_mismatch:  { label: "User Mismatch",      color: "#7c3aed" },
   name_typo:      { label: "Name Typo",          color: "#0891b2" },
->>>>>>> 753ffd8 (feat(orgs): fuzzy-match pipeline + admin flag queue)
 };
 
 // ─── Single flag row ──────────────────────────────────────────────────────────
@@ -132,17 +124,7 @@ function FlagRow({
 
       {/* Linked reservation */}
       {flag.reservations && (
-<<<<<<< HEAD
-        <div
-          style={{
-            fontSize: 12,
-            color: "var(--bx-muted, #6b7280)",
-            marginBottom: 10,
-          }}
-        >
-=======
         <div style={{ fontSize: 12, color: "var(--bx-muted, #6b7280)", marginBottom: 10 }}>
->>>>>>> 753ffd8 (feat(orgs): fuzzy-match pipeline + admin flag queue)
           Reservation{" "}
           <a
             href={`/admin/bx-reservations/${flag.reservations.id}`}
@@ -154,26 +136,6 @@ function FlagRow({
         </div>
       )}
 
-<<<<<<< HEAD
-      {/* Suggested org / candidate chooser */}
-      {flag.bx_organizations && (
-        <div style={{ marginBottom: 10 }}>
-          <span style={{ fontSize: 12, color: "var(--bx-muted, #6b7280)" }}>
-            Suggested org:{" "}
-          </span>
-          <strong style={{ fontSize: 13 }}>{flag.bx_organizations.name}</strong>
-          <span
-            style={{
-              fontSize: 11,
-              marginLeft: 6,
-              color: "var(--bx-muted, #6b7280)",
-              textTransform: "uppercase",
-            }}
-          >
-            {flag.bx_organizations.tier}
-            {flag.bx_organizations.status !== "confirmed" &&
-              ` · ${flag.bx_organizations.status}`}
-=======
       {/* Suggested org */}
       {flag.bx_organizations && (
         <div style={{ marginBottom: 10 }}>
@@ -182,7 +144,6 @@ function FlagRow({
           <span style={{ fontSize: 11, marginLeft: 6, color: "var(--bx-muted, #6b7280)", textTransform: "uppercase" }}>
             {flag.bx_organizations.tier}
             {flag.bx_organizations.status !== "confirmed" && ` · ${flag.bx_organizations.status}`}
->>>>>>> 753ffd8 (feat(orgs): fuzzy-match pipeline + admin flag queue)
           </span>
         </div>
       )}
@@ -225,54 +186,16 @@ function FlagRow({
       {/* Action buttons */}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         {flag.flag_type !== "new_org" && (
-<<<<<<< HEAD
-          <button
-            onClick={() => resolve("approved")}
-            disabled={isPending}
-            style={btnStyle("var(--bx-accent, #2563eb)")}
-          >
-=======
           <button onClick={() => resolve("approved")} disabled={isPending} style={btnStyle("var(--bx-accent, #2563eb)")}>
->>>>>>> 753ffd8 (feat(orgs): fuzzy-match pipeline + admin flag queue)
             ✓ Approve link
           </button>
         )}
         {flag.flag_type === "new_org" && (
-<<<<<<< HEAD
-          <button
-            onClick={() => resolve("approved")}
-            disabled={isPending}
-            style={btnStyle("var(--bx-sage, #059669)")}
-          >
-=======
           <button onClick={() => resolve("approved")} disabled={isPending} style={btnStyle("var(--bx-sage, #059669)")}>
->>>>>>> 753ffd8 (feat(orgs): fuzzy-match pipeline + admin flag queue)
             ✓ Confirm new org
           </button>
         )}
         {flag.candidates && flag.candidates.length > 0 && chosenOrgId && (
-<<<<<<< HEAD
-          <button
-            onClick={() => resolve("merged")}
-            disabled={isPending}
-            style={btnStyle("#7c3aed")}
-          >
-            Merge into selected
-          </button>
-        )}
-        <button
-          onClick={() => resolve("corrected")}
-          disabled={isPending}
-          style={btnStyle("#d97706")}
-        >
-          Corrected
-        </button>
-        <button
-          onClick={() => resolve("dismissed")}
-          disabled={isPending}
-          style={btnStyle("#6b7280")}
-        >
-=======
           <button onClick={() => resolve("merged")} disabled={isPending} style={btnStyle("#7c3aed")}>
             Merge into selected
           </button>
@@ -281,7 +204,6 @@ function FlagRow({
           Corrected
         </button>
         <button onClick={() => resolve("dismissed")} disabled={isPending} style={btnStyle("#6b7280")}>
->>>>>>> 753ffd8 (feat(orgs): fuzzy-match pipeline + admin flag queue)
           Dismiss
         </button>
       </div>
@@ -303,15 +225,7 @@ function btnStyle(color: string): React.CSSProperties {
 }
 
 // ─── Flag Queue Panel ─────────────────────────────────────────────────────────
-<<<<<<< HEAD
-export default function OrgFlagQueue({
-  initialFlags,
-}: {
-  initialFlags: OrgFlag[];
-}) {
-=======
 export default function OrgFlagQueue({ initialFlags }: { initialFlags: OrgFlag[] }) {
->>>>>>> 753ffd8 (feat(orgs): fuzzy-match pipeline + admin flag queue)
   const [flags, setFlags] = useState<OrgFlag[]>(initialFlags);
   const [backfilling, setBackfilling] = useState(false);
   const [backfillResult, setBackfillResult] = useState<string | null>(null);
@@ -324,13 +238,7 @@ export default function OrgFlagQueue({ initialFlags }: { initialFlags: OrgFlag[]
   function handleResolved(id: string, resolution: string) {
     setFlags((prev) =>
       prev.map((f) =>
-<<<<<<< HEAD
-        f.id === id
-          ? { ...f, resolved_at: new Date().toISOString(), resolution }
-          : f
-=======
         f.id === id ? { ...f, resolved_at: new Date().toISOString(), resolution } : f
->>>>>>> 753ffd8 (feat(orgs): fuzzy-match pipeline + admin flag queue)
       )
     );
   }
@@ -342,10 +250,6 @@ export default function OrgFlagQueue({ initialFlags }: { initialFlags: OrgFlag[]
       const res = await fetch("/api/admin/org-flags?backfill=1", { method: "POST" });
       const j = await res.json();
       setBackfillResult(`Backfill done — ${j.backfill?.processed ?? 0} reservation(s) processed.`);
-<<<<<<< HEAD
-      // Reload flags after backfill
-=======
->>>>>>> 753ffd8 (feat(orgs): fuzzy-match pipeline + admin flag queue)
       startTransition(async () => {
         const fr = await fetch("/api/admin/org-flags");
         const fj = await fr.json();
@@ -360,38 +264,11 @@ export default function OrgFlagQueue({ initialFlags }: { initialFlags: OrgFlag[]
 
   return (
     <section style={{ marginTop: 32 }}>
-<<<<<<< HEAD
-      {/* Section header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          marginBottom: 16,
-          flexWrap: "wrap",
-        }}
-      >
-        <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>
-          Org Flag Queue
-          {unresolvedCount > 0 && (
-            <span
-              style={{
-                marginLeft: 8,
-                fontSize: 12,
-                fontWeight: 700,
-                background: "#dc2626",
-                color: "#fff",
-                borderRadius: 10,
-                padding: "1px 7px",
-              }}
-            >
-=======
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
         <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>
           Org Flag Queue
           {unresolvedCount > 0 && (
             <span style={{ marginLeft: 8, fontSize: 12, fontWeight: 700, background: "#dc2626", color: "#fff", borderRadius: 10, padding: "1px 7px" }}>
->>>>>>> 753ffd8 (feat(orgs): fuzzy-match pipeline + admin flag queue)
               {unresolvedCount}
             </span>
           )}
@@ -399,19 +276,7 @@ export default function OrgFlagQueue({ initialFlags }: { initialFlags: OrgFlag[]
 
         <button
           onClick={() => setShowResolved((v) => !v)}
-<<<<<<< HEAD
-          style={{
-            fontSize: 12,
-            padding: "4px 10px",
-            borderRadius: 6,
-            border: "1px solid var(--bx-border, #e5e7eb)",
-            background: "transparent",
-            cursor: "pointer",
-            color: "var(--bx-muted, #6b7280)",
-          }}
-=======
           style={{ fontSize: 12, padding: "4px 10px", borderRadius: 6, border: "1px solid var(--bx-border, #e5e7eb)", background: "transparent", cursor: "pointer", color: "var(--bx-muted, #6b7280)" }}
->>>>>>> 753ffd8 (feat(orgs): fuzzy-match pipeline + admin flag queue)
         >
           {showResolved ? "Hide resolved" : "Show resolved"}
         </button>
@@ -419,55 +284,21 @@ export default function OrgFlagQueue({ initialFlags }: { initialFlags: OrgFlag[]
         <button
           onClick={runBackfill}
           disabled={backfilling || isPending}
-<<<<<<< HEAD
-          style={{
-            fontSize: 12,
-            padding: "4px 12px",
-            borderRadius: 6,
-            border: "1px solid var(--bx-accent, #2563eb)",
-            background: "transparent",
-            color: "var(--bx-accent, #2563eb)",
-            fontWeight: 600,
-            cursor: "pointer",
-            marginLeft: "auto",
-          }}
-=======
           style={{ fontSize: 12, padding: "4px 12px", borderRadius: 6, border: "1px solid var(--bx-accent, #2563eb)", background: "transparent", color: "var(--bx-accent, #2563eb)", fontWeight: 600, cursor: "pointer", marginLeft: "auto" }}
->>>>>>> 753ffd8 (feat(orgs): fuzzy-match pipeline + admin flag queue)
         >
           {backfilling ? "Running…" : "Backfill unlinked reservations"}
         </button>
       </div>
 
       {backfillResult && (
-<<<<<<< HEAD
-        <div
-          style={{
-            fontSize: 13,
-            color: "var(--bx-muted, #6b7280)",
-            marginBottom: 12,
-            padding: "8px 12px",
-            background: "var(--bx-surface, #f9fafb)",
-            borderRadius: 6,
-            border: "1px solid var(--bx-border, #e5e7eb)",
-          }}
-        >
-=======
         <div style={{ fontSize: 13, color: "var(--bx-muted, #6b7280)", marginBottom: 12, padding: "8px 12px", background: "var(--bx-surface, #f9fafb)", borderRadius: 6, border: "1px solid var(--bx-border, #e5e7eb)" }}>
->>>>>>> 753ffd8 (feat(orgs): fuzzy-match pipeline + admin flag queue)
           {backfillResult}
         </div>
       )}
 
       {visible.length === 0 ? (
         <p style={{ fontSize: 14, color: "var(--bx-muted, #6b7280)" }}>
-<<<<<<< HEAD
-          {unresolvedCount === 0
-            ? "No unresolved flags. All orgs are linked."
-            : "Nothing to show."}
-=======
           {unresolvedCount === 0 ? "No unresolved flags. All orgs are linked." : "Nothing to show."}
->>>>>>> 753ffd8 (feat(orgs): fuzzy-match pipeline + admin flag queue)
         </p>
       ) : (
         visible.map((flag) => (

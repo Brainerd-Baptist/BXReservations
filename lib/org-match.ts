@@ -6,10 +6,6 @@
 //   >= 0.92  → auto-link silently (method: 'exact' if 1.0, 'fuzzy' if <1.0)
 //   0.75–0.91 → flag for admin review, do NOT auto-link
 //   < 0.75  → create new org (pending_review) + flag as new_org
-<<<<<<< HEAD
-//   Multiple in 0.75–0.92 band → flag as 'duplicate', pick none
-=======
->>>>>>> 753ffd8 (feat(orgs): fuzzy-match pipeline + admin flag queue)
 
 import { createServerClient } from "@supabase/ssr";
 import { normalizeOrgName, canonicalOrgName } from "@/lib/org-name";

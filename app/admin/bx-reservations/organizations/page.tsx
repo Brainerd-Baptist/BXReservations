@@ -88,17 +88,7 @@ export default async function OrganizationsPage() {
         initialOrganizations={organizations}
         fetchError={orgsResult.error?.message ?? null}
       />
-<<<<<<< HEAD
-      <div
-        style={{
-          maxWidth: 900,
-          margin: "0 auto",
-          padding: "0 16px 64px",
-        }}
-      >
-=======
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 16px 64px" }}>
->>>>>>> 753ffd8 (feat(orgs): fuzzy-match pipeline + admin flag queue)
         <OrgFlagQueue initialFlags={flags} />
       </div>
     </>
