@@ -21,6 +21,11 @@ const ALLOWED_KEYS = [
   "coi_expiry_warning_days",
 ];
 
+/** Keys whose values are boolean strings ("true"/"false") rather than day counts. */
+const BOOL_KEYS = ["payment_alerts_enabled"];
+
+const ALL_ALLOWED_KEYS = [...ALLOWED_KEYS, ...BOOL_KEYS];
+
 function adminSb() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -36,7 +41,7 @@ export async function GET() {
   const { data, error } = await sb
     .from("bx_settings")
     .select("key, value, description")
-    .in("key", ALLOWED_KEYS);
+    .in("key", ALL_ALLOWED_KEYS);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
@@ -59,6 +64,15 @@ export async function PATCH(req: NextRequest) {
   const errors: string[] = [];
 
   for (const [key, value] of Object.entries(settings)) {
+    if (BOOL_KEYS.includes(key)) {
+      // Boolean setting: accept "true" or "false" only
+      const boolVal = value === "true" || value === "false" ? value : "true";
+      const { error } = await sb
+        .from("bx_settings")
+        .upsert({ key, value: boolVal }, { onConflict: "key" });
+      if (error) errors.push(`${key}: ${error.message}`);
+      continue;
+    }
     if (!ALLOWED_KEYS.includes(key)) continue;
     const num = parseInt(value, 10);
     if (isNaN(num) || num < 1 || num > 365) {

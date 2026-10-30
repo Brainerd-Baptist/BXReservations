@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { brandedEmailHtml, sendEmail, escHtml, pillButtonHtml } from "@/lib/email";
 import { ensureSurvey, readSurveySettings, releaseReward } from "@/lib/survey";
 import { runAutoReminders } from "@/lib/payment-reminders";
+import { runEventPrepReminders } from "@/lib/event-prep-reminders";
 import { SITE_URL, ADMIN_EMAIL as SITE_ADMIN_EMAIL } from "@/lib/site";
 
 // ─── Auth ──────────────────────────────────────────────────────────────────────
@@ -546,6 +547,13 @@ export async function GET(req: NextRequest) {
     if (r.sent) log.push(`payment_reminders → ${r.sent} sent`);
     if (r.errors.length) { errors += r.errors.length; console.error("[bx-automation] reminders:", r.errors); }
   } catch (e) { errors++; console.error("[bx-automation] reminders failed:", e); }
+
+  // ── Event-prep reminders (30 days and 7 days before event) ──────────────
+  try {
+    const prep = await runEventPrepReminders(sb);
+    if (prep.sent) log.push(`event_prep_reminders → ${prep.sent} sent`);
+    if (prep.errors.length) { errors += prep.errors.length; console.error("[bx-automation] event-prep:", prep.errors); }
+  } catch (e) { errors++; console.error("[bx-automation] event-prep reminders failed:", e); }
 
   return NextResponse.json({
     ok: true,

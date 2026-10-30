@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminClient } from "@/lib/event-map";
 import { syncLegacyPayment } from "@/lib/billing";
 import { stripe } from "@/lib/stripe";
+import { buildReadiness } from "@/lib/event-prep-reminders";
+import { sendPaymentReceiptEmail, sendAdminPaymentAlert } from "@/lib/email";
 import type Stripe from "stripe";
 
 // Next.js must NOT parse the body — Stripe needs the raw bytes to verify the signature.
@@ -53,10 +55,10 @@ async function handlePaymentSucceeded(pi: Stripe.PaymentIntent) {
   const amount = pi.amount_received / 100;
   const db = adminClient();
 
-  // Confirm the reservation still exists.
+  // Confirm the reservation exists (with all fields needed for readiness + emails).
   const { data: res } = await db
     .from("reservations")
-    .select("id")
+    .select("id, booking_number, event_name, contact_name, contact_email, status, payload, coi_accepted_at, coi_uploaded_at, waived")
     .eq("id", reservationId)
     .maybeSingle();
   if (!res) {
@@ -112,4 +114,37 @@ async function handlePaymentSucceeded(pi: Stripe.PaymentIntent) {
   });
 
   console.log(`[stripe/webhook] Recorded $${amount.toFixed(2)} for reservation ${res.id}`);
+
+  // ── Notification emails ──────────────────────────────────────────────────
+  try {
+    const readiness = await buildReadiness(db, res as Parameters<typeof buildReadiness>[1]);
+    if (readiness) {
+      // Override amountPaid with the actual payment received.
+      const r = { ...readiness, amountPaid: amount };
+
+      // 1. Renter receipt — always.
+      await sendPaymentReceiptEmail(r).catch(e =>
+        console.error("[stripe/webhook] sendPaymentReceiptEmail failed:", e)
+      );
+
+      // 2. Admin alert — gated on the payment_alerts_enabled setting (default: on).
+      const { data: alertSetting } = await db
+        .from("bx_settings")
+        .select("value")
+        .eq("key", "payment_alerts_enabled")
+        .maybeSingle();
+      const alertsEnabled = (alertSetting as { value?: string } | null)?.value !== "false";
+
+      if (alertsEnabled) {
+        await sendAdminPaymentAlert(r).catch(e =>
+          console.error("[stripe/webhook] sendAdminPaymentAlert failed:", e)
+        );
+      } else {
+        console.log("[stripe/webhook] Admin payment alerts disabled — skipping admin alert.");
+      }
+    }
+  } catch (e) {
+    // Email failure should never fail the webhook — Stripe would retry.
+    console.error("[stripe/webhook] Email notification failed:", e);
+  }
 }

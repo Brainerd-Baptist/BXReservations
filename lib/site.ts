@@ -7,3 +7,10 @@ export const SUPPORT_PHONE_TEL = "4236434978";
 /** Staff alert emails go to the shared BX inbox (every staff member also gets
  *  an in-app notification). Set ADMIN_EMAIL in Vercel to send them elsewhere. */
 export const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? SUPPORT_EMAIL;
+
+/**
+ * Payment alert recipients — set in Vercel for Production only.
+ * Leave unset in Preview/Development so test payments don't email staff.
+ */
+export const BX_COORDINATOR_EMAIL = process.env.BX_COORDINATOR_EMAIL ?? "";
+export const FINANCE_EMAIL        = process.env.FINANCE_EMAIL ?? "";

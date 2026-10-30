@@ -939,3 +939,370 @@ export async function sendScheduleRequest(opts: {
     html,
   });
 }
+
+// ─── Payment receipt & admin alert ───────────────────────────────────────────
+
+function progressBarHtml(paid: number, charges: number): string {
+  if (charges <= 0) return "";
+  const pct = Math.min(100, Math.round((paid / charges) * 100));
+  const label = pct >= 100
+    ? `<span style="font-size:13px; color:#059669; font-weight:700;">Paid in full ✓</span>`
+    : `<span style="font-size:13px; color:#374151;"><strong style="color:${NAVY};">${usd(paid)}</strong> paid &nbsp;·&nbsp; <strong>${usd(charges - paid)}</strong> remaining</span>`;
+  const filled = pct >= 100
+    ? `border-radius:6px; background:${TEAL};`
+    : `border-radius:6px 0 0 6px; background:${TEAL};`;
+  const empty  = pct >= 100 ? "" : `<td style="height:8px; background:#e5e7eb; border-radius:0 6px 6px 0;"></td>`;
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:12px 0 4px 0;">
+      <tr><td style="padding-bottom:6px;">${label}</td></tr>
+      <tr>
+        <td>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-radius:6px; background:#e5e7eb; overflow:hidden;">
+            <tr>
+              <td width="${pct}%" style="height:8px; ${filled}"></td>
+              ${empty}
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>`;
+}
+
+function checklistItemHtml(state: "done" | "todo" | "optional", label: string, href?: string | null, note?: string | null): string {
+  const icon  = state === "done"     ? `<td style="width:22px; padding:5px 0; vertical-align:top; font-size:15px; color:#059669;">✓</td>`
+              : state === "todo"     ? `<td style="width:22px; padding:5px 0; vertical-align:top; font-size:15px; color:#d97706;">→</td>`
+              :                        `<td style="width:22px; padding:5px 0; vertical-align:top; font-size:15px; color:#9ca3af;">○</td>`;
+  const text  = href
+    ? `<a href="${href}" target="_blank" rel="noopener noreferrer" style="color:${TEAL}; text-decoration:underline; font-weight:600;">${escHtml(label)}</a>`
+    : escHtml(label);
+  const noteEl = note ? `<br><span style="font-size:12px; color:#9ca3af;">${escHtml(note)}</span>` : "";
+  return `<tr>${icon}<td style="padding:5px 0 5px 6px; font-size:14px; color:#374151;">${text}${noteEl}</td></tr>`;
+}
+
+function sectionHeadingHtml(text: string): string {
+  return `<p style="margin:20px 0 8px 0; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#9ca3af;">${escHtml(text)}</p>`;
+}
+
+function infoRowHtml(label: string, value: string): string {
+  return `
+    <tr>
+      <td style="padding:5px 12px 5px 0; font-size:13px; color:#9ca3af; white-space:nowrap; vertical-align:top;">${escHtml(label)}</td>
+      <td style="padding:5px 0; font-size:13px; color:#374151; vertical-align:top;">${value}</td>
+    </tr>`;
+}
+
+export interface PaymentReadiness {
+  reservationId:   string;
+  bookingNumber:   string;
+  contactName:     string;
+  contactEmail:    string;
+  eventName:       string;
+  eventDates:      string[];   // YMD strings
+  roomNames:       string[];
+  headcount:       number;
+  amountPaid:      number;     // this payment
+  totalPaid:       number;     // after this payment
+  totalCharges:    number;
+  // Required steps
+  agreementSigned: boolean;
+  agreementToken:  string | null;
+  coiAccepted:     boolean;
+  coiUploaded:     boolean;    // uploaded but not yet accepted
+  // Optional
+  logoUploaded:    boolean;
+  labelCount:      number;
+  // Waivers
+  waivedAgreement: boolean;
+  waivedCoi:       boolean;
+  waivedPayment:   boolean;
+}
+
+/** Rich payment receipt to the renter — sent immediately on payment_intent.succeeded. */
+export async function sendPaymentReceiptEmail(r: PaymentReadiness): Promise<void> {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn("[email] RESEND_API_KEY not set — skipping payment receipt");
+    return;
+  }
+
+  const { SITE_URL, SUPPORT_EMAIL, SUPPORT_PHONE } = await import("@/lib/site");
+
+  const bn          = r.bookingNumber;
+  const eventUrl    = `${SITE_URL}/reservations/${r.reservationId}`;
+  const name        = r.contactName || r.contactEmail;
+  const paidFull    = r.totalCharges > 0 && r.totalCharges - r.totalPaid <= 0;
+  const datesLabel  = r.eventDates.slice(0, 3).map((d) => {
+    const [, m, day] = d.split("-");
+    const dt = new Date(`${d}T12:00:00Z`);
+    return dt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+  }).join(" · ") + (r.eventDates.length > 3 ? ` + ${r.eventDates.length - 3} more` : "");
+
+  // Event detail card
+  const eventCard = `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+      style="margin:16px 0; background:#f9fafb; border-radius:8px; border:1px solid #e5e7eb;">
+      <tr><td style="padding:14px 16px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+          ${r.eventDates.length ? infoRowHtml("Date", escHtml(datesLabel)) : ""}
+          ${r.roomNames.length  ? infoRowHtml("Spaces", escHtml(r.roomNames.join(", "))) : ""}
+          ${r.headcount > 0     ? infoRowHtml("Guests", escHtml(String(r.headcount))) : ""}
+        </table>
+      </td></tr>
+    </table>`;
+
+  // Payment progress
+  const progress = progressBarHtml(r.totalPaid, r.totalCharges);
+
+  // Required steps (only items that are still open)
+  const requiredRows: string[] = [];
+  if (!r.waivedAgreement) {
+    if (r.agreementSigned) {
+      requiredRows.push(checklistItemHtml("done", "Facility Use Agreement signed"));
+    } else {
+      const href = r.agreementToken
+        ? `${SITE_URL}/reservations/${r.reservationId}/agreement?token=${r.agreementToken}`
+        : null;
+      requiredRows.push(checklistItemHtml("todo", "Sign the Facility Use Agreement", href, href ? null : "We'll send this link separately."));
+    }
+  }
+  if (!r.waivedCoi) {
+    if (r.coiAccepted) {
+      requiredRows.push(checklistItemHtml("done", "Proof of insurance accepted"));
+    } else if (r.coiUploaded) {
+      requiredRows.push(checklistItemHtml("done", "Proof of insurance uploaded — under review"));
+    } else {
+      requiredRows.push(checklistItemHtml("todo", "Upload proof of insurance", `${eventUrl}#documents`,
+        "A Certificate of Insurance (COI) naming Brainerd Baptist Church as additionally insured."));
+    }
+  }
+
+  // Optional steps (always shown as prompts if not done)
+  const optionalRows: string[] = [];
+  if (!r.logoUploaded) {
+    optionalRows.push(checklistItemHtml("optional", "Upload your logo", `${eventUrl}#logo`,
+      "We use it to make custom entry signs and event materials for you."));
+  }
+  if (r.labelCount === 0) {
+    optionalRows.push(checklistItemHtml("optional", "Name your rooms on the Event Map", `${eventUrl}/event-map`,
+      "Adds personalized door signs to each space you're using."));
+  }
+
+  const requiredSection = requiredRows.length
+    ? `${sectionHeadingHtml("Still needed")}<table role="presentation" cellpadding="0" cellspacing="0" width="100%">${requiredRows.join("")}</table>`
+    : "";
+  const optionalSection = optionalRows.length
+    ? `${sectionHeadingHtml("Optional but helpful")}<table role="presentation" cellpadding="0" cellspacing="0" width="100%">${optionalRows.join("")}</table>`
+    : "";
+
+  const amountLine = r.amountPaid !== r.totalPaid
+    ? `<strong style="color:${NAVY};">${usd(r.amountPaid)}</strong> received — ${usd(r.totalPaid)} paid total`
+    : `<strong style="color:${NAVY};">${usd(r.amountPaid)}</strong> received`;
+
+  const body = `
+    <p style="margin:0 0 4px 0;">Hi <strong style="color:${NAVY};">${escHtml(name)}</strong>,</p>
+    <p style="margin:0 0 16px 0;">We received your payment for <strong>${escHtml(r.eventName)}</strong> (${escHtml(bn)}).</p>
+    <p style="margin:0 0 4px 0; font-size:15px;">${amountLine}</p>
+    ${r.totalCharges > 0 ? progress : ""}
+    ${eventCard}
+    ${requiredSection}
+    ${optionalSection}
+    <p style="margin:${requiredRows.length || optionalRows.length ? "16" : "0"}px 0 0 0; font-size:13px; color:#6b7280;">
+      Questions? Reply to this email or call <a href="tel:${SUPPORT_PHONE.replace(/\D/g, "")}" style="color:${TEAL};">${SUPPORT_PHONE}</a>.
+    </p>`;
+
+  await deliver({
+    from: FROM, to: r.contactEmail,
+    subject: paidFull
+      ? `Payment complete — ${escHtml(r.eventName)} (${bn})`
+      : `Payment received — ${escHtml(r.eventName)} (${bn})`,
+    html: brandedEmailHtml({
+      preheader: paidFull ? `Paid in full for ${r.eventName}.` : `${usd(r.amountPaid)} received for ${r.eventName}.`,
+      headline: paidFull ? "You're all paid up!" : "Payment received",
+      body,
+      ctaText: "View your reservation",
+      ctaUrl:  eventUrl,
+      footnoteHtml: null,
+    }),
+  });
+}
+
+/** Alert sent to Barb + finance immediately when a payment lands. */
+export async function sendAdminPaymentAlert(r: PaymentReadiness): Promise<void> {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn("[email] RESEND_API_KEY not set — skipping admin payment alert");
+    return;
+  }
+
+  const { SITE_URL, BX_COORDINATOR_EMAIL, FINANCE_EMAIL } = await import("@/lib/site");
+
+  const recipients = [BX_COORDINATOR_EMAIL, FINANCE_EMAIL].filter(Boolean);
+  if (!recipients.length) {
+    console.log("[email] No payment alert recipients configured — skipping admin alert (set BX_COORDINATOR_EMAIL and FINANCE_EMAIL in Vercel Production env)");
+    return;
+  }
+
+  const bn         = r.bookingNumber;
+  const adminUrl   = `${SITE_URL}/admin/bx-reservations?highlight=${r.reservationId}`;
+  const paidFull   = r.totalCharges > 0 && r.totalCharges - r.totalPaid <= 0;
+  const firstDate  = r.eventDates[0]
+    ? new Date(`${r.eventDates[0]}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "UTC" })
+    : null;
+
+  const agStatus = r.waivedAgreement ? "Waived" : r.agreementSigned ? "✓ Signed" : "Not yet signed";
+  const coiStatus = r.waivedCoi ? "Waived"
+    : r.coiAccepted  ? "✓ Accepted"
+    : r.coiUploaded  ? "⏳ Uploaded — pending review"
+    : "Not uploaded";
+
+  const body = `
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%"
+      style="margin:0 0 20px 0; background:#f9fafb; border-radius:8px; border:1px solid #e5e7eb;">
+      <tr><td style="padding:16px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+          ${infoRowHtml("From",      `<strong style="color:${NAVY};">${escHtml(r.contactName || r.contactEmail)}</strong> &lt;<a href="mailto:${escHtml(r.contactEmail)}" style="color:${TEAL};">${escHtml(r.contactEmail)}</a>&gt;`)}
+          ${infoRowHtml("Event",     `<strong>${escHtml(r.eventName)}</strong>`)}
+          ${firstDate ? infoRowHtml("Date",  escHtml(firstDate)) : ""}
+          ${r.roomNames.length ? infoRowHtml("Spaces", escHtml(r.roomNames.join(", "))) : ""}
+          ${infoRowHtml("Booking #", escHtml(bn))}
+        </table>
+      </td></tr>
+    </table>
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%"
+      style="margin:0 0 20px 0; background:#f0fdf4; border-radius:8px; border:1px solid #bbf7d0;">
+      <tr><td style="padding:16px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+          ${infoRowHtml("This payment", `<strong style="color:${NAVY}; font-size:16px;">${usd(r.amountPaid)}</strong>`)}
+          ${r.totalCharges > 0 ? infoRowHtml("Total paid",  `${usd(r.totalPaid)} of ${usd(r.totalCharges)}`) : ""}
+          ${r.totalCharges > 0 ? infoRowHtml("Balance",     paidFull ? `<strong style="color:#059669;">Paid in full ✓</strong>` : `<strong>${usd(r.totalCharges - r.totalPaid)}</strong> remaining`) : ""}
+        </table>
+      </td></tr>
+    </table>
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%"
+      style="margin:0 0 8px 0; background:#f9fafb; border-radius:8px; border:1px solid #e5e7eb;">
+      <tr><td style="padding:14px 16px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+          ${infoRowHtml("Agreement", escHtml(agStatus))}
+          ${infoRowHtml("Insurance", escHtml(coiStatus))}
+        </table>
+      </td></tr>
+    </table>`;
+
+  await deliver({
+    from: FROM, to: recipients,
+    subject: `Payment received — ${r.eventName} · ${usd(r.amountPaid)} (${bn})`,
+    html: brandedEmailHtml({
+      preheader: `${usd(r.amountPaid)} from ${r.contactName || r.contactEmail} for ${r.eventName}.`,
+      headline: "Payment received",
+      body,
+      ctaText: "Open in admin",
+      ctaUrl:  adminUrl,
+      footnoteHtml: null,
+    }),
+  });
+}
+
+/** Event-prep nudge — sent ~30 days out (kind "prep:30") and ~7 days out (kind "prep:7").
+ *  Only fires when there are optional or required items still open. */
+export async function sendEventPrepEmail(r: PaymentReadiness & {
+  kind: "prep:30" | "prep:7";
+}): Promise<void> {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn("[email] RESEND_API_KEY not set — skipping event prep email");
+    return;
+  }
+
+  const { SITE_URL, SUPPORT_EMAIL, SUPPORT_PHONE } = await import("@/lib/site");
+  const eventUrl = `${SITE_URL}/reservations/${r.reservationId}`;
+  const name     = r.contactName || r.contactEmail;
+  const bn       = r.bookingNumber;
+  const isFinal  = r.kind === "prep:7";
+
+  const firstDate = r.eventDates[0]
+    ? new Date(`${r.eventDates[0]}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "UTC" })
+    : null;
+
+  // Required items still open
+  const requiredOpen: string[] = [];
+  if (!r.waivedAgreement && !r.agreementSigned) {
+    const href = r.agreementToken ? `${SITE_URL}/reservations/${r.reservationId}/agreement?token=${r.agreementToken}` : null;
+    requiredOpen.push(checklistItemHtml("todo", "Sign the Facility Use Agreement", href, null));
+  }
+  if (!r.waivedCoi && !r.coiAccepted && !r.coiUploaded) {
+    requiredOpen.push(checklistItemHtml("todo", "Upload proof of insurance", `${eventUrl}#documents`,
+      "A Certificate of Insurance (COI) naming Brainerd Baptist Church as additionally insured."));
+  }
+  if (!r.waivedPayment && r.totalCharges > 0 && r.totalCharges - r.totalPaid > 0) {
+    requiredOpen.push(checklistItemHtml("todo", `Pay the remaining balance (${usd(r.totalCharges - r.totalPaid)})`, `${eventUrl}#billing`, null));
+  }
+
+  // Optional items still open
+  const optionalOpen: string[] = [];
+  if (!r.logoUploaded) {
+    optionalOpen.push(checklistItemHtml("optional", "Upload your logo for custom signage", `${eventUrl}#logo`,
+      "We print entry signs and event materials with your logo."));
+  }
+  if (r.labelCount === 0) {
+    optionalOpen.push(checklistItemHtml("optional", "Name your rooms on the Event Map", `${eventUrl}/event-map`,
+      "Door signs are printed from the room names you set here."));
+  }
+  if (r.headcount >= 75) {
+    optionalOpen.push(checklistItemHtml("optional", "Share your event schedule or run of show", `${eventUrl}`,
+      "Helps our team prepare spaces and AV for your timeline."));
+  }
+
+  // Nothing to say → skip
+  if (!requiredOpen.length && !optionalOpen.length && !isFinal) return;
+
+  const requiredSection = requiredOpen.length
+    ? `${sectionHeadingHtml("Still needed before your event")}<table role="presentation" cellpadding="0" cellspacing="0" width="100%">${requiredOpen.join("")}</table>`
+    : "";
+  const optionalSection = optionalOpen.length
+    ? `${sectionHeadingHtml("Optional — but helpful for your team")}<table role="presentation" cellpadding="0" cellspacing="0" width="100%">${optionalOpen.join("")}</table>`
+    : "";
+
+  const dayOfSection = isFinal ? `
+    ${sectionHeadingHtml("Day-of details")}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+      style="margin:8px 0 12px 0; background:#f9fafb; border-radius:8px; border:1px solid #e5e7eb;">
+      <tr><td style="padding:14px 16px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+          ${infoRowHtml("BX contact",   escHtml(SUPPORT_EMAIL))}
+          ${infoRowHtml("Phone",         escHtml(SUPPORT_PHONE))}
+          ${infoRowHtml("Parking",       "Main lot off Missionary Ridge Road; overflow in the lower campus lot.")}
+          ${infoRowHtml("Arrival",       "You may access your reserved spaces starting at the time shown on your booking.")}
+        </table>
+      </td></tr>
+    </table>` : "";
+
+  const intro = isFinal
+    ? `<p style="margin:0 0 16px 0;">Hi <strong style="color:${NAVY};">${escHtml(name)}</strong>, your event is just around the corner${firstDate ? ` — <strong>${escHtml(firstDate)}</strong>` : ""}. Here's everything to have ready.</p>`
+    : `<p style="margin:0 0 16px 0;">Hi <strong style="color:${NAVY};">${escHtml(name)}</strong>, your event is coming up${firstDate ? ` on <strong>${escHtml(firstDate)}</strong>` : ""}. A quick checklist to make sure everything is set.</p>`;
+
+  const body = `
+    ${intro}
+    ${requiredSection}
+    ${optionalSection}
+    ${dayOfSection}
+    <p style="margin:16px 0 0 0; font-size:13px; color:#6b7280;">
+      Questions? Reply to this email or call <a href="tel:${SUPPORT_PHONE.replace(/\D/g, "")}" style="color:${TEAL};">${SUPPORT_PHONE}</a>.
+      &nbsp;<span style="color:#d1d5db;">|</span>&nbsp; Booking ${escHtml(bn)}
+    </p>`;
+
+  const subject = isFinal
+    ? `Final details — ${r.eventName}${firstDate ? " · " + firstDate : ""}`
+    : `Getting ready for your event — ${r.eventName} (${bn})`;
+
+  await deliver({
+    from: FROM, to: r.contactEmail,
+    subject,
+    html: brandedEmailHtml({
+      preheader: isFinal
+        ? `Your event is almost here. Here's what's needed and your day-of details.`
+        : `A quick checklist to make sure everything is ready for ${r.eventName}.`,
+      headline: isFinal ? "Final event checklist" : "Getting ready for your event",
+      body,
+      ctaText: "View your reservation",
+      ctaUrl:  eventUrl,
+      footnoteHtml: null,
+    }),
+  });
+}

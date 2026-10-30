@@ -1762,7 +1762,8 @@ function AutomationSettings({
   const [loaded, setLoaded] = useState(false);
   if (!loaded) { onLoad(); setLoaded(true); }
 
-  const dirty = AUTOMATION_KEYS.some(k => draft[k.key] !== settings[k.key]);
+  const dirty = AUTOMATION_KEYS.some(k => draft[k.key] !== settings[k.key])
+    || draft["payment_alerts_enabled"] !== settings["payment_alerts_enabled"];
 
   return (
     <div className="rounded-2xl bx-glass overflow-hidden mb-4">
@@ -1807,6 +1808,43 @@ function AutomationSettings({
           ))}
         </div>
       )}
+      {/* Payment alert toggle */}
+      <div className="px-5 py-4 border-t border-parchment/10 flex items-center justify-between gap-4">
+        <div>
+          <p className="text-sm font-semibold text-parchment">Admin payment alerts</p>
+          <p className="text-xs text-slate mt-0.5">
+            Email Barb and finance when a payment is received online. Turn off during testing.
+          </p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-label="Admin payment alerts"
+          aria-checked={draft["payment_alerts_enabled"] !== "false"}
+          onClick={() => {
+            const next = draft["payment_alerts_enabled"] === "false" ? "true" : "false";
+            onChange("payment_alerts_enabled", next);
+          }}
+          className="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors"
+          style={{
+            background: draft["payment_alerts_enabled"] !== "false"
+              ? "var(--bx-action-bg)"
+              : "color-mix(in srgb, var(--bx-parchment) 20%, transparent)",
+          }}
+        >
+          <span
+            className="inline-block h-4 w-4 rounded-full transition-transform"
+            style={{
+              background: draft["payment_alerts_enabled"] !== "false"
+                ? "var(--bx-action-fg)"
+                : "var(--bx-parchment)",
+              transform: draft["payment_alerts_enabled"] !== "false"
+                ? "translateX(1.375rem)"
+                : "translateX(0.25rem)",
+            }}
+          />
+        </button>
+      </div>
     </div>
   );
 }
