@@ -206,7 +206,7 @@ export function brandedEmailHtml(opts: {
           <tr>
             <td style="padding:16px 40px 40px 40px; font-family:${FONT}; font-size:12px; line-height:1.6; color:#9ca3af;">
               <p style="margin:0;">Wasn't expecting this? Call
-                <a href="tel:4236434978" style="color:#9ca3af; text-decoration:underline;">${SUPPORT_PHONE}</a>
+                <a href="tel:${SUPPORT_PHONE.replace(/\D/g, '')}" style="color:#9ca3af; text-decoration:underline;">${SUPPORT_PHONE}</a>
                 or email
                 <a href="mailto:${SUPPORT_EMAIL}" style="color:#9ca3af; text-decoration:underline;">${SUPPORT_EMAIL}</a>
                 before clicking anything.
@@ -616,7 +616,7 @@ export async function sendWelcomeEmail(opts: {
     ctaUrl:  SITE_URL + "/reserve",
     footnoteHtml: `
       <p style="margin:0 0 10px 0;">
-        Questions? Call <a href="tel:4236434978" style="color:${TEAL}; text-decoration:underline;">${SUPPORT_PHONE}</a>
+        Questions? Call <a href="tel:${SUPPORT_PHONE.replace(/\D/g, '')}" style="color:${TEAL}; text-decoration:underline;">${SUPPORT_PHONE}</a>
         or email <a href="mailto:${SUPPORT_EMAIL}" style="color:${TEAL}; text-decoration:underline;">${SUPPORT_EMAIL}</a>.
       </p>
       <p style="margin:0; color:#9ca3af; font-size:12px; line-height:1.6;">
@@ -1031,7 +1031,6 @@ export async function sendPaymentReceiptEmail(r: PaymentReadiness): Promise<void
   const name        = r.contactName || r.contactEmail;
   const paidFull    = r.totalCharges > 0 && r.totalCharges - r.totalPaid <= 0;
   const datesLabel  = r.eventDates.slice(0, 3).map((d) => {
-    const [, m, day] = d.split("-");
     const dt = new Date(`${d}T12:00:00Z`);
     return dt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
   }).join(" · ") + (r.eventDates.length > 3 ? ` + ${r.eventDates.length - 3} more` : "");

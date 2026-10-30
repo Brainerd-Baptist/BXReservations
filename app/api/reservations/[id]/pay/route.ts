@@ -46,17 +46,22 @@ export async function POST(_req: NextRequest, { params }: Params) {
   // Stripe amounts are in cents (integer).
   const amountCents = Math.round(balance * 100);
 
-  const paymentIntent = await stripe.paymentIntents.create({
-    amount: amountCents,
-    currency: "usd",
-    automatic_payment_methods: { enabled: true },
-    metadata: {
-      reservation_id: ctx.reservation.id,
-      booking_number: ctx.reservation.booking_number ?? "",
-      event_name: ctx.reservation.event_name ?? "",
+  const paymentIntent = await stripe.paymentIntents.create(
+    {
+      amount: amountCents,
+      currency: "usd",
+      automatic_payment_methods: { enabled: true },
+      metadata: {
+        reservation_id: ctx.reservation.id,
+        booking_number: ctx.reservation.booking_number ?? "",
+        event_name: ctx.reservation.event_name ?? "",
+      },
+      description: `BX Reservation – ${ctx.reservation.booking_number ?? ctx.reservation.id}`,
     },
-    description: `BX Reservation – ${ctx.reservation.booking_number ?? ctx.reservation.id}`,
-  });
+    // Idempotency key prevents duplicate PIs if the form is remounted
+    // before the user completes payment (e.g. modal closed and reopened).
+    { idempotencyKey: `pi-${ctx.reservation.id}` }
+  );
 
   return NextResponse.json({ clientSecret: paymentIntent.client_secret });
 }

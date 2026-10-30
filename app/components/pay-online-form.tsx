@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Elements,
   PaymentElement,
@@ -69,7 +69,7 @@ export default function PayOnlineForm({
         appearance: {
           theme: "night",
           variables: {
-            colorPrimary: "#7c96b2",
+            colorPrimary: "#00abc9",
             colorBackground: "#0f1c2e",
             colorText: "#e8dfc8",
             colorDanger: "#f87171",
@@ -99,6 +99,20 @@ function PayForm({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const calledSuccess = useRef(false);
+
+  // After a 3DS redirect Stripe appends ?payment_intent=...&redirect_status=succeeded
+  // to the return_url. Detect this on mount and call onSuccess so the billing
+  // panel refreshes even when the user was redirected away and back.
+  useEffect(() => {
+    if (calledSuccess.current) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("redirect_status") === "succeeded" && params.get("payment_intent")) {
+      calledSuccess.current = true;
+      setDone(true);
+      onSuccess();
+    }
+  }, [onSuccess]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -127,8 +141,11 @@ function PayForm({
       setError(confirmErr.message ?? "Payment failed.");
       setBusy(false);
     } else {
-      setDone(true);
-      onSuccess();
+      if (!calledSuccess.current) {
+        calledSuccess.current = true;
+        setDone(true);
+        onSuccess();
+      }
     }
   }
 
@@ -163,7 +180,7 @@ function PayForm({
         <Button type="submit" size="sm" loading={busy} disabled={!stripe}>
           Pay ${balance.toFixed(2)}
         </Button>
-        <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
+        <Button type="button" size="sm" variant="ghost" onClick={onCancel} disabled={busy}>
           Cancel
         </Button>
       </div>
