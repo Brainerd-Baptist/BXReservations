@@ -947,7 +947,7 @@ function progressBarHtml(paid: number, charges: number): string {
   const pct = Math.min(100, Math.round((paid / charges) * 100));
   const label = pct >= 100
     ? `<span style="font-size:13px; color:#059669; font-weight:700;">Paid in full ✓</span>`
-    : `<span style="font-size:13px; color:#374151;"><strong style="color:${NAVY};">${usd(paid)}</strong> paid &nbsp;·&nbsp; <strong>${usd(charges - paid)}</strong> remaining</span>`;
+    : `<span style="font-size:13px; color:#374151;"><strong style="color:${NAVY};">${usdFmt(paid)}</strong> paid &nbsp;·&nbsp; <strong>${usdFmt(charges - paid)}</strong> remaining</span>`;
   const filled = pct >= 100
     ? `border-radius:6px; background:${TEAL};`
     : `border-radius:6px 0 0 6px; background:${TEAL};`;
@@ -1093,8 +1093,8 @@ export async function sendPaymentReceiptEmail(r: PaymentReadiness): Promise<void
     : "";
 
   const amountLine = r.amountPaid !== r.totalPaid
-    ? `<strong style="color:${NAVY};">${usd(r.amountPaid)}</strong> received — ${usd(r.totalPaid)} paid total`
-    : `<strong style="color:${NAVY};">${usd(r.amountPaid)}</strong> received`;
+    ? `<strong style="color:${NAVY};">${usdFmt(r.amountPaid)}</strong> received — ${usdFmt(r.totalPaid)} paid total`
+    : `<strong style="color:${NAVY};">${usdFmt(r.amountPaid)}</strong> received`;
 
   const body = `
     <p style="margin:0 0 4px 0;">Hi <strong style="color:${NAVY};">${escHtml(name)}</strong>,</p>
@@ -1114,7 +1114,7 @@ export async function sendPaymentReceiptEmail(r: PaymentReadiness): Promise<void
       ? `Payment complete — ${escHtml(r.eventName)} (${bn})`
       : `Payment received — ${escHtml(r.eventName)} (${bn})`,
     html: brandedEmailHtml({
-      preheader: paidFull ? `Paid in full for ${r.eventName}.` : `${usd(r.amountPaid)} received for ${r.eventName}.`,
+      preheader: paidFull ? `Paid in full for ${r.eventName}.` : `${usdFmt(r.amountPaid)} received for ${r.eventName}.`,
       headline: paidFull ? "You're all paid up!" : "Payment received",
       body,
       ctaText: "View your reservation",
@@ -1169,9 +1169,9 @@ export async function sendAdminPaymentAlert(r: PaymentReadiness): Promise<void> 
       style="margin:0 0 20px 0; background:#f0fdf4; border-radius:8px; border:1px solid #bbf7d0;">
       <tr><td style="padding:16px;">
         <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-          ${infoRowHtml("This payment", `<strong style="color:${NAVY}; font-size:16px;">${usd(r.amountPaid)}</strong>`)}
-          ${r.totalCharges > 0 ? infoRowHtml("Total paid",  `${usd(r.totalPaid)} of ${usd(r.totalCharges)}`) : ""}
-          ${r.totalCharges > 0 ? infoRowHtml("Balance",     paidFull ? `<strong style="color:#059669;">Paid in full ✓</strong>` : `<strong>${usd(r.totalCharges - r.totalPaid)}</strong> remaining`) : ""}
+          ${infoRowHtml("This payment", `<strong style="color:${NAVY}; font-size:16px;">${usdFmt(r.amountPaid)}</strong>`)}
+          ${r.totalCharges > 0 ? infoRowHtml("Total paid",  `${usdFmt(r.totalPaid)} of ${usdFmt(r.totalCharges)}`) : ""}
+          ${r.totalCharges > 0 ? infoRowHtml("Balance",     paidFull ? `<strong style="color:#059669;">Paid in full ✓</strong>` : `<strong>${usdFmt(r.totalCharges - r.totalPaid)}</strong> remaining`) : ""}
         </table>
       </td></tr>
     </table>
@@ -1187,9 +1187,9 @@ export async function sendAdminPaymentAlert(r: PaymentReadiness): Promise<void> 
 
   await deliver({
     from: FROM, to: recipients,
-    subject: `Payment received — ${r.eventName} · ${usd(r.amountPaid)} (${bn})`,
+    subject: `Payment received — ${r.eventName} · ${usdFmt(r.amountPaid)} (${bn})`,
     html: brandedEmailHtml({
-      preheader: `${usd(r.amountPaid)} from ${r.contactName || r.contactEmail} for ${r.eventName}.`,
+      preheader: `${usdFmt(r.amountPaid)} from ${r.contactName || r.contactEmail} for ${r.eventName}.`,
       headline: "Payment received",
       body,
       ctaText: "Open in admin",
@@ -1230,7 +1230,7 @@ export async function sendEventPrepEmail(r: PaymentReadiness & {
       "A Certificate of Insurance (COI) naming Brainerd Baptist Church as additionally insured."));
   }
   if (!r.waivedPayment && r.totalCharges > 0 && r.totalCharges - r.totalPaid > 0) {
-    requiredOpen.push(checklistItemHtml("todo", `Pay the remaining balance (${usd(r.totalCharges - r.totalPaid)})`, `${eventUrl}#billing`, null));
+    requiredOpen.push(checklistItemHtml("todo", `Pay the remaining balance (${usdFmt(r.totalCharges - r.totalPaid)})`, `${eventUrl}#billing`, null));
   }
 
   // Optional items still open
