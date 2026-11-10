@@ -1135,12 +1135,11 @@ select:disabled,
   align-items: center;
   gap: 0.625rem;
   padding: 0.625rem 1.125rem;
-  border-radius: 9999px;
+  border-radius: 10px;
   font-size: 0.875rem;
   font-weight: 600;
   box-shadow: var(--shadow-3);
   animation: bx-toast-in var(--duration-base, 200ms) var(--ease-out, cubic-bezier(0.16,1,0.3,1)) both;
-  white-space: nowrap;
   max-width: min(400px, calc(100vw - 2rem));
   white-space: normal;
 }

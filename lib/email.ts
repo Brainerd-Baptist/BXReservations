@@ -136,9 +136,11 @@ export function brandedEmailHtml(opts: {
     @media (prefers-color-scheme: dark) {
       .bx-cta, .bx-cta span { color: #F4F7FB !important; }
       .bx-cta-cell { background-color: #0a8aa3 !important; }
+      .bx-logo-cell { background-color: #00205b !important; }
     }
     [data-ogsc] .bx-cta, [data-ogsc] .bx-cta span { color: #F4F7FB !important; }
     [data-ogsb] .bx-cta-cell { background-color: #0a8aa3 !important; }
+    [data-ogsc] .bx-logo-cell { background-color: #00205b !important; }
   </style>
   <title>${escHtml(headline.replace(/<[^>]*>/g, ""))}</title>
   <!--[if mso]><noscript><xml><o:OfficeDocumentSettings>
@@ -157,7 +159,7 @@ export function brandedEmailHtml(opts: {
 
           <!-- LOGO -->
           <tr>
-            <td style="padding:40px 40px 24px 40px; text-align:center;">
+            <td class="bx-logo-cell" style="padding:40px 40px 24px 40px; text-align:center;">
               <img src="${LOGO_URL}" alt="${ORG_NAME}" width="180"
                 style="display:block; margin:0 auto; border:0; outline:none; text-decoration:none;" />
             </td>

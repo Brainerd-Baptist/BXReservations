@@ -46,7 +46,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     (message: string, kind: ToastKind = "success") => {
       const id = `toast-${Date.now()}-${++counterRef.current}`;
       setToasts((prev) => [...prev, { id, message, kind }]);
-      setTimeout(() => dismiss(id), 3000);
+      setTimeout(() => dismiss(id), 6000);
     },
     [dismiss]
   );
