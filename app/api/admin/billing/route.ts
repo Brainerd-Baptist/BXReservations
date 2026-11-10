@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireStaff } from "@/lib/api-auth";
+import { requireBillingAccess } from "@/lib/api-auth";
 import { adminClient } from "@/lib/event-map";
 import { money, firstEventDate } from "@/lib/billing";
 
@@ -21,7 +21,7 @@ export interface BillingRow {
 
 // GET /api/admin/billing — every booking's total, paid and balance (payment hub)
 export async function GET() {
-  const denied = await requireStaff();
+  const denied = await requireBillingAccess();
   if (denied) return denied;
   const db = adminClient();
   const [res, ch, pay, rem] = await Promise.all([
