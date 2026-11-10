@@ -92,7 +92,7 @@ function checklistSteps(
   if (!w.coi) {
     steps.push(r.coi_accepted_at ? { label: "Upload proof of insurance", state: "done" }
       : r.coi_uploaded_at ? { label: "Upload proof of insurance", state: "waiting", note: "Uploaded — the BX team is checking it." }
-      : { label: "Upload proof of insurance", state: reviewed ? "todo" : "waiting", note: "A Certificate of Insurance (COI) from your insurer, naming Brainerd Baptist Church as additionally insured." });
+      : { label: "Upload proof of insurance", state: reviewed ? "todo" : "waiting", href: reviewed ? "#documents" : undefined, note: "A Certificate of Insurance (COI) from your insurer, naming Brainerd Baptist Church as additionally insured." });
   }
   if (!w.payment) {
     const t = v.totals;
@@ -732,7 +732,7 @@ function renderPage(
 
       {/* COI upload card — show when pending_documents and not yet accepted */}
       {!view.staffView && !readWaived(reservation.waived).coi && reservation.status === "pending_documents" && !reservation.coi_accepted_at && (
-        <div style={{ marginBottom: "1rem" }}>
+        <div id="documents" style={{ marginBottom: "1rem" }}>
           <COIUploadCard reservationId={reservation.id} />
         </div>
       )}
