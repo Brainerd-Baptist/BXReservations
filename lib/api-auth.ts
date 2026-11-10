@@ -22,3 +22,11 @@ export async function requireSysadmin(): Promise<NextResponse | null> {
   if (!can.configureSystem(role)) return NextResponse.json({ error: "Owner or System Admin only" }, { status: 403 });
   return null;
 }
+
+/** Finance Contact and above — read billing data. */
+export async function requireBillingAccess(): Promise<NextResponse | null> {
+  const { user, role } = await getUserAndRole();
+  if (!user) return NextResponse.json({ error: "Sign in required" }, { status: 401 });
+  if (!can.viewBillingHub(role)) return NextResponse.json({ error: "Finance access required" }, { status: 403 });
+  return null;
+}
